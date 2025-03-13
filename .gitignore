@@ -1,0 +1,55 @@
+# 🚀 Ignorar el entorno virtual
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*.swp
+*.swo
+*.swn
+*.bak
+
+# 🚀 Ignorar la base de datos SQLite (si usas PostgreSQL o MySQL, no lo necesitas)
+db.sqlite3
+db.sqlite3-journal
+
+# 🚀 Archivos de migraciones compilados (opcional, si quieres compartir las migraciones, quítalo)
+**/migrations/*.pyc
+**/migrations/*.pyo
+**/migrations/__pycache__/
+**/migrations/*.py, !**/migrations/__init__.py
+
+# 🚀 Ignorar logs y caché
+logs/
+*.log
+local_settings.py
+.DS_Store
+media/
+static/
+staticfiles/
+
+# 🚀 Ignorar configuraciones sensibles
+.env
+*.secret
+config.json
+settings_local.py
+
+# 🚀 Ignorar archivos de IDEs y editores de código
+.vscode/
+.idea/
+*.iml
+
+# 🚀 Ignorar archivos de dependencias de Python
+Pipfile
+Pipfile.lock
+poetry.lock
+
+# 🚀 Ignorar archivos de Docker (si lo usas)
+docker-compose.override.yml
+.dockerignore
+
+# 🚀 Ignorar archivos de node_modules si usas frontend con React o Vue
+node_modules/
+npm-debug.log
+yarn.lock
