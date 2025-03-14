@@ -16,7 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from daily_trainning_app.api.router import router_trauning_app
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/', include(router_trauning_app.urls)),  # Todas las rutas de los ViewSets dentro de `/api/`
 ]
