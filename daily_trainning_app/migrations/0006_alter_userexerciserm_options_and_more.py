@@ -13,7 +13,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='userexerciserm',
-            options={'ordering': ['-fecha_registro'], 'verbose_name': 'User Exercise 1RM', 'verbose_name_plural': 'User Exercise 1RMs'},
+            options={
+                'ordering': ['-fecha_registro'],
+                'verbose_name': 'User Exercise 1RM',
+                'verbose_name_plural': 'User Exercise 1RMs'},
         ),
         migrations.AlterUniqueTogether(
             name='userexerciserm',
@@ -22,6 +25,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='userexerciserm',
             name='fecha_registro',
-            field=models.DateField(default=django.utils.timezone.now, verbose_name='Date Recorded'),
+            field=models.DateField(
+                default=django.utils.timezone.now,
+                verbose_name='Date Recorded'),
         ),
     ]

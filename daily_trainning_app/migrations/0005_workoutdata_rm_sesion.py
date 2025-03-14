@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('daily_trainning_app', '0004_remove_user_peso_maximo_rm_userexerciserm'),
+        ('daily_trainning_app',
+         '0004_remove_user_peso_maximo_rm_userexerciserm'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='workoutdata',
             name='rm_sesion',
-            field=models.FloatField(default=0.0, verbose_name='Estimated 1RM (Session)'),
+            field=models.FloatField(
+                default=0.0,
+                verbose_name='Estimated 1RM (Session)'),
         ),
     ]

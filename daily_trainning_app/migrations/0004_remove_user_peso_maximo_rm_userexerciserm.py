@@ -7,7 +7,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('daily_trainning_app', '0003_remove_workoutdata_nivel_fatiga_and_more'),
+        ('daily_trainning_app',
+         '0003_remove_workoutdata_nivel_fatiga_and_more'),
     ]
 
     operations = [
@@ -18,13 +19,33 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='UserExerciseRM',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('peso_maximo_rm', models.PositiveIntegerField(default=0, help_text='Peso máximo levantado en una repetición máxima para este ejercicio.', verbose_name='Max Lift (1RM)')),
-                ('exercise', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='daily_trainning_app.exercise', verbose_name='Exercise')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='daily_trainning_app.user', verbose_name='User')),
+                ('id',
+                 models.BigAutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('peso_maximo_rm',
+                 models.PositiveIntegerField(
+                     default=0,
+                     help_text='Peso máximo levantado en una repetición máxima para este ejercicio.',
+                     verbose_name='Max Lift (1RM)')),
+                ('exercise',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='daily_trainning_app.exercise',
+                     verbose_name='Exercise')),
+                ('user',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='daily_trainning_app.user',
+                     verbose_name='User')),
             ],
             options={
-                'unique_together': {('user', 'exercise')},
+                'unique_together': {
+                    (
+                        'user',
+                        'exercise')},
             },
         ),
     ]

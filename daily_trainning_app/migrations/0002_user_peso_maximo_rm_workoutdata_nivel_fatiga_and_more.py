@@ -13,36 +13,59 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='peso_maximo_rm',
-            field=models.PositiveIntegerField(default=0, help_text='Peso máximo levantado en una repetición máxima.', verbose_name='Max Lift (1RM)'),
+            field=models.PositiveIntegerField(
+                default=0,
+                help_text='Peso máximo levantado en una repetición máxima.',
+                verbose_name='Max Lift (1RM)'),
         ),
         migrations.AddField(
             model_name='workoutdata',
             name='nivel_fatiga',
-            field=models.CharField(choices=[('Bajo', 'Low'), ('Medio', 'Medium'), ('Alto', 'High')], default='Medio', max_length=10, verbose_name='Fatigue Level'),
+            field=models.CharField(
+                choices=[
+                    ('Bajo',
+                     'Low'),
+                    ('Medio',
+                     'Medium'),
+                    ('Alto',
+                     'High')],
+                default='Medio',
+                max_length=10,
+                verbose_name='Fatigue Level'),
         ),
         migrations.AddField(
             model_name='workoutdata',
             name='peso',
-            field=models.PositiveIntegerField(default=0, verbose_name='Weight (kg)'),
+            field=models.PositiveIntegerField(
+                default=0,
+                verbose_name='Weight (kg)'),
         ),
         migrations.AlterField(
             model_name='workoutdata',
             name='carga',
-            field=models.PositiveIntegerField(default=0, verbose_name='Load (kg)'),
+            field=models.PositiveIntegerField(
+                default=0,
+                verbose_name='Load (kg)'),
         ),
         migrations.AlterField(
             model_name='workoutdata',
             name='intensidad_relativa',
-            field=models.FloatField(default=0.0, verbose_name='Relative Intensity (%)'),
+            field=models.FloatField(
+                default=0.0,
+                verbose_name='Relative Intensity (%)'),
         ),
         migrations.AlterField(
             model_name='workoutdata',
             name='rpe_objetivo',
-            field=models.FloatField(default=0.0, verbose_name='Target RPE'),
+            field=models.FloatField(
+                default=0.0,
+                verbose_name='Target RPE'),
         ),
         migrations.AlterField(
             model_name='workoutdata',
             name='volumen_relativo',
-            field=models.FloatField(default=0.0, verbose_name='Relative Volume'),
+            field=models.FloatField(
+                default=0.0,
+                verbose_name='Relative Volume'),
         ),
     ]
