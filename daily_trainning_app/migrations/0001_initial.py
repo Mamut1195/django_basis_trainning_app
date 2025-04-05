@@ -16,8 +16,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Classification',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nombre', models.CharField(max_length=255, unique=True, verbose_name='Name')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
+                ('nombre', models.CharField(
+                    max_length=255, unique=True, verbose_name='Name')),
             ],
             options={
                 'verbose_name': 'Classification',
@@ -27,9 +29,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='User',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('nombre', models.CharField(max_length=255, verbose_name='Name')),
-                ('email', models.EmailField(max_length=254, unique=True, verbose_name='Email')),
+                ('email', models.EmailField(max_length=254,
+                 unique=True, verbose_name='Email')),
                 ('fecha_inicio', models.DateField(verbose_name='Start Date')),
             ],
             options={
@@ -40,11 +44,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Exercise',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('nombre', models.CharField(max_length=255, verbose_name='Name')),
                 ('video', models.URLField(blank=True, null=True, verbose_name='Video')),
-                ('descripcion', models.TextField(blank=True, verbose_name='Description')),
-                ('classification', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='daily_trainning_app.classification', verbose_name='Classification')),
+                ('descripcion', models.TextField(
+                    blank=True, verbose_name='Description')),
+                ('classification', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                 to='daily_trainning_app.classification', verbose_name='Classification')),
             ],
             options={
                 'verbose_name': 'Exercise',
@@ -54,17 +61,27 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='WorkoutData',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('fecha', models.DateField(verbose_name='Date')),
-                ('sets', models.PositiveIntegerField(default=0, verbose_name='Sets')),
-                ('reps', models.PositiveIntegerField(default=0, verbose_name='Reps')),
-                ('total_reps', models.PositiveIntegerField(default=0, verbose_name='Total Reps')),
-                ('intensidad_relativa', models.IntegerField(default=0, verbose_name='Relative Intensity')),
-                ('carga', models.PositiveIntegerField(default=0, verbose_name='Load')),
-                ('volumen_relativo', models.PositiveIntegerField(default=0, verbose_name='Relative Volume')),
-                ('rpe_objetivo', models.PositiveIntegerField(default=0, validators=[django.core.validators.MinValueValidator(1)], verbose_name='Target RPE')),
-                ('exercise', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='daily_trainning_app.exercise', verbose_name='Exercise')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='daily_trainning_app.user', verbose_name='User')),
+                ('sets', models.PositiveIntegerField(
+                    default=0, verbose_name='Sets')),
+                ('reps', models.PositiveIntegerField(
+                    default=0, verbose_name='Reps')),
+                ('total_reps', models.PositiveIntegerField(
+                    default=0, verbose_name='Total Reps')),
+                ('intensidad_relativa', models.IntegerField(
+                    default=0, verbose_name='Relative Intensity')),
+                ('carga', models.PositiveIntegerField(
+                    default=0, verbose_name='Load')),
+                ('volumen_relativo', models.PositiveIntegerField(
+                    default=0, verbose_name='Relative Volume')),
+                ('rpe_objetivo', models.PositiveIntegerField(default=0, validators=[
+                 django.core.validators.MinValueValidator(1)], verbose_name='Target RPE')),
+                ('exercise', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                 to='daily_trainning_app.exercise', verbose_name='Exercise')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                 to='daily_trainning_app.user', verbose_name='User')),
             ],
             options={
                 'verbose_name': 'Workout Data',

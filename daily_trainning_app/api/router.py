@@ -15,5 +15,6 @@ router_trauning_app.register(r'workout-data', WorkoutDataViewSet)
 
 # 📌 2️⃣ Definir las Rutas de la API
 urlpatterns = [
-    path('api/', include(router_trauning_app.urls)),  # Todas las rutas de los ViewSets dentro de `/api/`
+    # Todas las rutas de los ViewSets dentro de `/api/`
+    path('api/', include(router_trauning_app.urls)),
 ]

@@ -89,7 +89,8 @@ class UserExerciseRM(models.Model):
     peso_maximo_rm = models.PositiveIntegerField(
         default=0,
         verbose_name=_("Max Lift (1RM)"),
-        help_text=_("Peso máximo levantado en una repetición máxima para este ejercicio.")
+        help_text=_(
+            "Peso máximo levantado en una repetición máxima para este ejercicio.")
     )
     fecha_registro = models.DateField(
         default=now, verbose_name=_("Date Recorded"))

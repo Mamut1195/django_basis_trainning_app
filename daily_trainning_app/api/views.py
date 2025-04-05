@@ -9,6 +9,8 @@ from .serializers import (
 )
 
 # 📌 1️⃣ Vista para Clasificación (List, Create, Retrieve, Update, Delete)
+
+
 class ClassificationViewSet(viewsets.ModelViewSet):
     queryset = Classification.objects.all()
     serializer_class = ClassificationSerializer
@@ -20,15 +22,15 @@ class ClassificationViewSet(viewsets.ModelViewSet):
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.select_related("classification").all()
     serializer_class = ExerciseSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get_queryset(self):
-        """ Filtrar ejercicios por clasificación si se pasa `classification_id` como parámetro """
-        queryset = super().get_queryset()
-        classification_id = self.request.query_params.get("classification_id")
-        if classification_id:
-            queryset = queryset.filter(classification_id=classification_id)
-        return queryset
+    # def get_queryset(self):
+    #     """ Filtrar ejercicios por clasificación si se pasa `classification_id` como parámetro """
+    #     queryset = super().get_queryset()
+    #     classification_id = self.request.query_params.get("classification_id")
+    #     if classification_id:
+    #         queryset = queryset.filter(classification_id=classification_id)
+    #     return queryset
 
 
 # 📌 3️⃣ Vista para Usuarios (Sin Exponer Datos Sensibles)
@@ -36,21 +38,21 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):  # Solo lectura
     queryset = User.objects.all()
     serializer_class = UserSerializer
     # Solo usuarios autenticados pueden ver usuarios
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
 
 # 📌 4️⃣ Vista para 1RM por Usuario y Ejercicio
 class UserExerciseRMViewSet(viewsets.ModelViewSet):
     queryset = UserExerciseRM.objects.select_related("user", "exercise").all()
     serializer_class = UserExerciseRMSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        """ Filtrar registros de 1RM por usuario autenticado """
-        if self.request.user.is_superuser:
-            return super().get_queryset()  # Admins ven todos los datos
-        return super().get_queryset().filter(
-            user=self.request.user)  # Usuarios ven solo sus datos
+    # def get_queryset(self):
+    #     """ Filtrar registros de 1RM por usuario autenticado """
+    #     if self.request.user.is_superuser:
+    #         return super().get_queryset()  # Admins ven todos los datos
+    #     return super().get_queryset().filter(
+    #         user=self.request.user)  # Usuarios ven solo sus datos
 
     def perform_create(self, serializer):
         """ Asignar automáticamente el usuario autenticado al crear un registro """
@@ -61,13 +63,13 @@ class UserExerciseRMViewSet(viewsets.ModelViewSet):
 class WorkoutDataViewSet(viewsets.ModelViewSet):
     queryset = WorkoutData.objects.select_related("user", "exercise").all()
     serializer_class = WorkoutDataSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        """ Filtrar entrenamientos por usuario autenticado """
-        if self.request.user.is_superuser:
-            return super().get_queryset()
-        return super().get_queryset().filter(user=self.request.user)
+    # def get_queryset(self):
+    #     """ Filtrar entrenamientos por usuario autenticado """
+    #     if self.request.user.is_superuser:
+    #         return super().get_queryset()
+    #     return super().get_queryset().filter(user=self.request.user)
 
     def perform_create(self, serializer):
         """ Asignar usuario autenticado y calcular valores antes de guardar """
