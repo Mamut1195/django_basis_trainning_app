@@ -1,0 +1,26 @@
+{
+  "site": "https://basisasesoria.fitness/",
+  "logo": {
+    "url": "https://basisasesoria.fitness/Logo_blanco.svg",
+    "file": "logo-original.svg",
+    "sha256": "00830a819481179a65b338081a36243458b6b44a721c173e95410e6a86678bfd",
+    "adaptation": "logo.svg changes only canvas/viewBox to remove whitespace; original path and fill retained"
+  },
+  "stylesheet": {
+    "url": "https://basisasesoria.fitness/_astro/agente-entrenamientos.CBAHeYg6.css",
+    "sha256": "d3f86ee816e5e5eefd57806eafa6fb5bc9435fe13aff7055172d768fbac7700a"
+  },
+  "observed_colors": {
+    "primary": "#0400FF",
+    "hover": "#0300CC",
+    "surface": "#ffffff",
+    "text": "#111827",
+    "muted": "#374151",
+    "border": "#e5e7eb"
+  },
+  "observed_font": "ui-sans-serif, system-ui, sans-serif; no custom webfont loaded on the inspected homepage",
+  "retrieved_at": "2026-10-17",
+  "reuse": "User requested reuse of BASIS identity from the supplied website",
+  "pwa": "Exact original vector inside a 320x202 region centered on the primary-blue 512x512 background; rendered at 192 and 512px",
+  "adaptation_background": "#f8fafc"
+}

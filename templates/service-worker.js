@@ -8,7 +8,8 @@ const ASSETS = [OFFLINE,
   '{% static "vendor/htmx.min.js" %}', '{% static "vendor/alpine.min.js" %}',
   '{% static "vendor/alpine-focus.min.js" %}', '{% static "vendor/alpine-collapse.min.js" %}',
   '{% static "django_cotton_ui/cotton-ui.css" %}', '{% static "django_cotton_ui/cotton-ui.min.js" %}',
-  '{% static "icons/icon-192.png" %}', '{% static "icons/icon-512.png" %}', '{% static "icons/icon.svg" %}'
+  '{% static "icons/icon-192.png" %}', '{% static "icons/icon-512.png" %}', '{% static "icons/icon.svg" %}',
+  '{% static "brand/logo.svg" %}'
 ];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(async cache => {
   // Explicitly omit credentials: the offline shell must never contain account HTML/CSRF.

@@ -52,6 +52,8 @@ La verificación del correo sigue siendo independiente. Las métricas heredadas 
 
 Consulta [la arquitectura y contratos](docs/ARCHITECTURE.md), [el diccionario deportivo](docs/TRAINING_VARIABLES.md) y [la validación de esta entrega](docs/VALIDATION.md).
 
+La app reutiliza el [logo y la identidad oficial de BASIS](docs/BRAND.md). Los colores compartidos se editan en `assets/brand/identity.json`; los tokens semánticos y de componentes están en `assets/css/tokens.css`.
+
 La primera tanda añade un [contrato deportivo con semana ejecutable](docs/TRAINING_CONTRACT.md), las [reglas de fuerza y sus límites](docs/STRENGTH_METRICS.md) y un [verificador de entorno aislado](docs/REPRODUCIBILITY.md). El avance y los criterios pendientes están en [el registro de integración](docs/IMPLEMENTATION_WAVE_01.md).
 
 Polar requiere un producto mensual con un único precio activo de USD 5, impuestos `exclusive` y prueba nativa de siete días con tarjeta. Configura token, producto y un secreto Standard Webhooks reciente. Usa sandbox primero. `/webhooks/polar/` valida firma y vigencia y consulta el estado autoritativo del cliente. Mantén una conciliación periódica además de los eventos.

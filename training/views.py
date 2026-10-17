@@ -1078,6 +1078,8 @@ def csrf_api(request):
 
 
 def manifest(request):
+    from .brand import IDENTITY
+
     return JsonResponse(
         {
             "id": "/",
@@ -1087,8 +1089,8 @@ def manifest(request):
             "start_url": "/",
             "scope": "/",
             "display": "standalone",
-            "background_color": "#f4f5f7",
-            "theme_color": "#153c35",
+            "background_color": IDENTITY["colors"]["background"],
+            "theme_color": IDENTITY["colors"]["primary"],
             "icons": [
                 {"src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
                 {
@@ -1107,6 +1109,7 @@ def service_worker(request):
     files = [
         *sorted((settings.BASE_DIR / "assets").rglob("*")),
         settings.BASE_DIR / "templates/base.html",
+        settings.BASE_DIR / "templates/cotton/brand.html",
         settings.BASE_DIR / "templates/training/offline.html",
         settings.BASE_DIR / "templates/service-worker.js",
         settings.BASE_DIR / "requirements.txt",
