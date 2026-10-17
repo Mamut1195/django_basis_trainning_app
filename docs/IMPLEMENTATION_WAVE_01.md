@@ -104,7 +104,7 @@ proveedores LIVE, carga de 1.000 usuarios ni evaluación deportiva profesional.
 Las evidencias anteriores de navegador se conservan en `VALIDATION.md` como
 registro histórico, sin presentarlas como nuevas comprobaciones.
 
-## Estado final y reanudación
+## Estado antes de la integración remota
 
 La escritura elevada tampoco pudo iniciarse: dos intentos de la alternativa
 segura fallaron con `helper_unknown_error: setup refresh had errors`. No se
@@ -132,3 +132,47 @@ en Linear.
 Después de integrar, comprobar el commit en `main` y conciliar los tickets
 contra sus criterios pendientes. Los procesos PostgreSQL de validación se
 detienen al terminar; no se deja un servicio de aplicación en ejecución.
+
+## Integración remota y cierre verificados
+
+El usuario desarchivó `Mamut1195/django_basis_trainning_app`. Se integró la
+instantánea revisada por el conector GitHub mediante un commit cuyo padre es
+`459f530`, y se avanzó `main` sin force. No se modificaron permisos locales,
+el índice, el historial anterior ni los archivos de trabajo del usuario.
+
+- Commit de implementación en `main`: [`50583c69757fa528e8e47246483de177baa0cb60`](https://github.com/Mamut1195/django_basis_trainning_app/commit/50583c69757fa528e8e47246483de177baa0cb60).
+- Árbol leído de vuelta: `ea0268051eafcc9d0f0155994e0694f23037a060`.
+- Los 138 archivos coinciden por hash con la entrega revisada; el diff remoto
+  contiene 123 archivos añadidos/modificados y ningún cambio en `seed.py` o
+  `manage.py`, incluidos sus modos originales.
+- Se ejecutaron nuevamente Ruff y el CLI de entorno aislado antes de integrar:
+  seis etapas VERIFIED, 22 versiones coincidentes y limpieza confirmada.
+- [CI Django checks 39067380697](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39067380697)
+  terminó SUCCESS sobre ese commit. El job `117497736216` instaló dependencias
+  en un runner nuevo Ubuntu/Python 3.13, pasó Ruff, check y migraciones sin
+  diferencias, **97 pruebas PostgreSQL 18.4 en 7,768 s**, destrucción de la base
+  de prueba y generación de 176 archivos estáticos. Todos los pasos terminaron
+  correctamente, incluidos los contenedores de pruebas.
+
+La instalación limpia de CI resuelve el criterio pendiente de BASIS-001. Las
+97 pruebas incluyen el recorrido real del verificador con migración SQLite
+desde cero, health y login con CSRF. El fallo del certificado en el sandbox
+Windows sigue siendo un límite local; no invalida la instalación verificada
+en CI ni se eludió su restricción.
+
+Linear se actualizó y leyó de vuelta: **BASIS-001/MAM-615, BASIS-005/MAM-618 y
+BASIS-003/MAM-619 están Done**, con criterios marcados y enlaces al commit,
+pruebas y CI. Se cerró BASIS-003 después de verificar sus dos dependencias en
+Done. El proyecto tiene 35 tickets: 31 In Progress, 1 Backlog y 3 Done.
+
+El checkout local conserva `HEAD=459f530` y todos sus cambios de trabajo: su
+Git continúa sin sincronizar por las restricciones locales. **No ejecutar el
+script de recuperación para volver a crear la integración**; el commit ya
+existe en el remoto. La sincronización futura del checkout requiere preservar
+las modificaciones previas y conciliar contra `main`; no usar reset ni checkout
+que descarte trabajo. El manifiesto y zip originales se conservan como evidencia
+de la instantánea integrada, anterior a esta actualización documental.
+
+Los otros 32 tickets conservan sus criterios y estados. No se activó producción
+ni se hicieron llamadas o pagos de proveedores LIVE, pruebas físicas PWA o carga
+de 1.000 usuarios. La CI de PostgreSQL no certifica esos ámbitos.

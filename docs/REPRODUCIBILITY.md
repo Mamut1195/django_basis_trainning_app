@@ -129,7 +129,12 @@ El 2026-10-17 el coordinador informó que la instalación fresh con uv en
 `.cache/verification-venv` quedó **FAILED por el entorno**: la política deny
 `**/*.pem` impidió copiar `certifi/cacert.pem`. No se intentó leer ese archivo,
 escalar permisos ni eludir la restricción. Ese venv es ajeno y no se usa ni se
-borra. La validación con `.venv-win` existente no reemplaza una instalación limpia;
-esa evidencia sigue pendiente y **BASIS-001/MAM-615 no es cerrable todavía**.
+borra. La validación con `.venv-win` existente no reemplaza una instalación limpia.
+Ese bloqueo local quedó resuelto como criterio de aceptación por la instalación
+en un runner nuevo de [CI 39067380697](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39067380697):
+dependencias, checks, 97 pruebas PostgreSQL y estáticos terminaron correctamente
+sobre el commit `50583c6` integrado en `main`. **BASIS-001/MAM-615 está Done**.
+El [registro de integración](IMPLEMENTATION_WAVE_01.md#integración-remota-y-cierre-verificados)
+separa esa evidencia remota de la restricción que sigue vigente en Windows.
 El workspace es compartido: esta entrega solo asigna los tres archivos indicados
 y no integra ni certifica los demás cambios preexistentes del repositorio.

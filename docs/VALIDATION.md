@@ -2,7 +2,24 @@
 
 La tabla siguiente registra la validación de la implementación inicial, antes de su integración. La ejecución posterior se documenta en [la primera tanda](IMPLEMENTATION_WAVE_01.md), con sus comprobaciones y límites propios. No se activaron despliegues, pagos ni llamadas reales al modelo. El estado no equivale a una versión publicada ni al cierre de todos los criterios del roadmap.
 
-## Evidencia ejecutada
+## Integración GitHub y CI verificadas
+
+La primera tanda se integró en `main` mediante el commit
+[`50583c6`](https://github.com/Mamut1195/django_basis_trainning_app/commit/50583c69757fa528e8e47246483de177baa0cb60).
+Los 138 archivos se compararon por hash; `seed.py` y `manage.py` quedaron fuera.
+[CI 39067380697](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39067380697)
+terminó SUCCESS: instalación en runner nuevo, Ruff, check, migraciones sin
+diferencias, **97 pruebas PostgreSQL 18.4** y 176 archivos estáticos. Esta evidencia
+sustituye los pendientes anteriores de integración e instalación limpia para
+BASIS-001/005/003, ya Done en Linear. El checkout local sigue en `459f530` con
+sus cambios preservados; no se ejecutó reset ni pull sobre ese trabajo.
+
+Proveedores LIVE, despliegue, dispositivos físicos y capacidad siguen sin
+certificarse. El [registro de la tanda](IMPLEMENTATION_WAVE_01.md) contiene los
+límites y la reanudación del checkout. La tabla siguiente es evidencia histórica
+de la implementación inicial, no una segunda ejecución de sus comprobaciones.
+
+## Evidencia anterior a la primera tanda
 
 | Comprobación | Estado | Resultado / alcance |
 |---|---|---|

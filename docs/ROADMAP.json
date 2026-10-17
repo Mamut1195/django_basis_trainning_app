@@ -7,10 +7,10 @@
       "code": "BASIS-001",
       "id": "MAM-615",
       "title": "BASIS-001 — Restablecer arranque y entorno reproducible de Django",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-615/basis-001-restablecer-arranque-y-entorno-reproducible-de-django",
       "deps": [],
-      "complete": false,
+      "complete": true,
       "dependenciesMatch": true,
       "depends_on": []
     },
@@ -50,10 +50,10 @@
       "code": "BASIS-005",
       "id": "MAM-618",
       "title": "BASIS-005 — Definir contrato deportivo para uso multiusuario y diccionario de variables",
-      "status": "In Review",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-618/basis-005-definir-contrato-deportivo-para-uso-multiusuario-y",
       "deps": [],
-      "complete": false,
+      "complete": true,
       "dependenciesMatch": true,
       "depends_on": []
     },
@@ -61,13 +61,13 @@
       "code": "BASIS-003",
       "id": "MAM-619",
       "title": "BASIS-003 — Corregir métricas de fuerza y separar RPE objetivo, real y estimado",
-      "status": "In Review",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-619/basis-003-corregir-metricas-de-fuerza-y-separar-rpe-objetivo-real-y",
       "deps": [
         "MAM-615",
         "MAM-618"
       ],
-      "complete": false,
+      "complete": true,
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-001",
@@ -629,12 +629,16 @@
   ],
   "nodes": 35,
   "edges": 86,
-  "done": 0,
+  "done": 3,
   "last_implementation_wave": {
     "document": "docs/IMPLEMENTATION_WAVE_01.md",
     "tests_postgresql": 97,
-    "integration_commit": null,
-    "integration_blocker": "Git read-only in sandbox; elevated executor initialization failed",
-    "done": 0
+    "integration_commit": "50583c69757fa528e8e47246483de177baa0cb60",
+    "integration_blocker": null,
+    "local_checkout": "459f530dae787fc9cc72f2584b66e76652e212cb; preserved and not synchronized",
+    "ci_run": 39067380697,
+    "ci_job": 117497736216,
+    "ci_conclusion": "success",
+    "done": 3
   }
 }
