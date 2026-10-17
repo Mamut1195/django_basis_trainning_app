@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block content %}
+<div class="form-width stack"><c-page-heading :title="title" :subtitle="subtitle" />
+<c-card><form method="post" class="stack" data-form-submit>{% csrf_token %}{% if revision %}<input type="hidden" name="revision" value="{{ revision }}">{% endif %}
+<div class="form-fields">{{ form.as_div }}</div>
+{% for extra in extra_forms %}<fieldset><legend>{% if extra.prefix == 'target' %}Objetivo{% elif extra.prefix == 'actual' %}Resultado real{% else %}Bloque de entrenamiento{% endif %}</legend><div class="form-fields">{{ extra.as_div }}</div></fieldset>{% endfor %}
+<div class="actions"><c-ui.button type="submit" variant="primary">{{ submit|default:'Guardar' }}</c-ui.button><a href="/" data-back>Volver</a><span class="muted" data-submit-status></span></div></form></c-card></div>
+{% endblock %}

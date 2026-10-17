@@ -1,0 +1,58 @@
+# Explicit local/staging operation. No public port or paid resource is activated by this file.
+x-app: &app
+  build: .
+  environment: &environment
+    DJANGO_DEBUG: "0"
+    DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set a unique secret in the process environment}
+    DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    PUBLIC_URL: ${PUBLIC_URL:-https://localhost}
+    TRUST_PROXY: ${TRUST_PROXY:-0}
+    CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://localhost}
+    DATABASE_URL: postgresql://basis:${POSTGRES_PASSWORD:?Set the database password}@db:5432/basis
+    POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
+    POLAR_PRODUCT_ID: ${POLAR_PRODUCT_ID:-}
+    POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
+    POLAR_SANDBOX: ${POLAR_SANDBOX:-1}
+    AI_ENABLED: ${AI_ENABLED:-0}
+    DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-flash}
+    EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+    EMAIL_HOST: ${EMAIL_HOST:-localhost}
+    EMAIL_PORT: ${EMAIL_PORT:-587}
+    EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+    EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+    DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@localhost}
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:18.4
+    environment:
+      POSTGRES_USER: basis
+      POSTGRES_DB: basis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set the database password}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U basis -d basis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  web:
+    <<: *app
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  worker:
+    <<: *app
+    command: ["python", "manage.py", "process_ai_jobs"]
+
+volumes:
+  postgres_data:

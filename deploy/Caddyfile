@@ -1,0 +1,5 @@
+# Run behind an explicitly provisioned TLS endpoint; this file activates nothing.
+{$BASIS_DOMAIN} {
+    encode gzip
+    reverse_proxy web:8000
+}

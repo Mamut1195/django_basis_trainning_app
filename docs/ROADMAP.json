@@ -1,0 +1,640 @@
+{
+  "project": "P-MAM-12",
+  "verified_at": "2026-10-17",
+  "rule": "Done requires complete acceptance, verification and a committed integration in main.",
+  "issues": [
+    {
+      "code": "BASIS-001",
+      "id": "MAM-615",
+      "title": "BASIS-001 — Restablecer arranque y entorno reproducible de Django",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-615/basis-001-restablecer-arranque-y-entorno-reproducible-de-django",
+      "deps": [],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": []
+    },
+    {
+      "code": "BASIS-002",
+      "id": "MAM-616",
+      "title": "BASIS-002 — Vincular cuenta y atleta y cerrar acceso a datos privados",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-616/basis-002-vincular-cuenta-y-atleta-y-cerrar-acceso-a-datos-privados",
+      "deps": [
+        "MAM-615"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-001"
+      ]
+    },
+    {
+      "code": "BASIS-004",
+      "id": "MAM-617",
+      "title": "BASIS-004 — Proteger historial y endurecer integridad y datos de ejemplo",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-617/basis-004-proteger-historial-y-endurecer-integridad-y-datos-de-ejemplo",
+      "deps": [
+        "MAM-616",
+        "MAM-615"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-001",
+        "BASIS-002"
+      ]
+    },
+    {
+      "code": "BASIS-005",
+      "id": "MAM-618",
+      "title": "BASIS-005 — Definir contrato deportivo para uso multiusuario y diccionario de variables",
+      "status": "In Review",
+      "url": "https://linear.app/mamutsystems/issue/MAM-618/basis-005-definir-contrato-deportivo-para-uso-multiusuario-y",
+      "deps": [],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": []
+    },
+    {
+      "code": "BASIS-003",
+      "id": "MAM-619",
+      "title": "BASIS-003 — Corregir métricas de fuerza y separar RPE objetivo, real y estimado",
+      "status": "In Review",
+      "url": "https://linear.app/mamutsystems/issue/MAM-619/basis-003-corregir-metricas-de-fuerza-y-separar-rpe-objetivo-real-y",
+      "deps": [
+        "MAM-615",
+        "MAM-618"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-001",
+        "BASIS-005"
+      ]
+    },
+    {
+      "code": "BASIS-006",
+      "id": "MAM-620",
+      "title": "BASIS-006 — Construir perfil, objetivos y configuración inicial del atleta",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-620/basis-006-construir-perfil-objetivos-y-configuracion-inicial-del",
+      "deps": [
+        "MAM-810",
+        "MAM-616",
+        "MAM-618"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-002",
+        "BASIS-005",
+        "BASIS-025"
+      ]
+    },
+    {
+      "code": "BASIS-007",
+      "id": "MAM-621",
+      "title": "BASIS-007 — Ampliar catálogo de ejercicios y variantes para prescripción real",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-621/basis-007-ampliar-catalogo-de-ejercicios-y-variantes-para-prescripcion",
+      "deps": [
+        "MAM-617",
+        "MAM-618"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-004",
+        "BASIS-005"
+      ]
+    },
+    {
+      "code": "BASIS-008",
+      "id": "MAM-622",
+      "title": "BASIS-008 — Modelar objetivos, ciclos y calendario versionado de entrenamiento",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-622/basis-008-modelar-objetivos-ciclos-y-calendario-versionado-de",
+      "deps": [
+        "MAM-620",
+        "MAM-618",
+        "MAM-621"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-005",
+        "BASIS-006",
+        "BASIS-007"
+      ]
+    },
+    {
+      "code": "BASIS-009",
+      "id": "MAM-623",
+      "title": "BASIS-009 — Separar prescripción, sesión ejecutada y registros por serie",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-623/basis-009-separar-prescripcion-sesion-ejecutada-y-registros-por-serie",
+      "deps": [
+        "MAM-619",
+        "MAM-622",
+        "MAM-621"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-003",
+        "BASIS-007",
+        "BASIS-008"
+      ]
+    },
+    {
+      "code": "BASIS-010",
+      "id": "MAM-624",
+      "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-624/basis-010-registrar-recuperacion-bienestar-y-respuesta-al",
+      "deps": [
+        "MAM-620",
+        "MAM-618"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-005",
+        "BASIS-006"
+      ]
+    },
+    {
+      "code": "BASIS-011",
+      "id": "MAM-625",
+      "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-625/basis-011-implementar-metricas-de-progreso-adherencia-y-carga-con",
+      "deps": [
+        "MAM-619",
+        "MAM-624",
+        "MAM-623"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-003",
+        "BASIS-009",
+        "BASIS-010"
+      ]
+    },
+    {
+      "code": "BASIS-012",
+      "id": "MAM-626",
+      "title": "BASIS-012 — Diseñar flujos UI UX y contrato visual basado en tokens",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-626/basis-012-disenar-flujos-ui-ux-y-contrato-visual-basado-en-tokens",
+      "deps": [
+        "MAM-618"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-005"
+      ]
+    },
+    {
+      "code": "BASIS-013",
+      "id": "MAM-627",
+      "title": "BASIS-013 — Integrar Django Cotton UI y tokens de diseño con HTMX",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-627/basis-013-integrar-django-cotton-ui-y-tokens-de-diseno-con-htmx",
+      "deps": [
+        "MAM-615",
+        "MAM-626"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-001",
+        "BASIS-012"
+      ]
+    },
+    {
+      "code": "BASIS-014",
+      "id": "MAM-628",
+      "title": "BASIS-014 — Construir Hoy y reproductor de sesión para registro rápido",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-628/basis-014-construir-hoy-y-reproductor-de-sesion-para-registro-rapido",
+      "deps": [
+        "MAM-623",
+        "MAM-627"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-009",
+        "BASIS-013"
+      ]
+    },
+    {
+      "code": "BASIS-015",
+      "id": "MAM-629",
+      "title": "BASIS-015 — Construir calendario y editor de planes y ciclos",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-629/basis-015-construir-calendario-y-editor-de-planes-y-ciclos",
+      "deps": [
+        "MAM-622",
+        "MAM-627"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-008",
+        "BASIS-013"
+      ]
+    },
+    {
+      "code": "BASIS-016",
+      "id": "MAM-630",
+      "title": "BASIS-016 — Construir progreso, recuperación y ajustes del perfil",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-630/basis-016-construir-progreso-recuperacion-y-ajustes-del-perfil",
+      "deps": [
+        "MAM-620",
+        "MAM-624",
+        "MAM-625",
+        "MAM-627"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-006",
+        "BASIS-010",
+        "BASIS-011",
+        "BASIS-013"
+      ]
+    },
+    {
+      "code": "BASIS-017",
+      "id": "MAM-631",
+      "title": "BASIS-017 — Habilitar PWA instalable y recursos disponibles sin conexión",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-631/basis-017-habilitar-pwa-instalable-y-recursos-disponibles-sin-conexion",
+      "deps": [
+        "MAM-627"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-013"
+      ]
+    },
+    {
+      "code": "BASIS-018",
+      "id": "MAM-632",
+      "title": "BASIS-018 — Implementar registro offline y sincronización idempotente",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-632/basis-018-implementar-registro-offline-y-sincronizacion-idempotente",
+      "deps": [
+        "MAM-631",
+        "MAM-623",
+        "MAM-628",
+        "MAM-616"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-002",
+        "BASIS-009",
+        "BASIS-014",
+        "BASIS-017"
+      ]
+    },
+    {
+      "code": "BASIS-019",
+      "id": "MAM-633",
+      "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-633/basis-019-crear-contexto-y-herramientas-de-ia-sobre-servicios",
+      "deps": [
+        "MAM-810",
+        "MAM-815",
+        "MAM-625",
+        "MAM-624",
+        "MAM-623",
+        "MAM-616",
+        "MAM-622"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-002",
+        "BASIS-008",
+        "BASIS-009",
+        "BASIS-010",
+        "BASIS-011",
+        "BASIS-025",
+        "BASIS-030"
+      ]
+    },
+    {
+      "code": "BASIS-020",
+      "id": "MAM-634",
+      "title": "BASIS-020 — Generar propuestas de entrenamiento y ciclos con validación y versiones",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-634/basis-020-generar-propuestas-de-entrenamiento-y-ciclos-con-validacion",
+      "deps": [
+        "MAM-633"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-019"
+      ]
+    },
+    {
+      "code": "BASIS-021",
+      "id": "MAM-635",
+      "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-635/basis-021-construir-entrenador-ia-y-adaptacion-del-plan-con-tareas",
+      "deps": [
+        "MAM-818",
+        "MAM-633",
+        "MAM-634",
+        "MAM-627"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-019",
+        "BASIS-020",
+        "BASIS-013",
+        "BASIS-033"
+      ]
+    },
+    {
+      "code": "BASIS-022",
+      "id": "MAM-636",
+      "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación",
+      "status": "Backlog",
+      "url": "https://linear.app/mamutsystems/issue/MAM-636/basis-022-evaluar-entrenador-ia-antes-de-habilitar-programacion-y",
+      "deps": [
+        "MAM-635",
+        "MAM-633",
+        "MAM-634"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-019",
+        "BASIS-020",
+        "BASIS-021"
+      ]
+    },
+    {
+      "code": "BASIS-023",
+      "id": "MAM-637",
+      "title": "BASIS-023 — Preparar despliegue sencillo, PostgreSQL, backups y CI",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-637/basis-023-preparar-despliegue-sencillo-postgresql-backups-y-ci",
+      "deps": [
+        "MAM-617",
+        "MAM-616",
+        "MAM-615"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-001",
+        "BASIS-002",
+        "BASIS-004"
+      ]
+    },
+    {
+      "code": "BASIS-024",
+      "id": "MAM-638",
+      "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-638/basis-024-validar-producto-completo-en-web-movil-offline-e-ia",
+      "deps": [
+        "MAM-818",
+        "MAM-815",
+        "MAM-816",
+        "MAM-820",
+        "MAM-817",
+        "MAM-637",
+        "MAM-632",
+        "MAM-625",
+        "MAM-629",
+        "MAM-630",
+        "MAM-628",
+        "MAM-636"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-011",
+        "BASIS-014",
+        "BASIS-015",
+        "BASIS-016",
+        "BASIS-018",
+        "BASIS-022",
+        "BASIS-023",
+        "BASIS-030",
+        "BASIS-031",
+        "BASIS-032",
+        "BASIS-033",
+        "BASIS-035"
+      ]
+    },
+    {
+      "code": "BASIS-025",
+      "id": "MAM-810",
+      "title": "BASIS-025 — Registro, verificación, recuperación y acceso multiusuario",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-810/basis-025-registro-verificacion-recuperacion-y-acceso-multiusuario",
+      "deps": [
+        "MAM-616"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-002"
+      ]
+    },
+    {
+      "code": "BASIS-026",
+      "id": "MAM-811",
+      "title": "BASIS-026 — Bloques de resistencia, intervalos y umbrales por disciplina",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-811/basis-026-bloques-de-resistencia-intervalos-y-umbrales-por-disciplina",
+      "deps": [
+        "MAM-618",
+        "MAM-623"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-005",
+        "BASIS-009"
+      ]
+    },
+    {
+      "code": "BASIS-027",
+      "id": "MAM-812",
+      "title": "BASIS-027 — Running manual con ritmo, desnivel y respuesta",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-812/basis-027-running-manual-con-ritmo-desnivel-y-respuesta",
+      "deps": [
+        "MAM-811"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-026"
+      ]
+    },
+    {
+      "code": "BASIS-028",
+      "id": "MAM-813",
+      "title": "BASIS-028 — Ciclismo manual con potencia y cadencia opcionales",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-813/basis-028-ciclismo-manual-con-potencia-y-cadencia-opcionales",
+      "deps": [
+        "MAM-811"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-026"
+      ]
+    },
+    {
+      "code": "BASIS-029",
+      "id": "MAM-814",
+      "title": "BASIS-029 — Natación manual con piscina, estilos y ritmo por 100 m",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-814/basis-029-natacion-manual-con-piscina-estilos-y-ritmo-por-100-m",
+      "deps": [
+        "MAM-811"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-026"
+      ]
+    },
+    {
+      "code": "BASIS-030",
+      "id": "MAM-815",
+      "title": "BASIS-030 — Carga concurrente y analítica multideporte con procedencia",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-815/basis-030-carga-concurrente-y-analitica-multideporte-con-procedencia",
+      "deps": [
+        "MAM-820",
+        "MAM-625",
+        "MAM-814",
+        "MAM-819",
+        "MAM-812",
+        "MAM-813"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-011",
+        "BASIS-027",
+        "BASIS-028",
+        "BASIS-029",
+        "BASIS-034",
+        "BASIS-035"
+      ]
+    },
+    {
+      "code": "BASIS-031",
+      "id": "MAM-816",
+      "title": "BASIS-031 — Polar checkout, portal y webhooks conciliados",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-816/basis-031-polar-checkout-portal-y-webhooks-conciliados",
+      "deps": [
+        "MAM-810"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-025"
+      ]
+    },
+    {
+      "code": "BASIS-032",
+      "id": "MAM-817",
+      "title": "BASIS-032 — Prueba, permisos comerciales y conservación al vencer acceso",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-817/basis-032-prueba-permisos-comerciales-y-conservacion-al-vencer-acceso",
+      "deps": [
+        "MAM-816"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-031"
+      ]
+    },
+    {
+      "code": "BASIS-033",
+      "id": "MAM-818",
+      "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-818/basis-033-cuotas-ia-y-libro-de-costo-con-reservas-atomicas",
+      "deps": [
+        "MAM-633",
+        "MAM-817"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-019",
+        "BASIS-032"
+      ]
+    },
+    {
+      "code": "BASIS-034",
+      "id": "MAM-819",
+      "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-819/basis-034-hiking-con-tiempos-desnivel-altitud-terreno-y-mochila",
+      "deps": [
+        "MAM-811"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-026"
+      ]
+    },
+    {
+      "code": "BASIS-035",
+      "id": "MAM-820",
+      "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-820/basis-035-trekking-por-etapas-pernoctas-y-recuperacion-entre-dias",
+      "deps": [
+        "MAM-819",
+        "MAM-624"
+      ],
+      "complete": false,
+      "dependenciesMatch": true,
+      "depends_on": [
+        "BASIS-034",
+        "BASIS-010"
+      ]
+    }
+  ],
+  "nodes": 35,
+  "edges": 86,
+  "done": 0,
+  "last_implementation_wave": {
+    "document": "docs/IMPLEMENTATION_WAVE_01.md",
+    "tests_postgresql": 97,
+    "integration_commit": null,
+    "integration_blocker": "Git read-only in sandbox; elevated executor initialization failed",
+    "done": 0
+  }
+}

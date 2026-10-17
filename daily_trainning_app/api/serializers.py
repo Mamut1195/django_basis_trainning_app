@@ -1,29 +1,24 @@
+from django.core.exceptions import ValidationError as ModelValidationError
 from rest_framework import serializers
-from daily_trainning_app.models import Classification, Exercise, User, UserExerciseRM, WorkoutData
 
-# 📌 1️⃣ Serializer para Clasificación
+from daily_trainning_app.models import Classification, Exercise, User, UserExerciseRM, WorkoutData
+from daily_trainning_app.strength_metrics import METRICS_VERSION
 
 
 class ClassificationSerializer(serializers.ModelSerializer):
-    nombre = serializers.CharField(max_length=255)
-
     class Meta:
         model = Classification
-        fields = ["id", "nombre"]  # No exponemos datos innecesarios
+        fields = ["id", "nombre"]
 
     def validate_nombre(self, value):
-        """ Normaliza y valida el nombre """
-        return value.strip().title()
+        return " ".join(value.split()).title()
 
 
-# 📌 2️⃣ Serializer para Ejercicios
 class ExerciseSerializer(serializers.ModelSerializer):
-    classification = ClassificationSerializer(
-        read_only=True)  # Datos completos de clasificación
+    classification = ClassificationSerializer(read_only=True)
     classification_id = serializers.PrimaryKeyRelatedField(
-        queryset=Classification.objects.all(),
-        source="classification",
-        write_only=True)  # Permitir asignar clasificación por ID
+        queryset=Classification.objects.all(), source="classification", write_only=True
+    )
 
     class Meta:
         model = Exercise
@@ -33,39 +28,76 @@ class ExerciseSerializer(serializers.ModelSerializer):
             "video",
             "descripcion",
             "classification",
-            "classification_id"]
+            "classification_id",
+            "nivel_fatiga",
+            "patron_movimiento",
+            "musculos_principales",
+            "equipo",
+            "variante",
+            "archivado",
+        ]
 
-    def validate_nombre(self, value):
-        """ Normaliza y valida el nombre """
-        return value.strip().title()
 
-
-# 📌 3️⃣ Serializer para Usuarios (Sin Exponer Datos Sensibles)
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        # ⚠️ No exponemos contraseñas ni datos innecesarios
-        fields = ["id", "nombre", "email", "fecha_inicio"]
+        fields = [
+            "id",
+            "nombre",
+            "email",
+            "fecha_inicio",
+            "titulo",
+            "pais",
+            "ciudad",
+            "especialidad",
+            "edad",
+            "peso",
+            "objetivos",
+            "descripcion",
+        ]
 
     def validate_email(self, value):
-        """ Validar que el email tenga un formato correcto """
-        if "@" not in value:
-            raise serializers.ValidationError("Debe ser un email válido.")
-        return value.lower().strip()
+        return value.strip().lower()
 
 
-# 📌 4️⃣ Serializer para UserExerciseRM (Registros de 1RM por Usuario y Ejercicio)
-class UserExerciseRMSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)  # Solo lectura del usuario
+class OwnedRecordSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source="user", write_only=True
-    )  # Permitir enviar solo el ID
-
-    exercise = ExerciseSerializer(read_only=True)  # Solo lectura del ejercicio
+        queryset=User.objects.none(), source="user", write_only=True, required=False
+    )
+    exercise = ExerciseSerializer(read_only=True)
     exercise_id = serializers.PrimaryKeyRelatedField(
         queryset=Exercise.objects.all(), source="exercise", write_only=True
-    )  # Permitir enviar solo el ID
+    )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            self.fields["user_id"].queryset = User.objects.filter(account=request.user)
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except ModelValidationError as exc:
+            raise serializers.ValidationError(
+                exc.message_dict
+                if hasattr(exc, "message_dict")
+                else {"non_field_errors": exc.messages}
+            ) from exc
+
+    def update(self, instance, validated_data):
+        try:
+            return super().update(instance, validated_data)
+        except ModelValidationError as exc:
+            raise serializers.ValidationError(
+                exc.message_dict
+                if hasattr(exc, "message_dict")
+                else {"non_field_errors": exc.messages}
+            ) from exc
+
+
+class UserExerciseRMSerializer(OwnedRecordSerializer):
     class Meta:
         model = UserExerciseRM
         fields = [
@@ -75,34 +107,36 @@ class UserExerciseRMSerializer(serializers.ModelSerializer):
             "exercise",
             "exercise_id",
             "peso_maximo_rm",
-            "fecha_registro"]
+            "fecha_registro",
+        ]
 
     def validate_peso_maximo_rm(self, value):
-        """ Asegurar que el peso máximo registrado sea un número válido """
         if value <= 0:
             raise serializers.ValidationError("El 1RM debe ser mayor a 0.")
         return value
 
 
-# 📌 5️⃣ Serializer para WorkoutData (Datos de Entrenamientos con Cálculos Automáticos)
-class WorkoutDataSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source="user", write_only=True)
+class WorkoutDataSerializer(OwnedRecordSerializer):
+    def validate(self, attrs):
+        if "rm_referencia" in self.initial_data:
+            raise serializers.ValidationError(
+                {"rm_referencia": "La referencia histórica se asigna en el servidor."}
+            )
+        return super().validate(attrs)
 
-    exercise = ExerciseSerializer(read_only=True)
-    exercise_id = serializers.PrimaryKeyRelatedField(
-        queryset=Exercise.objects.all(), source="exercise", write_only=True)
-
-    intensidad_relativa = serializers.FloatField(
-        read_only=True)  # Calculado automáticamente
-    carga = serializers.FloatField(read_only=True)  # Calculado automáticamente
-    volumen_relativo = serializers.FloatField(
-        read_only=True)  # Calculado automáticamente
-    rpe_objetivo = serializers.FloatField(
-        read_only=True)  # Calculado automáticamente
-    rm_sesion = serializers.FloatField(
-        read_only=True)  # Calculado automáticamente
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        verified = instance.metrics_version == METRICS_VERSION
+        if (
+            not verified
+            or not instance.rm_referencia_id
+            or instance.rm_referencia.peso_maximo_rm <= 0
+        ):
+            data["intensidad_relativa"] = None
+            data["volumen_relativo"] = None
+        if not verified or not instance.rm_sesion:
+            data["rm_sesion"] = None
+        return data
 
     class Meta:
         model = WorkoutData
@@ -115,23 +149,23 @@ class WorkoutDataSerializer(serializers.ModelSerializer):
             "fecha",
             "sets",
             "reps",
+            "total_reps",
             "peso",
             "carga",
             "intensidad_relativa",
             "volumen_relativo",
             "rpe_objetivo",
-            "rm_sesion"]
-
-    def validate_peso(self, value):
-        """ Asegurar que el peso utilizado sea mayor a 0 """
-        if value < 0:
-            raise serializers.ValidationError("El peso no puede ser negativo.")
-        return value
-
-    def create(self, validated_data):
-        """ Crear y calcular automáticamente los valores de entrenamiento """
-        instance = WorkoutData(**validated_data)
-        # Calcular automáticamente carga, volumen, intensidad, etc.
-        instance.clean()
-        instance.save()
-        return instance
+            "rpe_real",
+            "rm_sesion",
+            "rm_referencia",
+            "metrics_version",
+        ]
+        read_only_fields = [
+            "total_reps",
+            "carga",
+            "intensidad_relativa",
+            "volumen_relativo",
+            "rm_sesion",
+            "rm_referencia",
+            "metrics_version",
+        ]

@@ -1,0 +1,13 @@
+.git
+.venv
+.venv-win
+.cache
+artifacts
+__pycache__
+*.pyc
+db.sqlite3*
+.env*
+!.env.example
+staticfiles
+.agents
+.codex

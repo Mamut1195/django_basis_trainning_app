@@ -1,0 +1,157 @@
+{
+  "contract_version": "basis-005-v1",
+  "provenance": {
+    "kind": "synthetic_manual_example",
+    "population": "Atleta autónoma adulta de 32 años, experiencia recreativa en las seis disciplinas",
+    "purpose": "Revisión del contrato de datos y servicios; no recomendación individual ni evaluación LIVE",
+    "observations": "Todos los resultados son ilustrativos. RPE declarado; sin sensores, umbrales ni RM inventados.",
+    "units": "s, m, kg, repeticiones; RPE 0–10; carga interna UA por protocolo; ritmo s/km o s/100m"
+  },
+  "athlete": {
+    "age": 32,
+    "availability": [1, 2, 3, 4, 5, 6, 7],
+    "minutes_per_session": 180,
+    "timezone_name": "America/Guayaquil",
+    "equipment": "Mancuerna, elíptica, bicicleta, piscina 25 m, equipo de senderismo",
+    "limitations": "Sin limitaciones declaradas; esto no equivale a evaluación médica"
+  },
+  "goal": {
+    "title": "Continuidad multideportiva con dos etapas de senderismo",
+    "sport": "hiking",
+    "priority": "primary",
+    "baseline_value": "6000",
+    "baseline_date": "2026-10-04",
+    "target_value": "8000",
+    "target_unit": "m",
+    "target_date": "2026-10-17",
+    "description": "Comparar una etapa con referencia manual; no sumar distancias de otros deportes como progreso equivalente."
+  },
+  "exercises": {
+    "goblet_squat": {"nombre": "Sentadilla goblet", "equipo": "Mancuerna", "patron_movimiento": "Sentadilla"},
+    "bodyweight_squat": {"nombre": "Sentadilla al aire", "equipo": "Peso corporal", "patron_movimiento": "Sentadilla"}
+  },
+  "plan": {
+    "title": "Base recreativa multideportiva — semana ilustrativa",
+    "start_date": "2026-10-05",
+    "end_date": "2026-11-01",
+    "notes": "Macro de cuatro semanas y meso de dos: solo se detalla el micro del 12 al 18. La fecha del goal no impone el fin del plan.",
+    "cycles": [
+      {"key": "macro", "parent": null, "kind": "macro", "title": "Continuidad", "start_date": "2026-10-05", "end_date": "2026-11-01", "focus": "Registro consistente y revisión humana"},
+      {"key": "meso", "parent": "macro", "kind": "meso", "title": "Base y salida por etapas", "start_date": "2026-10-05", "end_date": "2026-10-18", "focus": "Alternar modalidades y dejar una jornada sin sesión"},
+      {"key": "micro", "parent": "meso", "kind": "micro", "title": "Semana de ejemplo", "start_date": "2026-10-12", "end_date": "2026-10-18", "focus": "Separar prescripción, observación y evaluación"}
+    ],
+    "sessions": [
+      {
+        "title": "Fuerza y cardio suave", "date": "2026-10-12", "cycle_key": "micro",
+        "blocks": [
+          {"sport": "strength", "title": "Sentadillas técnicas", "notes": "40 min de contexto, incluidas pausas; no se registra como métrica JSON de fuerza.", "sets": [
+            {"exercise": "goblet_squat", "kind": "warmup", "target_kg": "10", "target_reps": 8, "rest_seconds": 60},
+            {"exercise": "goblet_squat", "target_kg": "25", "target_reps": 8, "target_rpe": "7", "target_rir": 3, "rest_seconds": 120, "tempo": "3-0-1-0", "range_of_motion": "Declarado completo"},
+            {"exercise": "goblet_squat", "target_kg": "25", "target_reps": 8, "target_rpe": "7", "rest_seconds": 120},
+            {"exercise": "goblet_squat", "target_kg": "25", "target_reps_min": 6, "target_reps_max": 8, "target_rpe": "7", "rest_seconds": 120},
+            {"exercise": "bodyweight_squat", "load_type": "bodyweight", "target_reps": 8, "rest_seconds": 60}
+          ]},
+          {"sport": "cardio", "title": "Elíptica suave", "target": {"duration_seconds": 900, "session_type": "continuo suave"}}
+        ]
+      },
+      {
+        "title": "Running cómodo", "date": "2026-10-13", "cycle_key": "micro",
+        "blocks": [{"sport": "running", "title": "Rodaje fraccionado", "target": {"distance_m": 4000, "duration_seconds": 1800, "surface": "pista"}, "intervals": [
+          {"repetitions": 2, "target": {"distance_m": 2000, "duration_seconds": 900}, "rest_seconds": 60, "target_rpe": "5"}
+        ]}]
+      },
+      {
+        "title": "Natación técnica", "date": "2026-10-14", "cycle_key": "micro",
+        "blocks": [{"sport": "swimming", "title": "Crol y técnica", "target": {"distance_m": 800, "duration_seconds": 1200, "pool_length_m": 25, "laps": 32, "stroke": "crol", "drill": "alineación"}, "intervals": [
+          {"repetitions": 4, "target": {"distance_m": 200, "duration_seconds": 240}, "rest_seconds": 60}
+        ]}]
+      },
+      {
+        "title": "Bicicleta fácil", "date": "2026-10-15", "cycle_key": "micro",
+        "blocks": [{"sport": "cycling", "title": "Rodillo", "target": {"duration_seconds": 1800, "distance_m": 10000, "environment": "indoor", "session_type": "continuo fácil"}, "intervals": [
+          {"repetitions": 2, "target": {"duration_seconds": 900, "distance_m": 5000}, "rest_seconds": 0}
+        ]}]
+      },
+      {
+        "title": "Senderismo etapa 1", "date": "2026-10-17", "cycle_key": "micro",
+        "blocks": [{"sport": "hiking", "title": "Acceso al refugio", "target": {"distance_m": 8000, "duration_seconds": 10800, "moving_seconds": 9000, "pause_seconds": 1800, "ascent_m": 350, "descent_m": 150, "start_altitude_m": 1800, "max_altitude_m": 2050, "end_altitude_m": 2000, "pack_kg": "5.5", "terrain": "sendero señalizado", "equipment": "calzado, agua y protección"}, "intervals": [
+          {"repetitions": 1, "target": {"distance_m": 4000, "duration_seconds": 5400}},
+          {"repetitions": 1, "target": {"distance_m": 4000, "duration_seconds": 5400}}
+        ]}]
+      },
+      {
+        "title": "Senderismo etapa 2", "date": "2026-10-18", "cycle_key": "micro",
+        "blocks": [{"sport": "hiking", "title": "Regreso por otro sendero", "target": {"distance_m": 6000, "duration_seconds": 9000, "moving_seconds": 7200, "pause_seconds": 1800, "ascent_m": 150, "descent_m": 350, "start_altitude_m": 2000, "max_altitude_m": 2050, "end_altitude_m": 1800, "pack_kg": "5.5", "terrain": "sendero señalizado"}}]
+      }
+    ]
+  },
+  "days": [
+    {"date": "2026-10-12", "session": "Fuerza y cardio suave", "intent": "Fuerza y cierre aeróbico; completada"},
+    {"date": "2026-10-13", "session": "Running cómodo", "intent": "Ejecución parcial guardada; alternativa de finalización en test separado"},
+    {"date": "2026-10-14", "session": "Natación técnica", "intent": "Sin ejecución: omitida como lectura humana, pendiente en datos"},
+    {"date": "2026-10-15", "session": "Bicicleta fácil", "intent": "Revisión: trasladar al viernes y dejar hoy descanso"},
+    {"date": "2026-10-16", "session": null, "intent": "Originalmente descanso; recibe ciclismo desde la revisión"},
+    {"date": "2026-10-17", "session": "Senderismo etapa 1", "intent": "Etapa completada; pernocta declarada"},
+    {"date": "2026-10-18", "session": "Senderismo etapa 2", "intent": "Etapa completada; protocolo activo distinto del sábado"}
+  ],
+  "executions": {
+    "Fuerza y cardio suave": {
+      "status": "completed", "duration_seconds": 3300, "duration_protocol": "elapsed", "reported_rpe": "5",
+      "blocks": [
+        {"sets": [
+          {"actual_kg": "10", "actual_reps": 8, "actual_rpe": "3", "actual_rest_seconds": 60},
+          {"actual_kg": "25", "actual_reps": 8, "actual_rpe": "7", "actual_rir": 3, "actual_rest_seconds": 120},
+          {"actual_kg": "25", "actual_reps": 8, "actual_rpe": "7", "actual_rest_seconds": 120},
+          {"actual_kg": "25", "actual_reps": 8, "actual_rpe": "8", "actual_rest_seconds": 120},
+          {"actual_reps": 8, "actual_rpe": "4"}
+        ]},
+        {"actual": {"duration_seconds": 900, "distance_m": null}}
+      ]
+    },
+    "Running cómodo": {
+      "status": "in_progress", "duration_seconds": 1200, "duration_protocol": "elapsed", "reported_rpe": null,
+      "blocks": [{"actual": {"distance_m": 2500, "duration_seconds": 1200, "ascent_m": 0}, "intervals": [{"actual": {"distance_m": 2000, "duration_seconds": 900}, "actual_rpe": "5", "actual_rest_seconds": 60}]}]
+    },
+    "Bicicleta fácil": {
+      "status": "completed", "duration_seconds": 1800, "duration_protocol": "elapsed", "reported_rpe": null,
+      "blocks": [{"actual": {"distance_m": 10000, "duration_seconds": 1800, "ascent_m": 0, "environment": "indoor", "power_w": null, "cadence_rpm": null}, "intervals": [{"actual": {"distance_m": 5000, "duration_seconds": 900}, "actual_rest_seconds": 0}]}]
+    },
+    "Senderismo etapa 1": {
+      "status": "completed", "duration_seconds": 10800, "duration_protocol": "elapsed", "reported_rpe": "4",
+      "blocks": [{"actual": {"distance_m": 8000, "duration_seconds": 10800, "moving_seconds": 9000, "pause_seconds": 1800, "ascent_m": 350, "descent_m": 150, "start_altitude_m": 1800, "max_altitude_m": 2050, "end_altitude_m": 2000, "pack_kg": "5.5"}, "intervals": [
+        {"actual": {"distance_m": 4000, "duration_seconds": 5400}},
+        {"actual": {"distance_m": 4000, "duration_seconds": 5400}}
+      ]}]
+    },
+    "Senderismo etapa 2": {
+      "status": "completed", "duration_seconds": 7200, "duration_protocol": "moving", "reported_rpe": "4",
+      "blocks": [{"actual": {"distance_m": 6000, "duration_seconds": 9000, "moving_seconds": 7200, "pause_seconds": 1800, "ascent_m": 150, "descent_m": 350, "start_altitude_m": 2000, "max_altitude_m": 2050, "end_altitude_m": 1800, "pack_kg": "5.5"}}]
+    }
+  },
+  "running_completion_alternative": {
+    "status": "completed", "duration_seconds": 1500, "reported_rpe": "5",
+    "blocks": [{"actual": {"distance_m": 3000, "duration_seconds": 1500, "ascent_m": 0}}]
+  },
+  "review": {"date": "2026-10-15", "session": "Bicicleta fácil", "from": "2026-10-15", "to": "2026-10-16", "reason": "Disponibilidad personal declarada; sin adaptación automática desde carga o síntomas"},
+  "trek": {
+    "title": "Salida ilustrativa de dos etapas",
+    "stages": [
+      {"session": "Senderismo etapa 1", "order": 1, "overnight_altitude_m": "2000", "recovery_notes": "Pernocta y descanso declarados; sin puntuación automática"},
+      {"session": "Senderismo etapa 2", "order": 2, "overnight_altitude_m": null, "recovery_notes": "Regreso; pernocta no registrada"}
+    ]
+  },
+  "expected": {
+    "before_review": {"scheduled_past": 4, "completed_scheduled": 1, "adherence_percent": 25.0},
+    "after_reschedule": {"scheduled_past": 3, "completed_scheduled": 1, "adherence_percent": 33.3},
+    "week_end": {"sessions": 4, "scheduled_past": 6, "completed_scheduled": 4, "adherence_percent": 66.7},
+    "sports": {
+      "strength": {"sessions": 1, "distance_m": null, "ascent_m": null, "external_volume_kg": "680"},
+      "cardio": {"sessions": 1, "distance_m": null, "ascent_m": null, "external_volume_kg": null},
+      "cycling": {"sessions": 1, "distance_m": "10000", "ascent_m": "0", "external_volume_kg": null},
+      "hiking": {"sessions": 2, "distance_m": "14000", "ascent_m": "500", "external_volume_kg": null}
+    },
+    "loads": {"elapsed": {"value": "995.00", "known": 2, "missing": 1}, "moving": {"value": "480.00", "known": 1, "missing": 0}},
+    "trip": {"distance_m": "14000", "ascent_m": "500", "descent_m": "500", "duration_seconds": "19800", "moving_seconds": "16200"},
+    "alternative_running_pace_seconds_km": "500.00"
+  }
+}

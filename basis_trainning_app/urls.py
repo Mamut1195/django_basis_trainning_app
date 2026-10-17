@@ -14,12 +14,19 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+
 from daily_trainning_app.api.router import router_trauning_app
+from training.views import BasisLoginView, BasisPasswordResetView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("", include("training.urls")),
+    path("accounts/login/", BasisLoginView.as_view(), name="login"),
+    path("accounts/password_reset/", BasisPasswordResetView.as_view(), name="password_reset"),
+    path("accounts/", include("django.contrib.auth.urls")),
+    path("admin/", admin.site.urls),
     # Todas las rutas de los ViewSets dentro de `/api/`
-    path('api/v1/', include(router_trauning_app.urls)),
+    path("api/v1/", include(router_trauning_app.urls)),
 ]

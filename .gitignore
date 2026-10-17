@@ -1,6 +1,11 @@
 # 🚀 Ignorar el entorno virtual
 venv/
 .venv/
+.venv-win/
+.cache/
+artifacts/
+.env.*
+!.env.example
 env/
 ENV/
 __pycache__/
@@ -18,7 +23,6 @@ db.sqlite3-journal
 **/migrations/*.pyc
 **/migrations/*.pyo
 **/migrations/__pycache__/
-**/migrations/*.py, !**/migrations/__init__.py
 
 # 🚀 Ignorar logs y caché
 logs/
@@ -47,7 +51,6 @@ poetry.lock
 
 # 🚀 Ignorar archivos de Docker (si lo usas)
 docker-compose.override.yml
-.dockerignore
 
 # 🚀 Ignorar archivos de node_modules si usas frontend con React o Vue
 node_modules/
