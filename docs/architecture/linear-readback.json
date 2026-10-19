@@ -1,0 +1,708 @@
+{
+  "verified_at": "2026-10-19",
+  "epic": {
+    "id": "MAM-821",
+    "status": "In Progress",
+    "blocks": [
+      "MAM-617",
+      "MAM-620",
+      "MAM-621",
+      "MAM-622",
+      "MAM-623",
+      "MAM-624",
+      "MAM-625",
+      "MAM-628",
+      "MAM-629",
+      "MAM-630",
+      "MAM-631",
+      "MAM-632",
+      "MAM-633",
+      "MAM-634",
+      "MAM-635",
+      "MAM-637",
+      "MAM-638",
+      "MAM-810",
+      "MAM-811",
+      "MAM-812",
+      "MAM-813",
+      "MAM-814",
+      "MAM-815",
+      "MAM-816",
+      "MAM-817",
+      "MAM-818",
+      "MAM-819",
+      "MAM-820",
+      "MAM-636",
+      "MAM-626",
+      "MAM-627"
+    ]
+  },
+  "issues": [
+    {
+      "id": "MAM-616",
+      "title": "BASIS-002 — Vincular cuenta y atleta y cerrar acceso a datos privados",
+      "status": "Done",
+      "parent": null,
+      "blocked_by": [
+        "MAM-615"
+      ],
+      "blocks": [
+        "MAM-810",
+        "MAM-637",
+        "MAM-633",
+        "MAM-632",
+        "MAM-620",
+        "MAM-617"
+      ]
+    },
+    {
+      "id": "MAM-627",
+      "title": "BASIS-013 — Integrar Django Cotton UI y tokens de diseño con HTMX",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-615",
+        "MAM-626"
+      ],
+      "blocks": [
+        "MAM-635",
+        "MAM-631",
+        "MAM-630",
+        "MAM-629",
+        "MAM-628"
+      ]
+    },
+    {
+      "id": "MAM-626",
+      "title": "BASIS-012 — Diseñar flujos UI UX y contrato visual basado en tokens",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-618"
+      ],
+      "blocks": [
+        "MAM-627"
+      ]
+    },
+    {
+      "id": "MAM-619",
+      "title": "BASIS-003 — Corregir métricas de fuerza y separar RPE objetivo, real y estimado",
+      "status": "Done",
+      "parent": null,
+      "blocked_by": [
+        "MAM-615",
+        "MAM-618"
+      ],
+      "blocks": [
+        "MAM-625",
+        "MAM-623"
+      ]
+    },
+    {
+      "id": "MAM-615",
+      "title": "BASIS-001 — Restablecer arranque y entorno reproducible de Django",
+      "status": "Done",
+      "parent": null,
+      "blocked_by": [],
+      "blocks": [
+        "MAM-637",
+        "MAM-627",
+        "MAM-619",
+        "MAM-617",
+        "MAM-616"
+      ]
+    },
+    {
+      "id": "MAM-618",
+      "title": "BASIS-005 — Definir contrato deportivo para uso multiusuario y diccionario de variables",
+      "status": "Done",
+      "parent": null,
+      "blocked_by": [],
+      "blocks": [
+        "MAM-811",
+        "MAM-626",
+        "MAM-624",
+        "MAM-622",
+        "MAM-621",
+        "MAM-620",
+        "MAM-619"
+      ]
+    },
+    {
+      "id": "MAM-636",
+      "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación",
+      "status": "Backlog",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-635",
+        "MAM-633",
+        "MAM-634"
+      ],
+      "blocks": [
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-820",
+      "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-819",
+        "MAM-624"
+      ],
+      "blocks": [
+        "MAM-815",
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-819",
+      "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-811"
+      ],
+      "blocks": [
+        "MAM-820",
+        "MAM-815"
+      ]
+    },
+    {
+      "id": "MAM-818",
+      "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-633",
+        "MAM-817"
+      ],
+      "blocks": [
+        "MAM-638",
+        "MAM-635"
+      ]
+    },
+    {
+      "id": "MAM-817",
+      "title": "BASIS-032 — Prueba, permisos comerciales y conservación al vencer acceso",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-816"
+      ],
+      "blocks": [
+        "MAM-818",
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-816",
+      "title": "BASIS-031 — Polar checkout, portal y webhooks conciliados",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-810"
+      ],
+      "blocks": [
+        "MAM-817",
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-815",
+      "title": "BASIS-030 — Carga concurrente y analítica multideporte con procedencia",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-820",
+        "MAM-625",
+        "MAM-814",
+        "MAM-819",
+        "MAM-812",
+        "MAM-813"
+      ],
+      "blocks": [
+        "MAM-638",
+        "MAM-633"
+      ]
+    },
+    {
+      "id": "MAM-814",
+      "title": "BASIS-029 — Natación manual con piscina, estilos y ritmo por 100 m",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-811"
+      ],
+      "blocks": [
+        "MAM-815"
+      ]
+    },
+    {
+      "id": "MAM-813",
+      "title": "BASIS-028 — Ciclismo manual con potencia y cadencia opcionales",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-811"
+      ],
+      "blocks": [
+        "MAM-815"
+      ]
+    },
+    {
+      "id": "MAM-812",
+      "title": "BASIS-027 — Running manual con ritmo, desnivel y respuesta",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-811"
+      ],
+      "blocks": [
+        "MAM-815"
+      ]
+    },
+    {
+      "id": "MAM-811",
+      "title": "BASIS-026 — Bloques de resistencia, intervalos y umbrales por disciplina",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-618",
+        "MAM-623"
+      ],
+      "blocks": [
+        "MAM-819",
+        "MAM-814",
+        "MAM-813",
+        "MAM-812"
+      ]
+    },
+    {
+      "id": "MAM-810",
+      "title": "BASIS-025 — Registro, verificación, recuperación y acceso multiusuario",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-616"
+      ],
+      "blocks": [
+        "MAM-816",
+        "MAM-633",
+        "MAM-620"
+      ]
+    },
+    {
+      "id": "MAM-638",
+      "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-818",
+        "MAM-815",
+        "MAM-816",
+        "MAM-820",
+        "MAM-817",
+        "MAM-637",
+        "MAM-632",
+        "MAM-625",
+        "MAM-629",
+        "MAM-630",
+        "MAM-628",
+        "MAM-636"
+      ],
+      "blocks": []
+    },
+    {
+      "id": "MAM-637",
+      "title": "BASIS-023 — Preparar despliegue sencillo, PostgreSQL, backups y CI",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-617",
+        "MAM-616",
+        "MAM-615"
+      ],
+      "blocks": [
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-635",
+      "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-818",
+        "MAM-633",
+        "MAM-634",
+        "MAM-627"
+      ],
+      "blocks": [
+        "MAM-636"
+      ]
+    },
+    {
+      "id": "MAM-634",
+      "title": "BASIS-020 — Generar propuestas de entrenamiento y ciclos con validación y versiones",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-633"
+      ],
+      "blocks": [
+        "MAM-636",
+        "MAM-635"
+      ]
+    },
+    {
+      "id": "MAM-633",
+      "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-810",
+        "MAM-815",
+        "MAM-625",
+        "MAM-624",
+        "MAM-623",
+        "MAM-616",
+        "MAM-622"
+      ],
+      "blocks": [
+        "MAM-818",
+        "MAM-636",
+        "MAM-635",
+        "MAM-634"
+      ]
+    },
+    {
+      "id": "MAM-632",
+      "title": "BASIS-018 — Implementar registro offline y sincronización idempotente",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-631",
+        "MAM-623",
+        "MAM-628",
+        "MAM-616"
+      ],
+      "blocks": [
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-631",
+      "title": "BASIS-017 — Habilitar PWA instalable y recursos disponibles sin conexión",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-627"
+      ],
+      "blocks": [
+        "MAM-632"
+      ]
+    },
+    {
+      "id": "MAM-630",
+      "title": "BASIS-016 — Construir progreso, recuperación y ajustes del perfil",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-620",
+        "MAM-624",
+        "MAM-625",
+        "MAM-627"
+      ],
+      "blocks": [
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-629",
+      "title": "BASIS-015 — Construir calendario y editor de planes y ciclos",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-622",
+        "MAM-627"
+      ],
+      "blocks": [
+        "MAM-638"
+      ]
+    },
+    {
+      "id": "MAM-628",
+      "title": "BASIS-014 — Construir Hoy y reproductor de sesión para registro rápido",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-623",
+        "MAM-627"
+      ],
+      "blocks": [
+        "MAM-638",
+        "MAM-632"
+      ]
+    },
+    {
+      "id": "MAM-625",
+      "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-619",
+        "MAM-624",
+        "MAM-623"
+      ],
+      "blocks": [
+        "MAM-815",
+        "MAM-638",
+        "MAM-633",
+        "MAM-630"
+      ]
+    },
+    {
+      "id": "MAM-624",
+      "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-620",
+        "MAM-618"
+      ],
+      "blocks": [
+        "MAM-820",
+        "MAM-633",
+        "MAM-630",
+        "MAM-625"
+      ]
+    },
+    {
+      "id": "MAM-623",
+      "title": "BASIS-009 — Separar prescripción, sesión ejecutada y registros por serie",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-619",
+        "MAM-622",
+        "MAM-621"
+      ],
+      "blocks": [
+        "MAM-811",
+        "MAM-633",
+        "MAM-632",
+        "MAM-628",
+        "MAM-625"
+      ]
+    },
+    {
+      "id": "MAM-622",
+      "title": "BASIS-008 — Modelar objetivos, ciclos y calendario versionado de entrenamiento",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-620",
+        "MAM-618",
+        "MAM-621"
+      ],
+      "blocks": [
+        "MAM-633",
+        "MAM-629",
+        "MAM-623"
+      ]
+    },
+    {
+      "id": "MAM-621",
+      "title": "BASIS-007 — Ampliar catálogo de ejercicios y variantes para prescripción real",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-617",
+        "MAM-618"
+      ],
+      "blocks": [
+        "MAM-623",
+        "MAM-622"
+      ]
+    },
+    {
+      "id": "MAM-620",
+      "title": "BASIS-006 — Construir perfil, objetivos y configuración inicial del atleta",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-810",
+        "MAM-616",
+        "MAM-618"
+      ],
+      "blocks": [
+        "MAM-630",
+        "MAM-624",
+        "MAM-622"
+      ]
+    },
+    {
+      "id": "MAM-617",
+      "title": "BASIS-004 — Proteger historial y endurecer integridad y datos de ejemplo",
+      "status": "In Progress",
+      "parent": null,
+      "blocked_by": [
+        "MAM-821",
+        "MAM-616",
+        "MAM-615"
+      ],
+      "blocks": [
+        "MAM-637",
+        "MAM-621"
+      ]
+    },
+    {
+      "id": "MAM-822",
+      "title": "ARCH-01 — Contratos y controles",
+      "status": "In Progress",
+      "parent": "MAM-821",
+      "blocked_by": [],
+      "blocks": [
+        "MAM-823"
+      ]
+    },
+    {
+      "id": "MAM-823",
+      "title": "ARCH-02 — Primer flujo de entrenamiento",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-822"
+      ],
+      "blocks": [
+        "MAM-824"
+      ]
+    },
+    {
+      "id": "MAM-824",
+      "title": "ARCH-03 — Identidad, atleta y catálogo",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-823"
+      ],
+      "blocks": [
+        "MAM-825"
+      ]
+    },
+    {
+      "id": "MAM-825",
+      "title": "ARCH-04 — Planificación y versiones",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-824"
+      ],
+      "blocks": [
+        "MAM-826"
+      ]
+    },
+    {
+      "id": "MAM-826",
+      "title": "ARCH-05 — Métricas y multideporte",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-825"
+      ],
+      "blocks": [
+        "MAM-827"
+      ]
+    },
+    {
+      "id": "MAM-827",
+      "title": "ARCH-06 — Facturación",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-826"
+      ],
+      "blocks": [
+        "MAM-828"
+      ]
+    },
+    {
+      "id": "MAM-828",
+      "title": "ARCH-07 — Entrenador IA",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-827"
+      ],
+      "blocks": [
+        "MAM-829"
+      ]
+    },
+    {
+      "id": "MAM-829",
+      "title": "ARCH-08 — Sincronización offline",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-828"
+      ],
+      "blocks": [
+        "MAM-830"
+      ]
+    },
+    {
+      "id": "MAM-830",
+      "title": "ARCH-09 — Integración y retiro del legado",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-829"
+      ],
+      "blocks": [
+        "MAM-831"
+      ]
+    },
+    {
+      "id": "MAM-831",
+      "title": "ARCH-10 — Aceptación integral",
+      "status": "Backlog",
+      "parent": "MAM-821",
+      "blocked_by": [
+        "MAM-830"
+      ],
+      "blocks": []
+    }
+  ]
+}
