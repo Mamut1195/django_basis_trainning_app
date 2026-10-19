@@ -739,6 +739,8 @@
     "done": 3
   },
   "architecture": {
+    "handoff": "docs/HANDOFF_ARCH02_2026-10-19.md",
+    "execution_state": "Resumed at user request; ARCH-02 local checks verified, external Docker and Git completion pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -751,10 +753,10 @@
         "code": "ARCH-01",
         "id": "MAM-822",
         "title": "ARCH-01 â€” Contratos y controles",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [],
-        "integrated_commit": null,
-        "verification": "VERIFIED locally; partial main commit 21a8ab3 lacks tests, inventories and docs; completion pending",
+        "integrated_commit": "3fd8978",
+        "verification": "VERIFIED: ARCH-01 integrated through 21a8ab3 and 3fd8978; controls and required files checked",
         "evidence": "docs/architecture/ARCH-01-VERIFICATION.md",
         "checks": {
           "architecture": "VERIFIED",
@@ -767,10 +769,10 @@
           "sqlite_regression": "VERIFIED",
           "linear_readback": "VERIFIED",
           "branch_creation": "FAILED",
-          "integration": "NOT RUN",
+          "integration": "VERIFIED",
           "postgresql": "NOT RUN",
           "remote_ci": "NOT RUN",
-          "committed_file_completeness": "FAILED"
+          "committed_file_completeness": "VERIFIED"
         },
         "partial_commit": "21a8ab3"
       },
@@ -778,13 +780,13 @@
         "code": "ARCH-02",
         "id": "MAM-823",
         "title": "ARCH-02 â€” Primer flujo de entrenamiento",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-01"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null
+        "verification": "VERIFIED local: 25 pure tests, mypy 40/47 files, eight import contracts, Ruff, Django, no migrations; combined SQLite 124 tests with three PostgreSQL skips. Docker and Git integration NOT RUN",
+        "evidence": "docs/architecture/ARCH-02-VERIFICATION.md"
       },
       {
         "code": "ARCH-03",

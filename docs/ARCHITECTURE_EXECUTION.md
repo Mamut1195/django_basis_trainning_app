@@ -1,4 +1,6 @@
 # Goal
+Estado actualizado y orden de reanudación: [HANDOFF_ARCH02_2026-10-19.md](HANDOFF_ARCH02_2026-10-19.md). ARCH-01 integrado en main/3fd8978; ARCH-02 local sin commit. Parada solicitada por el usuario mientras repara el entorno.
+
 Migrar BASIS por etapas a arquitectura hexagonal con tipado estricto, conservando datos y comportamiento. Primera entrega: ARCH-01; ARCH-02 comienza solo después de integrar y verificar ARCH-01.
 
 # Context

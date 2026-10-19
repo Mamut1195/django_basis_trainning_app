@@ -1,5 +1,7 @@
 # Arquitectura y límites de operación
 
+Estado al parar el 2026-10-19: ARCH-01 integrado y verificado en `main/3fd8978`; ARCH-02 implementado localmente, con verificación final e integración pendientes. Reanudación y bloqueos actuales: [handoff ARCH-02](HANDOFF_ARCH02_2026-10-19.md). Ejecución detenida por petición del usuario; no comenzar ARCH-03.
+
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
 **Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. Arquitectura antes de retomar aceptación funcional. ARCH-01/MAM-822 establece contratos y controles; los flujos existentes siguen en el legado hasta ARCH-02. Los directorios vacíos son límites reservados, no funcionalidades migradas. No se ha cambiado el esquema ni el registro de modelos Django.

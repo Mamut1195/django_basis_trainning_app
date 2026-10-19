@@ -23,6 +23,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from standardwebhooks.webhooks import Webhook, WebhookVerificationError
 
+from basis.bootstrap.training import edit_revision
+from basis.modules.training.adapters.wire import encode_session
+from basis.modules.training.public import ExecutionConflict
 from daily_trainning_app.models import User as Athlete
 from daily_trainning_app.models import UserExerciseRM, WorkoutData
 
@@ -489,11 +492,17 @@ def touch_parent(parent, expected):
         expected = int(expected)
     except (TypeError, ValueError):
         raise ValidationError("Recarga la página antes de guardar.") from None
-    if current.revision != expected:
-        raise Conflict(session_snapshot(current) if isinstance(current, Session) else None)
-    if isinstance(current, Session) and current.status == "completed":
-        raise ValidationError("La sesión ya se completó.")
-    current.revision += 1
+    if isinstance(current, Session):
+        try:
+            current.revision = edit_revision(current, expected)
+        except ExecutionConflict as exc:
+            if exc.current.revision == expected:
+                raise ValidationError("La sesión ya se completó.") from None
+            raise Conflict(encode_session(exc.current)) from None
+    else:
+        if current.revision != expected:
+            raise Conflict(None)
+        current.revision += 1
     current.save()
 
 

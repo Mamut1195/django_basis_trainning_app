@@ -1,3 +1,53 @@
-"""Public contract. No operations migrated yet; do not import ORM here."""
+"""Public execution contract. Infrastructure is composed by basis.bootstrap."""
 
-__all__: tuple[str, ...] = ()
+from .application.execution import (
+    Change,
+    FinishSession,
+    ReadSession,
+    RecordSession,
+    SessionChanges,
+    SessionMutation,
+    SessionRepository,
+    StartSession,
+    Training,
+)
+from .domain.execution import (
+    BlockData,
+    DurationProtocol,
+    ExecutionConflict,
+    IntervalData,
+    InvalidExecution,
+    Metric,
+    MetricName,
+    Prescription,
+    SessionState,
+    SessionStatus,
+    StrengthData,
+    Unavailable,
+    require_editable,
+)
+
+__all__ = (
+    "Change",
+    "FinishSession",
+    "ReadSession",
+    "RecordSession",
+    "SessionChanges",
+    "SessionMutation",
+    "SessionRepository",
+    "StartSession",
+    "Training",
+    "BlockData",
+    "DurationProtocol",
+    "ExecutionConflict",
+    "IntervalData",
+    "InvalidExecution",
+    "Metric",
+    "MetricName",
+    "Prescription",
+    "SessionState",
+    "SessionStatus",
+    "StrengthData",
+    "Unavailable",
+    "require_editable",
+)

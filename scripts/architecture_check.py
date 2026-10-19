@@ -131,6 +131,18 @@ def inventory_errors(root: Path) -> list[str]:
         config = configparser.ConfigParser()
         config.read(root / filename)
         strict_entries.update(p.strip() for p in config.get("mypy", "files").split(","))
+        for section in config.sections():
+            if config.get(section, "follow_imports", fallback="normal") != "silent":
+                continue
+            if not section.startswith("mypy-"):
+                errors.append("Global silent imports are forbidden")
+                continue
+            for module in section.removeprefix("mypy-").split(","):
+                module = module.strip()
+                if "*" in module or module.replace(".", "/") + ".py" not in pending:
+                    errors.append(
+                        f"Silent imports must name an exact pending legacy module: {module}"
+                    )
     for path in tracked:
         strict = any(
             path == entry or path.startswith(entry.rstrip("/") + "/") for entry in strict_entries

@@ -12,6 +12,10 @@ from django.db import models, transaction
 from django.db.models import F, Q
 from django.utils import timezone
 
+from basis.bootstrap import training as execution
+from basis.modules.training.adapters.wire import encode_session
+from basis.modules.training.public import ExecutionConflict, InvalidExecution, Unavailable
+
 from .access import require_write_access
 from .domain import SPORT_LABELS
 from .models import (
@@ -44,32 +48,7 @@ def encode_row(row, exclude=()):
 
 
 def session_snapshot(session):
-    return {
-        "id": str(session.pk),
-        "revision": session.revision,
-        "title": session.title,
-        "date": session.date.isoformat(),
-        "status": session.status,
-        "duration_seconds": session.duration_seconds,
-        "duration_protocol": session.duration_protocol,
-        "reported_rpe": str(session.reported_rpe) if session.reported_rpe is not None else None,
-        "notes": session.notes,
-        "planned": session.planned_id,
-        "blocks": [
-            {
-                "id": b.pk,
-                "order": b.order,
-                "sport": b.sport,
-                "title": b.title,
-                "target": b.target,
-                "actual": b.actual,
-                "notes": b.notes,
-                "sets": [encode_row(s) for s in b.sets.all()],
-                "intervals": [encode_row(i) for i in b.intervals.all()],
-            }
-            for b in session.blocks.all()
-        ],
-    }
+    return execution.snapshot(session.owner_id, session.pk)
 
 
 def validate_block_data(data):
@@ -122,7 +101,7 @@ def sync_session(owner, mutation_id, payload):
     get_user_model().objects.select_for_update().get(pk=owner.pk)
     try:
         mutation_id = uuid.UUID(str(mutation_id))
-        session_id = uuid.UUID(str(payload["id"]))
+        uuid.UUID(str(payload["id"]))
     except (ValueError, KeyError, TypeError):
         raise ValidationError("Identificador de sincronización inválido.") from None
     digest = hashlib.sha256(
@@ -149,48 +128,12 @@ def sync_session(owner, mutation_id, payload):
     }
     if set(payload) - allowed or type(payload.get("revision")) is not int:
         raise ValidationError("Formato o revisión de sesión inválida.")
-    session = Session.objects.select_for_update().filter(pk=session_id).first()
-    if session and session.owner_id != owner.pk:
-        raise ValidationError("La sesión no está disponible.")
-    if session and session.revision != payload["revision"]:
-        raise Conflict(session_snapshot(session))
-    if not session and payload["revision"] != 0:
-        raise ValidationError("Una sesión nueva empieza en revisión cero.")
-    if session and session.status == "completed":
-        raise Conflict(session_snapshot(session))
-    if not session:
-        session = Session(id=session_id, owner=owner)
-    planned_id = payload.get("planned")
-    if planned_id:
-        session.planned = PlannedSession.objects.filter(pk=planned_id, owner=owner).first()
-        if not session.planned:
-            raise ValidationError("Prescripción no disponible.")
-    for key in (
-        "title",
-        "date",
-        "status",
-        "duration_seconds",
-        "duration_protocol",
-        "reported_rpe",
-        "notes",
-    ):
-        if key in payload:
-            value = (
-                Decimal(str(payload[key]))
-                if key == "reported_rpe" and payload[key] is not None
-                else payload[key]
-            )
-            setattr(session, key, value)
-    session.revision = payload["revision"] + 1
-    session.save()
-    # Old blocks are replaced only while execution is in progress, inside this transaction.
-    # Children are not independently referenced outside their own session.
-    for block in session.blocks.all():
-        block.sets.all().delete()
-        block.intervals.all().delete()
-    session.blocks.all().delete()
-    save_blocks(session, payload.get("blocks"))
-    result = session_snapshot(session)
+    try:
+        result = execution.record(owner.pk, payload)
+    except ExecutionConflict as exc:
+        raise Conflict(encode_session(exc.current)) from None
+    except (Unavailable, InvalidExecution) as exc:
+        raise ValidationError(str(exc)) from None
     SyncReceipt.objects.create(
         owner=owner, mutation_id=mutation_id, payload_hash=digest, result=result
     )
@@ -199,27 +142,11 @@ def sync_session(owner, mutation_id, payload):
 
 @transaction.atomic
 def start_session(owner, planned):
-    require_write_access(owner)
-    planned = PlannedSession.objects.select_for_update().get(pk=planned.pk, owner=owner)
-    existing = planned.executions.filter(status="in_progress").first()
-    if existing:
-        return existing
-    session = Session.objects.create(
-        owner=owner, planned=planned, title=planned.title, date=timezone.localdate()
-    )
-    blocks = [
-        {
-            "sport": b.sport,
-            "title": b.title,
-            "target": b.target,
-            "notes": b.notes,
-            "sets": [encode_row(s) for s in b.sets.all()],
-            "intervals": [encode_row(i) for i in b.intervals.all()],
-        }
-        for b in planned.blocks.all()
-    ]
-    save_blocks(session, blocks)
-    return session
+    try:
+        state = execution.start(owner.pk, planned.pk)
+    except Unavailable as exc:
+        raise PlannedSession.DoesNotExist(str(exc)) from None
+    return Session.objects.get(pk=state.id)
 
 
 @transaction.atomic

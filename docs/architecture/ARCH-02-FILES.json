@@ -1,0 +1,29 @@
+{
+  "base_commit": "3fd8978",
+  "files": [
+    ".github/workflows/checks.yml",
+    "basis/bootstrap/training.py",
+    "basis/modules/training/public.py",
+    "basis/modules/training/domain/execution.py",
+    "basis/modules/training/application/execution.py",
+    "basis/modules/training/adapters/django.py",
+    "basis/modules/training/adapters/wire.py",
+    "basis/modules/training/adapters/tests.py",
+    "mypy-django.ini",
+    "scripts/architecture_check.py",
+    "scripts/Verify-Arch02.ps1",
+    "scripts/Complete-Arch02.ps1",
+    "tests_architecture/repository_contract.py",
+    "tests_architecture/test_execution.py",
+    "training/services.py",
+    "training/views.py",
+    "docs/ARCHITECTURE.md",
+    "docs/ARCHITECTURE_EXECUTION.md",
+    "docs/ROADMAP.json",
+    "docs/HANDOFF_ARCH02_2026-10-19.md",
+    "docs/architecture/ARCH-02-PLAN.md",
+    "docs/architecture/ARCH-02-VERIFICATION.md",
+    "docs/architecture/ARCH-02-FILES.json",
+    "docs/architecture/ARCH-02-RESULT.json"
+  ]
+}
