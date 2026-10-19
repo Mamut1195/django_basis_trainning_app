@@ -1,3 +1,59 @@
-"""Public contract. No operations migrated yet; do not import ORM here."""
+"""Supported athlete commands, values and shared enrollment contract."""
 
-__all__: tuple[str, ...] = ()
+from .application.enrollment import AthleteEnrollment
+from .application.records import (
+    Athletes,
+    EditPreferences,
+    EditProfile,
+    RecordMeasurement,
+    RecordRM,
+    RecordSport,
+    RecordWellness,
+    RecordWorkout,
+)
+from .domain.records import (
+    AthleteUnavailable,
+    InvalidAthleteData,
+    MeasuredRMData,
+    MeasuredRMState,
+    MeasurementData,
+    PreferencesData,
+    ProfileData,
+    SportData,
+    WellnessData,
+    WorkoutData,
+    require_adult,
+    require_legacy_link,
+    require_unchanged_rm,
+    valid_availability,
+    validate_sport,
+    validate_wellness,
+)
+
+__all__ = (
+    "AthleteEnrollment",
+    "Athletes",
+    "AthleteUnavailable",
+    "InvalidAthleteData",
+    "EditPreferences",
+    "EditProfile",
+    "RecordMeasurement",
+    "RecordRM",
+    "RecordSport",
+    "RecordWellness",
+    "RecordWorkout",
+    "MeasuredRMData",
+    "MeasuredRMState",
+    "MeasurementData",
+    "PreferencesData",
+    "ProfileData",
+    "SportData",
+    "WellnessData",
+    "WorkoutData",
+    "require_adult",
+    "require_legacy_link",
+    "require_unchanged_rm",
+    "valid_availability",
+    "validate_sport",
+    "validate_wellness",
+)

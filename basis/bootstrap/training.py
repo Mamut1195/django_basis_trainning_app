@@ -3,10 +3,9 @@
 from typing import Mapping
 from uuid import UUID
 
+from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
 from basis.modules.training.adapters.django import (
-    DjangoClock,
     DjangoSessionRepository,
-    DjangoUnitOfWork,
     DjangoWriteAuthorization,
     UUIDSessionIds,
     session_state,

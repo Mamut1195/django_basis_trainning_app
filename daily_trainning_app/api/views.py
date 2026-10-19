@@ -3,6 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
+from basis.bootstrap.catalog import catalog
+from basis.modules.catalog.public import DeleteClassification, DeleteExercise, catalog_allowed
+from basis.shared.identifiers import AccountId, ClassificationId, ExerciseId
 from daily_trainning_app.models import Classification, Exercise, User, UserExerciseRM, WorkoutData
 from training.access import require_write_access
 
@@ -17,18 +20,25 @@ from .serializers import (
 
 class CatalogPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.method in permissions.SAFE_METHODS or request.user.is_staff
-        )
+        return catalog_allowed(request.user.is_authenticated, request.user.is_staff,
+                               request.method in permissions.SAFE_METHODS)
 
 
 class ClassificationViewSet(viewsets.ModelViewSet):
+    def perform_destroy(self, instance):
+        catalog().delete_classification(DeleteClassification(
+            AccountId(self.request.user.pk), ClassificationId(instance.pk)))
+
     queryset = Classification.objects.order_by("nombre")
     serializer_class = ClassificationSerializer
     permission_classes = [CatalogPermission]
 
 
 class ExerciseViewSet(viewsets.ModelViewSet):
+    def perform_destroy(self, instance):
+        catalog().delete_exercise(DeleteExercise(
+            AccountId(self.request.user.pk), ExerciseId(instance.pk)))
+
     queryset = (
         Exercise.objects.select_related("classification").filter(archivado=False).order_by("nombre")
     )

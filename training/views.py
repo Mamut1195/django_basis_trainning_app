@@ -1,29 +1,33 @@
 import hashlib
 import json
 import uuid
-from datetime import timedelta
 from functools import wraps
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordResetView
-from django.core import signing
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from standardwebhooks.webhooks import Webhook, WebhookVerificationError
 
+from basis.bootstrap.accounts import identity, recover_password
+from basis.bootstrap.athletes import save_observation, save_preferences, save_profile, save_rm
 from basis.bootstrap.training import edit_revision
+from basis.modules.accounts.public import (
+    AccountUnavailable,
+    ConsumeAttempt,
+    InvalidVerification,
+    RegisterAccount,
+    VerifyAccount,
+)
 from basis.modules.training.adapters.wire import encode_session
 from basis.modules.training.public import ExecutionConflict
 from daily_trainning_app.models import User as Athlete
@@ -63,7 +67,6 @@ from .models import (
     Measurement,
     PlannedSession,
     PlanProposal,
-    RateWindow,
     Session,
     SportProfile,
     StrengthSet,
@@ -106,19 +109,9 @@ def write_required(view):
 
 
 def rate_allowed(request, action, maximum=10, minutes=15):
-    key = hashlib.sha256(
-        (action + ":" + request.META.get("REMOTE_ADDR", "unknown")).encode()
-    ).hexdigest()
-    with transaction.atomic():
-        window, _ = RateWindow.objects.get_or_create(
-            key=key, defaults={"expires_at": timezone.now() + timedelta(minutes=minutes)}
-        )
-        window = RateWindow.objects.select_for_update().get(pk=window.pk)
-        if window.expires_at <= timezone.now():
-            window.count, window.expires_at = 0, timezone.now() + timedelta(minutes=minutes)
-        window.count += 1
-        window.save()
-        return window.count <= maximum
+    return identity().allow_attempt(
+        ConsumeAttempt(action, request.META.get("REMOTE_ADDR", "unknown"), maximum, minutes)
+    )
 
 
 class BasisLoginView(LoginView):
@@ -142,21 +135,14 @@ class BasisPasswordResetView(PasswordResetView):
     template_name = "registration/password_reset_form.html"
     email_template_name = "registration/password_reset_email.html"
 
+    def form_valid(self, form):
+        recover_password(form, self.request)
+        return HttpResponseRedirect(self.get_success_url())
+
     def post(self, request, *args, **kwargs):
         if not rate_allowed(request, "password-reset", maximum=5):
             return HttpResponse("Inténtalo más tarde.", status=429)
         return super().post(request, *args, **kwargs)
-
-
-def send_verification(account):
-    token = signing.dumps({"uid": account.pk, "email": account.email}, salt="basis-verify")
-    link = settings.PUBLIC_URL + reverse("verify-email", args=[token])
-    send_mail(
-        "Verifica tu cuenta de BASIS",
-        "Confirma tu correo para empezar:\n" + link + "\nEste enlace caduca en 24 horas.",
-        settings.DEFAULT_FROM_EMAIL,
-        [account.email],
-    )
 
 
 def signup(request):
@@ -164,21 +150,14 @@ def signup(request):
         return HttpResponse("Inténtalo más tarde.", status=429)
     form = SignupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            account = form.save(commit=False)
-            account.username = account.email = form.cleaned_data["email"]
-            account.first_name = form.cleaned_data["name"]
-            account.is_active = False
-            account.save()
-            Athlete.objects.create(
-                account=account,
-                nombre=account.first_name,
-                email=account.email,
-                fecha_inicio=timezone.localdate(),
+        account = form.save(commit=False)
+        identity().register(
+            RegisterAccount(
+                email=form.cleaned_data["email"],
+                name=form.cleaned_data["name"],
+                encoded_password=account.password,
             )
-            AthleteSettings.objects.create(owner=account)
-            BillingAccount.objects.create(owner=account)
-            send_verification(account)
+        )
         return render(
             request,
             "training/notice.html",
@@ -201,13 +180,8 @@ def signup(request):
 
 def verify_email(request, token):
     try:
-        data = signing.loads(token, salt="basis-verify", max_age=86400)
-        account = get_object_or_404(get_user_model(), pk=data["uid"], email=data["email"])
+        identity().verify(VerifyAccount(token, confirm=request.method == "POST"))
         if request.method == "POST":
-            with transaction.atomic():
-                account.is_active = True
-                account.save(update_fields=["is_active"])
-                Athlete.objects.filter(account=account).update(email_verified=True)
             messages.success(request, "Correo verificado. Ya puedes iniciar sesión.")
             return redirect("login")
         return render(
@@ -219,7 +193,9 @@ def verify_email(request, token):
                 "submit": "Verificar correo",
             },
         )
-    except signing.BadSignature:
+    except AccountUnavailable as error:
+        raise Http404 from error
+    except InvalidVerification:
         return render(
             request,
             "training/notice.html",
@@ -241,13 +217,7 @@ def resend_verification(request):
     if request.method == "POST" and form.is_valid():
         if not rate_allowed(request, "resend-verification", maximum=5):
             return HttpResponse("Inténtalo más tarde.", status=429)
-        account = (
-            get_user_model()
-            .objects.filter(email__iexact=form.cleaned_data["email"], is_active=False)
-            .first()
-        )
-        if account and hasattr(account, "athlete"):
-            send_verification(account)
+        identity().resend(form.cleaned_data["email"])
         return render(
             request,
             "training/notice.html",
@@ -720,7 +690,7 @@ def profile(request):
 def profile_edit(request):
     form = AthleteForm(request.POST or None, instance=request.user.athlete)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        save_profile(request.user.pk, form.save(commit=False))
         return redirect("profile")
     return render(request, "training/form.html", {"title": "Tu perfil", "form": form})
 
@@ -730,7 +700,7 @@ def preferences_edit(request):
     preferences, _ = AthleteSettings.objects.get_or_create(owner=request.user)
     form = PreferencesForm(request.POST or None, instance=preferences)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        save_preferences(request.user.pk, form.save(commit=False))
         return redirect("profile")
     return render(request, "training/form.html", {"title": "Disponibilidad y equipo", "form": form})
 
@@ -755,7 +725,11 @@ def owned_new(request, resource):
         )
     form = cls(request.POST or None, instance=instance)
     if request.method == "POST" and form.is_valid():
-        instance = form.save()
+        if resource in ("sport", "wellness", "measurement"):
+            instance = form.save(commit=False)
+            save_observation(request.user.pk, instance)
+        else:
+            instance = form.save()
         return (
             redirect("trip-detail", pk=instance.pk)
             if resource == "trip"
@@ -794,7 +768,7 @@ def stage_new(request, pk):
 def rm_new(request):
     form = RMForm(request.POST or None, instance=UserExerciseRM(user=request.user.athlete))
     if request.method == "POST" and form.is_valid():
-        form.save()
+        save_rm(request.user.pk, form.save(commit=False))
         return redirect("profile")
     return render(
         request,

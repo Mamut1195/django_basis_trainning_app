@@ -1,4 +1,3 @@
-import re
 import uuid
 from decimal import Decimal
 
@@ -9,12 +8,22 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
+from basis.modules.athletes.public import (
+    InvalidAthleteData,
+    MeasuredRMData,
+    MeasuredRMState,
+    require_unchanged_rm,
+)
+from basis.modules.catalog.public import valid_muscle_names
+from basis.shared.identifiers import AthleteId, ExerciseId
+from basis.shared.text import normalized_name
+
 from .strength_metrics import METRICS_VERSION, MetricsInputError, calculate_strength_metrics
 
 
 def normalize_text(value):
     """Normaliza el texto eliminando espacios extra y caracteres especiales."""
-    return re.sub(r"\s+", " ", value).strip().title()
+    return normalized_name(value)
 
 
 class Classification(models.Model):
@@ -61,11 +70,7 @@ class Exercise(models.Model):
         self.nombre = normalize_text(self.nombre)
         from django.core.exceptions import ValidationError
 
-        if (
-            not isinstance(self.musculos_principales, list)
-            or len(self.musculos_principales) > 30
-            or any(not isinstance(m, str) or len(m) > 80 for m in self.musculos_principales)
-        ):
+        if not valid_muscle_names(self.musculos_principales):
             raise ValidationError({"musculos_principales": "Usa una lista de nombres musculares."})
 
     def save(self, *args, **kwargs):
@@ -162,10 +167,26 @@ class UserExerciseRM(models.Model):
         previous = (
             type(self).objects.filter(pk=self.pk).values(*fields).first() if self.pk else None
         )
-        if previous and any(previous[name] != getattr(self, name) for name in fields):
-            raise ValidationError(
-                "El RM es una medición histórica. Registra otra medición con su fecha."
-            )
+        if previous:
+            try:
+                require_unchanged_rm(
+                    MeasuredRMState(
+                        AthleteId(previous["user_id"]),
+                        MeasuredRMData(
+                            ExerciseId(previous["exercise_id"]),
+                            previous["peso_maximo_rm"], previous["fecha_registro"],
+                        ),
+                    ),
+                    MeasuredRMState(
+                        AthleteId(self.user_id),
+                        MeasuredRMData(
+                            ExerciseId(self.exercise_id), self.peso_maximo_rm, self.fecha_registro,
+                        ),
+                    ),
+                )
+            except InvalidAthleteData as error:
+                raise ValidationError(str(error)) from error
+
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get("update_fields")

@@ -1,3 +1,5 @@
-"""Public contract. No operations migrated yet; do not import ORM here."""
+"""Supported billing contracts."""
 
-__all__: tuple[str, ...] = ()
+from .application.enrollment import BillingEnrollment
+
+__all__ = ("BillingEnrollment",)

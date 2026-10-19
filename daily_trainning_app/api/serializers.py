@@ -1,11 +1,19 @@
 from django.core.exceptions import ValidationError as ModelValidationError
 from rest_framework import serializers
 
+from basis.bootstrap.athletes import write_legacy_rm, write_legacy_workout
+from basis.bootstrap.catalog import save_classification, save_exercise
 from daily_trainning_app.models import Classification, Exercise, User, UserExerciseRM, WorkoutData
 from daily_trainning_app.strength_metrics import METRICS_VERSION
 
 
 class ClassificationSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        return save_classification(self.context["request"].user.pk, validated_data)
+
+    def update(self, instance, validated_data):
+        return save_classification(self.context["request"].user.pk, validated_data, instance)
+
     class Meta:
         model = Classification
         fields = ["id", "nombre"]
@@ -15,6 +23,12 @@ class ClassificationSerializer(serializers.ModelSerializer):
 
 
 class ExerciseSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        return save_exercise(self.context["request"].user.pk, validated_data)
+
+    def update(self, instance, validated_data):
+        return save_exercise(self.context["request"].user.pk, validated_data, instance)
+
     classification = ClassificationSerializer(read_only=True)
     classification_id = serializers.PrimaryKeyRelatedField(
         queryset=Classification.objects.all(), source="classification", write_only=True
@@ -78,7 +92,8 @@ class OwnedRecordSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
-            return super().create(validated_data)
+            writer = write_legacy_rm if self.Meta.model is UserExerciseRM else write_legacy_workout
+            return writer(self.context["request"].user.pk, validated_data)
         except ModelValidationError as exc:
             raise serializers.ValidationError(
                 exc.message_dict
@@ -88,7 +103,8 @@ class OwnedRecordSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         try:
-            return super().update(instance, validated_data)
+            writer = write_legacy_rm if self.Meta.model is UserExerciseRM else write_legacy_workout
+            return writer(self.context["request"].user.pk, validated_data, instance)
         except ModelValidationError as exc:
             raise serializers.ValidationError(
                 exc.message_dict

@@ -1,12 +1,12 @@
 # Arquitectura y límites de operación
 
-Estado al parar el 2026-10-19: ARCH-01 integrado y verificado en `main/3fd8978`; ARCH-02 implementado localmente, con verificación final e integración pendientes. Reanudación y bloqueos actuales: [handoff ARCH-02](HANDOFF_ARCH02_2026-10-19.md). Ejecución detenida por petición del usuario; no comenzar ARCH-03.
+Estado 2026-10-19: ARCH-01 y ARCH-02 integrados; ARCH-02 en `main/2f3c95e`, 124 pruebas PostgreSQL sin omisiones. ARCH-03 implementado localmente y pendiente de PostgreSQL e integración externa. [Reanudación ARCH-03](HANDOFF_ARCH03_2026-10-19.md).
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. Arquitectura antes de retomar aceptación funcional. ARCH-01/MAM-822 establece contratos y controles; los flujos existentes siguen en el legado hasta ARCH-02. Los directorios vacíos son límites reservados, no funcionalidades migradas. No se ha cambiado el esquema ni el registro de modelos Django.
+**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. Arquitectura antes de retomar aceptación funcional. ARCH-01/MAM-822 y ARCH-02/MAM-823 están integrados y verificados. ARCH-03/MAM-824 tiene implementación local pendiente de PostgreSQL e integración. Los límites reservados de etapas posteriores no representan funcionalidades migradas. No se ha cambiado el esquema ni el registro de modelos Django.
 
-`basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; inicialmente no exporta operaciones. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conectará implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
+`basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
 | Módulo | Responsabilidad y fuente actual | Etapa principal |
 | --- | --- | --- |
@@ -22,7 +22,7 @@ Estado al parar el 2026-10-19: ARCH-01 integrado y verificado en `main/3fd8978`;
 
 Comandos y resultados serán dataclasses; puertos Protocol específicos del caso de uso. Sin repositorio CRUD genérico ni bus obligatorio. Identificadores de cuenta, atleta (PK del perfil), sesión UUID, sesión programada, plan y revisión son NewType diferentes. Los identificadores públicos externos conservarán su representación actual mediante adaptadores. Cargas y dinero usan Decimal; fechas explícitas; None conserva ausencia frente a cero. El núcleo no recibe ORM, QuerySet, HTTP, Any ni JSON libre. Los adaptadores validan y convierten entradas externas y traducen errores propios a los errores HTTP/DRF/formularios existentes.
 
-La UoW Django confirmará explícitamente éxito y revertirá ante error o salida sin commit, también dentro de transacciones anidadas. Sesión y recibo se guardarán juntos. Conservar el orden de bloqueo y la política de reservas/resultados ambiguos del legado. ARCH-02 debe probar estos contratos sobre el adaptador real antes de cerrar.
+La UoW Django confirmará explícitamente éxito y revertirá ante error o salida sin commit, también dentro de transacciones anidadas. Sesión y recibo se guardarán juntos. Conservar el orden de bloqueo y la política de reservas/resultados ambiguos del legado. ARCH-02 verificó estos contratos sobre el adaptador real y PostgreSQL antes de cerrar.
 
 ### Planes y extensión futura
 
@@ -86,3 +86,13 @@ PostgreSQL, dos procesos web iniciales y un worker de trabajos duraderos. WhiteN
 - [Django 5.2](https://docs.djangoproject.com/en/5.2/), [Cotton UI](https://django-cotton.com/ui/installation), [temas Cotton UI](https://django-cotton.com/ui/theming), [HTMX](https://htmx.org/docs/).
 - [Polar Customer State](https://polar.sh/docs/integrate/customer-state), [checkout](https://polar.sh/docs/api-reference/2026-10/checkouts/create-checkout-session), [webhooks](https://polar.sh/docs/integrate/webhooks/delivery), [pruebas](https://polar.sh/docs/features/subscriptions/trials).
 - [DeepSeek: modelos y precios](https://api-docs.deepseek.com/quick_start/pricing/), [modo de pensamiento](https://api-docs.deepseek.com/guides/thinking_mode).
+
+## ARCH-03: identity, athletes and catalog
+
+Typed identity registration, email confirmation/resend, rate windows and password recovery live in accounts. Django remains the password/token/site/mail adapter. Registration coordinates athlete/settings and empty billing enrollment through public ports in one explicitly committed transaction; mail failure rolls back all rows. GET confirmation never activates an account. Explicit legacy linking locks account before athlete, never guesses an owner, and does not verify email.
+
+Athlete commands own profile/preferences, sport profiles, wellness, measurements, measured RM and legacy workout writes. Owner IDs come from the authenticated account. Observation absence remains distinct from zero. Existing sport/wellness/RM invariants are shared pure functions called by model validation; historical strength calculations and reference freezing remain in persistence until ARCH-05. Catalog writes enforce staff authorization, preserve archive behavior and Django protected deletion. Existing ModelSerializers/templates/querysets are compatibility read adapters until ARCH-09; schema/URL/JSON/export formats remain stable.
+
+Composition is explicit in basis/bootstrap/{accounts,athletes,catalog,training}. Shared Django UoW/clock adapters now live in bootstrap/transactions; modules do not import each other's adapters. The six exact pending legacy typing frontiers remain unchanged: these mixed files are not certified as fully migrated. Narrow Protocol casts describe existing untyped model save/access signatures without suppressing migrated code or replacing validation.
+
+[ARCH-03 plan](architecture/ARCH-03-PLAN.md), [verification and pending gates](architecture/ARCH-03-VERIFICATION.md). ARCH-04 starts only after the ARCH-03 commit, receipt and main are independently checked.

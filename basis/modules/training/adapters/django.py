@@ -1,15 +1,12 @@
 """Django persistence adapter over stable legacy tables and model registration."""
 
 from dataclasses import fields
-from datetime import date, datetime
-from types import TracebackType
-from typing import Callable, Protocol, Self, cast
+from typing import Callable, Protocol, cast
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.db import models, transaction
-from django.utils import timezone
+from django.db import models
 
 from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
 from training.access import require_write_access
@@ -81,38 +78,6 @@ def session_state(row: Session) -> SessionState:
         notes=row.notes,
         blocks=tuple(block_state(b) for b in row.blocks.all()),
     )
-
-
-class DjangoUnitOfWork:
-    def __init__(self) -> None:
-        self.atomic = transaction.atomic()
-        self.committed = False
-
-    def __enter__(self) -> Self:
-        self.committed = False
-        self.atomic.__enter__()
-        return self
-
-    def commit(self) -> None:
-        self.committed = True
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        if not self.committed:
-            transaction.set_rollback(True)
-        self.atomic.__exit__(exc_type, exc_value, traceback)
-
-
-class DjangoClock:
-    def today(self) -> date:
-        return timezone.localdate()
-
-    def now(self) -> datetime:
-        return timezone.now()
 
 
 class UUIDSessionIds:

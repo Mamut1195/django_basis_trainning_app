@@ -1,29 +1,37 @@
 # Goal
-Estado actualizado y orden de reanudación: [HANDOFF_ARCH02_2026-10-19.md](HANDOFF_ARCH02_2026-10-19.md). ARCH-01 integrado en main/3fd8978; ARCH-02 local sin commit. Parada solicitada por el usuario mientras repara el entorno.
 
-Migrar BASIS por etapas a arquitectura hexagonal con tipado estricto, conservando datos y comportamiento. Primera entrega: ARCH-01; ARCH-02 comienza solo después de integrar y verificar ARCH-01.
+Migrate BASIS serially to a strict typed hexagonal Django/PostgreSQL monolith, preserving data and behavior. Architecture precedes functional acceptance. No predefined-program feature is included.
 
 # Context
-Base local: main 08dcd02. Baseline ejecutado el 2026-10-19: 111 pruebas, 108 pasan en SQLite temporal en memoria; tres carreras requieren PostgreSQL. No hay AGENTS.md adicional en el repositorio. Las reglas globales proporcionadas por el usuario aplican.
+
+2026-10-19: ARCH-01 is integrated at 3fd8978; ARCH-02 at main/2f3c95ebefedfcc082cdc074aaafefd4efc1aaa5, independently checked with PostgreSQL18.4/124 tests/zero skips and receipt/HEAD hashes. MAM-823 is Done. ARCH-03/MAM-824 is In Progress with a local candidate; ARCH-04 has not started. See [current handoff](HANDOFF_ARCH03_2026-10-19.md).
+
+The original baseline is 08dcd02 with111 tests (108 SQLite passes, three PostgreSQL-only races). Existing user changes remain seed.py168 additions/56 deletions and manage.py mode only. No repository AGENTS.md was found; supplied global working agreements apply.
 
 # Constraints
-Preservar seed.py y el modo de manage.py. Conservar tablas, app labels, migraciones, HTTP/JSON, propietario, CSRF y colas. Sin producción, cobros ni catálogo de programas. No cambiar reglas funcionales durante ARCH-01.
+
+Preserve tables, app labels, migrations, URLs/JSON, owner authorization, CSRF, IndexedDB queues and history. No production, paid calls, live SMTP or functional changes. Keep seed.py/manage.py outside architecture commits. Do not modify ACLs, bypass execution policy or use alternate Git indexes/checkouts; no stash/reset/clean.
 
 # Affected areas
-Nuevo paquete basis; controles en scripts/architecture_check.py, tests_architecture, mypy-core.ini, mypy-django.ini y .importlinter. CI, dependencias de desarrollo, documentación y ROADMAP. Los modelos actuales siguen registrados en sus aplicaciones Django.
+
+basis/modules/{accounts,athletes,catalog} typed domain/application/adapters and public contracts; narrow athlete/billing enrollment ports; explicit bootstrap composition/UoW. Existing forms, views, serializers, model hooks and the explicit linking command delegate through compatibility bindings. Legacy calculations and generic read adapters remain for ARCH-05/09, with all six exact legacy typing frontiers documented rather than silencing migrated code.
 
 # Implementation steps
-1. Crear épica y diez etapas seriales en Linear; añadir bloqueo a los 31 funcionales abiertos, conservando estados y dependencias.
-2. Registrar ADR, mapa, contratos, inventario explícito de legado y baseline.
-3. Incorporar controles estáticos y ejecutables (incluido TYPE_CHECKING), mypy estricto separado y CI.
-4. Ejecutar regresión, Ruff, Django y comprobación de migraciones. Integrar commit de ARCH-01 en main antes de iniciar ARCH-02.
-5. ARCH-02 migrará inicio, lectura, resultados y finalización con puertos, UoW explícita y adaptador Django; probar rollback y compatibilidad web/offline.
+
+1. Completed: architecture epic and ten serial stages, blockers for31 open functional tickets preserving four Done tickets; contracts, controls and baseline (ARCH-01).
+2. Completed: session execution, repository/UoW, web/offline delegation and PostgreSQL integration (ARCH-02).
+3. Current: ARCH-03 identity/profile/catalog candidate implemented; local gates pass. Review [plan](architecture/ARCH-03-PLAN.md) and [evidence](architecture/ARCH-03-VERIFICATION.md).
+4. Operator executes scripts/Complete-Arch03.ps1: native capture self-test, repeated checks, temporary Docker PostgreSQL139 tests with zero skips, stopped container, explicit manifest/source hashes, dedicated branch and fast-forward main. No push.
+5. Independently check returned SHA, logs, receipt, source/HEAD hashes and committed completeness. Only then mark MAM-824 Done and begin ARCH-04. Continue each later stage in order with its own reviewed commit and integration evidence.
 
 # Required skills
+
 task-planning, safe-git-workflow, verify-before-complete.
 
 # Validation
-Núcleo sin Django/plugin/configuración, mypy con django-stubs para infraestructura; Import Linter más AST para importaciones de tipos y contratos públicos. Pruebas negativas de controles; suite existente en base temporal, Ruff, check y makemigrations --check --dry-run. Etiquetar VERIFIED / FAILED / NOT RUN por entrega.
+
+VERIFIED local ARCH-03:39 pure tests without Django/DB/network, mypy core52/Django68 files, eight Import Linter contracts, AST/inventory, Ruff, Django check/no migrations, SQLite139 with three PostgreSQL-only skips, PowerShell parser zero syntax errors. Shared fake/Django identity transaction contract and15 new integration tests are included. Logs/receipt: .cache/arch03-local. Every claim uses VERIFIED / FAILED / NOT RUN.
 
 # Risks
-El entorno deniega escritura en .git incluso tras pedir ejecución ampliada: no modificar ACL ni eludir permisos. Sin integración comprobada, no cerrar ARCH-01 ni comenzar ARCH-02. PostgreSQL y CI remoto requieren ejecución independiente; SQLite no demuestra bloqueos.
+
+NOT RUN: candidate PostgreSQL139 without skips, native process-capture self-test, main integration and remote CI. Child PowerShell here refused scripts by execution policy; no bypass attempted. Git writes/Docker access require the user's external session. SQLite does not establish concurrency correctness. Preserve failures and logs, diagnose the exact gate, and do not claim closure from local-only checks.

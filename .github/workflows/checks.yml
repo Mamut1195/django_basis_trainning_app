@@ -37,5 +37,5 @@ jobs:
       - run: lint-imports
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
-      - run: python manage.py test training.tests basis.modules.training.adapters.tests --noinput
+      - run: python manage.py test training.tests basis.modules.training.adapters.tests basis.modules.accounts.adapters.tests --noinput
       - run: python manage.py collectstatic --noinput

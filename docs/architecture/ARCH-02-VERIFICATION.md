@@ -40,3 +40,7 @@ Source hashes are taken before/after verification, with strict UTF-8/BOM/CRLF no
 Only after successful checks and container cleanup does the completion script create `arch/02-execution`, stage the explicit manifest, check staged scope/whitespace/file completeness and source hashes, commit, and fast-forward main. It preserves existing user edits and stops at errors without reset/stash/clean/history rewriting. No push occurs. Integration receipt: `.cache/arch02-integration.json`. Return its printed main SHA to Codex for independent readback and Linear closure. Do not start ARCH-03 until this verification/integration is confirmed.
 
 Docker behavior follows the [official run reference](https://docs.docker.com/reference/cli/docker/container/run/) and [official PostgreSQL image documentation](https://github.com/docker-library/docs/blob/master/postgres/README.md).
+
+## Final integration readback, 2026-10-19
+
+VERIFIED after external execution: main/2f3c95ebefedfcc082cdc074aaafefd4efc1aaa5. Receipt docs/architecture/ARCH-02-RESULT.json, run b218c860b7314a47b5d6b1803c666836: PostgreSQL 18.4, 124 tests, zero skips, stopped container. Actual logs contain Ran 124 tests and standalone OK. All receipt source hashes match both the working tree at readback and HEAD blobs with its documented UTF-8/line-ending normalization. ARCH-02/MAM-823 is Done; ARCH-03/MAM-824 is In Progress. Earlier pending-state notes above are historical.

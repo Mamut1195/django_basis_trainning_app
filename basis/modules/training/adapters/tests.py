@@ -12,7 +12,8 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from basis.bootstrap.training import training
-from basis.modules.training.adapters.django import DjangoSessionRepository, DjangoUnitOfWork
+from basis.bootstrap.transactions import DjangoUnitOfWork
+from basis.modules.training.adapters.django import DjangoSessionRepository
 from basis.modules.training.adapters.wire import encode_session
 from basis.modules.training.public import (
     BlockData,

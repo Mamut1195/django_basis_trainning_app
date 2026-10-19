@@ -8,6 +8,14 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from basis.modules.athletes.public import (
+    InvalidAthleteData,
+    SportData,
+    WellnessData,
+    valid_availability,
+    validate_sport,
+    validate_wellness,
+)
 from daily_trainning_app.strength_metrics import calculate_strength_metrics
 
 from .domain import SPORTS, internal_load, validate_metrics
@@ -52,11 +60,7 @@ class AthleteSettings(Owned):
     def clean(self):
         from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-        if (
-            not isinstance(self.availability, list)
-            or any(type(d) is not int or d not in range(1, 8) for d in self.availability)
-            or len(set(self.availability)) != len(self.availability)
-        ):
+        if not valid_availability(self.availability):
             raise ValidationError({"availability": "Usa días únicos de 1 a 7."})
         try:
             ZoneInfo(self.timezone_name)
@@ -97,20 +101,15 @@ class SportProfile(Owned):
         ]
 
     def clean(self):
-        if self.threshold is not None and (
-            not self.threshold_unit or not self.measured_on or not self.method
-        ):
-            raise ValidationError("Un umbral requiere unidad, fecha y método.")
-        allowed = {
-            "strength": set(),
-            "cardio": {"bpm"},
-            "running": {"bpm", "seconds_km"},
-            "cycling": {"bpm", "watts"},
-            "swimming": {"bpm", "seconds_100m"},
-            "hiking": {"bpm"},
-        }
-        if self.threshold_unit and self.threshold_unit not in allowed.get(self.sport, set()):
-            raise ValidationError("Unidad de umbral incompatible con la disciplina.")
+        try:
+            validate_sport(
+                SportData(
+                    self.sport, self.experience, self.threshold,
+                    self.threshold_unit, self.measured_on, self.method,
+                )
+            )
+        except InvalidAthleteData as error:
+            raise ValidationError(str(error)) from error
 
 
 class Measurement(Owned):
@@ -553,10 +552,17 @@ class Wellness(Owned):
         ]
 
     def clean(self):
-        if self.hrv_ms is not None and not self.hrv_method:
-            raise ValidationError("Indica el método de medición HRV.")
-        if self.pain_score is not None and self.pain_score > 0 and not self.pain_regions:
-            raise ValidationError("Indica dónde sientes dolor.")
+        try:
+            validate_wellness(
+                WellnessData(
+                    self.date, self.sleep_hours, self.sleep_quality, self.fatigue,
+                    self.stress, self.soreness, self.readiness, self.pain_regions,
+                    self.pain_score, self.resting_hr_bpm, self.hrv_ms,
+                    self.hrv_method, self.notes,
+                )
+            )
+        except InvalidAthleteData as error:
+            raise ValidationError(str(error)) from error
 
 
 class TrekTrip(Owned):

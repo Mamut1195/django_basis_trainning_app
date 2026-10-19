@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 
+from basis.bootstrap.accounts import identity
+from basis.modules.athletes.public import InvalidAthleteData, require_adult
 from daily_trainning_app.models import User as Athlete
 from daily_trainning_app.models import UserExerciseRM
 
@@ -35,10 +37,7 @@ class SignupForm(UserCreationForm):
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
-        if (
-            get_user_model().objects.filter(username=email).exists()
-            or Athlete.objects.filter(email__iexact=email).exists()
-        ):
+        if identity().email_in_use(email):
             raise ValidationError(
                 "Usa recuperación de acceso o contacta soporte si ya tienes un perfil."
             )
@@ -73,8 +72,10 @@ class AthleteForm(forms.ModelForm):
 
     def clean_edad(self):
         age = self.cleaned_data.get("edad")
-        if age is not None and not 18 <= age <= 120:
-            raise ValidationError("La aplicación está dirigida a personas adultas.")
+        try:
+            require_adult(age)
+        except InvalidAthleteData as error:
+            raise ValidationError(str(error)) from error
         return age
 
 

@@ -1,0 +1,123 @@
+"""Athlete composition and temporary ORM form/serializer compatibility bindings."""
+
+from collections.abc import Mapping
+
+from basis.bootstrap.transactions import DjangoUnitOfWork
+from basis.modules.athletes.adapters.django import (
+    DjangoAthleteAuthorization,
+    DjangoAthleteRecords,
+    preferences_data,
+    profile_data,
+    sport_data,
+    wellness_data,
+)
+from basis.modules.athletes.public import (
+    Athletes,
+    EditPreferences,
+    EditProfile,
+    MeasuredRMData,
+    MeasurementData,
+    RecordMeasurement,
+    RecordRM,
+    RecordSport,
+    RecordWellness,
+    RecordWorkout,
+    WorkoutData,
+)
+from basis.shared.identifiers import (
+    AccountId,
+    ExerciseId,
+    MeasuredRMId,
+    SportProfileId,
+    WellnessId,
+    WorkoutId,
+)
+from daily_trainning_app.models import User as Athlete
+from daily_trainning_app.models import UserExerciseRM
+from daily_trainning_app.models import WorkoutData as WorkoutRow
+from training.models import AthleteSettings, Measurement, SportProfile, Wellness
+
+
+def athletes() -> Athletes:
+    return Athletes(DjangoAthleteRecords(), DjangoAthleteAuthorization(), DjangoUnitOfWork)
+
+
+def save_profile(owner: int, row: Athlete) -> None:
+    athletes().edit_profile(EditProfile(AccountId(owner), profile_data(row)))
+
+
+def save_preferences(owner: int, row: AthleteSettings) -> None:
+    athletes().edit_preferences(EditPreferences(AccountId(owner), preferences_data(row)))
+
+
+def save_observation(owner: int, row: SportProfile | Wellness | Measurement) -> None:
+    service, account = athletes(), AccountId(owner)
+    if isinstance(row, SportProfile):
+        row.pk = service.record_sport(
+            RecordSport(
+                account, sport_data(row), SportProfileId(row.pk) if row.pk is not None else None
+            )
+        )
+    elif isinstance(row, Wellness):
+        row.pk = service.record_wellness(
+            RecordWellness(
+                account, wellness_data(row), WellnessId(row.pk) if row.pk is not None else None
+            )
+        )
+    else:
+        row.pk = service.record_measurement(
+            RecordMeasurement(account, MeasurementData(row.date, row.weight_kg, row.notes))
+        )
+
+
+def save_rm(owner: int, row: UserExerciseRM) -> None:
+    row.pk = athletes().record_rm(
+        RecordRM(
+            AccountId(owner),
+            MeasuredRMData(ExerciseId(row.exercise_id), row.peso_maximo_rm, row.fecha_registro),
+        )
+    )
+
+
+def write_legacy_rm(
+    owner: int, values: Mapping[str, object], row: UserExerciseRM | None = None
+) -> UserExerciseRM:
+    candidate = row if row is not None else UserExerciseRM()
+    for name, value in values.items():
+        setattr(candidate, name, value)
+    id = athletes().record_rm(
+        RecordRM(
+            AccountId(owner),
+            MeasuredRMData(
+                ExerciseId(candidate.exercise_id),
+                candidate.peso_maximo_rm,
+                candidate.fecha_registro,
+            ),
+            MeasuredRMId(row.pk) if row is not None else None,
+        )
+    )
+    return UserExerciseRM.objects.get(pk=id)
+
+
+def write_legacy_workout(
+    owner: int, values: Mapping[str, object], row: WorkoutRow | None = None
+) -> WorkoutRow:
+    candidate = row if row is not None else WorkoutRow()
+    for name, value in values.items():
+        setattr(candidate, name, value)
+    id = athletes().record_workout(
+        RecordWorkout(
+            AccountId(owner),
+            WorkoutData(
+                ExerciseId(candidate.exercise_id),
+                candidate.fecha,
+                candidate.sets,
+                candidate.reps,
+                candidate.peso,
+                candidate.rpe_objetivo,
+                candidate.rpe_real,
+            ),
+            WorkoutId(row.pk) if row is not None else None,
+        )
+    )
+    return WorkoutRow.objects.get(pk=id)

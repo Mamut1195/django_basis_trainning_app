@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH02_2026-10-19.md",
-    "execution_state": "Resumed at user request; ARCH-02 local checks verified, external Docker and Git completion pending",
+    "handoff": "docs/HANDOFF_ARCH03_2026-10-19.md",
+    "execution_state": "ARCH-02 integrated and verified; ARCH-03 candidate locally verified; external PostgreSQL and Git integration pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -780,25 +780,25 @@
         "code": "ARCH-02",
         "id": "MAM-823",
         "title": "ARCH-02 â€” Primer flujo de entrenamiento",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [
           "ARCH-01"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local: 25 pure tests, mypy 40/47 files, eight import contracts, Ruff, Django, no migrations; combined SQLite 124 tests with three PostgreSQL skips. Docker and Git integration NOT RUN",
-        "evidence": "docs/architecture/ARCH-02-VERIFICATION.md"
+        "integrated_commit": "2f3c95ebefedfcc082cdc074aaafefd4efc1aaa5",
+        "verification": "VERIFIED: PostgreSQL 18.4, 124 tests zero skips, source/HEAD hashes and stopped container checked",
+        "evidence": "docs/architecture/ARCH-02-RESULT.json"
       },
       {
         "code": "ARCH-03",
         "id": "MAM-824",
         "title": "ARCH-03 â€” Identidad, atleta y catÃ¡logo",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-02"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null
+        "verification": "VERIFIED local: 39 pure tests; mypy core52/Django68; 8 import contracts; Ruff; Django check; no migrations; SQLite139 with3 PostgreSQL-only skips. External script runtime, PostgreSQL139 zero skips and main integration NOT RUN",
+        "evidence": "docs/architecture/ARCH-03-VERIFICATION.md"
       },
       {
         "code": "ARCH-04",

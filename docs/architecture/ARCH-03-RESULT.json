@@ -1,0 +1,113 @@
+{
+    "status":  "VERIFIED",
+    "run_id":  "ac42bce0ac9a4fc795271b758fbf0959",
+    "checks":  {
+                   "architecture":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "pure-tests":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "core-types":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "django-types":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "imports":  {
+                                   "exit_code":  0,
+                                   "status":  "VERIFIED"
+                               },
+                   "ruff":  {
+                                "exit_code":  0,
+                                "status":  "VERIFIED"
+                            },
+                   "django-check":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "migrations":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "docker-access":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     },
+                   "postgres-start":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "loopback-binding":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "postgres-version":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "image-id":  {
+                                    "exit_code":  0,
+                                    "status":  "VERIFIED"
+                                },
+                   "postgres-tests":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      }
+               },
+    "tests":  139,
+    "skipped":  0,
+    "engine":  "postgres (PostgreSQL) 18.4 (Debian 18.4-1.pgdg13+1)",
+    "image_id":  "sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636",
+    "source_hashes":  {
+                          ".github/workflows/checks.yml":  "A42FFC8B54B8FC18BD8BCB7C0900EB41EABCCB664DB024F6F2D254D7AB0F136B",
+                          "basis/bootstrap/accounts.py":  "9CE7D852B70DDF09211147ABD789A32CE0CD261F94AE26A4D532CDEFFFA5C57A",
+                          "basis/bootstrap/athletes.py":  "A2CE0DBAD4DFFF4FD61182DA7904FF36D8F23C007B4AF6630A93CC9E303707C6",
+                          "basis/bootstrap/catalog.py":  "D96A1640B7C7CBBCDBF027505180CC107CE7B0D0D4F9EA0BFA6AD110F2034B10",
+                          "basis/bootstrap/training.py":  "9FF6889D64AA88BCFBC9A56B25904A548017F2E743E367F65FE5CD668F977DF8",
+                          "basis/bootstrap/transactions.py":  "1270E19B0E332C01432400A6D2C01BECD34A1198E325B984784EEB6C02876706",
+                          "basis/modules/accounts/adapters/django.py":  "8761F08F9881C22F48AB33F6DC894EE544BC4E5BA7CFB36A19D6F90ED417016B",
+                          "basis/modules/accounts/adapters/recovery.py":  "198605CD632FD6C995E81BAC9BCF7D4849BC7ED44E7BA2987A716A9BB9CC486D",
+                          "basis/modules/accounts/adapters/tests.py":  "B1463274B435E42DC4F8B8249FA4E409D52EA4FC6F222209CF7CD84B4702C31C",
+                          "basis/modules/accounts/application/identity.py":  "192EB31C53DB4A6501A67A50859DD8B9DE1CB4D7882AC7207BE9F52C76E21F52",
+                          "basis/modules/accounts/application/recovery.py":  "6ED03D2A2993DDD9DBAC722758C20420456B05D59B69B27C9C2D21DCCA53BCCA",
+                          "basis/modules/accounts/domain/identity.py":  "BC61FBE3B49FEEA506B4DCFB674E7BE55C6ECA93A45A8000840EDCA0BEB05ED0",
+                          "basis/modules/accounts/public.py":  "DF30C4C6161C6E0AAE092CC481022063D06C5F5DE2FDE92CB1786EF7099EC4C5",
+                          "basis/modules/athletes/adapters/django.py":  "B63C63FE3263F4B427FA23E88F8A784151C55FC147E01F949D3C0CE9935AF65A",
+                          "basis/modules/athletes/adapters/enrollment.py":  "304D8735705D0B72ED149D07E67B0451CAC7FDE28C0EDFC8F5B2A08C1F7D4043",
+                          "basis/modules/athletes/application/enrollment.py":  "AE768ED1B6AEBE0A6DABE8D36364D84A131A5213BFE81C78A752ED3BD702AC46",
+                          "basis/modules/athletes/application/records.py":  "266D6E44839FE7697031FC5E11F2DB37EB7D2618B129DAF5D15745ADDAA59C9B",
+                          "basis/modules/athletes/domain/records.py":  "0B4A495CBE99A69460E5E2DC88D6A16F0748FC4CDE5B4A1E7595835F1115C0C2",
+                          "basis/modules/athletes/public.py":  "157A26D2766CB18D32499956284FED54602B26187D4704682C103DE9CD900CBC",
+                          "basis/modules/billing/adapters/enrollment.py":  "74989BEDAF650B9EC8AA335940D9E00B1275A4D0EFCAD0C354BF2F19263376DE",
+                          "basis/modules/billing/application/enrollment.py":  "8B1BDBF7410779B45B05F14C03D6B5EF3FD24D381A3738253AA6306EB75CE5D2",
+                          "basis/modules/billing/public.py":  "2AD0F1294A13C95EE305C0049B4B37682535CED222410A247C4BCA9790F9D958",
+                          "basis/modules/catalog/adapters/django.py":  "56418FE5DE2E8105DCFBE7C9CE8DB9966D1E851F8B587BFA2C6346DF6F6FEF7A",
+                          "basis/modules/catalog/application/catalog.py":  "7446A1FFE781329253F632EC0D83A0AD5B7CC638D1C92A98ACD5092622D657C1",
+                          "basis/modules/catalog/domain/catalog.py":  "AB0B657733C07B3E353A2C5F3AB29B8BD9ABBCC50DBFA7FDD519B09DDA9BC7F3",
+                          "basis/modules/catalog/public.py":  "5F333230185686391DA0F2A4795265D5BF7116C4E7DB96A389B4C4F5596A62A2",
+                          "basis/modules/training/adapters/django.py":  "C705F31E3BFBA81B7D18F6CB0806FFC5AF750F9A90BD5DD1629AACBC03AD22FD",
+                          "basis/modules/training/adapters/tests.py":  "30CC97ED2768074E14836136DE316D338C4B38F562EEB341968E5691DFCD95DE",
+                          "basis/shared/identifiers.py":  "CEBF747FE47EE330472F0F377FDC869B9CF83BCF0CAC55FA6C2B815779821BBF",
+                          "basis/shared/text.py":  "407138DB8D56722D6826A1BCDF460B27AF4148E12439499C9D13C440639E7D95",
+                          "daily_trainning_app/api/serializers.py":  "64CB3B880FC5AB637FAC4B9BAEA1B464589D53A8BD2CDAFE0A8FAAAA0FF95680",
+                          "daily_trainning_app/api/views.py":  "3D9BF29BB350830D53BC235A8AD2D4313DE128E13B8CECA7E909016903D75517",
+                          "daily_trainning_app/models.py":  "CC2C8EE92641A7CA378F661666F2B03DBCB4359136C55A974B131BC2E9953A9B",
+                          "docs/architecture/ARCH-03-FILES.json":  "70125B5D4FCACAEAA5BD7AEAF42DFC0B90CA4AED77FE8F40C0AD9A083B4FA661",
+                          "scripts/Complete-Arch03.ps1":  "A56B6167E4A8AA8503DDC6EB01E5DBAB21E70133FE092A0C6F679DD3A1CCA68E",
+                          "scripts/Verify-Arch03.ps1":  "5E3AD00473372566C816AD7CAD40CC9527F4B907FA873A26D26DFCAA73869E79",
+                          "tests_architecture/identity_contract.py":  "E9E9841BF246FC0E38F1D7A489ED14F9C198AA4447AEBCCDF316A41AC27A1000",
+                          "tests_architecture/test_identity.py":  "E8180950C79F1149043CDF0169DE6AA973E316F1BE4FF18D9C5E690748ED15BB",
+                          "training/forms.py":  "1401437DB4D86D542ECD673EEEDCDD1CCF0F8FAE5659812CAF6C53FA8B635475",
+                          "training/management/commands/link_legacy_profile.py":  "F08CD9693E019F87B51DCAA9B21979575F4B5D95627CBAB9E42C2CE36DA8FFD1",
+                          "training/models.py":  "31E0A13583CAB4F563A6C909F40328D12C5811A369C8A26FCD21CAE31B55F9E9",
+                          "training/views.py":  "4DD091284B6D4FE030FD9725B85078644EE611D8D488DF64E173D5410716F700"
+                      },
+    "hash_mode":  "SHA256 strict UTF-8 without BOM, CRLF normalized to LF",
+    "container_stopped":  true,
+    "verified_at":  "2026-10-19T19:31:37.8144803Z"
+}
