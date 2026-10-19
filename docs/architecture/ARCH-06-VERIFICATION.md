@@ -42,3 +42,7 @@ ADR-002 records the user's updated goal: ARCH-09 removes daily_trainning_app and
 ## External integration gate
 
 Run scripts/Complete-Arch06.ps1 from external PowerShell. It checks main/base/empty index, self-tests native stderr and failing exit capture, repeats gates, runs all180 tests on an owned temporary Docker PostgreSQL18.4 container without host volumes, checks zero skips, stops the container and records source hashes/receipt. It commits only the explicit43-file manifest on arch/06-billing and fast-forwards main without push. Receipt: ARCH-06-RESULT.json; integration: .cache/arch06-integration.json. Only actual SHA/logs/hashes/committed completeness readback can close MAM-827 or start ARCH-07.
+
+## Main integration readback - 2026-10-19
+
+Earlier local-candidate/NOT RUN integration notes are historical. VERIFIED main/c5cc0c17d7f3070c81950a89ea8ccbdcdde696e6,180 PostgreSQL tests/no skips, actual logs standalone OK, every gate exit0, owned container stopped. ARCH-06-RESULT.json and .cache/arch06-integration.json agree on run136ec5dcf05f42d5b705540d62a6b9ad. All43 manifest paths exist in HEAD and every recorded normalized source hash matched both tree and HEAD before starting ARCH-07. MAM-827 Done. Remote CI/LIVE providers remain NOT RUN.

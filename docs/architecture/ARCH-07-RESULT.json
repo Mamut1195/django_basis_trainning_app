@@ -1,0 +1,118 @@
+{
+    "status":  "VERIFIED",
+    "run_id":  "524117c46a6149878edce8c22d124277",
+    "checks":  {
+                   "architecture":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "pure-tests":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "core-types":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "django-types":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "imports":  {
+                                   "exit_code":  0,
+                                   "status":  "VERIFIED"
+                               },
+                   "ruff":  {
+                                "exit_code":  0,
+                                "status":  "VERIFIED"
+                            },
+                   "django-check":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "migrations":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "docker-access":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     },
+                   "postgres-start":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "loopback-binding":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "postgres-version":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "image-id":  {
+                                    "exit_code":  0,
+                                    "status":  "VERIFIED"
+                                },
+                   "postgres-tests":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "static-assets":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     }
+               },
+    "tests":  199,
+    "skipped":  0,
+    "engine":  "postgres (PostgreSQL) 18.4 (Debian 18.4-1.pgdg13+1)",
+    "image_id":  "sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636",
+    "source_hashes":  {
+                          ".github/workflows/checks.yml":  "8C161F1B79A04647A8D242B8E095A15A840860CCBCFD0835A60A6A7BAE98BC44",
+                          "basis/bootstrap/coach.py":  "EB038E25F3FA912392A2079993D18547599A1413420D08255AE9CBE5DFB3F106",
+                          "basis/modules/accounts/adapters/coach.py":  "F26F020E58A960603246875D1E09C8CC4D01DC091AC58A9D70F3CA56934F36D6",
+                          "basis/modules/accounts/application/coach.py":  "A5BFDEF0492152EB9777CBF94FFB458A5984DADF83CECAE10034241ABD513078",
+                          "basis/modules/accounts/public.py":  "7FAB3B3419BE4F9881F740039B1BC0092A0052DAB04548088917F0B53D0D39BD",
+                          "basis/modules/athletes/adapters/coach.py":  "78D0FD6CB19F8464F359C9E8755C38907DA1B02B1BC9271D11126C532F9206B7",
+                          "basis/modules/athletes/application/coach.py":  "C1645A3345965DFA246253C3B0562FDD9598ECC48630D03C5EAFC2A4B133174B",
+                          "basis/modules/athletes/public.py":  "357B2212039741955472B2857D4DF0497326887263F15EC1C85FD0C07321E876",
+                          "basis/modules/billing/adapters/coach.py":  "A40E93575B7BD10D60826963BFAA54E991BF0C1A7328AF7313FC382E3A23F8EE",
+                          "basis/modules/billing/application/coach.py":  "5BE0C13AF1BDB65A31A1B0A80107D52BA0E5F632B6A4EC07F0DDFD1AD203AEA7",
+                          "basis/modules/billing/public.py":  "E5CE370F83500042E3A94167B1DC75222E0397321BF5D5F23D701BAA3DAA8408",
+                          "basis/modules/catalog/adapters/coach.py":  "5B9D357E8D1DEF2C0013563D959396EC7F837C67DF6CD1D7F9CD018348F91B7C",
+                          "basis/modules/catalog/application/coach.py":  "4379E77597E420140E0100A27A1C238FF965600193BBB2C40DFBCDF2E88CB120",
+                          "basis/modules/catalog/public.py":  "54FF09E6B5B2CBEF84E474D53CA61264294570EC37C679E4C40142112AF61956",
+                          "basis/modules/coach/adapters/context_wire.py":  "1F14B0E71095ABFCD0B0BB9A4BF9CDE20926CD7971E2BDD0539616F5CE20E620",
+                          "basis/modules/coach/adapters/jobs.py":  "ABDA85A7B1805DD5D1710744CC457539CB6FB5C2F12AAFBBB6316FEEB8B233F8",
+                          "basis/modules/coach/adapters/proposals.py":  "E85D708F7FCB26912799C3CE10F9CF152E43568A024E6A8880346F879B0DF129",
+                          "basis/modules/coach/adapters/provider.py":  "3C7583A767E60C838230669521EF887ADF7D4D3A477A3362562A61CDF82A8547",
+                          "basis/modules/coach/adapters/test_edges.py":  "343B2A1AC7948E1ABBE9BA3E2C48F05470422C52F816AFCAE93712FA2AF9C610",
+                          "basis/modules/coach/adapters/test_jobs.py":  "933B36D4F44005EACD7CD7BCFE430743D67D0E4AA6986FF22E6BB30B4B75EBFE",
+                          "basis/modules/coach/application/context.py":  "37C9848760C66858BFD70687E899A29DF6C235E49919E8C29BA0A4C1E95CE05C",
+                          "basis/modules/coach/application/jobs.py":  "EA2DD6714CEB38B42DCCEC1C3EC81A4FD3D9B39E0C447BE602BEA5C981A02382",
+                          "basis/modules/coach/application/proposals.py":  "D6D571F341081461147BE92F224565A88B6DB43210D603E99BB4AF5EED78A5AA",
+                          "basis/modules/coach/domain/context.py":  "3660BF74C79A1C2C28F0C1D35B87F850FC082DF5F2E18F2B123870158F089A9E",
+                          "basis/modules/coach/domain/jobs.py":  "09A6D23F283004D830AD77C56DEA666E4891C6CE649B04E9CA73C60D2685D250",
+                          "basis/modules/coach/domain/prompts.py":  "8B6A920A1EB68DE5BB005850991263D89903C54B7CD061216584C09852ADEE8B",
+                          "basis/modules/coach/domain/proposals.py":  "219905B69418D19E3725A62650881AB28C8DD0FA3D743EBCC6440AF2256F4B97",
+                          "basis/modules/coach/public.py":  "B5502B0ED3C0903B7446D5FB811D0041D759C73851E1F7896EAC7543CC7A7752",
+                          "basis/modules/training/adapters/coach.py":  "C95BD2E90F31FA575452570D8ECBBA7424EDAF7EB787075326A92CF6CBBC61D3",
+                          "basis/modules/training/application/coach.py":  "C84E971368DB177C35593EB89414D9E308C3280302B6281866227B67B818D312",
+                          "basis/modules/training/public.py":  "61E34240D78D2EC40682A98BAE7226D14B4BB71BB47AA4D65FD8E6B380240302",
+                          "basis/shared/identifiers.py":  "764DF81EB2B52C1B3E7566B259396165570484B6435E843A619197DD72C4F221",
+                          "docs/architecture/ARCH-07-FILES.json":  "84F48EE258252CC9F9EA4108EF8A11F6E195A0DAF181B0758469673DD46A03DA",
+                          "mypy-django.ini":  "C76D7A48B3969CD5A4C4B312FA47F279FA9BCCA6734E2E72A11E56719D8B4B18",
+                          "scripts/Complete-Arch07.ps1":  "D2C614A626560FB610BBAA8915DF98B4E69E518FBBD864406D8EF7570D9D715A",
+                          "scripts/Verify-Arch07.ps1":  "54F82087F6ED2B4A6B3AA8B601429187F4619706AEC1E0674E9277E4E5327997",
+                          "tests_architecture/coach_jobs_contract.py":  "C04953206C3FB613E8E0A4961996AE6E65A976E2CC8BEBCDD9894892756C5B85",
+                          "tests_architecture/test_coach_jobs.py":  "BB7F5CD2530D51B53FFADC0209D4570C0DD19206B47475CBF2911F2BB2BF04FE",
+                          "tests_architecture/test_coach_proposals.py":  "79152F9ECDD9E34BD840EDFE1AD406DC0633D5F62D0C35C854C44F47D775B491",
+                          "training/ai.py":  "2A5A6FA2B89792C3A248EC712B49E7D31F01AA0670677EE55FF58AA8F97D9357",
+                          "training/management/commands/process_ai_jobs.py":  "C5459D758BCDF4F7C8ED217F42BAF46C2E5B70A296B24C1DB8608AFAB6E2E9B6",
+                          "training/proposals.py":  "9F3B8F3F21E19631E2BC2EA20E1E743978B7BCE42D4F1A344CD9DF4275E2E883",
+                          "training/views.py":  "F5B74616CBE9427B06748E03F38C7BB38D303E3E434255CA90BB5CB002C01153"
+                      },
+    "hash_mode":  "SHA256 strict UTF-8 without BOM, CRLF normalized to LF",
+    "container_stopped":  true,
+    "verified_at":  "2026-10-19T23:19:12.3426502Z"
+}

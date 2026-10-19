@@ -1,5 +1,14 @@
 """Public execution contract. Infrastructure is composed by basis.bootstrap."""
 
+from .application.coach import (
+    CoachBasePlan,
+    CoachGoal,
+    CoachPlanning,
+    CoachRecentSession,
+    CoachVariables,
+    TrainingCoachContext,
+    TrainingCoachContexts,
+)
 from .application.execution import (
     Change,
     FinishSession,
@@ -107,6 +116,14 @@ from .domain.trekking import (
 )
 
 __all__ = (
+    "CoachGoal",
+    "CoachRecentSession",
+    "CoachBasePlan",
+    "TrainingCoachContext",
+    "CoachVariables",
+    "TrainingCoachContexts",
+    "CoachPlanning",
+
     "Change",
     "FinishSession",
     "ReadSession",

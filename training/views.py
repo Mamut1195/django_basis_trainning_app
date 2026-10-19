@@ -889,25 +889,17 @@ def job_detail(request, pk):
 
 @write_required
 def proposal_review(request, pk):
-    from .proposals import accept_proposal, validate_proposal
+    from .proposals import edit_and_accept_proposal, reject_proposal
 
     proposal = get_object_or_404(PlanProposal, pk=pk, owner=request.user)
     form = ProposalReviewForm(request.POST or None, content=proposal.content, owner=request.user)
     if request.method == "POST":
         if request.POST.get("decision") == "reject":
-            PlanProposal.objects.filter(pk=proposal.pk, status="pending").update(status="rejected")
+            reject_proposal(request.user, proposal.pk)
             return redirect("coach")
         if form.is_valid():
             try:
-                with transaction.atomic():
-                    proposal = PlanProposal.objects.select_for_update().get(pk=proposal.pk)
-                    if proposal.status != "pending":
-                        raise ValidationError("La propuesta ya se resolvió.")
-                    content = form.to_content()
-                    validate_proposal(request.user, content)
-                    proposal.content = content
-                    proposal.save()
-                    plan = accept_proposal(request.user, proposal.pk)
+                plan = edit_and_accept_proposal(request.user, proposal.pk, form.to_content())
                 return redirect("plan-detail", pk=plan.pk)
             except ValidationError as exc:
                 form.add_error(None, exc)

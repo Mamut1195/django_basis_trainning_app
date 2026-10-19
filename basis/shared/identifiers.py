@@ -3,6 +3,12 @@
 from typing import NewType
 from uuid import UUID
 
+JobId = NewType("JobId", UUID)
+UsagePeriodId = NewType("UsagePeriodId", int)
+TrialFundId = NewType("TrialFundId", int)
+AIRequestKey = NewType("AIRequestKey", UUID)
+ProposalId = NewType("ProposalId", int)
+
 AccountId = NewType("AccountId", int)
 AthleteId = NewType("AthleteId", int)
 SessionId = NewType("SessionId", UUID)

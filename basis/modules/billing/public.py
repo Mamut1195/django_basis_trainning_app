@@ -1,5 +1,6 @@
 """Supported billing contracts."""
 
+from .application.coach import CoachBilling
 from .application.enrollment import BillingEnrollment
 from .application.service import (
     Billing,
@@ -27,6 +28,7 @@ from .domain.records import (
 )
 
 __all__ = (
+    "CoachBilling",
     "BillingEnrollment",
     "Billing",
     "BillingRepository",

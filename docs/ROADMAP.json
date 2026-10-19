@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH06_2026-10-19.md",
-    "execution_state": "ARCH-01..05 integrated/verified; ARCH-06 locally verified, external PostgreSQL/main pending",
+    "handoff": "docs/HANDOFF_ARCH07_2026-10-19.md",
+    "execution_state": "ARCH-01..06 integrated/verified; ARCH-07 locally verified, external PostgreSQL/main pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -828,25 +828,25 @@
         "code": "ARCH-06",
         "id": "MAM-827",
         "title": "ARCH-06 â€” FacturaciÃ³n",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [
           "ARCH-05"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local:72 pure; mypy70/102;8 imports; AST/Ruff/Django/no migrations/static;180 SQLite with3 PostgreSQL-only skips;43-file manifest and stable source hashes. External PostgreSQL/main NOT RUN",
-        "evidence": "docs/architecture/ARCH-06-VERIFICATION.md"
+        "integrated_commit": "c5cc0c17d7f3070c81950a89ea8ccbdcdde696e6",
+        "verification": "VERIFIED:180 PostgreSQL/no skips; stopped container;43 committed paths; all normalized tree/HEAD hashes; run136ec5dcf05f42d5b705540d62a6b9ad",
+        "evidence": "docs/architecture/ARCH-06-RESULT.json"
       },
       {
         "code": "ARCH-07",
         "id": "MAM-828",
         "title": "ARCH-07 â€” Entrenador IA",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-06"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null
+        "verification": "VERIFIED local:91 pure; mypy85/129;8 imports; AST/Ruff/Django/no migrations/static;199 SQLite with4 PostgreSQL-only skips;40 parity cases zero differences;53-file manifest/stable hashes. External PostgreSQL/main NOT RUN",
+        "evidence": "docs/architecture/ARCH-07-VERIFICATION.md"
       },
       {
         "code": "ARCH-08",

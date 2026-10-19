@@ -1,5 +1,6 @@
 """Supported identity commands and results."""
 
+from .application.coach import AccountLocks
 from .application.identity import (
     ConsumeAttempt,
     Identity,
@@ -11,6 +12,7 @@ from .application.recovery import RecoverPassword, Recovery
 from .domain.identity import Account, AccountUnavailable, InvalidVerification
 
 __all__ = (
+    "AccountLocks",
     "LinkLegacyProfile",
     "RecoverPassword",
     "Recovery",

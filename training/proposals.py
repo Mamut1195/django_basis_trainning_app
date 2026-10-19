@@ -1,32 +1,53 @@
+"""Legacy entry bindings to typed proposal and common planning cases."""
 
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.db import transaction
 
+from basis.bootstrap.coach import proposals
 from basis.bootstrap.planning import build_proposal
+from basis.modules.coach.application.proposals import AcceptProposal, EditAndAcceptProposal
+from basis.modules.coach.domain.jobs import CoachInvalid
+from basis.modules.coach.domain.proposals import ProposalUnavailable
+from basis.modules.training.adapters.plan_wire import proposal_definition
+from basis.modules.training.public import InvalidPlanning
+from basis.shared.identifiers import AccountId, ProposalId
 
-from .access import require_write_access
 from .models import PlanProposal, TrainingPlan
 
 
-def build_plan(owner, content, previous=None):
+def build_plan(
+    owner: AbstractUser, content: object, previous: TrainingPlan | None = None
+) -> TrainingPlan | None:
     return build_proposal(owner.pk, content, previous.pk if previous else None)
 
 
-def validate_proposal(owner, content):
+def validate_proposal(owner: AbstractUser, content: object) -> None:
     build_proposal(owner.pk, content, preview=True)
 
 
-@transaction.atomic
-def accept_proposal(owner, proposal_id):
-    require_write_access(owner)
-    proposal = PlanProposal.objects.select_for_update().get(pk=proposal_id, owner=owner)
-    if proposal.status == "accepted":
-        return proposal.accepted_plan
-    if proposal.status != "pending":
-        raise ValidationError("Esta propuesta ya fue rechazada.")
-    if proposal.base_plan_id and TrainingPlan.objects.filter(previous=proposal.base_plan).exists():
-        raise ValidationError("El plan cambió desde la propuesta. Revisa una nueva versión.")
-    plan = build_plan(owner, proposal.content, previous=proposal.base_plan)
-    proposal.status, proposal.accepted_plan = "accepted", plan
-    proposal.save()
-    return plan
+def accept_proposal(owner: AbstractUser, proposal_id: int) -> TrainingPlan:
+    try:
+        result = proposals().accept(AcceptProposal(AccountId(owner.pk), ProposalId(proposal_id)))
+        return TrainingPlan.objects.get(pk=result, owner_id=owner.pk)
+    except ProposalUnavailable as error:
+        raise PlanProposal.DoesNotExist from error
+    except (CoachInvalid, InvalidPlanning) as error:
+        raise ValidationError(str(error)) from None
+
+
+def edit_and_accept_proposal(
+    owner: AbstractUser, proposal_id: int, content: object
+) -> TrainingPlan:
+    try:
+        result = proposals(content).edit_and_accept(
+            EditAndAcceptProposal(
+                AccountId(owner.pk), ProposalId(proposal_id), proposal_definition(content)
+            )
+        )
+        return TrainingPlan.objects.get(pk=result, owner_id=owner.pk)
+    except (CoachInvalid, InvalidPlanning) as error:
+        raise ValidationError(str(error)) from None
+
+
+def reject_proposal(owner: AbstractUser, proposal_id: int) -> None:
+    proposals().reject(AcceptProposal(AccountId(owner.pk), ProposalId(proposal_id)))

@@ -1,6 +1,7 @@
 """Supported athlete commands, values and shared enrollment contract."""
 
 from .application.billing import BillingProfile, BillingProfiles
+from .application.coach import AthleteCoachContext, AthleteCoachContexts
 from .application.enrollment import AthleteEnrollment
 from .application.records import (
     Athletes,
@@ -32,6 +33,8 @@ from .domain.records import (
 )
 
 __all__ = (
+    "AthleteCoachContext",
+    "AthleteCoachContexts",
     "BillingProfile",
     "BillingProfiles",
     "AthleteEnrollment",
