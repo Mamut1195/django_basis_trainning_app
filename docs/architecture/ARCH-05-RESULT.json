@@ -1,0 +1,100 @@
+{
+    "status":  "VERIFIED",
+    "run_id":  "5979be3c5b6447c6bbeee21f4e6cd0a7",
+    "checks":  {
+                   "architecture":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "pure-tests":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "core-types":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "django-types":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "imports":  {
+                                   "exit_code":  0,
+                                   "status":  "VERIFIED"
+                               },
+                   "ruff":  {
+                                "exit_code":  0,
+                                "status":  "VERIFIED"
+                            },
+                   "django-check":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "migrations":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "docker-access":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     },
+                   "postgres-start":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "loopback-binding":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "postgres-version":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "image-id":  {
+                                    "exit_code":  0,
+                                    "status":  "VERIFIED"
+                                },
+                   "postgres-tests":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      }
+               },
+    "tests":  158,
+    "skipped":  0,
+    "engine":  "postgres (PostgreSQL) 18.4 (Debian 18.4-1.pgdg13+1)",
+    "image_id":  "sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636",
+    "source_hashes":  {
+                          ".github/workflows/checks.yml":  "3593AF21345CB2B458142DACA57E2B61C4FE6EC9F1EA13581D4FABE157020851",
+                          "basis/bootstrap/progress.py":  "C3283A2191303928068889A9F4AA42408D93BCDC43379AF77D79A8BF1802863D",
+                          "basis/modules/training/adapters/metrics.py":  "57B564E1983B85AFE5848C24BA38A7D1B9C613F27B09D948FB166C867EB92439",
+                          "basis/modules/training/adapters/progress.py":  "D70F559408D76424C5DDA9BAE8DB7E6F0B7978D8F2832B3778B6223A17753A46",
+                          "basis/modules/training/adapters/progress_wire.py":  "8A268533A1155455B9EB01A69EB2B63B9ADFB85E34FFB811596A18214DEAB25C",
+                          "basis/modules/training/adapters/test_metrics.py":  "4F29FA631BE0C724D9BA3A0A9515C13862BA427293796EB8ABD77AAD662A78F3",
+                          "basis/modules/training/adapters/test_progress.py":  "2B1F66BDCB3E73A487670B3ADBC5B0C5A5598DA81BA79DC527C161FCB6A30484",
+                          "basis/modules/training/application/progress.py":  "EDDFF177F5402EF8037C5BC56B875B7295EF768B8D62B601A755472E498BD75F",
+                          "basis/modules/training/domain/progress.py":  "AB54511E621D5E96E01C8B00A811F498B2B907164550D3CF578A7ADEEA14BCAA",
+                          "basis/modules/training/domain/sports.py":  "56E8F5A244316AFC60BB883F9EB0E6D7E34FA011A92B06F526A88A1356065848",
+                          "basis/modules/training/domain/strength.py":  "8BECE5E241B9967225B85FB32D925A34418FF50D11E2788BC5D6D44B923B5367",
+                          "basis/modules/training/domain/trekking.py":  "883240E37E1CD69AF61E81E626C5CCF5FBAC47099629C547BDD42DE7051D400B",
+                          "basis/modules/training/public.py":  "A342A986F47E7C796613ECBF73C7110CC856A5FD5017EFA98D9D14B0A7545ABF",
+                          "basis/shared/identifiers.py":  "58A17E190EF879361CDD0ACE86FC2139BECB0E3F64AADE768BEC4F41EFD6C0F3",
+                          "daily_trainning_app/models.py":  "E025A69CB4A3B9858827C511DFD6640A094C55B68DC5263B97E956E3B1B03C30",
+                          "daily_trainning_app/strength_metrics.py":  "DFCDC47271F2DB3C3BE9448AF167082E18B23348E4CC27D608892708EBB11743",
+                          "docs/architecture/ARCH-05-FILES.json":  "9E64AD40F0E30E2FD5F5D41C09F0AA38606B617E72EB10038C94A14E46DF5A86",
+                          "mypy-django.ini":  "3BA15ABA2D2A2DD76A7D16D58F9ECC1E9CF2ED7B12F774CFE82AD22F472EDEF7",
+                          "scripts/Complete-Arch05.ps1":  "F93C5BE4400CFF4D99A2AEE02E1A5816A64FF5D21B0AE8965818D21AABC98632",
+                          "scripts/Verify-Arch05.ps1":  "67E9F6A2106C22FE9B03BB4A4FEB693C78988D97A6C91C3B40D022073F78EFE4",
+                          "tests_architecture/progress_contract.py":  "79141630941F632B56C4AEE3FE50D23BBEA60215AA65EF19CC03575AE76D042A",
+                          "tests_architecture/test_progress.py":  "C387F9DDDF32C0C14AA678FEB41B3FFE3EFE785ACD70E8C5E3D96C44304D1DA2",
+                          "tests_architecture/test_sport_metrics.py":  "8EF959826C31ACC61AA86200614645AA206F63BE6D1FDB209C459B540A8D1E67",
+                          "tests_architecture/test_strength_metrics.py":  "9115651030B8115CC8F27C16F3AD679D54DFCC8CD5DCA083D780CAD3B84F113C",
+                          "training/domain.py":  "1B507913FFDFA8F8242B5F09C8B28B2021E494A2E1EDB5684FADA8D6AD0FA86D",
+                          "training/forms.py":  "1D4CA5B1E275A9D8E15C97D92EC600CA262D7B8CD6883EECD253E0B30CA82462",
+                          "training/models.py":  "B85E97DA3004EAD41832FC6822A9AA430147B7C501DF9A63EC0EA7BD0BE8C061",
+                          "training/services.py":  "6C6018DC2204436FD54671510AE449584302545D319ABBAABA90847F22715411",
+                          "training/views.py":  "29D4FFE01DEF7861EE4409C4C1E94337D36A0E4078A78B598EA80B7C0DCB5FA5"
+                      },
+    "hash_mode":  "SHA256 strict UTF-8 without BOM, CRLF normalized to LF",
+    "container_stopped":  true,
+    "verified_at":  "2026-10-19T20:14:21.8798428Z"
+}

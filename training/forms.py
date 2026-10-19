@@ -5,10 +5,10 @@ from django.core.exceptions import ValidationError
 
 from basis.bootstrap.accounts import identity
 from basis.modules.athletes.public import InvalidAthleteData, require_adult
+from basis.modules.training.public import SPORTS, VARIABLES
 from daily_trainning_app.models import User as Athlete
 from daily_trainning_app.models import UserExerciseRM
 
-from .domain import SPORTS, VARIABLES
 from .models import (
     AthleteSettings,
     Cycle,
@@ -260,7 +260,7 @@ class MetricsForm(forms.Form):
         self.sport = sport
 
     def clean(self):
-        from .domain import validate_metrics
+        from basis.modules.training.adapters.metrics import validate_metrics
 
         return validate_metrics(self.sport, super().clean())
 

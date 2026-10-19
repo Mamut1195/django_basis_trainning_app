@@ -15,6 +15,7 @@ from basis.modules.athletes.public import (
     require_unchanged_rm,
 )
 from basis.modules.catalog.public import valid_muscle_names
+from basis.modules.training.public import ReferenceContext, reference_is_frozen, reference_matches
 from basis.shared.identifiers import AthleteId, ExerciseId
 from basis.shared.text import normalized_name
 
@@ -298,9 +299,8 @@ class WorkoutData(models.Model):
         same_context = previous and all(
             previous[name] == getattr(self, name) for name in ("user_id", "exercise_id", "fecha")
         )
-        if same_context and (
-            previous["rm_referencia_id"] is not None
-            or previous["metrics_version"] in {METRICS_VERSION, "legacy-volume-v2"}
+        if previous and reference_is_frozen(
+            bool(same_context), previous["rm_referencia_id"], previous["metrics_version"]
         ):
             if self.rm_referencia_id not in (None, previous["rm_referencia_id"]):
                 raise ValidationError({"rm_referencia": "La referencia histórica es estable."})
@@ -326,10 +326,9 @@ class WorkoutData(models.Model):
                     .order_by("-fecha_registro", "-pk")
                     .first()
                 )
-        if reference and (
-            reference.user_id != self.user_id
-            or reference.exercise_id != self.exercise_id
-            or reference.fecha_registro > self.fecha
+        if reference and not reference_matches(
+            ReferenceContext(AthleteId(reference.user_id), ExerciseId(reference.exercise_id), reference.fecha_registro),
+            ReferenceContext(AthleteId(self.user_id), ExerciseId(self.exercise_id), self.fecha),
         ):
             raise ValidationError({"rm_referencia": "Referencia RM ajena, incompatible o futura."})
         return reference

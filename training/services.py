@@ -3,22 +3,19 @@
 import hashlib
 import json
 import uuid
-from collections import defaultdict
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import F, Q
-from django.utils import timezone
 
 from basis.bootstrap import planning
+from basis.bootstrap import progress as progress_application
 from basis.bootstrap import training as execution
 from basis.modules.training.adapters.wire import encode_session
 from basis.modules.training.public import ExecutionConflict, InvalidExecution, Unavailable
 
 from .access import require_write_access
-from .domain import SPORT_LABELS
 from .models import (
     Block,
     Interval,
@@ -153,92 +150,8 @@ def revise_plan(owner, plan):
 
 
 def progress_report(owner):
-    sessions = Session.objects.filter(owner=owner, status="completed").prefetch_related(
-        "blocks__sets", "blocks__intervals"
-    )
-    by_sport = defaultdict(
-        lambda: {
-            "sessions": set(),
-            "distance_m": Decimal(0),
-            "distance_known": 0,
-            "ascent_m": Decimal(0),
-            "ascent_known": 0,
-            "external_volume_kg": Decimal(0),
-            "sets_known": 0,
-        }
-    )
-    loads = defaultdict(lambda: {"value": Decimal(0), "known": 0, "missing": 0})
-    for session in sessions:
-        load = loads[session.duration_protocol]
-        if session.load is None:
-            load["missing"] += 1
-        else:
-            load["known"] += 1
-            load["value"] += session.load
-        for block in session.blocks.all():
-            row = by_sport[block.sport]
-            row["sessions"].add(session.pk)
-            # Block totals are authoritative; interval details are never added twice.
-            for metric in ("distance_m", "ascent_m"):
-                if block.actual.get(metric) is not None:
-                    row[metric] += Decimal(block.actual[metric])
-                    row["distance_known" if metric == "distance_m" else "ascent_known"] += 1
-            for strength_set in block.sets.all():
-                volume = strength_set.external_volume_kg
-                if volume is not None:
-                    row["external_volume_kg"] += volume
-                    row["sets_known"] += 1
-    sports = []
-    for sport, row in by_sport.items():
-        sports.append(
-            {
-                "sport": sport,
-                "label": SPORT_LABELS[sport],
-                "sessions": len(row["sessions"]),
-                "distance_m": row["distance_m"] if row["distance_known"] else None,
-                "ascent_m": row["ascent_m"] if row["ascent_known"] else None,
-                "external_volume_kg": row["external_volume_kg"] if row["sets_known"] else None,
-            }
-        )
-    scheduled = (
-        PlannedSession.objects.filter(owner=owner, date__lte=timezone.localdate())
-        .filter(
-            Q(executions__status="completed")
-            | Q(plan__next_version__isnull=True)
-            | Q(date__lt=F("plan__next_version__created_at__date"))
-        )
-        .distinct()
-    )
-    expected = scheduled.count()
-    completed = scheduled.filter(executions__status="completed").distinct().count()
-    return {
-        "sports": sports,
-        "loads": [
-            {"protocol": k, "label": "Tiempo total" if k == "elapsed" else "Tiempo activo", **v}
-            for k, v in loads.items()
-        ],
-        "sessions": sessions.count(),
-        "scheduled_past": expected,
-        "completed_scheduled": completed,
-        "adherence_percent": round(completed / expected * 100, 1) if expected else None,
-        "method": "session-rpe-v1; total de bloque; sin suma entre deportes",
-    }
+    return progress_application.report(owner.pk)
 
 
 def trip_summary(trip):
-    stages = list(trip.stages.select_related("session").prefetch_related("session__blocks"))
-    totals = {}
-    for key in ("distance_m", "ascent_m", "descent_m", "duration_seconds", "moving_seconds"):
-        values = [
-            Decimal(b.actual[key])
-            for s in stages
-            if s.session.status == "completed"
-            for b in s.session.blocks.all()
-            if b.sport == "hiking" and b.actual.get(key) is not None
-        ]
-        totals[key] = sum(values, Decimal(0)) if values else None
-    return {
-        "stages": len(stages),
-        "completed": sum(s.session.status == "completed" for s in stages),
-        "totals": totals,
-    }
+    return progress_application.trip_summary(trip.owner_id, trip.pk)

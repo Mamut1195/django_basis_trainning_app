@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH04_2026-10-19.md",
-    "execution_state": "ARCH-03 integrated/verified; ARCH-04 locally implemented, external PostgreSQL/main gates pending",
+    "handoff": "docs/HANDOFF_ARCH05_2026-10-19.md",
+    "execution_state": "ARCH-04 integrated/verified; ARCH-05 locally verified after two-executor orchestration; PostgreSQL/main pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -804,25 +804,25 @@
         "code": "ARCH-04",
         "id": "MAM-825",
         "title": "ARCH-04 â€” PlanificaciÃ³n y versiones",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [
           "ARCH-03"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local:48 pure; mypy56/74; eight import contracts; Ruff; Django/no migrations;148 SQLite with3 PostgreSQL-only skips. PostgreSQL/main NOT RUN",
-        "evidence": "docs/architecture/ARCH-04-VERIFICATION.md"
+        "integrated_commit": "20cc32ca25a905cbb20a3e6707d92ae74797c573",
+        "verification": "VERIFIED: PostgreSQL18.4,148 tests/no skips; stopped container;26 files and all normalized tree/HEAD hashes",
+        "evidence": "docs/architecture/ARCH-04-RESULT.json"
       },
       {
         "code": "ARCH-05",
         "id": "MAM-826",
         "title": "ARCH-05 â€” MÃ©tricas y multideporte",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-04"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null
+        "verification": "VERIFIED local:61 pure; mypy65/87;8 imports; AST/Ruff/Django/no migrations;158 SQLite with3 PostgreSQL-only skips;2028 parity cases zero differences. External PostgreSQL/main NOT RUN",
+        "evidence": "docs/architecture/ARCH-05-VERIFICATION.md"
       },
       {
         "code": "ARCH-06",

@@ -21,3 +21,7 @@ WorkoutId = NewType("WorkoutId", int)
 GoalId = NewType("GoalId", int)
 CycleId = NewType("CycleId", int)
 LineageId = NewType("LineageId", UUID)
+
+TrekTripId = NewType("TrekTripId", int)
+
+TrekStageId = NewType("TrekStageId", int)

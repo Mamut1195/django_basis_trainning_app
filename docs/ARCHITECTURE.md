@@ -1,10 +1,10 @@
 # Arquitectura y límites de operación
 
-Estado 2026-10-19: ARCH-03 integrado y verificado en `main/ddcf178`, 139 pruebas PostgreSQL sin omisiones. ARCH-04 implementado localmente; PostgreSQL e integración pendientes. [Handoff ARCH-04](HANDOFF_ARCH04_2026-10-19.md).
+Estado 2026-10-19: ARCH-04 integrado y verificado en `main/20cc32c`,148 pruebas PostgreSQL sin omisiones. ARCH-05 implementado localmente mediante dos ejecutores y orquestación central; PostgreSQL e integración pendientes. [Handoff ARCH-05](HANDOFF_ARCH05_2026-10-19.md).
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. Arquitectura antes de retomar aceptación funcional. ARCH-01, ARCH-02 y ARCH-03 están integrados y verificados. ARCH-04/MAM-825 tiene implementación local pendiente de PostgreSQL e integración. Los límites reservados de etapas posteriores no representan funcionalidades migradas. No se ha cambiado el esquema ni el registro de modelos Django.
+**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01/02/03/04 integrados y verificados; ARCH-05/MAM-826 local y pendiente de PostgreSQL/main. Arquitectura antes de retomar aceptación funcional. No cambia el esquema ni el registro de modelos Django.
 
 `basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
@@ -106,3 +106,11 @@ Planning coordinates goal creation, cycles, scheduling, rescheduling with revisi
 Revision locks the original plan, preserves its lineage/version relationship, copies all cycles and only future schedules without executions. Old schedules, prescriptions, measured RM references and results remain intact. Target/actual fields stay distinct, including zero observations. Revisions of an empty scheduled prescription retain the existing validation failure rather than inventing blocks. Typed definitions use immutable tuples and private instance copies, so changing source input cannot alter history.
 
 Shared fake/Django repository tests cover creation, preview rollback and revision/history. Additional real tests cover detailed strength prescriptions and frozen RM, foreign RM rollback, source-input mutation, manual cycle/schedule forms and stale rescheduling. [Plan](architecture/ARCH-04-PLAN.md), [verification](architecture/ARCH-04-VERIFICATION.md). ARCH-05 waits for independent PostgreSQL/commit readback.
+
+## ARCH-05: metrics, progress and multisport
+
+Pure strength/sport policies now define Decimal arithmetic, overflow/rounding/effort eligibility, detailed external-volume/estimate rules, repetition prescriptions and historical RM identity/frozen-context decisions. Sport variables/units/ranges, pace, measured time/load and hiking consistency rules share typed execution Metric/MetricName values. Loose input conversion and Django error translation live in adapters; original strength metric version and reference selection/save behavior remain stable.
+
+Progress/application consumes typed repository snapshots and controlled clock; aggregates authoritative block totals without adding intervals again, keeps sport/protocol ordering and separate units, preserves zero versus unknown and historical adherence across version replacement dates. Trekking adds typed trip/stage writes with explicit UoW, owner/hiking/date-order validation shared with model/form hooks, and typed summary projections. Existing HTTP/report dictionaries are presentation adapters; no public format changed.
+
+Two completed compatibility files (training/domain.py and daily_trainning_app/strength_metrics.py) are strictly checked and removed from pending inventory. Four exact silent legacy frontiers remain; mixed model/view/service files are still infrastructure pending their later retirement. [Plan](architecture/ARCH-05-PLAN.md), [evidence](architecture/ARCH-05-VERIFICATION.md). One combined delivery follows two disjoint executors and independent primary verification; no ARCH-06 before main readback. No programs functionality or schema change.

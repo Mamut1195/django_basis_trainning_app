@@ -16,20 +16,35 @@ from basis.modules.athletes.public import (
     validate_sport,
     validate_wellness,
 )
+from basis.modules.training.adapters.metrics import (
+    estimated_1rm_legacy as estimated_1rm,
+)
+from basis.modules.training.adapters.metrics import (
+    external_volume_legacy as external_volume,
+)
+from basis.modules.training.adapters.metrics import (
+    internal_load_legacy as internal_load,
+)
+from basis.modules.training.adapters.metrics import (
+    validate_metrics,
+)
 from basis.modules.training.public import (
+    SPORTS,
     CycleDefinition,
     CycleKind,
     GoalData,
     InvalidPlanning,
+    InvalidTrekking,
     ScheduledDefinition,
+    StageNeighbour,
     validate_cycle,
     validate_dates,
     validate_goal,
+    validate_repetition_prescription,
     validate_schedule,
+    validate_stage,
 )
-from daily_trainning_app.strength_metrics import calculate_strength_metrics
-
-from .domain import SPORTS, internal_load, validate_metrics
+from basis.shared.identifiers import AccountId
 
 
 class ValidatedModel(models.Model):
@@ -433,14 +448,13 @@ class StrengthSet(ValidatedModel):
         ordering = ["order", "pk"]
 
     def clean(self):
-        if (self.target_reps_min is None) != (self.target_reps_max is None) or (
-            self.target_reps_min is not None and self.target_reps_min > self.target_reps_max
-        ):
-            raise ValidationError("Indica un rango de repeticiones completo y ordenado.")
-        if self.target_reps is not None and self.target_reps_min is not None:
-            raise ValidationError("Usa repeticiones fijas o un rango, no ambos.")
-        if self.target_percent_rm is not None and not self.rm_reference_id:
-            raise ValidationError("El porcentaje RM requiere una referencia medida.")
+        try:
+            validate_repetition_prescription(
+                self.target_reps, self.target_reps_min, self.target_reps_max,
+                self.target_percent_rm, bool(self.rm_reference_id),
+            )
+        except ValueError as error:
+            raise ValidationError(str(error)) from error
         if self.block.sport != "strength":
             raise ValidationError("Las series de fuerza requieren un bloque de fuerza.")
         if self.block.planned_id and any(
@@ -466,29 +480,12 @@ class StrengthSet(ValidatedModel):
 
     @property
     def external_volume_kg(self):
-        if self.load_type != "external" or self.actual_kg is None or self.actual_reps is None:
-            return None
-        return calculate_strength_metrics(
-            sets=1, reps=self.actual_reps, weight_kg=self.actual_kg
-        ).load_kg_reps
+        return external_volume(self.load_type, self.actual_kg, self.actual_reps)
 
     @property
     def estimated_1rm(self):
-        if (
-            self.load_type != "external"
-            or self.kind != "work"
-            or self.actual_rpe != 10
-            or not self.actual_kg
-            or not self.actual_reps
-            or self.actual_reps > 10
-        ):
-            return None
-        return calculate_strength_metrics(
-            sets=1,
-            reps=self.actual_reps,
-            weight_kg=self.actual_kg,
-            observed_rpe=self.actual_rpe,
-        ).estimated_1rm_kg
+        return estimated_1rm(self.load_type, self.kind, self.actual_kg, self.actual_reps, self.actual_rpe)
+
 
 
 class Interval(ValidatedModel):
@@ -611,17 +608,17 @@ class TrekStage(ValidatedModel):
     def clean(self):
         if not self.trip_id or not self.session_id:
             return
-        if self.trip.owner_id != self.session.owner_id:
-            raise ValidationError("La etapa pertenece a otra cuenta.")
-        if not self.session.blocks.filter(sport="hiking").exists():
-            raise ValidationError("La etapa debe tener al menos un bloque de hiking.")
-        neighbours = self.trip.stages.exclude(pk=self.pk).select_related("session")
-        if any(
-            (s.order < self.order and s.session.date > self.session.date)
-            or (s.order > self.order and s.session.date < self.session.date)
-            for s in neighbours
-        ):
-            raise ValidationError("Las fechas de etapas deben seguir su orden.")
+        try:
+            validate_stage(
+                AccountId(self.trip.owner_id), AccountId(self.session.owner_id),
+                self.session.blocks.filter(sport="hiking").exists(), self.order,
+                self.session.date,
+                tuple(StageNeighbour(stage.order, stage.session.date) for stage in
+                      self.trip.stages.exclude(pk=self.pk).select_related("session")),
+            )
+        except InvalidTrekking as error:
+            raise ValidationError(str(error)) from error
+
 
 
 class BillingAccount(models.Model):

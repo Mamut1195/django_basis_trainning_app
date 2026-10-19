@@ -1,0 +1,21 @@
+{
+  "strength_cases": 1326,
+  "strength_differences": 0,
+  "sport_cases": 562,
+  "sport_differences": 0,
+  "pace_cases": 50,
+  "pace_differences": 0,
+  "load_cases": 90,
+  "load_differences": 0,
+  "examples": [],
+  "baseline_commit": "20cc32ca25a905cbb20a3e6707d92ae74797c573",
+  "status": "VERIFIED",
+  "method": "Exact HEAD baseline source versus current facades; values/errors compared; three Decimal contexts for strength; deterministic fixed/random cases",
+  "source_hashes": {
+    "basis/modules/training/domain/strength.py": "8bece5e241b9967225b85fb32d925a34418ff50d11e2788bc5d6d44b923b5367",
+    "basis/modules/training/domain/sports.py": "56e8f5a244316afc60bb883f9eb0e6d7e34fa011a92b06f526a88a1356065848",
+    "basis/modules/training/adapters/metrics.py": "57b564e1983b85afe5848c24ba38a7d1b9c613f27b09d948fb166c867eb92439",
+    "training/domain.py": "1b507913ffdfa8f8242b5f09c8b28b2021e494a2e1edb5684fada8d6ad0fa86d",
+    "daily_trainning_app/strength_metrics.py": "dfcdc47271f2db3c3be9448af167082e18b23348e4cc27d608892708ebb11743"
+  }
+}

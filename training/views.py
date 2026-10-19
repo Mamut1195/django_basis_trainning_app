@@ -27,6 +27,7 @@ from basis.bootstrap.planning import (
     save_manual_plan,
     save_scheduled,
 )
+from basis.bootstrap.progress import save_stage, save_trip
 from basis.bootstrap.training import edit_revision
 from basis.modules.accounts.public import (
     AccountUnavailable,
@@ -730,7 +731,8 @@ def owned_new(request, resource):
             instance = form.save(commit=False)
             instance.pk = save_goal(request.user.pk, instance)
         else:
-            instance = form.save()
+            instance = form.save(commit=False)
+            instance.pk = save_trip(request.user.pk, instance)
         return (
             redirect("trip-detail", pk=instance.pk)
             if resource == "trip"
@@ -758,7 +760,7 @@ def stage_new(request, pk):
     trip = get_object_or_404(TrekTrip, pk=pk, owner=request.user)
     form = TrekStageForm(request.POST or None, trip=trip)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        save_stage(request.user.pk, form.save(commit=False))
         return redirect("trip-detail", pk=pk)
     return render(
         request, "training/form.html", {"title": "Añadir etapa de trekking", "form": form}

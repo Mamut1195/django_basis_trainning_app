@@ -4,7 +4,7 @@ Migrate BASIS serially to a strict typed hexagonal Django/PostgreSQL monolith, p
 
 # Context
 
-2026-10-19: ARCH-01/02/03 integrated and verified; main/ddcf178d6a5c8c4793e3672a95dbf64fdffe2b91, PostgreSQL139 tests/zero skips with receipt/log/HEAD hash readback. MAM-824 Done. ARCH-04/MAM-825 is a locally verified planning candidate awaiting external PostgreSQL/main integration. ARCH-05 has not started. [Current handoff](HANDOFF_ARCH04_2026-10-19.md).
+2026-10-19: ARCH-01..04 integrated and verified; main/20cc32ca25a905cbb20a3e6707d92ae74797c573, PostgreSQL148 tests/no skips with receipt/log/HEAD readback. MAM-825 Done. ARCH-05/MAM-826 local candidate built by two executors under primary orchestration, awaiting external PostgreSQL/main. ARCH-06 has not started. [Current handoff](HANDOFF_ARCH05_2026-10-19.md).
 
 The original baseline is 08dcd02 with111 tests (108 SQLite passes, three PostgreSQL-only races). Existing user changes remain seed.py168 additions/56 deletions and manage.py mode only. No repository AGENTS.md was found; supplied global working agreements apply.
 
@@ -39,3 +39,7 @@ NOT RUN: candidate PostgreSQL148 without skips, native process-capture self-test
 ## Current stage - ARCH-04
 
 ARCH-03 is now integrated at main/ddcf178 and MAM-824 Done, verified139 PostgreSQL/no skips. ARCH-04/MAM-825 local planning implementation is pending external integration. Its plan/verification and current handoff are docs/architecture/ARCH-04-PLAN.md, ARCH-04-VERIFICATION.md and HANDOFF_ARCH04_2026-10-19.md. Local48 pure tests,56/74 typed files, eight import contracts, Ruff, Django/no migrations,148 SQLite with three PostgreSQL-only skips. Follow scripts/Complete-Arch04.ps1 and independently check its returned receipt/SHA before ARCH-05. Earlier ARCH-03 candidate notes are historical. User confirms no production and authorizes autonomous progress; preserve unrelated seed.py/manage.py and session security boundaries.
+
+## Current stage - ARCH-05
+
+Two authorized executors finished disjoint metric and progress/trekking scopes; primary merged contracts, strict scope, docs and evidence. Integrated61 pure tests, mypy65/87, eight import contracts, AST, Ruff, Django/no migrations and158 SQLite (three PostgreSQL-only skips) pass. Differential comparison against exact HEAD baseline checks2028 strength/sport/pace/load cases with zero differences. See ARCH-05 plan/verification/handoff. External scripts/Complete-Arch05.ps1 must verify158 PostgreSQL/no skips and integrate the commit before MAM-826 Done/ARCH-06. Prior stage candidate notes below/above are historical; original user work is preserved.
