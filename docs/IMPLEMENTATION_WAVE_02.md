@@ -53,7 +53,7 @@ comando operativo de vinculación de perfiles antiguos.
 | Comparación con main remoto | VERIFIED | 145 archivos de implementación revisados por hash Git: 143 idénticos y solo los dos archivos API cambiados en esta tanda diferentes. Los dos archivos nuevos son esta documentación y la matriz de pruebas. |
 | Fuentes anteriores | VERIFIED | `seed.py` y `manage.py` conservan los SHA256 del handoff; quedan excluidos de la integración. |
 | Diff | VERIFIED | `git diff --check` sin errores; índice vacío. El estado local todavía incluye la implementación anterior por HEAD desactualizado. |
-| CI PostgreSQL de esta tanda | NOT RUN | Pendiente del nuevo commit. No reutilizar las 97 pruebas históricas como evidencia de esta tanda. |
+| CI PostgreSQL de esta tanda | VERIFIED | [CI 39268683698](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39268683698), commit `40783f6`: instalación limpia, Ruff, check, migraciones, suite PostgreSQL y estáticos; job `118114931463` completado con éxito. |
 | Sincronización de metadatos locales | FAILED | Fetch no puede escribir `.git/FETCH_HEAD`, también con ejecución elevada. |
 | Proveedores LIVE, producción y dispositivos físicos | NOT RUN | Fuera de BASIS-002; no se activaron. |
 | Tipado estático | NOT APPLICABLE | El repositorio no define esta comprobación. |
@@ -62,6 +62,9 @@ La primera ejecución de las pruebas nuevas detectó tres supuestos erróneos
 del propio test (factory con título fijo, respuesta DRF vacía y nombres del
 catálogo público); se corrigieron y las 14 pruebas pasaron antes de ejecutar
 la suite completa. No se modificaron factories ni el contrato de latest.
+Una revisión posterior hizo explícitas las claves primarias de los fixtures que
+comprueban IDs iguales/diferentes, evitando depender del estado de secuencias
+de SQLite o PostgreSQL. Las 14 pruebas se repitieron correctamente en SQLite.
 
 ## Contrato de privacidad
 

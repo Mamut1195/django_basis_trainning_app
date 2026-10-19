@@ -1,6 +1,7 @@
 """BASIS-002 acceptance matrix against actual session-authenticated endpoints."""
 
 import json
+from datetime import timedelta
 from io import StringIO
 
 from django.contrib.auth import get_user_model
@@ -13,7 +14,7 @@ from rest_framework.test import APIClient
 from daily_trainning_app.models import User as Athlete
 from daily_trainning_app.models import UserExerciseRM, WorkoutData
 from training.ai import context_snapshot
-from training.models import Goal
+from training.models import BillingAccount, Goal
 
 from .factories import account, exercise, session
 
@@ -105,8 +106,21 @@ class PrivateAccessTests(TestCase):
 
     def test_create_both_record_types_assigns_profile_not_auth_id(self):
         # Deliberately create different account/profile primary keys.
-        get_user_model().objects.create_user(username="unlinked")
-        user = account("offset")
+        user = get_user_model().objects.create_user(pk=900001, username="offset")
+        Athlete.objects.create(
+            pk=900002,
+            account=user,
+            nombre="Offset",
+            email="offset@example.test",
+            fecha_inicio=timezone.localdate(),
+            email_verified=True,
+        )
+        BillingAccount.objects.create(
+            owner=user,
+            status="active",
+            period_start=timezone.now() - timedelta(days=1),
+            period_end=timezone.now() + timedelta(days=1),
+        )
         self.assertNotEqual(user.pk, user.athlete.pk)
         self.client.force_login(user)
         for resource, model in (
@@ -216,7 +230,10 @@ class ExplicitLegacyLinkTests(TestCase):
             username="legacy", email="legacy@example.test"
         )
         self.profile = Athlete.objects.create(
-            nombre="Legacy", email=self.account.email, fecha_inicio=timezone.localdate()
+            pk=self.account.pk,
+            nombre="Legacy",
+            email=self.account.email,
+            fecha_inicio=timezone.localdate(),
         )
 
     def link(self, account_id=None, profile_id=None):
