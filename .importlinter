@@ -1,0 +1,96 @@
+[importlinter]
+root_packages =
+    basis
+include_external_packages = True
+
+[importlinter:contract:accounts-layers]
+name = accounts inward dependencies
+type = layers
+layers =
+    basis.modules.accounts.adapters
+    basis.modules.accounts.application
+    basis.modules.accounts.domain
+
+[importlinter:contract:athletes-layers]
+name = athletes inward dependencies
+type = layers
+layers =
+    basis.modules.athletes.adapters
+    basis.modules.athletes.application
+    basis.modules.athletes.domain
+
+[importlinter:contract:catalog-layers]
+name = catalog inward dependencies
+type = layers
+layers =
+    basis.modules.catalog.adapters
+    basis.modules.catalog.application
+    basis.modules.catalog.domain
+
+[importlinter:contract:training-layers]
+name = training inward dependencies
+type = layers
+layers =
+    basis.modules.training.adapters
+    basis.modules.training.application
+    basis.modules.training.domain
+
+[importlinter:contract:billing-layers]
+name = billing inward dependencies
+type = layers
+layers =
+    basis.modules.billing.adapters
+    basis.modules.billing.application
+    basis.modules.billing.domain
+
+[importlinter:contract:coach-layers]
+name = coach inward dependencies
+type = layers
+layers =
+    basis.modules.coach.adapters
+    basis.modules.coach.application
+    basis.modules.coach.domain
+
+[importlinter:contract:sync-layers]
+name = sync inward dependencies
+type = layers
+layers =
+    basis.modules.sync.adapters
+    basis.modules.sync.application
+    basis.modules.sync.domain
+
+[importlinter:contract:core-independence]
+name = Core cannot depend on Django, providers or legacy
+type = forbidden
+source_modules =
+    basis.shared
+    basis.modules.accounts.domain
+    basis.modules.accounts.application
+    basis.modules.accounts.public
+    basis.modules.athletes.domain
+    basis.modules.athletes.application
+    basis.modules.athletes.public
+    basis.modules.catalog.domain
+    basis.modules.catalog.application
+    basis.modules.catalog.public
+    basis.modules.training.domain
+    basis.modules.training.application
+    basis.modules.training.public
+    basis.modules.billing.domain
+    basis.modules.billing.application
+    basis.modules.billing.public
+    basis.modules.coach.domain
+    basis.modules.coach.application
+    basis.modules.coach.public
+    basis.modules.sync.domain
+    basis.modules.sync.application
+    basis.modules.sync.public
+forbidden_modules =
+    django
+    rest_framework
+    httpx
+    training
+    daily_trainning_app
+    basis_trainning_app
+    basis.bootstrap
+allow_indirect_imports = False

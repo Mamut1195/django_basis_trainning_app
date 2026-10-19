@@ -23,12 +23,18 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+          fetch-depth: 2
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
+      - run: python scripts/architecture_check.py
+      - run: python -m unittest discover -s tests_architecture
+      - run: python -m mypy --config-file mypy-core.ini
+      - run: python -m mypy --config-file mypy-django.ini
+      - run: lint-imports
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py test training.tests --noinput
