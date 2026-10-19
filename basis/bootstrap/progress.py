@@ -1,7 +1,7 @@
 """Progress/trekking composition and legacy model-form compatibility."""
 
+from basis.bootstrap.billing import write_authorization
 from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
-from basis.modules.training.adapters.django import DjangoWriteAuthorization
 from basis.modules.training.adapters.progress import DjangoProgressRepository
 from basis.modules.training.adapters.progress_wire import encode_progress, encode_trip
 from basis.modules.training.public import (
@@ -19,7 +19,7 @@ from training.models import TrekStage, TrekTrip
 
 def progress() -> Progress:
     return Progress(
-        DjangoProgressRepository(), DjangoWriteAuthorization(), DjangoUnitOfWork, DjangoClock()
+        DjangoProgressRepository(), write_authorization(), DjangoUnitOfWork, DjangoClock()
     )
 
 

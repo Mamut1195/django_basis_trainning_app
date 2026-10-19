@@ -1,23 +1,18 @@
-from django.conf import settings
-from rest_framework.exceptions import PermissionDenied
+"""Compatibility facade for the typed commercial write-access policy."""
 
-from .models import BillingAccount
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import AnonymousUser
+
+from basis.bootstrap.billing import billing, write_authorization
+from basis.shared.identifiers import AccountId
 
 
-def can_write(user):
-    if not user.is_authenticated:
+def can_write(user: AbstractBaseUser | AnonymousUser) -> bool:
+    if not user.is_authenticated or user.pk is None:
         return False
-    profile = getattr(user, "athlete", None)
-    if not profile or not profile.email_verified:
-        return False
-    if settings.DEVELOPMENT_ACCESS:
-        return True
-    billing = BillingAccount.objects.filter(owner=user).first()
-    return bool(billing and billing.entitled)
+    return billing().can_write(AccountId(user.pk))
 
 
-def require_write_access(user):
-    if not can_write(user):
-        raise PermissionDenied(
-            "Necesitas verificar el correo y tener una prueba o suscripción activa para registrar entrenamiento. Tu historial sigue disponible."
-        )
+def require_write_access(user: AbstractBaseUser | AnonymousUser) -> None:
+    # Anonymous users take the same denial path as authenticated users without access.
+    write_authorization().require(AccountId(user.pk if user.pk is not None else 0))

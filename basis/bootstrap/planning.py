@@ -4,8 +4,8 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 
+from basis.bootstrap.billing import write_authorization
 from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
-from basis.modules.training.adapters.django import DjangoWriteAuthorization
 from basis.modules.training.adapters.plan_wire import INVALID, proposal_definition
 from basis.modules.training.adapters.planning import (
     DjangoPlanRepository,
@@ -31,7 +31,7 @@ from training.models import Cycle, Goal, PlannedSession, TrainingPlan
 
 def planning() -> Planning:
     return Planning(
-        DjangoPlanRepository(), DjangoWriteAuthorization(), DjangoUnitOfWork, DjangoClock()
+        DjangoPlanRepository(), write_authorization(), DjangoUnitOfWork, DjangoClock()
     )
 
 

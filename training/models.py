@@ -16,6 +16,8 @@ from basis.modules.athletes.public import (
     validate_sport,
     validate_wellness,
 )
+from basis.modules.billing.public import entitled as billing_entitled
+from basis.modules.billing.public import status_label as billing_status_label
 from basis.modules.training.adapters.metrics import (
     estimated_1rm_legacy as estimated_1rm,
 )
@@ -638,24 +640,15 @@ class BillingAccount(models.Model):
     checkout_expires_at = models.DateTimeField(null=True, blank=True)
 
     @property
-    def entitled(self):
-        return (
-            self.status in ("active", "trialing")
-            and self.period_start is not None
-            and self.period_end is not None
-            and self.period_start <= timezone.now() < self.period_end
-            and not self.needs_reconciliation
+    def entitled(self) -> bool:
+        return billing_entitled(
+            self.status, self.period_start, self.period_end,
+            self.needs_reconciliation, timezone.now(),
         )
 
     @property
-    def status_label(self):
-        return {
-            "active": "Activa",
-            "trialing": "Prueba activa",
-            "inactive": "Sin acceso activo",
-            "past_due": "Pago pendiente",
-            "canceled": "Cancelada",
-        }.get(self.status, "Pendiente de comprobar")
+    def status_label(self) -> str:
+        return billing_status_label(self.status)
 
 
 class WebhookReceipt(models.Model):

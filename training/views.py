@@ -16,10 +16,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from standardwebhooks.webhooks import Webhook, WebhookVerificationError
 
 from basis.bootstrap.accounts import identity, recover_password
 from basis.bootstrap.athletes import save_observation, save_preferences, save_profile, save_rm
+from basis.bootstrap.billing import webhooks
 from basis.bootstrap.planning import (
     reschedule,
     save_cycle,
@@ -36,6 +36,7 @@ from basis.modules.accounts.public import (
     RegisterAccount,
     VerifyAccount,
 )
+from basis.modules.billing.adapters.web import InvalidWebhook, decode_event, encode_result
 from basis.modules.training.adapters.wire import encode_session
 from basis.modules.training.public import ExecutionConflict
 from daily_trainning_app.models import User as Athlete
@@ -82,7 +83,6 @@ from .models import (
     TrekStage,
     TrekTrip,
     UsagePeriod,
-    WebhookReceipt,
     Wellness,
 )
 from .services import (
@@ -821,55 +821,13 @@ def polar_webhook(request):
     if not settings.POLAR_WEBHOOK_SECRET:
         return JsonResponse({"detail": "Webhook no configurado"}, status=503)
     try:
-        # Requires a fresh Standard Webhooks secret (created on/after 2026-09-08).
-        event = Webhook(settings.POLAR_WEBHOOK_SECRET).verify(
-            request.body, {k.lower(): v for k, v in request.headers.items()}
-        )
-        event_id = request.headers["webhook-id"]
-        data, kind = event["data"], event["type"]
-        external = (
-            data.get("external_id")
-            if kind == "customer.state_changed"
-            else (data.get("customer") or {}).get("external_id")
-        )
-    except (WebhookVerificationError, ValueError, KeyError, TypeError):
-        return JsonResponse({"detail": "Firma o evento inválido"}, status=400)
-    receipt, _ = WebhookReceipt.objects.get_or_create(
-        event_id=event_id, defaults={"event_type": kind}
-    )
-    if receipt.processed_at:
-        return JsonResponse({"ok": True})
-    if kind not in {
-        "customer.state_changed",
-        "subscription.created",
-        "subscription.updated",
-        "subscription.canceled",
-        "subscription.revoked",
-        "subscription.uncanceled",
-        "order.refunded",
-        "refund.updated",
-    }:
-        receipt.processed_at = timezone.now()
-        receipt.save()
-        return JsonResponse({"ok": True})
-    try:
-        profile = (
-            Athlete.objects.filter(public_id=uuid.UUID(str(external)), account__isnull=False)
-            .select_related("account")
-            .first()
-        )
-    except (ValueError, TypeError):
-        profile = None
-    if not profile:
-        return JsonResponse({"detail": "Cliente no vinculado; requiere conciliación"}, status=422)
-    BillingAccount.objects.filter(owner=profile.account).update(needs_reconciliation=True)
-    try:
-        polar.reconcile(profile.account)
-    except polar.ProviderUnavailable:
-        return JsonResponse({"detail": "Conciliación pendiente"}, status=503)
-    receipt.processed_at, receipt.customer_external_id = timezone.now(), profile.public_id
-    receipt.save()
-    return JsonResponse({"ok": True})
+        event = decode_event(settings.POLAR_WEBHOOK_SECRET, request.body, request.headers)
+    except InvalidWebhook:
+        return JsonResponse({"detail": "Firma o evento inv\u00e1lido"}, status=400)
+    result = webhooks(polar.polar_request).process(event)
+    status, payload = encode_result(result)
+    return JsonResponse(payload, status=status)
+
 
 
 @login_required

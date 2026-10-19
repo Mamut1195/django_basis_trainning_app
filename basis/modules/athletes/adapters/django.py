@@ -1,10 +1,8 @@
 """Owner-scoped persistence; historical calculations remain in legacy model hooks."""
 
 from dataclasses import fields
-from typing import Callable, Protocol, cast
+from typing import Protocol, cast
 
-from django.contrib.auth import get_user_model
-from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 
 from basis.shared.identifiers import (
@@ -18,7 +16,6 @@ from basis.shared.identifiers import (
 from daily_trainning_app.models import User as Athlete
 from daily_trainning_app.models import UserExerciseRM
 from daily_trainning_app.models import WorkoutData as WorkoutRow
-from training.access import require_write_access
 from training.models import AthleteSettings, Measurement, SportProfile, Wellness
 
 from ..domain.records import (
@@ -62,11 +59,6 @@ def assign(
             value = list(value)
         setattr(row, name, value)
 
-
-class DjangoAthleteAuthorization:
-    def require(self, owner: AccountId) -> None:
-        check = cast(Callable[[AbstractBaseUser], None], require_write_access)
-        check(get_user_model().objects.get(pk=owner))
 
 
 def profile_data(row: Athlete) -> ProfileData:

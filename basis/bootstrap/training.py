@@ -3,10 +3,10 @@
 from typing import Mapping
 from uuid import UUID
 
+from basis.bootstrap.billing import write_authorization
 from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
 from basis.modules.training.adapters.django import (
     DjangoSessionRepository,
-    DjangoWriteAuthorization,
     UUIDSessionIds,
     session_state,
 )
@@ -27,7 +27,7 @@ def training() -> Training:
     return Training(
         DjangoSessionRepository(),
         DjangoUnitOfWork,
-        DjangoWriteAuthorization(),
+        write_authorization(),
         DjangoClock(),
         UUIDSessionIds(),
     )

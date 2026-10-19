@@ -1,0 +1,107 @@
+{
+    "status":  "VERIFIED",
+    "run_id":  "136ec5dcf05f42d5b705540d62a6b9ad",
+    "checks":  {
+                   "architecture":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "pure-tests":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "core-types":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "django-types":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "imports":  {
+                                   "exit_code":  0,
+                                   "status":  "VERIFIED"
+                               },
+                   "ruff":  {
+                                "exit_code":  0,
+                                "status":  "VERIFIED"
+                            },
+                   "django-check":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "migrations":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "docker-access":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     },
+                   "postgres-start":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "loopback-binding":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "postgres-version":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "image-id":  {
+                                    "exit_code":  0,
+                                    "status":  "VERIFIED"
+                                },
+                   "postgres-tests":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "static-assets":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     }
+               },
+    "tests":  180,
+    "skipped":  0,
+    "engine":  "postgres (PostgreSQL) 18.4 (Debian 18.4-1.pgdg13+1)",
+    "image_id":  "sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636",
+    "source_hashes":  {
+                          ".github/workflows/checks.yml":  "E563033E18034C2ABC93334DDE620645F9218C597292D23130C23467FAFF0AB9",
+                          "basis/bootstrap/athletes.py":  "5164641250F463386C21A412280BF5B8E756F8EAA65150E7F7D0B8141E2CB675",
+                          "basis/bootstrap/billing.py":  "B8013541D82AADD23316AFF480B29028CEBE141C65F1D8F7ED78B25498DE4114",
+                          "basis/bootstrap/planning.py":  "66496E525B76E5BED88C589CEE145C28D18FC60A4CFA3BD06D5F7BA0F399B11C",
+                          "basis/bootstrap/progress.py":  "C8B03EC7B613ED7614FA1461431732BCF1942CEDAD21D4CECBCAA678E128D0BC",
+                          "basis/bootstrap/training.py":  "F48B57C9DD7693D58AA1FDFB2F1CD0F28DAE8F28DCC9191263975DFFAA839200",
+                          "basis/modules/athletes/adapters/billing.py":  "E9C69E561152D4FF0400DCCE28329B56942414B651E28B61038349F399F3C063",
+                          "basis/modules/athletes/adapters/django.py":  "5CF3118ECE8355A472BD169EEEBA4435B61A1FC21568181A4BD3395A3305843E",
+                          "basis/modules/athletes/application/billing.py":  "121EE8D19C830F81FDE40905B05B34CC06615CF7BEA0B5067EEC9E74E6F7341F",
+                          "basis/modules/athletes/public.py":  "F8360C3FBCEDC97B7831CBE05302AF9130D516BB58E70C53D1970F3A3F5D981E",
+                          "basis/modules/billing/adapters/authorization.py":  "BA5C9A36FDAB2BC7B398C15C8C1D66094DD0146BE9084DB9B3184C568C64250E",
+                          "basis/modules/billing/adapters/django.py":  "94F3A2CAF7123483EB4F8A4CC9F0FD62258544F15697CE6BA1B016EEBE7C15CF",
+                          "basis/modules/billing/adapters/polar.py":  "73695487FA1746F5E396804AA289EAE0B16633AC7ABAEB88AD1C5A27D40E2F08",
+                          "basis/modules/billing/adapters/test_persistence.py":  "F3B8BA3EF849B301FB8A73DC393A05B1FA866B87F45A7EEEF5EB1339B2290510",
+                          "basis/modules/billing/adapters/test_polar.py":  "CDB9FE9A6E662E9E92F3853DD133D79CFDB349A5E60CFE907016FF74DDC0E070",
+                          "basis/modules/billing/adapters/test_web.py":  "12AA0935256D19545B2EA0C37C4C443C56C378CC37136701ABA12453CC232E91",
+                          "basis/modules/billing/adapters/web.py":  "C845C78EE0FDA6794FE45608F0EC9B0C437E9EF9371C1277196756447AC97629",
+                          "basis/modules/billing/application/service.py":  "7A517A189F636861FE2153930887C23CCD9BA7D4E30C13D192D9F15EFE077451",
+                          "basis/modules/billing/domain/records.py":  "0245AF98474BF8781930B1B5D6DA114A1865D1522C8CA3F98DC0388AB00312C1",
+                          "basis/modules/billing/public.py":  "97C4F695DB79DBB36E949AE240FE8D0894DA64EF7DFCD29C33C0950410E019D6",
+                          "basis/modules/training/adapters/django.py":  "1E18EA02D99604106FDE1FB78CDE20C2057167C624711483B1C69CD75D288511",
+                          "docs/architecture/ARCH-06-FILES.json":  "F0923347BF269966DC0040FF3F0E7C596E6394AA6EFE62A2A5223C9ECDCAE843",
+                          "mypy-django.ini":  "7ADC4536F3639D7A337BC5684988A7CBAA5480F84E0CACC4FAD8C32DAAF9FA4B",
+                          "scripts/Complete-Arch06.ps1":  "B531C87D3369204F10C731A59F047F3DF6370E0BDE63F382621793F1A5C95162",
+                          "scripts/Verify-Arch06.ps1":  "0C812B8F084193967D05C0FEBD4F05C74A4DB08FCEE149BC66148D290DC5F133",
+                          "tests_architecture/billing_contract.py":  "C0372C9671678E46C1532AE39E6998B7126059DD1B4D9A8311140235EFBA0B36",
+                          "tests_architecture/test_billing.py":  "91F5BC1AB69664027AF143282D65F5B23D19ECEAC34FE50C6A1BF76479872E3A",
+                          "training/access.py":  "D8A1CB0701859865E7D01F429FE444F63E42E6138EC1CAE27596A82D70EEFA5C",
+                          "training/billing.py":  "F23E26BCB96781594343EC90FE4528A1FE05964CF0967511F89D5F9D2C7253A5",
+                          "training/management/commands/reconcile_billing.py":  "6F91D5DA00E169C7EC710C807DE51163827F6F082760B96C0E90782ADE0F3070",
+                          "training/models.py":  "50CA57A72BCD3B0412CCFAA3D62546887F19B1B985C852BD80C50BE6EDB19CFF",
+                          "training/views.py":  "0F0C615F6214925A37665C2E1DDD6EA79285A8A29ED5BFF18E15F032CF6C446C"
+                      },
+    "hash_mode":  "SHA256 strict UTF-8 without BOM, CRLF normalized to LF",
+    "container_stopped":  true,
+    "verified_at":  "2026-10-19T22:52:53.4822850Z"
+}

@@ -1,10 +1,10 @@
 # Arquitectura y límites de operación
 
-Estado 2026-10-19: ARCH-04 integrado y verificado en `main/20cc32c`,148 pruebas PostgreSQL sin omisiones. ARCH-05 implementado localmente mediante dos ejecutores y orquestación central; PostgreSQL e integración pendientes. [Handoff ARCH-05](HANDOFF_ARCH05_2026-10-19.md).
+Estado 2026-10-19: ARCH-01 a ARCH-05 integrados y verificados; main/e3ffcf66deb3e8138dfa57d6773a400c3a87426e,158 pruebas PostgreSQL sin omisiones. ARCH-06 verificado localmente, pendiente de PostgreSQL/main, con dos implementadores y orquestación central. Alcance final actualizado: [ADR-002](architecture/ADR-002-FINAL-PERSISTENCE.md).
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01/02/03/04 integrados y verificados; ARCH-05/MAM-826 local y pendiente de PostgreSQL/main. Arquitectura antes de retomar aceptación funcional. No cambia el esquema ni el registro de modelos Django.
+**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01 a ARCH-05 integrados; ARCH-06/MAM-827 en curso. Arquitectura antes de retomar aceptación funcional. ADR-002 reemplaza las restricciones iniciales de conservación de tablas, etiquetas y migraciones: ARCH-09 retirará daily_trainning_app y registrará los modelos en los adaptadores finales de los módulos. ARCH-10 verificará la estructura completa desde una base temporal nueva.
 
 `basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
@@ -114,3 +114,9 @@ Pure strength/sport policies now define Decimal arithmetic, overflow/rounding/ef
 Progress/application consumes typed repository snapshots and controlled clock; aggregates authoritative block totals without adding intervals again, keeps sport/protocol ordering and separate units, preserves zero versus unknown and historical adherence across version replacement dates. Trekking adds typed trip/stage writes with explicit UoW, owner/hiking/date-order validation shared with model/form hooks, and typed summary projections. Existing HTTP/report dictionaries are presentation adapters; no public format changed.
 
 Two completed compatibility files (training/domain.py and daily_trainning_app/strength_metrics.py) are strictly checked and removed from pending inventory. Four exact silent legacy frontiers remain; mixed model/view/service files are still infrastructure pending their later retirement. [Plan](architecture/ARCH-05-PLAN.md), [evidence](architecture/ARCH-05-VERIFICATION.md). One combined delivery follows two disjoint executors and independent primary verification; no ARCH-06 before main readback. No programs functionality or schema change.
+
+## ARCH-06: commercial policy and billing adapters
+
+Billing now has typed commercial/access/period policies and transactional checkout, portal, reconciliation and webhook cases, composed with Django repositories, public athlete identity lookup, a bounded Polar gateway and web signature adapter. Core webhook results express business outcomes; HTTP mapping remains in the adapter. Durable webhook phases preserve receipt/pending state before provider reconciliation, including failure/retry. Legacy access/billing/command facades enter strict scope; three exact mixed legacy import frontiers remain. See [verification](architecture/ARCH-06-VERIFICATION.md) and [typing boundary](architecture/ARCH-06-TYPING-EXCEPTIONS.md).
+
+Local checks verify72 pure tests, mypy70/102 files, eight import contracts, AST/Ruff/Django/no migrations/static and180 SQLite tests with three PostgreSQL-only skips. The43-file candidate is not integrated; external PostgreSQL/main gate remains. [Current handoff](HANDOFF_ARCH06_2026-10-19.md). ADR-002 requires daily_trainning_app removal and final model/app/migration reorganization in ARCH-09, with final acceptance in ARCH-10.

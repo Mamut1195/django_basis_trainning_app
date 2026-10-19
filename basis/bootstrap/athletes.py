@@ -2,9 +2,9 @@
 
 from collections.abc import Mapping
 
+from basis.bootstrap.billing import write_authorization
 from basis.bootstrap.transactions import DjangoUnitOfWork
 from basis.modules.athletes.adapters.django import (
-    DjangoAthleteAuthorization,
     DjangoAthleteRecords,
     preferences_data,
     profile_data,
@@ -39,7 +39,7 @@ from training.models import AthleteSettings, Measurement, SportProfile, Wellness
 
 
 def athletes() -> Athletes:
-    return Athletes(DjangoAthleteRecords(), DjangoAthleteAuthorization(), DjangoUnitOfWork)
+    return Athletes(DjangoAthleteRecords(), write_authorization(), DjangoUnitOfWork)
 
 
 def save_profile(owner: int, row: Athlete) -> None:

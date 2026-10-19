@@ -1,45 +1,39 @@
 # Goal
 
-Migrate BASIS serially to a strict typed hexagonal Django/PostgreSQL monolith, preserving data and behavior. Architecture precedes functional acceptance. No predefined-program feature is included.
+Complete the serial migration to a strict typed hexagonal Django/PostgreSQL monolith before functional acceptance. The final architecture, rather than legacy persistence structure, is authoritative. No predefined-program feature is included.
 
 # Context
 
-2026-10-19: ARCH-01..04 integrated and verified; main/20cc32ca25a905cbb20a3e6707d92ae74797c573, PostgreSQL148 tests/no skips with receipt/log/HEAD readback. MAM-825 Done. ARCH-05/MAM-826 local candidate built by two executors under primary orchestration, awaiting external PostgreSQL/main. ARCH-06 has not started. [Current handoff](HANDOFF_ARCH05_2026-10-19.md).
+ARCH-01 through ARCH-05 are integrated. Current main: e3ffcf66deb3e8138dfa57d6773a400c3a87426e. ARCH-05 independent readback verified158 PostgreSQL tests/no skips, stopped owned container,39 manifest paths and normalized tree/HEAD source hashes; run5979be3c5b6447c6bbeee21f4e6cd0a7. MAM-826 Done. ARCH-06/MAM-827 In Progress with two implementers and primary orchestration. See architecture/ARCH-06-PLAN.md.
 
-The original baseline is 08dcd02 with111 tests (108 SQLite passes, three PostgreSQL-only races). Existing user changes remain seed.py168 additions/56 deletions and manage.py mode only. No repository AGENTS.md was found; supplied global working agreements apply.
+Original baseline08dcd02 discovered111 tests. Unrelated user changes remain seed.py168 additions/56 deletions and manage.py mode only; exclude them from architecture commits. No repository AGENTS.md was found; supplied global agreements apply.
 
 # Constraints
 
-Preserve tables, app labels, migrations, URLs/JSON, owner authorization, CSRF, IndexedDB queues and history. No production, paid calls, live SMTP or functional changes. Keep seed.py/manage.py outside architecture commits. Do not modify ACLs, bypass execution policy or use alternate Git indexes/checkouts; no stash/reset/clean.
+ADR-002 supersedes the original final-schema compatibility rule: no production exists, and the user authorizes reorganizing apps/models/tables/migrations to achieve the proposed architecture. ARCH-09 must remove daily_trainning_app, place ORM models in final module persistence adapters and remove temporary bridges. ARCH-10 verifies the final structure from an empty temporary database. Keep stage06 schema unchanged only to bound its delivery. Preserve unrelated user work and do not unnecessarily delete local data.
+
+Preserve business behavior, owner authorization, CSRF, URLs/JSON and offline operations during extraction. No live providers, paid calls, SMTP or production. Do not modify ACLs, bypass execution policy, use alternate Git indexes/checkouts, stash/reset/clean or overwrite unrelated work. Git/Docker completion uses the external operator script when session access is blocked.
 
 # Affected areas
 
-basis/modules/{accounts,athletes,catalog} typed domain/application/adapters and public contracts; narrow athlete/billing enrollment ports; explicit bootstrap composition/UoW. Existing forms, views, serializers, model hooks and the explicit linking command delegate through compatibility bindings. Legacy calculations and generic read adapters remain for ARCH-05/09, with all six exact legacy typing frontiers documented rather than silencing migrated code.
+ARCH-06: billing domain/application and specific ports, Django repositories/receipts/authorization, public athlete profile lookup, Polar and webhook adapters, explicit billing bootstrap, legacy access/billing/web/command bridges. Primary owns public export integration, strict scope/inventory, CI, documentation and operator evidence. Final schema/app relocation belongs to ARCH-09.
 
 # Implementation steps
 
-1. Completed: architecture epic and ten serial stages, blockers for31 open functional tickets preserving four Done tickets; contracts, controls and baseline (ARCH-01).
-2. Completed: session execution, repository/UoW, web/offline delegation and PostgreSQL integration (ARCH-02).
-3. Completed: ARCH-03 identity/profile/catalog integrated and independently checked. Current ARCH-04: typed planning/versions candidate, local gates pass. Review [plan](architecture/ARCH-04-PLAN.md) and [evidence](architecture/ARCH-04-VERIFICATION.md).
-4. Operator executes scripts/Complete-Arch04.ps1: native capture self-test, repeated checks, temporary Docker PostgreSQL148 tests with zero skips, stopped container, explicit manifest/source hashes, dedicated branch and fast-forward main. No push.
-5. Independently check returned SHA, logs, receipt, source/HEAD hashes and committed completeness. Only then mark MAM-825 Done and begin ARCH-05. Continue each later stage in order with its own reviewed commit and integration evidence.
+1. Completed ARCH-01..05 serial gates; preserve their evidence and Done states.
+2. Core executor implements commercial rules, access, transactional cases/repositories and pure/shared persistence tests. Polar/web executor implements typed provider transport, signature decoding and legacy HTTP/command binding. They agree contracts directly; no overlapping file ownership or extra executors.
+3. Primary reviews contracts and behavior, runs combined architecture/type/lint/Django/regression checks, and prepares exact manifest plus external scripts/Complete-Arch06.ps1. Core tests must run without Django or network; provider tests use fakes/MockTransport only.
+4. External verification repeats gates on temporary Docker PostgreSQL18.4, requires every test/no skips, stops owned container, binds source hashes and commits only manifest files on a dedicated branch before fast-forwarding main. No push.
+5. Independently read back SHA, logs, receipt, committed scope and source hashes. Mark MAM-827 Done only then; ARCH-07 waits for that gate. Continue ARCH-07 coach, ARCH-08 sync, ARCH-09 final legacy removal, ARCH-10 full acceptance in order.
 
 # Required skills
 
-task-planning, safe-git-workflow, verify-before-complete.
+task-planning, safe-git-workflow, verify-before-complete. Primary orchestrates and verifies; two authorized agents implement.
 
 # Validation
 
-VERIFIED local ARCH-04:48 pure tests without Django/DB/network, mypy core56/Django74 files, eight Import Linter contracts, AST/inventory, Ruff, Django check/no migrations, SQLite148 with three PostgreSQL-only skips, PowerShell parser zero syntax errors. Shared fake/Django planning contract and9 new integration tests are included. Logs/receipt: .cache/arch04-local. Every claim uses VERIFIED / FAILED / NOT RUN.
+Per stage record VERIFIED / FAILED / NOT RUN, actual exit codes and log paths. Required: strict core/Django typing without broad exceptions, AST/public/inventory and Import Linter boundaries including type-only imports, Ruff, pure tests, common fake/Django contracts, Django system check and expected migrations, complete temporary PostgreSQL regression including concurrency. Verify final ARCH-06 counts from actual logs before publishing scripts/receipt.
 
 # Risks
 
-NOT RUN: candidate PostgreSQL148 without skips, native process-capture self-test, main integration and remote CI. Child PowerShell here refused scripts by execution policy; no bypass attempted. Git writes/Docker access require the user's external session. SQLite does not establish concurrency correctness. Preserve failures and logs, diagnose the exact gate, and do not claim closure from local-only checks.
-
-## Current stage - ARCH-04
-
-ARCH-03 is now integrated at main/ddcf178 and MAM-824 Done, verified139 PostgreSQL/no skips. ARCH-04/MAM-825 local planning implementation is pending external integration. Its plan/verification and current handoff are docs/architecture/ARCH-04-PLAN.md, ARCH-04-VERIFICATION.md and HANDOFF_ARCH04_2026-10-19.md. Local48 pure tests,56/74 typed files, eight import contracts, Ruff, Django/no migrations,148 SQLite with three PostgreSQL-only skips. Follow scripts/Complete-Arch04.ps1 and independently check its returned receipt/SHA before ARCH-05. Earlier ARCH-03 candidate notes are historical. User confirms no production and authorizes autonomous progress; preserve unrelated seed.py/manage.py and session security boundaries.
-
-## Current stage - ARCH-05
-
-Two authorized executors finished disjoint metric and progress/trekking scopes; primary merged contracts, strict scope, docs and evidence. Integrated61 pure tests, mypy65/87, eight import contracts, AST, Ruff, Django/no migrations and158 SQLite (three PostgreSQL-only skips) pass. Differential comparison against exact HEAD baseline checks2028 strength/sport/pace/load cases with zero differences. See ARCH-05 plan/verification/handoff. External scripts/Complete-Arch05.ps1 must verify158 PostgreSQL/no skips and integrate the commit before MAM-826 Done/ARCH-06. Prior stage candidate notes below/above are historical; original user work is preserved.
+For billing, retain pending reconciliation after provider failure, inclusive-start/exclusive-end access, first-seen trial history, cached checkout, server-owned product parameters and bounded provider request while holding the existing billing lock. Legacy training.billing.polar_request patches must still prevent network in old tests. Do not replace webhook durable phases with a single transaction that rolls back the pending flag. Session restrictions are infrastructure limits, not passing evidence. Remote CI/live providers remain unverified unless independently executed.

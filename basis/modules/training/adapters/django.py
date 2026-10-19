@@ -1,15 +1,13 @@
 """Django persistence adapter over stable legacy tables and model registration."""
 
 from dataclasses import fields
-from typing import Callable, Protocol, cast
+from typing import Protocol, cast
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 
 from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
-from training.access import require_write_access
 from training.models import Block, Interval, PlannedSession, Session, StrengthSet
 
 from ..domain.execution import (
@@ -84,13 +82,6 @@ class UUIDSessionIds:
     def new(self) -> SessionId:
         return SessionId(uuid4())
 
-
-class DjangoWriteAuthorization:
-    def require(self, owner: AccountId) -> None:
-        user = get_user_model().objects.get(pk=owner)
-        # Temporary typed boundary to existing billing/access policy (ARCH-06).
-        check = cast(Callable[[AbstractBaseUser], None], require_write_access)
-        check(user)
 
 
 class DjangoSessionRepository:

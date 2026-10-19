@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH05_2026-10-19.md",
-    "execution_state": "ARCH-04 integrated/verified; ARCH-05 locally verified after two-executor orchestration; PostgreSQL/main pending",
+    "handoff": "docs/HANDOFF_ARCH06_2026-10-19.md",
+    "execution_state": "ARCH-01..05 integrated/verified; ARCH-06 locally verified, external PostgreSQL/main pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -816,25 +816,25 @@
         "code": "ARCH-05",
         "id": "MAM-826",
         "title": "ARCH-05 â€” MÃ©tricas y multideporte",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [
           "ARCH-04"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local:61 pure; mypy65/87;8 imports; AST/Ruff/Django/no migrations;158 SQLite with3 PostgreSQL-only skips;2028 parity cases zero differences. External PostgreSQL/main NOT RUN",
-        "evidence": "docs/architecture/ARCH-05-VERIFICATION.md"
+        "integrated_commit": "e3ffcf66deb3e8138dfa57d6773a400c3a87426e",
+        "verification": "VERIFIED: PostgreSQL18.4,158 tests/no skips; stopped container;39 files and normalized tree/HEAD hashes; run5979be3c5b6447c6bbeee21f4e6cd0a7",
+        "evidence": "docs/architecture/ARCH-05-RESULT.json"
       },
       {
         "code": "ARCH-06",
         "id": "MAM-827",
         "title": "ARCH-06 â€” FacturaciÃ³n",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-05"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null
+        "verification": "VERIFIED local:72 pure; mypy70/102;8 imports; AST/Ruff/Django/no migrations/static;180 SQLite with3 PostgreSQL-only skips;43-file manifest and stable source hashes. External PostgreSQL/main NOT RUN",
+        "evidence": "docs/architecture/ARCH-06-VERIFICATION.md"
       },
       {
         "code": "ARCH-07",
@@ -870,7 +870,8 @@
         ],
         "integrated_commit": null,
         "verification": "NOT RUN",
-        "evidence": null
+        "evidence": null,
+        "scope_amendment": "Remove daily_trainning_app; final models/apps/schema/migrations may be reorganized. See ADR-002."
       },
       {
         "code": "ARCH-10",
@@ -882,8 +883,18 @@
         ],
         "integrated_commit": null,
         "verification": "NOT RUN",
-        "evidence": null
+        "evidence": null,
+        "scope_amendment": "Verify final package removal, empty-database migration and complete architecture/web/offline regression. See ADR-002."
       }
-    ]
+    ],
+    "final_persistence_decision": {
+      "date": "2026-10-19",
+      "evidence": "docs/architecture/ADR-002-FINAL-PERSISTENCE.md",
+      "remove_legacy_package": "daily_trainning_app",
+      "stage": "ARCH-09",
+      "acceptance": "ARCH-10",
+      "schema_labels_historical_migrations_may_change": true,
+      "preserve_unrelated_user_work": true
+    }
   }
 }
