@@ -39,12 +39,15 @@ class ExerciseViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return self.queryset.filter(account=self.request.user).order_by("pk")
 
 
 class PrivateRecordViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         return self.queryset.filter(user__account=self.request.user).order_by("-pk")
 

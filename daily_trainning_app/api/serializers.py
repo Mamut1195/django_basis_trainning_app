@@ -61,7 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class OwnedRecordSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.none(), source="user", write_only=True, required=False
     )
