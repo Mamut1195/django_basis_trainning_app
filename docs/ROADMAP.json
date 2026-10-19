@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH07_2026-10-19.md",
-    "execution_state": "ARCH-01..06 integrated/verified; ARCH-07 locally verified, external PostgreSQL/main pending",
+    "handoff": "docs/HANDOFF_ARCH08_2026-10-19.md",
+    "execution_state": "ARCH-01..07 integrated/verified; ARCH-08 locally verified, external PostgreSQL/main pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -840,25 +840,25 @@
         "code": "ARCH-07",
         "id": "MAM-828",
         "title": "ARCH-07 â€” Entrenador IA",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [
           "ARCH-06"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local:91 pure; mypy85/129;8 imports; AST/Ruff/Django/no migrations/static;199 SQLite with4 PostgreSQL-only skips;40 parity cases zero differences;53-file manifest/stable hashes. External PostgreSQL/main NOT RUN",
-        "evidence": "docs/architecture/ARCH-07-VERIFICATION.md"
+        "integrated_commit": "105ac188be24fbd960a1bf6941dbafa3104455ee",
+        "verification": "VERIFIED:199 PostgreSQL/no skips; stopped container;53 committed paths; normalized tree/HEAD hashes; run524117c46a6149878edce8c22d124277",
+        "evidence": "docs/architecture/ARCH-07-RESULT.json"
       },
       {
         "code": "ARCH-08",
         "id": "MAM-829",
         "title": "ARCH-08 â€” SincronizaciÃ³n offline",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-07"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null
+        "verification": "VERIFIED local:105 pure; mypy89/140;8 imports; AST/Ruff/Django/no migrations/static;218 SQLite with5 PostgreSQL-only skips;23 parity cases zero differences;31-file manifest/stable hashes. External PostgreSQL/main NOT RUN",
+        "evidence": "docs/architecture/ARCH-08-VERIFICATION.md"
       },
       {
         "code": "ARCH-09",

@@ -1,3 +1,16 @@
-"""Public contract. No operations migrated yet; do not import ORM here."""
+"""Public idempotent offline synchronization contract."""
 
-__all__: tuple[str, ...] = ()
+from .application.operations import (
+    ReceiptRepository,
+    SessionRecorder,
+    SyncCommand,
+    Synchronization,
+    SyncSource,
+)
+from .application.operations import WriteAuthorization as SyncAuthorization
+from .domain.operations import InvalidSynchronization, MutationIdentity, Receipt, replay
+
+__all__ = (
+    "ReceiptRepository", "SessionRecorder", "SyncCommand", "SyncSource", "Synchronization",
+    "SyncAuthorization", "InvalidSynchronization", "MutationIdentity", "Receipt", "replay",
+)

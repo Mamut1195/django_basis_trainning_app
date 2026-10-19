@@ -42,3 +42,7 @@ training/ai.py, training/proposals.py and process_ai_jobs.py now enter explicit 
 ## Integration gate
 
 Run scripts/Complete-Arch07.ps1 externally. It verifies main/base/empty index, self-tests native stderr/nonzero capture, repeats all controls, creates its own temporary Docker PostgreSQL18.4 without host volumes, requires199 tests/zero skips, stops the container, binds source hashes and commits only53 manifest paths on arch/07-coach before fast-forwarding main without push. Receipt: ARCH-07-RESULT.json; integration: .cache/arch07-integration.json. Done and ARCH-08 require independent SHA/logs/receipt/stopped-container/normalized tree-and-HEAD hashes and completeness readback. No unrelated user work is staged.
+
+## Main integration readback - 2026-10-19
+
+Earlier candidate/NOT RUN integration notes are historical. VERIFIED main/105ac188be24fbd960a1bf6941dbafa3104455ee; actual logs199 PostgreSQL/no skips and standalone OK; every gate exit0/VERIFIED; owned container stopped. ARCH-07-RESULT.json and .cache/arch07-integration.json agree on run524117c46a6149878edce8c22d124277. All53 manifest paths exist in HEAD and each recorded normalized source hash matched tree and HEAD before ARCH-08. MAM-828 Done. Remote CI/LIVE providers remain NOT RUN.

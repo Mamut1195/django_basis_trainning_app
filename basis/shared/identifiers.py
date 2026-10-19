@@ -31,3 +31,6 @@ LineageId = NewType("LineageId", UUID)
 TrekTripId = NewType("TrekTripId", int)
 
 TrekStageId = NewType("TrekStageId", int)
+
+MutationId = NewType("MutationId", UUID)
+PayloadDigest = NewType("PayloadDigest", str)

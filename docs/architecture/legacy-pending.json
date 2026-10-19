@@ -52,7 +52,6 @@
     "training/migrations/0004_goal_baseline_date_goal_baseline_value_goal_priority.py",
     "training/migrations/__init__.py",
     "training/models.py",
-    "training/services.py",
     "training/templatetags/__init__.py",
     "training/templatetags/training_tags.py",
     "training/tests/__init__.py",

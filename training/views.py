@@ -28,6 +28,7 @@ from basis.bootstrap.planning import (
     save_scheduled,
 )
 from basis.bootstrap.progress import save_stage, save_trip
+from basis.bootstrap.sync import synchronize
 from basis.bootstrap.training import edit_revision
 from basis.modules.accounts.public import (
     AccountUnavailable,
@@ -37,8 +38,10 @@ from basis.modules.accounts.public import (
     VerifyAccount,
 )
 from basis.modules.billing.adapters.web import InvalidWebhook, decode_event, encode_result
+from basis.modules.sync.adapters.web import sync_response
 from basis.modules.training.adapters.wire import encode_session
 from basis.modules.training.public import ExecutionConflict
+from basis.shared.identifiers import AccountId
 from daily_trainning_app.models import User as Athlete
 from daily_trainning_app.models import UserExerciseRM, WorkoutData
 
@@ -922,27 +925,9 @@ def snapshot_api(request, pk):
 @login_required
 @require_POST
 def sync_api(request):
-    try:
-        body = json.loads(request.body)
-        if not isinstance(body, dict) or not isinstance(body.get("session"), dict):
-            raise ValidationError("Formato inválido.")
-        if body.get("account") != str(request.user.athlete.public_id):
-            return JsonResponse({"detail": "La cola pertenece a otra cuenta."}, status=403)
-        result = sync_session(request.user, body.get("mutation_id"), body["session"])
-        return JsonResponse({"session": result})
-    except Conflict as exc:
-        return JsonResponse(
-            {"detail": "Hay otra versión. Revisa ambas antes de resolver.", "current": exc.current},
-            status=409,
-        )
-    except (ValidationError, ValueError, KeyError, TypeError) as exc:
-        return JsonResponse({"detail": getattr(exc, "messages", ["Datos inválidos"])}, status=400)
-    except Exception as exc:
-        from rest_framework.exceptions import PermissionDenied
-
-        if isinstance(exc, PermissionDenied):
-            return JsonResponse({"detail": str(exc.detail)}, status=403)
-        raise
+    return sync_response(
+        request.body, AccountId(request.user.pk), request.user.athlete.public_id, synchronize
+    )
 
 
 @login_required

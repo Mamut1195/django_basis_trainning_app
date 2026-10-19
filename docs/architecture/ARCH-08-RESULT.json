@@ -1,0 +1,96 @@
+{
+    "status":  "VERIFIED",
+    "run_id":  "fe03da62e81f444facf4eadf1baf0b70",
+    "checks":  {
+                   "architecture":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "pure-tests":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "core-types":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "django-types":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "imports":  {
+                                   "exit_code":  0,
+                                   "status":  "VERIFIED"
+                               },
+                   "ruff":  {
+                                "exit_code":  0,
+                                "status":  "VERIFIED"
+                            },
+                   "django-check":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "migrations":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "docker-access":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     },
+                   "postgres-start":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "loopback-binding":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "postgres-version":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "image-id":  {
+                                    "exit_code":  0,
+                                    "status":  "VERIFIED"
+                                },
+                   "postgres-tests":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "static-assets":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     }
+               },
+    "tests":  218,
+    "skipped":  0,
+    "engine":  "postgres (PostgreSQL) 18.4 (Debian 18.4-1.pgdg13+1)",
+    "image_id":  "sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636",
+    "source_hashes":  {
+                          ".github/workflows/checks.yml":  "F1DBFA830B3586A439AF25A12ACA03F26D031E2736F74109DC6193B6F5557EE5",
+                          "basis/bootstrap/sync.py":  "61B0A164F35225C5E07BD561DF5EB63AAB2FB73161B8E6FFB4198BAFE9E947E3",
+                          "basis/modules/sync/adapters/receipts.py":  "15CDCD13336F24BD3FE1E54A476ACFD7AF5537DEE99E19B48245126F38CFCCBA",
+                          "basis/modules/sync/adapters/test_receipts.py":  "428858BC0AF091FE1F70A17410C654C1B06C44FA7604CD29ED615E7AE4B2DD52",
+                          "basis/modules/sync/adapters/test_web.py":  "4A5B01A635F8E8AF4F9AE8131A84EAC45AEC823C985681FF719419DA3D913452",
+                          "basis/modules/sync/adapters/test_wire.py":  "94AC56824BEA1D0A2DFB32A836643F79298F36AAD39AC7A37015BBDBF0DAB18E",
+                          "basis/modules/sync/adapters/web.py":  "5CA749E6B72248AA7DDDB2729B16DE3563D736FD9A41C233EA58CF19717D2C35",
+                          "basis/modules/sync/adapters/wire.py":  "B9115E26CE7635E3FF63716349F7DC45ADDA898EB5A9C83AE98BFE654EDC81A4",
+                          "basis/modules/sync/application/operations.py":  "E7CB3BB04B53A7E514BD8458724BC6A37B3D7206AC6912A30A1CDD93EBF03F16",
+                          "basis/modules/sync/domain/operations.py":  "AAE6BD365EABECFA5513B7B82FB73360A57B4CC58548480DC8F2CEF4228DBFD2",
+                          "basis/modules/sync/public.py":  "601CEB29258EE2DE798F9DD072D5ABF7CAA27DD8D0F2978D4EF59007731C786E",
+                          "basis/modules/training/adapters/sync.py":  "1929C2A09F679C586CDABB4EC4A9CA17045F849B3A445E1B21727E4736A02A0D",
+                          "basis/shared/identifiers.py":  "F3A0A7069FBECE0EE6356C61D0A9F79B48EF29413302B26BD7B087CE771B489A",
+                          "docs/architecture/ARCH-08-FILES.json":  "A1D77B6533CB1C55223D7419143268EC9E4FF27FD12ED6D667F865E6D7B2EB1B",
+                          "mypy-django.ini":  "7522BB49D69C97BAED377AD39F50645B88F11341F0AD956446D8F7CD9AEAF0AA",
+                          "scripts/Complete-Arch08.ps1":  "1E84B7C1F1E1D8F15175BEE3207614188C937C510189A954EB9BB26E536EB019",
+                          "scripts/Verify-Arch08.ps1":  "BE91E63ADE856B158AE7CD9AA4C3B67A3F2B038C80589FF94370EF8E875AD889",
+                          "tests_architecture/sync_contract.py":  "B2AD2576D984A47B5D5185527D56AB837E705DBE8153332D9D3D530DF6BDB6B3",
+                          "tests_architecture/test_sync.py":  "819206A4CA2919ED01892DDCFBAE9635A36213F4F4872CC69857C590D908B480",
+                          "training/services.py":  "5D437A9BF3B316590D86CF49C82DAD56543295E0B8579F9A8CE0AB61940945A3",
+                          "training/views.py":  "ACDD48E4B449262E54D9DBBD87FEC93B60362AFB93DF6832FB7010D3B33AAA45"
+                      },
+    "hash_mode":  "SHA256 strict UTF-8 without BOM, CRLF normalized to LF",
+    "container_stopped":  true,
+    "verified_at":  "2026-10-19T23:41:44.6970402Z"
+}

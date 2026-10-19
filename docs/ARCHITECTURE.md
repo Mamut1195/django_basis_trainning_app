@@ -1,10 +1,10 @@
 # Arquitectura y límites de operación
 
-Estado 2026-10-19: ARCH-01 a ARCH-06 integrados y verificados; main/c5cc0c17d7f3070c81950a89ea8ccbdcdde696e6,180 pruebas PostgreSQL sin omisiones. ARCH-07 en curso con dos implementadores y orquestación central. Alcance final: [ADR-002](architecture/ADR-002-FINAL-PERSISTENCE.md).
+Estado 2026-10-19: ARCH-01 a ARCH-07 integrados y verificados; main/105ac188be24fbd960a1bf6941dbafa3104455ee,199 pruebas PostgreSQL sin omisiones. ARCH-08 en curso con dos implementadores y orquestación central. Alcance final: [ADR-002](architecture/ADR-002-FINAL-PERSISTENCE.md).
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01 a ARCH-06 integrados; ARCH-07/MAM-828 en curso. Arquitectura antes de retomar aceptación funcional. ADR-002 reemplaza las restricciones iniciales de conservación de tablas, etiquetas y migraciones: ARCH-09 retirará daily_trainning_app y registrará los modelos en los adaptadores finales de los módulos. ARCH-10 verificará la estructura completa desde una base temporal nueva.
+**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01 a ARCH-07 integrados; ARCH-08/MAM-829 en curso. Arquitectura antes de retomar aceptación funcional. ADR-002 reemplaza las restricciones iniciales de conservación de tablas, etiquetas y migraciones: ARCH-09 retirará daily_trainning_app y registrará los modelos en los adaptadores finales de los módulos. ARCH-10 verificará la estructura completa desde una base temporal nueva.
 
 `basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
@@ -128,3 +128,11 @@ Coach context reads typed public athlete/catalog/training projections, and job c
 Preserved contracts include lock order, exact quotas/rates, partial token capture, no ambiguous retries, raw selected-plan idempotency and delayed validation, JSON/message byte order, exact original proposal input and historical plan instances. Existing malformed-response defects are recorded in MAM-635/MAM-818 without silent fixes. Three newly certified legacy entry points leave pending inventory; no new typing exception or broad exclusion. Final app/model/migration relocation and remaining generic UI/admin integration stay ARCH-09 under ADR-002.
 
 Local verification:91 pure tests, strict mypy85/129 files, eight import contracts, AST/Ruff/Django/no migrations/static and199 SQLite tests with four PostgreSQL-only skips. Independent40-case differential against integrated baseline shows zero differences. The53-file candidate still requires external PostgreSQL199/no skips and main integration before ARCH-08. See [verification](architecture/ARCH-07-VERIFICATION.md), [parity](architecture/ARCH-07-PARITY.json) and [current handoff](HANDOFF_ARCH07_2026-10-19.md).
+
+## ARCH-08: typed offline synchronization and receipts
+
+Synchronization now coordinates typed operation identity/digest/receipt, deferred boundary source, public account locks/authorization/training execution and a single outer UoW. Identity/canonical hashing remains before receipt lookup; replay precedes authorization and late payload validation. Training owner/revision guards still precede child conversion. Session and receipt commit or roll back together even after an inner execution commit. Original receipt snapshots preserve IDs/order/Decimal scale/missing/zero without reading current rows. Bootstrap injects training snapshot codecs into sync persistence rather than importing foreign adapters from the module.
+
+Canonical JSON, original IndexedDB body including created, owner scope, CSRF and400/403/409 responses remain compatible. Offline assets are unchanged; real browser/device acceptance remains ARCH-10. training/services.py now joins strict scope and leaves pending inventory; two exact silent mixed model frontiers remain until ARCH-09. One local DRF web import boundary is documented in [verification](architecture/ARCH-08-VERIFICATION.md); no broad suppression.
+
+Local candidate:105 pure tests, strict89/140 files, eight import contracts, AST/Ruff/Django/no migrations/static,218 SQLite tests (five PostgreSQL-only skips),23 independent parity cases/zero differences and31-file stable scope. PostgreSQL/main integration remains pending; [current handoff](HANDOFF_ARCH08_2026-10-19.md). Only after readback may ARCH-09 remove daily_trainning_app and reorganize the final persistence/apps/migrations according to ADR-002.
