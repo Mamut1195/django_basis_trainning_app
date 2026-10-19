@@ -1,0 +1,31 @@
+{
+  "base_commit": "ddcf178d6a5c8c4793e3672a95dbf64fdffe2b91",
+  "files": [
+    ".github/workflows/checks.yml",
+    "basis/bootstrap/planning.py",
+    "basis/modules/training/adapters/plan_wire.py",
+    "basis/modules/training/adapters/planning.py",
+    "basis/modules/training/adapters/test_planning.py",
+    "basis/modules/training/application/planning.py",
+    "basis/modules/training/domain/planning.py",
+    "basis/modules/training/public.py",
+    "basis/shared/identifiers.py",
+    "docs/ARCHITECTURE.md",
+    "docs/ARCHITECTURE_EXECUTION.md",
+    "docs/HANDOFF_ARCH04_2026-10-19.md",
+    "docs/ROADMAP.json",
+    "docs/architecture/ARCH-03-VERIFICATION.md",
+    "docs/architecture/ARCH-04-FILES.json",
+    "docs/architecture/ARCH-04-PLAN.md",
+    "docs/architecture/ARCH-04-RESULT.json",
+    "docs/architecture/ARCH-04-VERIFICATION.md",
+    "scripts/Complete-Arch04.ps1",
+    "scripts/Verify-Arch04.ps1",
+    "tests_architecture/planning_contract.py",
+    "tests_architecture/test_planning.py",
+    "training/models.py",
+    "training/proposals.py",
+    "training/services.py",
+    "training/views.py"
+  ]
+}

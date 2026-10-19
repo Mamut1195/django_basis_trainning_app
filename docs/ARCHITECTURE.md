@@ -1,10 +1,10 @@
 # Arquitectura y límites de operación
 
-Estado 2026-10-19: ARCH-01 y ARCH-02 integrados; ARCH-02 en `main/2f3c95e`, 124 pruebas PostgreSQL sin omisiones. ARCH-03 implementado localmente y pendiente de PostgreSQL e integración externa. [Reanudación ARCH-03](HANDOFF_ARCH03_2026-10-19.md).
+Estado 2026-10-19: ARCH-03 integrado y verificado en `main/ddcf178`, 139 pruebas PostgreSQL sin omisiones. ARCH-04 implementado localmente; PostgreSQL e integración pendientes. [Handoff ARCH-04](HANDOFF_ARCH04_2026-10-19.md).
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. Arquitectura antes de retomar aceptación funcional. ARCH-01/MAM-822 y ARCH-02/MAM-823 están integrados y verificados. ARCH-03/MAM-824 tiene implementación local pendiente de PostgreSQL e integración. Los límites reservados de etapas posteriores no representan funcionalidades migradas. No se ha cambiado el esquema ni el registro de modelos Django.
+**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. Arquitectura antes de retomar aceptación funcional. ARCH-01, ARCH-02 y ARCH-03 están integrados y verificados. ARCH-04/MAM-825 tiene implementación local pendiente de PostgreSQL e integración. Los límites reservados de etapas posteriores no representan funcionalidades migradas. No se ha cambiado el esquema ni el registro de modelos Django.
 
 `basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
@@ -96,3 +96,13 @@ Athlete commands own profile/preferences, sport profiles, wellness, measurements
 Composition is explicit in basis/bootstrap/{accounts,athletes,catalog,training}. Shared Django UoW/clock adapters now live in bootstrap/transactions; modules do not import each other's adapters. The six exact pending legacy typing frontiers remain unchanged: these mixed files are not certified as fully migrated. Narrow Protocol casts describe existing untyped model save/access signatures without suppressing migrated code or replacing validation.
 
 [ARCH-03 plan](architecture/ARCH-03-PLAN.md), [verification and pending gates](architecture/ARCH-03-VERIFICATION.md). ARCH-04 starts only after the ARCH-03 commit, receipt and main are independently checked.
+
+## ARCH-04: source-independent private planning
+
+PlanDefinition contains typed goals, dates, cycle hierarchy and scheduled prescriptions. It has no program/proposal/provider dependency. Manual forms create a valid empty draft through the same creation/validation path as decoded AI proposals. Proposal shape and366-day/3..100-cycle/1..14-session bounds remain at the wire adapter; they do not restrict manual drafts. No programs feature or schema/provenance column was introduced.
+
+Planning coordinates goal creation, cycles, scheduling, rescheduling with revision/execution guards, rollback-only preview, owner-scoped calendar reads and plan revision. Django adapters keep model/field validation and owner-scoped FK resolution; model clean hooks delegate shared pure goal/date/cycle/schedule rules. Existing proposal acceptance keeps its lock/idempotency/status policy until ARCH-07 and delegates plan creation. Generic template/admin/queryset integration remains for ARCH-09.
+
+Revision locks the original plan, preserves its lineage/version relationship, copies all cycles and only future schedules without executions. Old schedules, prescriptions, measured RM references and results remain intact. Target/actual fields stay distinct, including zero observations. Revisions of an empty scheduled prescription retain the existing validation failure rather than inventing blocks. Typed definitions use immutable tuples and private instance copies, so changing source input cannot alter history.
+
+Shared fake/Django repository tests cover creation, preview rollback and revision/history. Additional real tests cover detailed strength prescriptions and frozen RM, foreign RM rollback, source-input mutation, manual cycle/schedule forms and stale rescheduling. [Plan](architecture/ARCH-04-PLAN.md), [verification](architecture/ARCH-04-VERIFICATION.md). ARCH-05 waits for independent PostgreSQL/commit readback.

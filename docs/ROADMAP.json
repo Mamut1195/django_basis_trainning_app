@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH03_2026-10-19.md",
-    "execution_state": "ARCH-02 integrated and verified; ARCH-03 candidate locally verified; external PostgreSQL and Git integration pending",
+    "handoff": "docs/HANDOFF_ARCH04_2026-10-19.md",
+    "execution_state": "ARCH-03 integrated/verified; ARCH-04 locally implemented, external PostgreSQL/main gates pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -792,25 +792,25 @@
         "code": "ARCH-03",
         "id": "MAM-824",
         "title": "ARCH-03 â€” Identidad, atleta y catÃ¡logo",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [
           "ARCH-02"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local: 39 pure tests; mypy core52/Django68; 8 import contracts; Ruff; Django check; no migrations; SQLite139 with3 PostgreSQL-only skips. External script runtime, PostgreSQL139 zero skips and main integration NOT RUN",
-        "evidence": "docs/architecture/ARCH-03-VERIFICATION.md"
+        "integrated_commit": "ddcf178d6a5c8c4793e3672a95dbf64fdffe2b91",
+        "verification": "VERIFIED: PostgreSQL18.4,139 tests zero skips, stopped container,50 manifest files and all normalized tree/HEAD hashes",
+        "evidence": "docs/architecture/ARCH-03-RESULT.json"
       },
       {
         "code": "ARCH-04",
         "id": "MAM-825",
         "title": "ARCH-04 â€” PlanificaciÃ³n y versiones",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-03"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null
+        "verification": "VERIFIED local:48 pure; mypy56/74; eight import contracts; Ruff; Django/no migrations;148 SQLite with3 PostgreSQL-only skips. PostgreSQL/main NOT RUN",
+        "evidence": "docs/architecture/ARCH-04-VERIFICATION.md"
       },
       {
         "code": "ARCH-05",

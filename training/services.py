@@ -12,6 +12,7 @@ from django.db import models, transaction
 from django.db.models import F, Q
 from django.utils import timezone
 
+from basis.bootstrap import planning
 from basis.bootstrap import training as execution
 from basis.modules.training.adapters.wire import encode_session
 from basis.modules.training.public import ExecutionConflict, InvalidExecution, Unavailable
@@ -20,13 +21,11 @@ from .access import require_write_access
 from .domain import SPORT_LABELS
 from .models import (
     Block,
-    Cycle,
     Interval,
     PlannedSession,
     Session,
     StrengthSet,
     SyncReceipt,
-    TrainingPlan,
 )
 
 
@@ -149,59 +148,8 @@ def start_session(owner, planned):
     return Session.objects.get(pk=state.id)
 
 
-@transaction.atomic
 def revise_plan(owner, plan):
-    require_write_access(owner)
-    plan = TrainingPlan.objects.select_for_update().get(pk=plan.pk, owner=owner)
-    if TrainingPlan.objects.filter(previous=plan).exists():
-        raise ValidationError("Ya existe una versión posterior.")
-    new = TrainingPlan.objects.create(
-        owner=owner,
-        lineage=plan.lineage,
-        version=plan.version + 1,
-        previous=plan,
-        goal=plan.goal,
-        title=plan.title,
-        start_date=plan.start_date,
-        end_date=plan.end_date,
-        notes=plan.notes,
-    )
-    cycle_map = {}
-    for kind in ("macro", "meso", "micro"):
-        for cycle in plan.cycles.filter(kind=kind):
-            cycle_map[cycle.pk] = Cycle.objects.create(
-                plan=new,
-                parent=cycle_map.get(cycle.parent_id),
-                kind=cycle.kind,
-                title=cycle.title,
-                start_date=cycle.start_date,
-                end_date=cycle.end_date,
-                focus=cycle.focus,
-            )
-    for old in plan.sessions.filter(date__gte=timezone.localdate(), executions__isnull=True):
-        scheduled = PlannedSession.objects.create(
-            owner=owner,
-            plan=new,
-            cycle=cycle_map[old.cycle_id],
-            title=old.title,
-            date=old.date,
-            notes=old.notes,
-        )
-        save_blocks(
-            scheduled,
-            [
-                {
-                    "sport": b.sport,
-                    "title": b.title,
-                    "target": b.target,
-                    "notes": b.notes,
-                    "sets": [encode_row(s) for s in b.sets.all()],
-                    "intervals": [encode_row(i) for i in b.intervals.all()],
-                }
-                for b in old.blocks.all()
-            ],
-        )
-    return new
+    return planning.revise(owner.pk, plan.pk)
 
 
 def progress_report(owner):

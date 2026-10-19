@@ -29,3 +29,7 @@ The six exact legacy typing frontiers remain pending. Protocol casts in athlete/
 External command: scripts/Complete-Arch03.ps1. It checks the reviewed base and empty index, runs its stderr/nonzero-exit self-test, repeats all local gates, creates its own PostgreSQL 18.4 Docker container with no host volume, requires139 successful tests/no skips, stops the owned container in finally, checks source hashes and integrates only the explicit manifest on a dedicated branch. Logs remain in .cache/arch03; receipt becomes docs/architecture/ARCH-03-RESULT.json. No push.
 
 Final local run: all nine checks VERIFIED in .cache/arch03-local/receipt.json. Separate stdout/stderr logs preserve actual native exit codes; the SQLite log confirms Ran139 tests / OK(skipped=3), and pure log confirms Ran39 / OK. Normalized source hashes are bound to the explicit50-file manifest. Native PowerShell parsing found zero errors; executing the script self-test externally remains required. Linear readback confirms MAM-823 Done and MAM-824 In Progress after appending this candidate's evidence.
+
+## Final integration readback
+
+VERIFIED main/ddcf178d6a5c8c4793e3672a95dbf64fdffe2b91; run ac42bce0ac9a4fc795271b758fbf0959. Actual PostgreSQL logs confirm139 tests and standalone OK, no skips. Receipt has all checks exit0 and container_stopped true; all normalized source hashes match working tree and HEAD; all50 manifest files exist in the commit. MAM-824 marked Done only after this check, then MAM-825 started. Earlier pending notes are historical.

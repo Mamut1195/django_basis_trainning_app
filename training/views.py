@@ -20,6 +20,13 @@ from standardwebhooks.webhooks import Webhook, WebhookVerificationError
 
 from basis.bootstrap.accounts import identity, recover_password
 from basis.bootstrap.athletes import save_observation, save_preferences, save_profile, save_rm
+from basis.bootstrap.planning import (
+    reschedule,
+    save_cycle,
+    save_goal,
+    save_manual_plan,
+    save_scheduled,
+)
 from basis.bootstrap.training import edit_revision
 from basis.modules.accounts.public import (
     AccountUnavailable,
@@ -265,7 +272,7 @@ def plan_list(request):
 def plan_new(request):
     form = PlanForm(request.POST or None, owner=request.user)
     if request.method == "POST" and form.is_valid():
-        return redirect("plan-detail", pk=form.save().pk)
+        return redirect("plan-detail", pk=save_manual_plan(request.user.pk, form.save(commit=False)))
     return render(request, "training/form.html", {"title": "Nuevo plan", "form": form})
 
 
@@ -297,7 +304,7 @@ def cycle_new(request, pk):
     plan = get_object_or_404(TrainingPlan, pk=pk, owner=request.user, next_version__isnull=True)
     form = CycleForm(request.POST or None, plan=plan)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        save_cycle(request.user.pk, form.save(commit=False))
         return redirect("plan-detail", pk=pk)
     return render(
         request,
@@ -310,7 +317,7 @@ def cycle_new(request, pk):
 def scheduled_new(request):
     form = PlannedSessionForm(request.POST or None, owner=request.user)
     if request.method == "POST" and form.is_valid():
-        return redirect("scheduled-detail", pk=form.save().pk)
+        return redirect("scheduled-detail", pk=save_scheduled(request.user.pk, form.save(commit=False)))
     return render(request, "training/form.html", {"title": "Programar sesión", "form": form})
 
 
@@ -352,20 +359,11 @@ def scheduled_reschedule(request, pk):
         request.POST or None, initial={"date": scheduled.date, "revision": scheduled.revision}
     )
     if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            scheduled = PlannedSession.objects.select_for_update().get(pk=scheduled.pk)
-            if scheduled.executions.exists() or scheduled.revision != form.cleaned_data["revision"]:
-                form.add_error(
-                    None, "La sesión cambió o ya tiene ejecuciones. Crea otra versión del plan."
-                )
-            else:
-                scheduled.date = form.cleaned_data["date"]
-                scheduled.revision += 1
-                try:
-                    scheduled.save()
-                    return redirect("scheduled-detail", pk=pk)
-                except ValidationError as exc:
-                    form.add_error(None, exc)
+        try:
+            reschedule(request.user.pk, scheduled.pk, form.cleaned_data["date"], form.cleaned_data["revision"])
+            return redirect("scheduled-detail", pk=pk)
+        except ValidationError as error:
+            form.add_error(None, error)
     return render(request, "training/form.html", {"title": "Reprogramar sesión", "form": form})
 
 
@@ -728,6 +726,9 @@ def owned_new(request, resource):
         if resource in ("sport", "wellness", "measurement"):
             instance = form.save(commit=False)
             save_observation(request.user.pk, instance)
+        elif resource == "goal":
+            instance = form.save(commit=False)
+            instance.pk = save_goal(request.user.pk, instance)
         else:
             instance = form.save()
         return (

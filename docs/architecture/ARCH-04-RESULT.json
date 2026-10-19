@@ -1,0 +1,89 @@
+{
+    "status":  "VERIFIED",
+    "run_id":  "92a87ed71d6947898ade23e1be0a24cd",
+    "checks":  {
+                   "architecture":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "pure-tests":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "core-types":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "django-types":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "imports":  {
+                                   "exit_code":  0,
+                                   "status":  "VERIFIED"
+                               },
+                   "ruff":  {
+                                "exit_code":  0,
+                                "status":  "VERIFIED"
+                            },
+                   "django-check":  {
+                                        "exit_code":  0,
+                                        "status":  "VERIFIED"
+                                    },
+                   "migrations":  {
+                                      "exit_code":  0,
+                                      "status":  "VERIFIED"
+                                  },
+                   "docker-access":  {
+                                         "exit_code":  0,
+                                         "status":  "VERIFIED"
+                                     },
+                   "postgres-start":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      },
+                   "loopback-binding":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "postgres-version":  {
+                                            "exit_code":  0,
+                                            "status":  "VERIFIED"
+                                        },
+                   "image-id":  {
+                                    "exit_code":  0,
+                                    "status":  "VERIFIED"
+                                },
+                   "postgres-tests":  {
+                                          "exit_code":  0,
+                                          "status":  "VERIFIED"
+                                      }
+               },
+    "tests":  148,
+    "skipped":  0,
+    "engine":  "postgres (PostgreSQL) 18.4 (Debian 18.4-1.pgdg13+1)",
+    "image_id":  "sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636",
+    "source_hashes":  {
+                          ".github/workflows/checks.yml":  "CB795E5C6F0C47F4F2B336D3D3EC65A9335525E68CBB1D7D18C085E8B90A6F48",
+                          "basis/bootstrap/planning.py":  "FF1448D38EF23FE1EE11E5EC485904A40E487382EDADD751DAAEB80B9DB8A7C2",
+                          "basis/modules/training/adapters/plan_wire.py":  "90AD4DA1393866663AC482AA7A7B4C1640AFF2C2FA1D5F0DF4C22CC61C2EA8C3",
+                          "basis/modules/training/adapters/planning.py":  "BCB62FB8154CB0CFFB9EF4A97E64F23EB3B477BAA491208A0AEEAFD80DE0EC04",
+                          "basis/modules/training/adapters/test_planning.py":  "C8D9B9D21DE029BE3D6C45654A7019677471097606C5833AB68C09B68774390F",
+                          "basis/modules/training/application/planning.py":  "E9D7F8DB57E5902D8DD5070E03A3009C13C1DB0A6AC06196E1FE1B536E146EBB",
+                          "basis/modules/training/domain/planning.py":  "D0C7C9ECA6D92AC44B1E1C756E393C6106AC98EFE51D3711C1334854630A72E4",
+                          "basis/modules/training/public.py":  "4DB62B49CEC5F81430FEA3B479B165DD1413B849FEBD1035E6E5825A27079499",
+                          "basis/shared/identifiers.py":  "89585E61E97FC530FC8A063DDA76F37E419DDEE410F67EC436BE4C012DC896EA",
+                          "docs/architecture/ARCH-04-FILES.json":  "D463710CFAC37D0041324C05ECC8F6F5C9676CC74AC40787141B39499800B167",
+                          "scripts/Complete-Arch04.ps1":  "8F7778841F2DB35D201A5FEDDB783C671C76EF2E917629D26BB01BC6F1B4D81E",
+                          "scripts/Verify-Arch04.ps1":  "B33EB9AC905B4A150D7DD7AF1FC65A5FAA9635C97C3B2667B06A5CC9D4EA60BB",
+                          "tests_architecture/planning_contract.py":  "239DCD99B1C7E81296C083074A718484EDCEDB24B52FD6C46CF89BDC59E12517",
+                          "tests_architecture/test_planning.py":  "7B8F86AB0020E9C2B46DE4DE0AFF70BF4EC7DD3002D63E4381CBEEA5093BC691",
+                          "training/models.py":  "7F6D47954EC579CE7F5A1B228F75F568E9EAAB544CE3BFB6D04D2184CFAECBA7",
+                          "training/proposals.py":  "0E50E6012378980AE7C7853F5CE0E54FF969EE48275193348261D560FCB266CC",
+                          "training/services.py":  "CF2E35DF92AF10FF599C6A5F8AEEA5D42045F7662CA2F19840BAC721FD71E392",
+                          "training/views.py":  "164C9FF9FE09478775BB8CE59BECED37251BA3D1D9EF3823A1AF8889EF5290C1"
+                      },
+    "hash_mode":  "SHA256 strict UTF-8 without BOM, CRLF normalized to LF",
+    "container_stopped":  true,
+    "verified_at":  "2026-10-19T19:53:12.1261497Z"
+}

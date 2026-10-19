@@ -17,3 +17,7 @@ WellnessId = NewType("WellnessId", int)
 SportProfileId = NewType("SportProfileId", int)
 MeasuredRMId = NewType("MeasuredRMId", int)
 WorkoutId = NewType("WorkoutId", int)
+
+GoalId = NewType("GoalId", int)
+CycleId = NewType("CycleId", int)
+LineageId = NewType("LineageId", UUID)

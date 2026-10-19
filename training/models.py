@@ -16,6 +16,17 @@ from basis.modules.athletes.public import (
     validate_sport,
     validate_wellness,
 )
+from basis.modules.training.public import (
+    CycleDefinition,
+    CycleKind,
+    GoalData,
+    InvalidPlanning,
+    ScheduledDefinition,
+    validate_cycle,
+    validate_dates,
+    validate_goal,
+    validate_schedule,
+)
 from daily_trainning_app.strength_metrics import calculate_strength_metrics
 
 from .domain import SPORTS, internal_load, validate_metrics
@@ -138,10 +149,14 @@ class Goal(Owned):
     target_unit = models.CharField(max_length=30, blank=True)
 
     def clean(self):
-        if self.target_value is not None and not self.target_unit:
-            raise ValidationError("Indica la unidad del objetivo.")
-        if self.baseline_value is not None and (not self.baseline_date or not self.target_unit):
-            raise ValidationError("La línea base necesita fecha y unidad.")
+        try:
+            validate_goal(GoalData(
+                self.title, self.sport, self.priority, self.baseline_value, self.baseline_date,
+                self.target_date, self.description, self.target_value, self.target_unit,
+            ))
+        except InvalidPlanning as error:
+            raise ValidationError(str(error)) from error
+
 
 
 class TrainingPlan(Owned):
@@ -169,8 +184,10 @@ class TrainingPlan(Owned):
         if not self.goal_id or not self.start_date or not self.end_date:
             return
         self.same_owner(self.goal, self.previous)
-        if self.end_date < self.start_date:
-            raise ValidationError("El final debe ser posterior al inicio.")
+        try:
+            validate_dates(self.start_date, self.end_date)
+        except InvalidPlanning as error:
+            raise ValidationError(str(error)) from error
         if self.previous and (
             self.previous.lineage != self.lineage or self.version != self.previous.version + 1
         ):
@@ -199,23 +216,20 @@ class Cycle(ValidatedModel):
             or self.kind not in ("macro", "meso", "micro")
         ):
             return
-        if (
-            self.end_date < self.start_date
-            or self.start_date < self.plan.start_date
-            or self.end_date > self.plan.end_date
-        ):
-            raise ValidationError("El ciclo debe estar dentro de las fechas del plan.")
-        expected = {"meso": "macro", "micro": "meso"}
-        if self.kind == "macro" and self.parent_id:
-            raise ValidationError("Un macrociclo no tiene padre.")
-        if self.kind != "macro" and (not self.parent_id or self.parent.kind != expected[self.kind]):
-            raise ValidationError("Jerarquía requerida: macro → meso → micro.")
-        if self.parent_id and (
-            self.parent.plan_id != self.plan_id
-            or self.start_date < self.parent.start_date
-            or self.end_date > self.parent.end_date
-        ):
-            raise ValidationError("El ciclo debe estar dentro de su padre y plan.")
+        def definition(row):
+            return CycleDefinition(
+                str(row.pk), str(row.parent_id) if row.parent_id is not None else None,
+                CycleKind(row.kind), row.title, row.start_date, row.end_date, row.focus,
+            )
+        try:
+            validate_cycle(
+                definition(self), self.plan.start_date, self.plan.end_date,
+                definition(self.parent) if self.parent_id else None,
+                same_plan=not self.parent_id or self.parent.plan_id == self.plan_id,
+            )
+        except InvalidPlanning as error:
+            raise ValidationError(str(error)) from error
+
 
 
 class PlannedSession(Owned):
@@ -233,12 +247,19 @@ class PlannedSession(Owned):
         if not self.plan_id or not self.cycle_id or not self.date:
             return
         self.same_owner(self.plan)
-        if (
-            self.cycle.plan_id != self.plan_id
-            or self.cycle.kind != "micro"
-            or not self.cycle.start_date <= self.date <= self.cycle.end_date
-        ):
-            raise ValidationError("La sesión debe pertenecer a un microciclo y sus fechas.")
+        try:
+            validate_schedule(
+                ScheduledDefinition(str(self.cycle_id), self.title, self.date),
+                CycleDefinition(
+                    str(self.cycle.pk), str(self.cycle.parent_id) if self.cycle.parent_id else None,
+                    CycleKind(self.cycle.kind), self.cycle.title, self.cycle.start_date,
+                    self.cycle.end_date, self.cycle.focus,
+                ),
+                same_plan=self.cycle.plan_id == self.plan_id,
+            )
+        except InvalidPlanning as error:
+            raise ValidationError(str(error)) from error
+
 
 
 class Session(Owned):
