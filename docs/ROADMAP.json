@@ -35,13 +35,14 @@
       "code": "BASIS-004",
       "id": "MAM-617",
       "title": "BASIS-004 — Proteger historial y endurecer integridad y datos de ejemplo",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-617/basis-004-proteger-historial-y-endurecer-integridad-y-datos-de-ejemplo",
       "deps": [
         "MAM-616",
         "MAM-615"
       ],
-      "complete": false,
+      "complete": true,
+      "completed_at": "2026-10-20T23:01:47.767Z",
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-002",
@@ -664,7 +665,82 @@
   ],
   "nodes": 35,
   "edges": 86,
-  "done": 4,
+  "done": 5,
+  "open": 30,
+  "in_progress": 29,
+  "backlog": 1,
+  "postmerge_readback": {
+    "source_kind": "Local readback of the supplied Luna transcript; no new Linear/Notion access by this documentation executor.",
+    "source": {
+      "model": "opencode-go/gpt-6-luna",
+      "agent": "build",
+      "session": "ses_ea475a80dffeVXF8os2txyd0Cv",
+      "transcript": "C:/Users/Jonnathan/AppData/Local/Temp/opencode/luna-postmerge-ses_ea475a80.transcript.txt"
+    },
+    "issue": "MAM-617",
+    "status": "Done",
+    "completed_at": "2026-10-20T23:01:47.767Z",
+    "read_back_at": "2026-10-20T23:01:57.740Z",
+    "comment_id": "aee03067-082c-4e94-b8f6-8a7216d311db",
+    "code_integration": {
+      "pr": "https://github.com/Mamut1195/django_basis_trainning_app/pull/1",
+      "merge_sha": "6c44307f81fe2bbd3f62f0742263bcf5ea1acd0a",
+      "main_ci": "https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39511340583",
+      "main_ci_sha": "6c44307f81fe2bbd3f62f0742263bcf5ea1acd0a",
+      "main_ci_conclusion": "success"
+    },
+    "counts": {
+      "functional": {
+        "total": 35,
+        "done": 5,
+        "in_progress": 29,
+        "backlog": 1,
+        "open": 30
+      },
+      "architecture": {
+        "total": 11,
+        "done": 11
+      },
+      "project": {
+        "total": 46,
+        "done": 16,
+        "in_progress": 29,
+        "backlog": 1,
+        "open": 30
+      }
+    },
+    "next_unblocked": [
+      {
+        "id": "MAM-637",
+        "priority": "High",
+        "satisfied_dependencies": [
+          "MAM-615",
+          "MAM-616",
+          "MAM-617"
+        ]
+      },
+      {
+        "id": "MAM-621",
+        "priority": "Medium",
+        "satisfied_dependencies": [
+          "MAM-617",
+          "MAM-618"
+        ]
+      }
+    ],
+    "ux": {
+      "MAM-626": "In Progress",
+      "MAM-627": "In Progress",
+      "comment_id": "62020fd5-ba95-47cc-98da-a1b559bd4b65",
+      "comment_updated_at": "2026-10-20T23:01:40.929Z",
+      "screen_reader": "NOT RUN",
+      "owner_acceptance": "PENDING"
+    },
+    "historical_architecture_snapshot": {
+      "path": "docs/architecture/linear-readback.json",
+      "meaning": "Preserved architecture snapshot before the MAM-617 closure; its functional MAM-617 In Progress and four Done count are historical, not the current operational state. Architecture acceptance metrics below retain their original scope."
+    }
+  },
   "dependency_reconciliation": {
     "verified_at": "2026-10-20",
     "meaning": "deps (issue IDs) and depends_on (BASIS codes) both represent current native blocking dependencies, including satisfied functional dependencies still present in Linear.",

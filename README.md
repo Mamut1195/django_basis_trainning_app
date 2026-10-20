@@ -2,7 +2,7 @@
 
 PWA de entrenamiento para cuentas individuales privadas. Django 5.2 LTS sirve la interfaz y la API; Django Cotton UI, HTMX y Alpine proporcionan los componentes e interacciones. PostgreSQL es obligatorio en producción. No usa OpenDesign.
 
-La arquitectura actual se organiza en `config/`, `basis/modules/<area>/{domain,application,adapters}`, contratos `public.py`, `basis/bootstrap/` y `basis/shared/`. Las pruebas originales están en `tests/regression/`. Consulta la [estructura y estado de aceptación](docs/ARCHITECTURE.md) y el [mapa de entradas y casos de uso](docs/architecture/ENTRYPOINTS.md). A 2026-10-20, ARCH-01..10 y la épica BASIS-ARCH/MAM-821 están Done, con integración en `main/24484b7` y [recibo de aceptación](docs/architecture/ARCHITECTURE-ACCEPTANCE-2026-10-20.json). Los 31 tickets funcionales abiertos ya no están bloqueados por arquitectura; MAM-617, MAM-626 y MAM-627 siguen In Progress. La reapertura anterior se conserva en los [registros históricos](docs/ARCHITECTURE_EXECUTION.md).
+La arquitectura actual se organiza en `config/`, `basis/modules/<area>/{domain,application,adapters}`, contratos `public.py`, `basis/bootstrap/` y `basis/shared/`. Las pruebas originales están en `tests/regression/`. Consulta la [estructura y estado de aceptación](docs/ARCHITECTURE.md) y el [mapa de entradas y casos de uso](docs/architecture/ENTRYPOINTS.md). A 2026-10-20, ARCH-01..10 y la épica BASIS-ARCH/MAM-821 están Done, con integración en `main/24484b7` y [recibo de aceptación](docs/architecture/ARCHITECTURE-ACCEPTANCE-2026-10-20.json). Tras PR #1 y su CI post-merge, Luna confirmó **MAM-617 Done**; quedan **30 funcionales abiertos** (29 In Progress y uno Backlog), sin bloqueo de arquitectura. MAM-626/MAM-627 siguen In Progress: lector de pantalla NOT RUN y aceptación humana PENDING. El [cierre operativo de integridad](docs/HISTORY_INTEGRITY.md#cierre-operativo-mam-617-2026-10-20) registra fuente, SHA y CI; la reapertura anterior se conserva en los [registros históricos](docs/ARCHITECTURE_EXECUTION.md).
 
 ## Funcionalidad implementada
 
@@ -48,7 +48,7 @@ ARCH-09 follows [ADR-002](docs/architecture/ADR-002-FINAL-PERSISTENCE.md): there
 
 ## Integraciones y operación
 
-Consulta [la arquitectura y contratos](docs/ARCHITECTURE.md), [el diccionario deportivo](docs/TRAINING_VARIABLES.md), [la validación histórica inicial](docs/VALIDATION.md) y [el readback actual de integridad](docs/HISTORY_INTEGRITY.md#readback-actual-tras-revisión-independiente-y-luna-2026-10-20).
+Consulta [la arquitectura y contratos](docs/ARCHITECTURE.md), [el diccionario deportivo](docs/TRAINING_VARIABLES.md), [la validación histórica inicial](docs/VALIDATION.md) y [el cierre y readback actual de integridad](docs/HISTORY_INTEGRITY.md#cierre-operativo-mam-617-2026-10-20).
 
 La app reutiliza el [logo y la identidad oficial de BASIS](docs/BRAND.md). Los colores compartidos se editan en `basis/adapters/web/static/basis/brand/identity.json`, cargado por `basis/adapters/web/brand.py`; los tokens semánticos y de componentes están en `basis/adapters/web/static/basis/css/tokens.css`.
 

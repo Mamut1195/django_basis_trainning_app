@@ -3,9 +3,10 @@
 Cerrar BASIS-004 / MAM-617 con archivo del catálogo, conservación del historial,
 normalización consistente y datos de demostración repetibles sin borrados.
 
-Estado actual y matriz de los cuatro criterios: [readback tras revisión y Luna](#readback-actual-tras-revisión-independiente-y-luna-2026-10-20).
-Las secciones previas a ese readback conservan los resultados y límites de sus
-ejecuciones originales, incluidos los FAILED; no describen por sí solas el gate actual.
+Estado actual: **MAM-617 Done**, según el [cierre operativo posterior a PR #1](#cierre-operativo-mam-617-2026-10-20).
+La [matriz de los cuatro criterios](#criterios-vivos-de-mam-617-y-cobertura-concreta)
+y los apartados previos al cierre conservan resultados y límites de sus capturas
+originales, incluidos FAILED e integración pendiente; no describen el estado actual.
 
 # Context
 
@@ -229,6 +230,9 @@ los cambios externos observados y los hashes de cada ejecución.
 
 ## Readback actual tras revisión independiente y Luna: 2026-10-20
 
+Registro capturado antes de PR #1 y del cierre operativo de las 23:01Z, conservado
+con su candidato original. El cierre posterior se añade al final, sin reescribir recibos.
+
 La revisión independiente aprobó el código y confirmó el gate técnico del
 candidato final. Su [recibo local](../.cache/independent-review-a5614455b6c040438616780d94269822/result.json)
 está VERIFIED y conserva `sources_edited: false`, `candidate_unchanged: true`
@@ -275,7 +279,7 @@ consulta de sesión/RM ni un defecto de código que requiera ampliar esta entreg
 documental. El límite de cobertura de helpers y de operaciones de bajo nivel
 queda explícito en la matriz, sin prometer pruebas no ejecutadas.
 
-### Estado operativo y siguiente integración
+### Estado operativo previo a PR #1 y siguiente integración
 
 Luna confirmó BASIS-ARCH/MAM-821 Done, relacionado y no bloqueante para los 31
 funcionales abiertos. MAM-617/MAM-626/MAM-627 siguen In Progress. La corrección
@@ -287,3 +291,62 @@ Lista para integrar tras verificar JSON/DAG, rutas y diff documental. El cierre
 de MAM-617 sigue condicionado a commit integrado en main, CI verde de ese mismo
 SHA y readback posterior por el orquestador/Luna. Los gates humanos de UX, lector
 de pantalla y aceptación del propietario no se cierran con esta revisión.
+
+## Cierre operativo MAM-617: 2026-10-20
+
+**BASIS-004 / [MAM-617](https://linear.app/mamutsystems/issue/MAM-617) está Done.**
+Luna cerró el ticket el `2026-10-20T23:01:47.767Z` y releyó el estado a las
+`2026-10-20T23:01:57.740Z`. Comentario de cierre:
+`aee03067-082c-4e94-b8f6-8a7216d311db`.
+
+Fuente de esta conciliación: transcript local proporcionado
+`C:/Users/Jonnathan/AppData/Local/Temp/opencode/luna-postmerge-ses_ea475a80.transcript.txt`,
+sesión `ses_ea475a80dffeVXF8os2txyd0Cv`, modelo `opencode-go/gpt-6-luna`, agente
+`build`. Se contrastaron sus resultados guardados; este ejecutor documental no
+consultó ni modificó Linear/Notion y no simula un readback vivo nuevo.
+
+### Código integrado y CI que sustentan el cierre
+
+- [PR #1](https://github.com/Mamut1195/django_basis_trainning_app/pull/1): MERGED
+  el `2026-10-20T22:53:41Z`; commit de entrega
+  `0c3b6c53fd7080bdf6c220429aefb462dd06bab6`.
+- Merge/main de la entrega de código:
+  `6c44307f81fe2bbd3f62f0742263bcf5ea1acd0a`.
+- [CI post-merge 39511340583](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39511340583):
+  success sobre **ese mismo SHA**, no sobre el head del PR ni un commit futuro.
+  Logs: 260 pruebas PostgreSQL sin omisiones, 174 puras, mypy 113 núcleo/320
+  Django, ocho contratos de imports, formato/lint, arquitectura, check Django,
+  ausencia de deriva y collectstatic correctos.
+
+Luna acreditó los cuatro criterios de la matriz anterior al cerrar: consultas de
+sesiones/RM archivados, protección ante borrados/migraciones, normalización
+coherente y seed no destructivo separado del despliegue. Los recibos locales
+anteriores y sus fallos mantienen sus hashes/resultados originales. Este cierre
+no exige ni acredita aceptación humana UX, proveedores reales o producción.
+
+### Conteos actuales y próximos desbloqueados
+
+| Alcance | Total | Done | In Progress | Backlog | Abiertos |
+| --- | --- | --- | --- | --- | --- |
+| Funcionales | 35 | 5 | 29 | 1 | 30 |
+| Arquitectura, incluida la épica | 11 | 11 | 0 | 0 | 0 |
+| Proyecto | 46 | 16 | 29 | 1 | 30 |
+
+- [MAM-637](https://linear.app/mamutsystems/issue/MAM-637), prioridad **High**:
+  MAM-615, MAM-616 y MAM-617 están Done.
+- [MAM-621](https://linear.app/mamutsystems/issue/MAM-621), prioridad **Medium**:
+  MAM-617 y MAM-618 están Done.
+
+Ambos siguen In Progress: se satisfacen sus dependencias, no se cierra ni se
+declara implementado su alcance. Las aristas de dependencia no se modifican.
+El snapshot `docs/architecture/linear-readback.json` conserva el estado anterior
+al cierre de MAM-617; el estado actual y su procedencia están en `ROADMAP.json`.
+
+**MAM-626/MAM-627 permanecen In Progress. Lector de pantalla NOT RUN; aceptación
+del propietario PENDING.** Luna actualizó el comentario de MAM-626
+`62020fd5-ba95-47cc-98da-a1b559bd4b65` el `2026-10-20T23:01:40.929Z` con la
+evidencia UX final de 60+6 estados/1208 focos y esos pendientes.
+
+Esta nota atribuye el CI anterior a PR #1. La conciliación documental tendrá su
+propio commit/PR y su CI se verificará y reportará después de integrarla, sin
+usar un resultado futuro para justificar el cierre ya confirmado por Luna.
