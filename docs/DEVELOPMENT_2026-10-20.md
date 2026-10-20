@@ -2,6 +2,11 @@
 
 Reconcile and accept the published architecture, then complete BASIS-004/MAM-617 data integrity and advance BASIS-012/MAM-626 with a reviewable UX contract.
 
+Estado final del lote: **MAM-617 Done**, confirmado por Luna después de PR #1 y
+su CI post-merge. Ver [cierre operativo y siguientes tareas](#cierre-operativo-del-lote).
+Los apartados anteriores a ese cierre conservan el contexto de sus capturas;
+las referencias a integración pendiente o 31 abiertos no son el estado actual.
+
 # Context
 
 Baseline main is `24484b7c8c5a4c0beb89ee1dc854c91581d7293a`. GitHub main, local HEAD and tracking ref match. The existing untracked `HANDOFF_PRESENTATION_2026-10-19.md` is preserved separately. Linear owns operational state; no accessible BASIS Notion page was found.
@@ -32,7 +37,7 @@ Baseline independently read back: CI Django run `39367822734`, PostgreSQL job `1
 
 ## Integridad BASIS-004 / MAM-617: validación delegada nueva
 
-Estado actual: código aprobado en la revisión independiente final; [readback y
+Estado de la revisión previa a PR #1: código aprobado; [readback y
 matriz de aceptación](HISTORY_INTEGRITY.md#readback-actual-tras-revisión-independiente-y-luna-2026-10-20).
 Los párrafos de ejecuciones siguientes se conservan como historial, con sus
 propios hashes y fallos. La integración y CI del candidato siguen pendientes.
@@ -83,6 +88,8 @@ Detalle y límites en HISTORY_INTEGRITY; estado global del complemento FAILED.
 
 ## Readback actual y corrección documental R1/R2
 
+Registro anterior a PR #1 y al cierre operativo de las 23:01Z, conservado como historial.
+
 La revisión independiente posterior verificó el código y las comprobaciones en
 `.cache/independent-review-a5614455b6c040438616780d94269822/result.json`:
 mypy Django 320/núcleo 113, Ruff lint/formato, djLint, Prettier, arquitectura y
@@ -116,6 +123,36 @@ Correcciones de esta entrega, sólo documentales:
 El paquete documental queda preparado para la revisión de integración tras los
 controles JSON/DAG/formato/diff. No se afirma commit, merge o CI futuro; MAM-617
 permanece In Progress hasta la integración y su readback autorizado.
+
+## Cierre operativo del lote
+
+Fuente: transcript local proporcionado de Luna, modelo `opencode-go/gpt-6-luna`,
+agente `build`, sesión `ses_ea475a80dffeVXF8os2txyd0Cv`. No se consultaron
+Linear/Notion en esta conciliación. [MAM-617](https://linear.app/mamutsystems/issue/MAM-617)
+quedó Done el `2026-10-20T23:01:47.767Z` y Luna lo releyó a las
+`23:01:57.740Z`; comentario `aee03067-082c-4e94-b8f6-8a7216d311db`.
+
+El código se integró mediante [PR #1](https://github.com/Mamut1195/django_basis_trainning_app/pull/1),
+merge `6c44307f81fe2bbd3f62f0742263bcf5ea1acd0a`. El
+[CI post-merge 39511340583](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39511340583)
+terminó success en ese mismo SHA: 260 PostgreSQL sin omisiones, 174 puras,
+mypy 113/320 y ocho contratos, con formato/lint, Django/esquema/estáticos verdes.
+Esta evidencia acredita la entrega de código de PR #1; no se atribuye a un
+commit futuro de conciliación documental.
+
+Estado del proyecto: **46 tickets = 16 Done, 29 In Progress, uno Backlog**.
+Funcionales: **35 = cinco Done, 29 In Progress, uno Backlog** (30 abiertos).
+Arquitectura: 11 Done. MAM-626/MAM-627 siguen In Progress: lector de pantalla
+NOT RUN, aceptación humana PENDING. MAM-637 (High; depende de MAM-615/616/617)
+y MAM-621 (Medium; depende de MAM-617/618) tienen sus dependencias satisfechas;
+continúan In Progress y su alcance no se declara completado. No se cambian
+dependencias ni se inicia su implementación en esta conciliación.
+
+La [nota de cierre de integridad](HISTORY_INTEGRITY.md#cierre-operativo-mam-617-2026-10-20)
+conserva fuente y detalles. `ROADMAP.json` refleja el nuevo estado;
+`docs/architecture/linear-readback.json` permanece como snapshot anterior al
+cierre. El CI propio de esta conciliación se verificará y reportará después de
+su integración, sin prometer su resultado en estos documentos.
 
 # Risks
 
