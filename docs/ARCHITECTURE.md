@@ -72,7 +72,7 @@ ARCH-01 → ARCH-02 → ARCH-03 → ARCH-04 → ARCH-05 → ARCH-06 → ARCH-07 
 ## Implementación existente y límites que deben conservarse
 
 
-Django modular monolith with server-rendered templates and session/CSRF API. Runtime code resides under basis/modules and explicit bootstrap composition; retired application/configuration packages have no active source or registration. tests/regression preserves the original baseline scenarios under strict typing. Model classes live in each module's adapters/models.py, registered as basis_<area>, with initial migrations under adapters/migrations. All 28 models and config are in strict type scope; no silent model import frontier remains.
+Django modular monolith with server-rendered templates and session/CSRF API. Runtime code resides under basis/modules and explicit bootstrap composition; retired application/configuration packages have no active source or registration. tests/regression preserves the original baseline scenarios under strict typing. Model classes live in each module's adapters/models.py or explicit adapters/models packages, registered as basis_<area>, with initial migrations under adapters/migrations. All 28 models and config are in strict type scope; no silent model import frontier remains.
 
 La cuenta `auth.User` se vincula explícitamente a un perfil privado mediante OneToOne. Todas las consultas privadas se filtran por la cuenta autenticada; un identificador enviado por el navegador nunca elige el dueño de un registro. El catálogo común se administra mediante permisos de personal. Los ejercicios referenciados se protegen frente al borrado en cascada.
 
@@ -165,3 +165,14 @@ Synchronization now coordinates typed operation identity/digest/receipt, deferre
 Canonical JSON, original IndexedDB body including created, owner scope, CSRF and400/403/409 responses remain compatible. Offline assets are unchanged; real browser/device acceptance remains ARCH-10. training/services.py now joins strict scope and leaves pending inventory; two exact silent mixed model frontiers remain until ARCH-09. One local DRF web import boundary is documented in [verification](architecture/ARCH-08-VERIFICATION.md); no broad suppression.
 
 Local candidate:105 pure tests, strict89/140 files, eight import contracts, AST/Ruff/Django/no migrations/static,218 SQLite tests (five PostgreSQL-only skips),23 independent parity cases/zero differences and31-file stable scope. PostgreSQL/main integration remains pending; [current handoff](HANDOFF_ARCH08_2026-10-19.md). Only after readback may ARCH-09 remove daily_trainning_app and reorganize the final persistence/apps/migrations according to ADR-002.
+
+
+## Presentation ownership and composition completion
+
+The current local presentation candidate starts from main `717cc1b`. `basis/adapters/web` is a technical Django application without models: shared layouts/forms/notices, `cotton/basis` components and authored `static/basis` resources. Third-party static files retain `static/vendor`. Each business module owns its `adapters/web` routes, views/forms and `adapters/templates/<area>` screens. Training web handlers are split into planning, execution, strength, intervals, progress and trekking; athlete/training model packages export exactly one definition of each registered model.
+
+`bootstrap` constructs and injects services and adapters; it contains no HTTP handlers, ORM selections, JSON conversion or application command dispatch. AST enforcement covers factories, technical adapter core independence and nested web handlers. Export-v1 obtains 19 owner-selected sections through typed area export read ports; foreign ORM schemas do not leave their owning adapters. Historical workout persistence and typed commands reuse one pure reference decision, compatibility policy and metric calculation while retaining defensive validation and `update_fields` semantics.
+
+Password recovery uses explicit `accounts/auth` templates through confirmation and completion, avoiding admin template discovery. The service worker hashes relocated templates/components/static sources, renders a Prettier-formatted plain JavaScript source, and fails explicitly for a missing critical source or resource. The offline shell omits credentials and authenticated documents. Shared form/error/loading components and their parameters/states are documented in [COMPONENTS](COMPONENTS.md).
+
+See [movement map](architecture/PRESENTATION-MOVES.json), [implementation plan](architecture/PRESENTATION-PLAN.md) and [verification](architecture/PRESENTATION-VERIFICATION.md). This local candidate does not supersede published commit evidence until Git integration is verified; ARCH-09 and ARCH-10 remain open.

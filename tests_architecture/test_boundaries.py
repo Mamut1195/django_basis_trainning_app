@@ -47,13 +47,20 @@ class BoundaryTests(unittest.TestCase):
 
     def test_adapters_cannot_import_retired_runtime(self) -> None:
         for source in ("from training.models import Session", "import daily_trainning_app"):
-            self.assertTrue(violations(source, "basis.modules.training.adapters.views"))
+            self.assertTrue(violations(source, "basis.modules.training.adapters.web"))
 
     def test_final_layout_rejects_old_namespaces_and_allows_regression_tests(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             (root / "config").mkdir()
-            for filename in ("__init__.py", "settings.py", "test_settings.py", "urls.py", "asgi.py", "wsgi.py"):
+            for filename in (
+                "__init__.py",
+                "settings.py",
+                "test_settings.py",
+                "urls.py",
+                "asgi.py",
+                "wsgi.py",
+            ):
                 (root / "config" / filename).write_text("", encoding="utf-8")
             (root / "tests" / "regression").mkdir(parents=True)
             (root / "tests" / "regression" / "test_history.py").write_text("", encoding="utf-8")
@@ -66,7 +73,7 @@ class BoundaryTests(unittest.TestCase):
             self.assertEqual(len(final_layout_errors(root)), 2)
 
     def test_views_reject_direct_writes_and_transactions_but_allow_binding(self) -> None:
-        module = "basis.modules.training.adapters.views"
+        module = "basis.modules.training.adapters.web"
         for source in (
             "from .models import Session\nSession.objects.create(title='x')",
             "from .models import Session\nSession.objects.filter(pk=1).update(title='x')",
@@ -76,11 +83,17 @@ class BoundaryTests(unittest.TestCase):
             with self.subTest(source=source):
                 self.assertTrue(violations(source, module))
         self.assertFalse(violations("form.save(commit=False)", module))
-        self.assertFalse(violations("from .models import Session\nSession.objects.filter(pk=1)", module))
+        self.assertFalse(
+            violations("from .models import Session\nSession.objects.filter(pk=1)", module)
+        )
         self.assertFalse(violations("cases().save_strength(command)", module))
 
     def test_final_configuration_cannot_be_an_old_named_package(self) -> None:
-        self.assertTrue(violations("from basis_trainning_app import settings", "basis.modules.training.adapters.views"))
+        self.assertTrue(
+            violations(
+                "from basis_trainning_app import settings", "basis.modules.training.adapters.web"
+            )
+        )
         with tempfile.TemporaryDirectory() as folder:
             errors = final_layout_errors(Path(folder))
             self.assertEqual(len(errors), 6)
@@ -133,6 +146,38 @@ class BoundaryTests(unittest.TestCase):
 
     def test_bootstrap_can_wire_django_adapters(self) -> None:
         self.assertFalse(violations("import django", "basis.bootstrap", is_package=True))
+
+    def test_technical_adapters_are_infrastructure_and_checked_in_type_imports(self) -> None:
+        source = "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n from basis.adapters.web import framework\n"
+        self.assertTrue(violations(source, "basis.modules.training.domain.execution"))
+        self.assertFalse(violations("import django", "basis.adapters.web.framework"))
+
+    def test_nested_web_handlers_cannot_persist_or_open_transactions(self) -> None:
+        for module in (
+            "basis.modules.training.adapters.web.execution",
+            "basis.modules.accounts.adapters.web.views",
+        ):
+            for source in (
+                "form.save()",
+                "from django.db import transaction",
+                "from ..models import Session\nSession.objects.create()",
+            ):
+                with self.subTest(module=module, source=source):
+                    self.assertTrue(violations(source, module))
+            self.assertFalse(violations("form.save(commit=False)", module))
+
+    def test_bootstrap_cannot_query_serialize_or_handle_http(self) -> None:
+        for source in (
+            "Model.objects.filter()",
+            "json.loads(payload)",
+            "render(request, 'page.html')",
+            "def page(request): pass",
+        ):
+            with self.subTest(source=source):
+                self.assertTrue(violations(source, "basis.bootstrap.example"))
+        self.assertFalse(
+            violations("def service(): return Service(Repository())", "basis.bootstrap.example")
+        )
 
     def test_all_core_modules_import_without_site_packages_or_settings(self) -> None:
         # -I ignores environment/PYTHONPATH; -S removes site packages, including Django.

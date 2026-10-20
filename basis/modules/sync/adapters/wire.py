@@ -21,8 +21,9 @@ class Conflict(Exception):
 
 
 class WireSource:
-    def __init__(self, mutation: object, payload: object, owner: AccountId,
-                 decode_changes: "ChangesDecoder") -> None:
+    def __init__(
+        self, mutation: object, payload: object, owner: AccountId, decode_changes: "ChangesDecoder"
+    ) -> None:
         self.mutation = mutation
         self.payload = payload
         self.owner = owner
@@ -35,15 +36,28 @@ class WireSource:
             session = SessionId(UUID(str(payload["id"])))
         except (ValueError, KeyError, TypeError):
             raise ValidationError("Identificador de sincronizaci\u00f3n inv\u00e1lido.") from None
-        digest = PayloadDigest(hashlib.sha256(
-            json.dumps(self.payload, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest())
+        digest = PayloadDigest(
+            hashlib.sha256(
+                json.dumps(self.payload, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+        )
         return MutationIdentity(mutation, session, digest)
 
     def revision(self) -> Revision:
         payload = mapping(self.payload)
-        allowed = {"id", "revision", "title", "date", "status", "duration_seconds",
-                   "duration_protocol", "reported_rpe", "notes", "planned", "blocks"}
+        allowed = {
+            "id",
+            "revision",
+            "title",
+            "date",
+            "status",
+            "duration_seconds",
+            "duration_protocol",
+            "reported_rpe",
+            "notes",
+            "planned",
+            "blocks",
+        }
         if set(payload) - allowed or type(payload.get("revision")) is not int:
             raise ValidationError("Formato o revisi\u00f3n de sesi\u00f3n inv\u00e1lida.")
         revision = payload["revision"]

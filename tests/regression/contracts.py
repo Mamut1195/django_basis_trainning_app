@@ -5,12 +5,12 @@ from typing import TypedDict, TypeVar, cast
 
 from django.contrib.auth.models import AbstractUser
 
-from basis.bootstrap.proposal_actions import build_plan as create_plan
 from basis.modules.sync.adapters.actions import sync_session as synchronize
 from basis.modules.training.adapters.actions import progress_report as report
 from basis.modules.training.adapters.actions import session_snapshot as snapshot
 from basis.modules.training.adapters.actions import trip_summary as summary
 from basis.modules.training.adapters.models import Session, TrainingPlan, TrekTrip
+from basis.modules.training.adapters.planning_actions import build_plan as create_plan
 
 T = TypeVar("T")
 

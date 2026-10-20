@@ -10,7 +10,7 @@ from rest_framework.fields import empty
 from rest_framework.request import Request
 
 from basis.bootstrap.api_fields import exercise_field, exercise_reference
-from basis.bootstrap.athletes import write_legacy_rm, write_legacy_workout
+from basis.modules.athletes.adapters.record_actions import write_legacy_rm, write_legacy_workout
 from basis.modules.athletes.public import InvalidAthleteData, require_positive_rm
 from basis.modules.training.public import METRICS_VERSION
 

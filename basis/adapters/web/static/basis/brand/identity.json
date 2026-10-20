@@ -1,0 +1,15 @@
+{
+  "name": "BASIS",
+  "product": "Training",
+  "colors": {
+    "primary": "#0400FF",
+    "hover": "#0300CC",
+    "background": "#f8fafc",
+    "surface": "#ffffff",
+    "text": "#111827",
+    "muted": "#374151",
+    "border": "#e5e7eb"
+  },
+  "logo": "brand/logo.svg",
+  "source": "https://basisasesoria.fitness/"
+}

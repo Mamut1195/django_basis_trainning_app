@@ -70,8 +70,8 @@ def form_policy(parent: ParentState) -> FormPolicy:
     if not parent.from_prescription:
         return FormPolicy((), ())
     return FormPolicy(
-        tuple(f.name for f in fields(StrengthData) if f.name.startswith("target_")) +
-        ("exercise", "rest_seconds", "rm_reference"),
+        tuple(f.name for f in fields(StrengthData) if f.name.startswith("target_"))
+        + ("exercise", "rest_seconds", "rm_reference"),
         ("repetitions", "rest_seconds", "target_rpe"),
     )
 
@@ -110,7 +110,9 @@ def validate_session(data: ManualSessionData) -> None:
     decimal_range(data.reported_rpe, Decimal(0), Decimal(10))
 
 
-def decimal_range(value: Decimal | None, minimum: Decimal, maximum: Decimal, places: int = 1) -> None:
+def decimal_range(
+    value: Decimal | None, minimum: Decimal, maximum: Decimal, places: int = 1
+) -> None:
     if value is not None and (not value.is_finite() or not minimum <= value <= maximum):
         raise ManualInvalid("Valor fuera de rango.")
     if value is not None:
@@ -120,16 +122,31 @@ def decimal_range(value: Decimal | None, minimum: Decimal, maximum: Decimal, pla
 
 
 def validate_strength(sport: str, parent: ParentState, data: StrengthData) -> None:
-    validate_repetition_prescription(data.target_reps, data.target_reps_min,
-                                    data.target_reps_max, data.target_percent_rm,
-                                    data.rm_reference is not None)
+    validate_repetition_prescription(
+        data.target_reps,
+        data.target_reps_min,
+        data.target_reps_max,
+        data.target_percent_rm,
+        data.rm_reference is not None,
+    )
     if sport != "strength":
         raise ManualInvalid("Las series de fuerza requieren un bloque de fuerza.")
-    if data.kind not in {"warmup", "work", "failed"} or data.load_type not in {"external", "bodyweight", "assisted"} or data.side not in {"both", "left", "right"}:
+    if (
+        data.kind not in {"warmup", "work", "failed"}
+        or data.load_type not in {"external", "bodyweight", "assisted"}
+        or data.side not in {"both", "left", "right"}
+    ):
         raise ManualInvalid("Tipo de serie, carga o lado inválidos.")
-    for value in (data.target_reps, data.target_reps_min, data.target_reps_max,
-                  data.actual_reps, data.rest_seconds, data.actual_rest_seconds,
-                  data.isometric_seconds, data.target_isometric_seconds):
+    for value in (
+        data.target_reps,
+        data.target_reps_min,
+        data.target_reps_max,
+        data.actual_reps,
+        data.rest_seconds,
+        data.actual_rest_seconds,
+        data.isometric_seconds,
+        data.target_isometric_seconds,
+    ):
         if value is not None and not 0 <= value <= 2147483647:
             raise ManualInvalid("Repeticiones o duración fuera de rango.")
     for value in (data.target_rir, data.actual_rir):
@@ -144,9 +161,19 @@ def validate_strength(sport: str, parent: ParentState, data: StrengthData) -> No
     if len(data.tempo) > 30 or len(data.range_of_motion) > 80 or len(data.group) > 80:
         raise ManualInvalid("Texto de serie demasiado largo.")
     if isinstance(parent.ref, PlannedParent):
-        validate_prescribed_results(any(v is not None for v in (
-            data.actual_kg, data.actual_reps, data.actual_rpe, data.actual_rir,
-            data.actual_rest_seconds, data.isometric_seconds)))
+        validate_prescribed_results(
+            any(
+                v is not None
+                for v in (
+                    data.actual_kg,
+                    data.actual_reps,
+                    data.actual_rpe,
+                    data.actual_rir,
+                    data.actual_rest_seconds,
+                    data.isometric_seconds,
+                )
+            )
+        )
 
 
 def require_strength_prescription(current: StrengthData, candidate: StrengthData) -> None:
@@ -169,10 +196,14 @@ def validate_interval(sport: str, parent: ParentState, data: IntervalData) -> No
     validate_sport_metrics(sport, data.target)
     validate_sport_metrics(sport, data.actual)
     if isinstance(parent.ref, PlannedParent):
-        validate_prescribed_results(bool(data.actual) or data.actual_rpe is not None or data.actual_rest_seconds is not None)
+        validate_prescribed_results(
+            bool(data.actual) or data.actual_rpe is not None or data.actual_rest_seconds is not None
+        )
 
 
 def require_interval_prescription(current: IntervalData, candidate: IntervalData) -> None:
-    if any(getattr(current, name) != getattr(candidate, name) for name in
-           ("repetitions", "rest_seconds", "target_rpe", "target")):
+    if any(
+        getattr(current, name) != getattr(candidate, name)
+        for name in ("repetitions", "rest_seconds", "target_rpe", "target")
+    ):
         raise ManualInvalid("La prescripción original no puede modificarse.")

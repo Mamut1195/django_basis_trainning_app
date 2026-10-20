@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from basis.bootstrap.planning import build_proposal, planning
+from basis.bootstrap.planning import planning
 from basis.bootstrap.tests.test_execution import account
 from basis.modules.athletes.adapters.models import UserExerciseRM
 from basis.modules.catalog.adapters.models import Classification, Exercise
@@ -23,6 +23,7 @@ from basis.modules.training.adapters.models import (
     TrainingPlan,
 )
 from basis.modules.training.adapters.planning import DjangoPlanRepository
+from basis.modules.training.adapters.planning_actions import build_proposal
 from basis.modules.training.adapters.wire import encode_block, object_map, sequence
 from basis.modules.training.public import (
     BlockData,

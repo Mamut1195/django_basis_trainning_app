@@ -60,7 +60,9 @@ def request(
         result: object = response.json()
         return result
     except (httpx.HTTPError, ValueError):
-        raise ProviderUnavailable("Polar no est\u00e1 disponible. Int\u00e9ntalo m\u00e1s tarde.") from None
+        raise ProviderUnavailable(
+            "Polar no est\u00e1 disponible. Int\u00e9ntalo m\u00e1s tarde."
+        ) from None
 
 
 def _mapping(value: object) -> Mapping[str, object]:
@@ -113,7 +115,11 @@ def _subscription(row: Mapping[str, object]) -> Subscription:
 
 def _number(value: object) -> Decimal | None:
     # Strings must not turn an invalid provider price/trial count into an accepted one.
-    return Decimal(str(value)) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+    return (
+        Decimal(str(value))
+        if isinstance(value, (int, float)) and not isinstance(value, bool)
+        else None
+    )
 
 
 class PolarGateway:
@@ -142,14 +148,20 @@ class PolarGateway:
         )
 
     def checkout(self, public_id: UUID, email: str, allow_trial: bool) -> CheckoutLink:
-        data = _mapping(self.requester("POST", "checkouts/", json={
-            "products": [self.product_id],
-            "external_customer_id": str(public_id),
-            "customer_email": email,
-            "success_url": self.public_url + "/billing/?checkout=returned",
-            "return_url": self.public_url + "/billing/",
-            "allow_trial": allow_trial,
-        }))
+        data = _mapping(
+            self.requester(
+                "POST",
+                "checkouts/",
+                json={
+                    "products": [self.product_id],
+                    "external_customer_id": str(public_id),
+                    "customer_email": email,
+                    "success_url": self.public_url + "/billing/?checkout=returned",
+                    "return_url": self.public_url + "/billing/",
+                    "allow_trial": allow_trial,
+                },
+            )
+        )
         expires = data.get("expires_at")
         return CheckoutLink(
             safe_provider_url(_text(data.get("url"))),
@@ -157,21 +169,26 @@ class PolarGateway:
         )
 
     def portal(self, public_id: UUID) -> str:
-        data = _mapping(self.requester("POST", "customer-sessions/", json={
-            "external_customer_id": str(public_id),
-            "return_url": self.public_url + "/billing/",
-        }))
+        data = _mapping(
+            self.requester(
+                "POST",
+                "customer-sessions/",
+                json={
+                    "external_customer_id": str(public_id),
+                    "return_url": self.public_url + "/billing/",
+                },
+            )
+        )
         return safe_provider_url(_text(data.get("customer_portal_url")))
 
     def customer(self, public_id: UUID) -> CustomerState:
-        data = _mapping(self.requester(
-            "GET", "customers/external/" + quote(str(public_id), safe="") + "/state"
-        ))
+        data = _mapping(
+            self.requester("GET", "customers/external/" + quote(str(public_id), safe="") + "/state")
+        )
         return CustomerState(
             id=_text(data.get("id")),
             external_id=_text(data.get("external_id")),
             subscriptions=tuple(
-                _subscription(row)
-                for row in _rows(data.get("active_subscriptions", []))
+                _subscription(row) for row in _rows(data.get("active_subscriptions", []))
             ),
         )

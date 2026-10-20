@@ -19,7 +19,6 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from basis.bootstrap.proposal_actions import validate_proposal
 from basis.modules.athletes.adapters.models import SportProfile, UserExerciseRM
 from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.modules.sync.adapters.actions import Conflict
@@ -38,6 +37,7 @@ from basis.modules.training.adapters.models import (
     TrekStage,
     TrekTrip,
 )
+from basis.modules.training.adapters.planning_actions import validate_proposal
 from basis.modules.training.public import SPORTS
 
 from .contracts import (

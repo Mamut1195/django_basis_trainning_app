@@ -7,13 +7,13 @@ from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
-from basis.bootstrap.admin_actions import (
+from basis.adapters.web.framework import owner
+from basis.modules.catalog.adapters.administration_actions import (
     delete_admin_classifications,
     delete_admin_exercises,
     save_admin_classification,
     save_admin_exercise,
 )
-from basis.bootstrap.web_framework import owner
 
 from .models import Classification, Exercise
 

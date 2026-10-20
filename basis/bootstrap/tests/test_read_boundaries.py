@@ -17,8 +17,8 @@ from basis.modules.athletes.adapters.admin import WorkoutDataAdmin, WorkoutDataI
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.athletes.adapters.models import UserExerciseRM, WorkoutData
 from basis.modules.catalog.adapters.models import Classification, Exercise
-from basis.modules.training.adapters.forms import StrengthSetForm
 from basis.modules.training.adapters.models import Block, Session
+from basis.modules.training.adapters.web.forms import StrengthSetForm
 
 
 class CrossModuleReadTests(TestCase):

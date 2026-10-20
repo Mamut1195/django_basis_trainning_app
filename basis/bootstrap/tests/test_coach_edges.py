@@ -15,12 +15,6 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from basis.bootstrap.coach import contexts, proposal_definition, proposals
-from basis.bootstrap.planning import build_proposal, revise
-from basis.bootstrap.proposal_actions import (
-    accept_proposal,
-    edit_and_accept_proposal,
-    reject_proposal,
-)
 from basis.modules.athletes.adapters.models import AthleteSettings, SportProfile, Wellness
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.billing.adapters.models import BillingAccount
@@ -28,10 +22,16 @@ from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.modules.coach.adapters.actions import enqueue, process_one
 from basis.modules.coach.adapters.context_wire import decode_context, encode_context, mapping, rows
 from basis.modules.coach.adapters.models import PlanProposal
+from basis.modules.coach.adapters.proposal_actions import (
+    accept_proposal,
+    edit_and_accept_proposal,
+    reject_proposal,
+)
 from basis.modules.coach.adapters.provider import DeepSeekProvider, decode_reply, request_body
 from basis.modules.coach.application.proposals import CreateProposal
 from basis.modules.coach.domain.jobs import ProviderAmbiguous, ProviderRejected
 from basis.modules.training.adapters.models import Goal, TrainingPlan
+from basis.modules.training.adapters.planning_actions import build_proposal, revise
 from basis.shared.identifiers import AccountId, JobId
 
 

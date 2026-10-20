@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import secrets
@@ -17,6 +18,42 @@ from urllib.request import urlopen
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def source_binding() -> dict[str, object]:
+    """Bind authored runtime inputs, excluding test-only edits and generated files."""
+    suffixes = {".py", ".html", ".js", ".css", ".svg", ".png", ".json", ".txt"}
+    sources: set[Path] = set()
+    for directory in (ROOT / "basis", ROOT / "config"):
+        for path in directory.rglob("*"):
+            if not path.is_file() or path.suffix not in suffixes:
+                continue
+            relative = path.relative_to(ROOT)
+            if "__pycache__" in relative.parts or "tests" in relative.parts:
+                continue
+            if relative.parts[0] == "basis" and path.name.startswith("test_"):
+                continue
+            sources.add(path)
+    sources.update(ROOT.glob("requirements*.txt"))
+    sources.update(
+        ROOT / name
+        for name in (
+            "pyproject.toml",
+            "package.json",
+            "package-lock.json",
+            "scripts/browser_smoke.py",
+            "scripts/acceptance_browser.py",
+        )
+        if (ROOT / name).is_file()
+    )
+    files = {
+        path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(sources)
+    }
+    aggregate = hashlib.sha256()
+    for name, digest in files.items():
+        aggregate.update((name + "\0" + digest + "\n").encode("utf-8"))
+    return {"algorithm": "sha256", "aggregate_sha256": aggregate.hexdigest(), "files": files}
 
 
 def find_browser(explicit: str | None) -> str | None:
@@ -117,6 +154,8 @@ def run(output: Path, executable: str | None, requested_port: int) -> int:
     if not output.is_relative_to(cache):
         raise ValueError("Acceptance artifacts must stay under the repository .cache directory")
     output.mkdir(parents=True, exist_ok=False)
+    before = source_binding()
+    (output / "source-before.json").write_text(json.dumps(before, indent=2), encoding="utf-8")
     database = output / "browser.sqlite3"
     password, secret = secrets.token_urlsafe(32), secrets.token_urlsafe(48)
     environment = child_environment(database, password, secret)
@@ -151,7 +190,7 @@ def run(output: Path, executable: str | None, requested_port: int) -> int:
             [
                 sys.executable,
                 "-c",
-                "import django; django.setup(); from basis.bootstrap.acceptance_fixture import prepare; prepare()",
+                "import django; django.setup(); from basis.adapters.django.acceptance_fixture import prepare; prepare()",
             ],
             environment,
             output / "fixture.log",
@@ -185,7 +224,7 @@ def run(output: Path, executable: str | None, requested_port: int) -> int:
         ]
         if browser:
             command.extend(("--browser-executable", browser))
-        execute(command, environment, output / "browser.log", timeout=150)
+        execute(command, environment, output / "browser.log", timeout=240)
         browser_result: object = json.loads(
             (output / "browser-result.json").read_text(encoding="utf-8")
         )
@@ -194,6 +233,19 @@ def run(output: Path, executable: str | None, requested_port: int) -> int:
         closed: object = json.loads((output / "browser-closed.json").read_text(encoding="utf-8"))
         if not isinstance(closed, dict) or closed.get("browser_closed") is not True:
             raise RuntimeError("Browser cleanup was not confirmed")
+        for screenshot in (
+            "today-desktop-light.png",
+            "today-desktop-dark.png",
+            "today-mobile-light.png",
+            "today-mobile-dark.png",
+            "form-errors-desktop.png",
+            "form-loading-desktop.png",
+            "conflict-completed-mobile.png",
+            "conflict-editable-mobile.png",
+        ):
+            artifact = output / screenshot
+            if not artifact.is_file() or artifact.stat().st_size == 0:
+                raise RuntimeError("Required browser screenshot missing: " + screenshot)
         result["browser"] = browser_result
         result["browser_closed"] = True
         result["status"] = "VERIFIED"
@@ -215,6 +267,13 @@ def run(output: Path, executable: str | None, requested_port: int) -> int:
             log.write_text(
                 text.replace(password, "[REDACTED]").replace(secret, "[REDACTED]"), encoding="utf-8"
             )
+        after = source_binding()
+        (output / "source-after.json").write_text(json.dumps(after, indent=2), encoding="utf-8")
+        result["source_sha256"] = before["aggregate_sha256"]
+        result["source_unchanged"] = before == after
+        if before != after:
+            result["status"] = "FAILED"
+            result["error"] = "Authored runtime source changed during browser acceptance"
         (output / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(
         json.dumps(

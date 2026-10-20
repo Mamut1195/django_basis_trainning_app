@@ -10,9 +10,28 @@ from django.test import TestCase
 
 MODEL_OWNERS: dict[str, tuple[str, ...]] = {
     "accounts": ("RateWindow",),
-    "athletes": ("User", "AthleteSettings", "SportProfile", "Measurement", "Wellness", "UserExerciseRM", "WorkoutData"),
+    "athletes": (
+        "User",
+        "AthleteSettings",
+        "SportProfile",
+        "Measurement",
+        "Wellness",
+        "UserExerciseRM",
+        "WorkoutData",
+    ),
     "catalog": ("Classification", "Exercise"),
-    "training": ("Goal", "TrainingPlan", "Cycle", "PlannedSession", "Session", "Block", "StrengthSet", "Interval", "TrekTrip", "TrekStage"),
+    "training": (
+        "Goal",
+        "TrainingPlan",
+        "Cycle",
+        "PlannedSession",
+        "Session",
+        "Block",
+        "StrengthSet",
+        "Interval",
+        "TrekTrip",
+        "TrekStage",
+    ),
     "billing": ("BillingAccount", "WebhookReceipt"),
     "coach": ("UsagePeriod", "TrialFund", "AIJob", "PlanProposal", "AIServiceState"),
     "sync": ("SyncReceipt",),
@@ -30,11 +49,16 @@ class FinalInstallationTests(TestCase):
                 self.assertEqual(config.name, "basis.modules." + area + ".adapters")
                 self.assertEqual({model.__name__ for model in config.get_models()}, set(expected))
                 for model in config.get_models():
-                    self.assertEqual(model.__module__, config.name + ".models")
+                    self.assertTrue(
+                        model.__module__ == config.name + ".models"
+                        or model.__module__.startswith(config.name + ".models.")
+                    )
 
     def test_fresh_database_contains_final_tables_and_applied_initial_migrations(self) -> None:
         tables = set(connection.introspection.table_names())
-        self.assertFalse({name for name in tables if name.startswith(("daily_trainning_app_", "training_"))})
+        self.assertFalse(
+            {name for name in tables if name.startswith(("daily_trainning_app_", "training_"))}
+        )
         applied = MigrationRecorder(connection).applied_migrations()
         for area in MODEL_OWNERS:
             label = "basis_" + area
@@ -51,10 +75,18 @@ class FinalInstallationTests(TestCase):
                     model_name = model._meta.model_name
                     assert model_name is not None
                     content_type = ContentType.objects.get(app_label=label, model=model_name)
-                    actual = set(Permission.objects.filter(content_type=content_type).values_list("codename", flat=True))
-                    expected = {action + "_" + model_name for action in model._meta.default_permissions}
+                    actual = set(
+                        Permission.objects.filter(content_type=content_type).values_list(
+                            "codename", flat=True
+                        )
+                    )
+                    expected = {
+                        action + "_" + model_name for action in model._meta.default_permissions
+                    }
                     self.assertTrue(expected.issubset(actual))
-        self.assertFalse(ContentType.objects.filter(app_label__in=("daily_trainning_app", "training")).exists())
+        self.assertFalse(
+            ContentType.objects.filter(app_label__in=("daily_trainning_app", "training")).exists()
+        )
 
     def test_operational_commands_are_registered_in_final_modules(self) -> None:
         commands = get_commands()

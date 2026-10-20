@@ -55,6 +55,18 @@ class WorkoutContext:
 
 
 @dataclass(frozen=True)
+class WorkoutReferenceDecision:
+    """An unchanged history can freeze a measured reference, including its absence."""
+
+    reuse_previous: bool
+    reference: MeasuredRMId | None
+
+    def __post_init__(self) -> None:
+        if not self.reuse_previous and self.reference is not None:
+            raise ValueError("A fresh context cannot reuse a historical reference.")
+
+
+@dataclass(frozen=True)
 class WorkoutMetrics:
     total_reps: int
     load_kg_reps: Decimal

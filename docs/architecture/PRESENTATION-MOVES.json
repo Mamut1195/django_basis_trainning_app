@@ -1,0 +1,178 @@
+{
+  "modules": {
+    "basis.bootstrap.transactions": "basis.adapters.django.transactions",
+    "basis.bootstrap.persistence": "basis.adapters.django.persistence",
+    "basis.bootstrap.api_errors": "basis.adapters.web.api_errors",
+    "basis.bootstrap.middleware": "basis.adapters.web.middleware",
+    "basis.bootstrap.brand": "basis.adapters.web.brand",
+    "basis.bootstrap.web_framework": "basis.adapters.web.framework",
+    "basis.bootstrap.context_processors": "basis.adapters.web.context_processors",
+    "basis.bootstrap.platform_views": "basis.adapters.web.platform_views",
+    "basis.bootstrap.api": "basis.adapters.web.api",
+    "basis.bootstrap.web": "basis.adapters.web.urls",
+    "basis.bootstrap.web_records": "basis.adapters.web.records",
+    "basis.bootstrap.demo": "basis.adapters.django.demo_fixture",
+    "basis.bootstrap.acceptance_fixture": "basis.adapters.django.acceptance_fixture",
+    "basis.bootstrap.permissions": "basis.adapters.web.permissions",
+    "basis.bootstrap.api_fields": "basis.modules.catalog.adapters.api_fields",
+    "basis.bootstrap.form_fields": "basis.modules.athletes.adapters.reference_fields"
+  },
+  "functions": {
+    "basis.bootstrap.accounts": {
+      "recover_password": "basis.modules.accounts.adapters.recovery_actions"
+    },
+    "basis.bootstrap.athletes": {
+      "translate_errors": "basis.modules.athletes.adapters.record_actions",
+      "preferences_row": "basis.modules.athletes.adapters.record_actions",
+      "save_profile": "basis.modules.athletes.adapters.record_actions",
+      "save_preferences": "basis.modules.athletes.adapters.record_actions",
+      "save_observation": "basis.modules.athletes.adapters.record_actions",
+      "save_rm": "basis.modules.athletes.adapters.record_actions",
+      "write_legacy_rm": "basis.modules.athletes.adapters.record_actions",
+      "write_legacy_workout": "basis.modules.athletes.adapters.record_actions"
+    },
+    "basis.bootstrap.catalog": {
+      "save_classification": "basis.modules.catalog.adapters.record_actions",
+      "save_exercise": "basis.modules.catalog.adapters.record_actions"
+    },
+    "basis.bootstrap.planning": {
+      "build_proposal": "basis.modules.training.adapters.planning_actions",
+      "revise": "basis.modules.training.adapters.planning_actions",
+      "save_manual_plan": "basis.modules.training.adapters.planning_actions",
+      "save_goal": "basis.modules.training.adapters.planning_actions",
+      "save_cycle": "basis.modules.training.adapters.planning_actions",
+      "save_scheduled": "basis.modules.training.adapters.planning_actions",
+      "reschedule": "basis.modules.training.adapters.planning_actions"
+    },
+    "basis.bootstrap.progress": {
+      "report": "basis.modules.training.adapters.progress_actions",
+      "trip_summary": "basis.modules.training.adapters.progress_actions",
+      "save_trip": "basis.modules.training.adapters.progress_actions",
+      "save_stage": "basis.modules.training.adapters.progress_actions"
+    },
+    "basis.bootstrap.sync": {
+      "changes": "basis.modules.sync.adapters.input_actions",
+      "synchronize": "basis.modules.sync.adapters.input_actions"
+    },
+    "basis.bootstrap.training": {
+      "start": "basis.modules.training.adapters.execution_actions",
+      "snapshot": "basis.modules.training.adapters.execution_actions",
+      "record": "basis.modules.training.adapters.execution_actions"
+    },
+    "basis.bootstrap.presentation": {
+      "wellness_today": "basis.adapters.web.presentation",
+      "current_plans": "basis.adapters.web.presentation",
+      "goal_choices": "basis.adapters.web.presentation",
+      "latest_usage": "basis.adapters.web.presentation",
+      "progress_history": "basis.adapters.web.presentation",
+      "exercise_fatigue": "basis.adapters.web.presentation"
+    },
+    "basis.bootstrap.billing": {
+      "account_row": "basis.modules.billing.adapters.record_actions",
+      "mark_pending": "basis.modules.billing.adapters.record_actions"
+    },
+    "basis.bootstrap.admin_actions": {
+      "athlete_admin": "basis.modules.athletes.adapters.administration_actions",
+      "copy_persisted": "basis.modules.catalog.adapters.administration_actions",
+      "save_admin_profile": "basis.modules.athletes.adapters.administration_actions",
+      "save_admin_rm": "basis.modules.athletes.adapters.administration_actions",
+      "save_admin_workout": "basis.modules.athletes.adapters.administration_actions",
+      "delete_admin_profiles": "basis.modules.athletes.adapters.administration_actions",
+      "delete_admin_rms": "basis.modules.athletes.adapters.administration_actions",
+      "delete_admin_workouts": "basis.modules.athletes.adapters.administration_actions",
+      "save_admin_classification": "basis.modules.catalog.adapters.administration_actions",
+      "save_admin_exercise": "basis.modules.catalog.adapters.administration_actions",
+      "delete_admin_classifications": "basis.modules.catalog.adapters.administration_actions",
+      "delete_admin_exercises": "basis.modules.catalog.adapters.administration_actions"
+    }
+  },
+  "templates": {
+    "base.html": "shared/base.html",
+    "registration/login.html": "accounts/auth/login.html",
+    "registration/password_reset_complete.html": "accounts/auth/password_reset_complete.html",
+    "registration/password_reset_confirm.html": "accounts/auth/password_reset_confirm.html",
+    "registration/password_reset_done.html": "accounts/auth/password_reset_done.html",
+    "registration/password_reset_email.html": "accounts/auth/password_reset_email.html",
+    "registration/password_reset_form.html": "accounts/auth/password_reset_form.html",
+    "cotton/brand.html": "cotton/basis/brand.html",
+    "cotton/card.html": "cotton/basis/card.html",
+    "cotton/empty.html": "cotton/basis/empty.html",
+    "cotton/page_heading.html": "cotton/basis/page_heading.html",
+    "training/profile.html": "athletes/profile/detail.html",
+    "training/legacy_history.html": "athletes/history/_strength.html",
+    "training/billing.html": "billing/subscription.html",
+    "training/coach.html": "coach/consultations/index.html",
+    "training/job.html": "coach/jobs/detail.html",
+    "training/job_fragment.html": "coach/jobs/_result.html",
+    "training/proposal.html": "coach/proposals/review.html",
+    "training/offline.html": "sync/offline/index.html",
+    "training/form.html": "shared/form.html",
+    "training/notice.html": "shared/notice.html",
+    "training/confirm.html": "shared/confirm.html",
+    "training/today.html": "training/execution/today.html",
+    "training/plans.html": "training/planning/index.html",
+    "training/plan_detail.html": "training/planning/detail.html",
+    "training/scheduled.html": "training/planning/scheduled.html",
+    "training/session.html": "training/execution/session.html",
+    "training/blocks.html": "training/execution/_blocks.html",
+    "training/progress.html": "training/progress/index.html",
+    "training/trip.html": "training/trekking/detail.html",
+    "service-worker.js": "basis/adapters/web/static/basis/js/service-worker.js"
+  },
+  "model_packages": {
+    "training": {
+      "planning": [
+        "Goal",
+        "TrainingPlan",
+        "Cycle",
+        "PlannedSession"
+      ],
+      "execution": [
+        "Session",
+        "Block",
+        "StrengthSet",
+        "Interval"
+      ],
+      "trekking": [
+        "TrekTrip",
+        "TrekStage"
+      ]
+    },
+    "athletes": {
+      "profile": [
+        "User",
+        "AthleteSettings",
+        "SportProfile"
+      ],
+      "observations": [
+        "Measurement",
+        "Wellness"
+      ],
+      "strength": [
+        "UserExerciseRM",
+        "WorkoutData"
+      ]
+    }
+  },
+  "web_packages": {
+    "accounts": "basis/modules/accounts/adapters/web",
+    "athletes": "basis/modules/athletes/adapters/web",
+    "training": "basis/modules/training/adapters/web",
+    "billing": "basis/modules/billing/adapters/web",
+    "coach": "basis/modules/coach/adapters/web",
+    "sync": "basis/modules/sync/adapters/web"
+  },
+  "training_web_features": [
+    "planning",
+    "execution",
+    "strength",
+    "intervals",
+    "progress",
+    "trekking"
+  ],
+  "static": {
+    "assets/vendor/*": "basis/adapters/web/static/vendor/*",
+    "assets/{css,js,brand,icons}/*": "basis/adapters/web/static/basis/{css,js,brand,icons}/*"
+  },
+  "note": "Movement map; no schema or public URL/export version change. Factories remain in bootstrap; module wire/action helpers live in their owning adapters. No compatibility runtime facades for deleted paths."
+}

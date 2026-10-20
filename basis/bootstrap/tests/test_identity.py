@@ -15,7 +15,7 @@ from django.utils import timezone
 
 from basis.bootstrap.accounts import identity
 from basis.bootstrap.athletes import athletes
-from basis.bootstrap.catalog import catalog, save_exercise
+from basis.bootstrap.catalog import catalog
 from basis.modules.accounts.adapters.django import DjangoVerification
 from basis.modules.accounts.public import Account
 from basis.modules.athletes.adapters.models import (
@@ -36,6 +36,7 @@ from basis.modules.athletes.public import (
 )
 from basis.modules.billing.adapters.models import BillingAccount
 from basis.modules.catalog.adapters.models import Classification, Exercise
+from basis.modules.catalog.adapters.record_actions import save_exercise
 from basis.modules.catalog.public import CatalogDenied, DeleteClassification
 from basis.shared.identifiers import AccountId, ClassificationId, SportProfileId, WellnessId
 from tests_architecture.identity_contract import IdentityContract

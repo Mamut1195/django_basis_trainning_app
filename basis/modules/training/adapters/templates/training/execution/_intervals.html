@@ -1,0 +1,19 @@
+{% for interval in block.intervals.all %}
+  <div class="card-line">
+    {% if editable and write_access %}
+      <a href="{% url 'interval-edit' interval.pk %}">Registrar resultado</a>
+    {% endif %}
+    <h3>Intervalo {{ forloop.counter }} · {{ interval.repetitions }} repeticiones</h3>
+    <p class="muted">
+      Descanso objetivo: {{ interval.rest_seconds|default_if_none:'—' }} s · RPE real: {{ interval.actual_rpe|default_if_none:'—' }}
+    </p>
+    <details>
+      <summary>Variables del intervalo</summary>
+      <pre>Objetivo: {{ interval.target }}
+Real: {{ interval.actual }}</pre>
+    </details>
+  </div>
+{% endfor %}
+{% if editable and write_access %}
+  <a href="{% url 'interval-new' block.pk %}">Añadir intervalo +</a>
+{% endif %}

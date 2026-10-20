@@ -2,7 +2,7 @@
 
 from django.contrib.auth.base_user import AbstractBaseUser
 
-from basis.bootstrap.sync import synchronize
+from basis.modules.sync.adapters.input_actions import synchronize
 from basis.shared.identifiers import AccountId
 
 from .wire import Conflict as Conflict

@@ -1,0 +1,45 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading :title="session.title"
+                        subtitle="{{ session.date|date:'l, j M Y' }} · {{ session.get_status_display }}" />
+  <div class="actions">
+    {% if session.status == 'in_progress' and write_access %}
+      <c-ui.button href="{% url 'session-edit' session.pk %}">
+        Editar resumen
+      </c-ui.button>
+      <c-ui.button href="{% url 'block-new' 'session' session.pk %}">
+        Añadir bloque
+      </c-ui.button>
+      <c-ui.button type="button" variant="primary" data-complete-session>
+        Completar sesión
+      </c-ui.button>
+    {% endif %}
+    <c-ui.button type="button" data-download-session="{{ session.pk }}">
+      Guardar sin conexión
+    </c-ui.button>
+  </div>
+  <div class="grid">
+    <c-basis.card title="Duración">
+      <p class="stat">
+        {{ session.duration_seconds|default_if_none:'—' }} <span class="stat-unit">s · {{ session.get_duration_protocol_display }}</span>
+      </p>
+    </c-basis.card>
+    <c-basis.card title="Esfuerzo percibido">
+      <p class="stat">
+        {{ session.reported_rpe|default_if_none:'—' }} <span class="stat-unit">RPE real / 10</span>
+      </p>
+    </c-basis.card>
+    <c-basis.card title="Carga interna">
+      <p class="stat">
+        {{ session.load|default_if_none:'—' }} <span class="stat-unit">UA · duración × RPE</span>
+      </p>
+    </c-basis.card>
+  </div>
+  {% if session.status == 'in_progress' %}
+    {% include 'training/execution/_blocks.html' with editable=True %}
+  {% else %}
+    {% include 'training/execution/_blocks.html' with editable=False %}
+  {% endif %}
+  {% include 'training/execution/_timer.html' %}
+  {{ snapshot|json_script:'session-snapshot' }}
+{% endblock %}

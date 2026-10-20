@@ -1,23 +1,14 @@
-"""Composition root for execution; callers receive the typed public contract."""
+"""Composition factories; input conversion belongs to adapters."""
 
-from typing import Mapping
-from uuid import UUID
-
+from basis.adapters.django.transactions import DjangoClock, DjangoUnitOfWork
 from basis.bootstrap.billing import write_authorization
-from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
 from basis.modules.training.adapters.django import (
     DjangoSessionRepository,
     UUIDSessionIds,
 )
-from basis.modules.training.adapters.wire import decode_record, encode_session
 from basis.modules.training.public import (
-    ReadSession,
-    SessionMutation,
-    SessionState,
-    StartSession,
     Training,
 )
-from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
 
 
 def training() -> Training:
@@ -27,23 +18,4 @@ def training() -> Training:
         write_authorization(),
         DjangoClock(),
         UUIDSessionIds(),
-    )
-
-
-def start(owner: int, planned: int) -> SessionState:
-    return training().start(StartSession(AccountId(owner), PlannedSessionId(planned)))
-
-
-def snapshot(owner: int, session: UUID) -> dict[str, object]:
-    return encode_session(training().read(ReadSession(AccountId(owner), SessionId(session))))
-
-
-def record(owner: int, payload: Mapping[str, object]) -> dict[str, object]:
-    mutation = SessionMutation(
-        AccountId(owner),
-        SessionId(UUID(str(payload["id"]))),
-        Revision(int(str(payload["revision"]))),
-    )
-    return encode_session(
-        training().record_from(mutation, lambda: decode_record(AccountId(owner), payload).changes)
     )

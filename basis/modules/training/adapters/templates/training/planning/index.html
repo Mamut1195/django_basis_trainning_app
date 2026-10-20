@@ -1,0 +1,37 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading title="Una dirección para tu esfuerzo."
+                        eyebrow="Planificación"
+                        subtitle="Objetivos, ciclos y sesiones. Cambia tu futuro sin borrar tu historia." />
+  <div class="actions">
+    <c-ui.button variant="primary" href="{% url 'plan-new' %}">
+      Crear plan
+    </c-ui.button>
+    <c-ui.button href="{% url 'owned-new' 'goal' %}">
+      Nuevo objetivo
+    </c-ui.button>
+    <c-ui.button href="{% url 'scheduled-new' %}">
+      Programar sesión
+    </c-ui.button>
+  </div>
+  <div class="grid">
+    {% for plan in plans %}
+      <c-basis.card>
+        <div class="stack-sm">
+          <span class="pill">Versión {{ plan.version }}</span>
+          <h2>
+            <a href="{% url 'plan-detail' plan.pk %}">{{ plan.title }}</a>
+          </h2>
+          <p class="muted">{{ plan.goal.title }}</p>
+          <small>{{ plan.start_date|date:'j M Y' }} → {{ plan.end_date|date:'j M Y' }}</small>
+        </div>
+      </c-basis.card>
+    {% empty %}
+      <c-basis.card>
+        <c-basis.empty title="Dale estructura a tu entrenamiento">
+          Crea un objetivo y después organiza tus ciclos y sesiones.
+        </c-basis.empty>
+      </c-basis.card>
+    {% endfor %}
+  </div>
+{% endblock %}

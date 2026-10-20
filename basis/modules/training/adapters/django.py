@@ -82,7 +82,6 @@ class UUIDSessionIds:
         return SessionId(uuid4())
 
 
-
 class DjangoSessionRepository:
     def lock_owner(self, owner: AccountId) -> None:
         get_user_model().objects.select_for_update().get(pk=owner)

@@ -11,8 +11,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
+from basis.adapters.django.transactions import DjangoUnitOfWork
 from basis.bootstrap.training import training
-from basis.bootstrap.transactions import DjangoUnitOfWork
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.sync.adapters.actions import sync_session
 from basis.modules.sync.adapters.models import SyncReceipt

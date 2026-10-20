@@ -10,8 +10,8 @@ from django.db.models.deletion import ProtectedError
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
-from basis.bootstrap.admin_actions import save_admin_profile
 from basis.bootstrap.tests.test_execution import account
+from basis.modules.athletes.adapters.administration_actions import save_admin_profile
 from basis.modules.athletes.adapters.models import User, UserExerciseRM, WorkoutData
 from basis.modules.catalog.adapters.models import Classification, Exercise
 

@@ -1,10 +1,12 @@
 """Explicit coach composition, with legacy transport seam supplied by its caller."""
 
+from collections.abc import Callable
+
 from django.conf import settings
 
+from basis.adapters.django.transactions import DjangoClock, DjangoUnitOfWork
 from basis.bootstrap.billing import write_authorization
 from basis.bootstrap.planning import planning
-from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
 from basis.modules.accounts.adapters.coach import DjangoAccountLocks
 from basis.modules.athletes.adapters.billing import DjangoBillingProfiles
 from basis.modules.athletes.adapters.coach import DjangoAthleteCoachContexts
@@ -18,6 +20,7 @@ from basis.modules.coach.application.jobs import CoachConfiguration, Jobs
 from basis.modules.coach.application.proposals import Proposals
 from basis.modules.training.adapters.coach import DjangoCoachPlanning, DjangoTrainingCoachContexts
 from basis.modules.training.adapters.plan_wire import proposal_definition as proposal_definition
+from basis.modules.training.public import PlanDefinition
 
 
 def contexts() -> Contexts:
@@ -58,3 +61,7 @@ def jobs(client_factory: ClientFactory | None = None) -> Jobs:
             settings.AI_ENABLED, bool(settings.DEEPSEEK_API_KEY), settings.DEEPSEEK_MODEL
         ),
     )
+
+
+def proposal_decoder() -> Callable[[object], PlanDefinition]:
+    return proposal_definition

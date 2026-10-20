@@ -1,0 +1,23 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading title="Tu entrenamiento continúa."
+                        eyebrow="Sin conexión"
+                        subtitle="Solo se guardan en este dispositivo las sesiones que eliges descargar." />
+  <div class="notice" id="offline-status" role="status">Abriendo sesiones guardadas…</div>
+  <div class="actions">
+    <c-ui.button type="button" data-sync-now>
+      Sincronizar pendientes
+    </c-ui.button>
+    <c-ui.button type="button" data-export-local>
+      Exportar registros locales
+    </c-ui.button>
+    <button type="button" class="plain-button" data-apply-update hidden>Actualizar aplicación</button>
+  </div>
+  <div id="offline-sessions" class="stack"></div>
+  <section id="offline-editor" class="stack" hidden>
+    <c-basis.card>
+      <div id="offline-editor-content" class="stack"></div>
+    </c-basis.card>
+  </section>
+  {{ offline_schema|json_script:'offline-schema' }}
+{% endblock %}

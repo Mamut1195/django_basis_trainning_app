@@ -11,6 +11,14 @@ from .application.operations import WriteAuthorization as SyncAuthorization
 from .domain.operations import InvalidSynchronization, MutationIdentity, Receipt, replay
 
 __all__ = (
-    "ReceiptRepository", "SessionRecorder", "SyncCommand", "SyncSource", "Synchronization",
-    "SyncAuthorization", "InvalidSynchronization", "MutationIdentity", "Receipt", "replay",
+    "ReceiptRepository",
+    "SessionRecorder",
+    "SyncCommand",
+    "SyncSource",
+    "Synchronization",
+    "SyncAuthorization",
+    "InvalidSynchronization",
+    "MutationIdentity",
+    "Receipt",
+    "replay",
 )

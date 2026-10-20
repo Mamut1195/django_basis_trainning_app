@@ -1,5 +1,8 @@
 # Goal
 
+Current presentation candidate: local work on main `717cc1b`, scope recorded in [PRESENTATION-PLAN](architecture/PRESENTATION-PLAN.md). ARCH-09/MAM-830 and ARCH-10/MAM-831 remain In Progress. New implementation/evidence are summarized in [PRESENTATION-VERIFICATION](architecture/PRESENTATION-VERIFICATION.md). Historical gate results below retain their original source attribution.
+
+
 Finish the strict typed hexagonal Django/PostgreSQL monolith before functional acceptance. ADR-002 authorizes the final module schema and removal of daily_trainning_app; predefined programs remain future work.
 
 # Context

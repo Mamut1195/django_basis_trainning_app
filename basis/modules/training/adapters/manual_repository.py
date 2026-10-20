@@ -30,7 +30,11 @@ def interval_data(row: Interval) -> IntervalData:
 def parent_ref(row: Session | PlannedSession) -> ParentRef:
     from basis.shared.identifiers import PlannedSessionId
 
-    return SessionParent(SessionId(row.pk)) if isinstance(row, Session) else PlannedParent(PlannedSessionId(row.pk))
+    return (
+        SessionParent(SessionId(row.pk))
+        if isinstance(row, Session)
+        else PlannedParent(PlannedSessionId(row.pk))
+    )
 
 
 def block_parent(row: Block) -> ParentRef:
@@ -48,18 +52,28 @@ class DjangoManualRepository:
             session = sessions.filter(pk=ref.id).first()
             if session is None:
                 return None
-            return ParentState(ref, AccountId(session.owner_id), session.date,
-                               Revision(session.revision), completed=session.status == "completed",
-                               from_prescription=session.planned_id is not None)
+            return ParentState(
+                ref,
+                AccountId(session.owner_id),
+                session.date,
+                Revision(session.revision),
+                completed=session.status == "completed",
+                from_prescription=session.planned_id is not None,
+            )
         planned_rows = PlannedSession.objects.all()
         if lock:
             planned_rows = planned_rows.select_for_update()
         planned = planned_rows.filter(pk=ref.id).first()
         if planned is None:
             return None
-        return ParentState(ref, AccountId(planned.owner_id), planned.date,
-            Revision(planned.revision), frozen=planned.executions.exists() or
-            TrainingPlan.objects.filter(previous_id=planned.plan_id).exists())
+        return ParentState(
+            ref,
+            AccountId(planned.owner_id),
+            planned.date,
+            Revision(planned.revision),
+            frozen=planned.executions.exists()
+            or TrainingPlan.objects.filter(previous_id=planned.plan_id).exists(),
+        )
 
     def block(self, id: BlockId) -> BlockContext | None:
         row = Block.objects.select_related("session", "planned").filter(pk=id).first()
@@ -74,13 +88,23 @@ class DjangoManualRepository:
         return IntervalContext(BlockId(row.block_id), interval_data(row)) if row else None
 
     def block_count(self, ref: ParentRef) -> int:
-        return (Block.objects.filter(session_id=ref.id).count() if isinstance(ref, SessionParent)
-                else Block.objects.filter(planned_id=ref.id).count())
+        return (
+            Block.objects.filter(session_id=ref.id).count()
+            if isinstance(ref, SessionParent)
+            else Block.objects.filter(planned_id=ref.id).count()
+        )
 
     def create_session(self, id: SessionId, owner: AccountId, data: ManualSessionData) -> None:
-        Session.objects.create(id=id, owner_id=owner, title=data.title, date=data.date,
-            duration_seconds=data.duration_seconds, duration_protocol=data.duration_protocol.value,
-            reported_rpe=data.reported_rpe, notes=data.notes)
+        Session.objects.create(
+            id=id,
+            owner_id=owner,
+            title=data.title,
+            date=data.date,
+            duration_seconds=data.duration_seconds,
+            duration_protocol=data.duration_protocol.value,
+            reported_rpe=data.reported_rpe,
+            notes=data.notes,
+        )
 
     def add_block(self, ref: ParentRef, sport: str, title: str, order: int) -> BlockId:
         row = Block(sport=sport, title=title, order=order)
@@ -115,12 +139,15 @@ class DjangoManualRepository:
     def interval_count(self, block: BlockId) -> int:
         return Interval.objects.filter(block_id=block).count()
 
-    def save_strength(self, block: BlockId, data: StrengthData, row: StrengthSetId | None,
-                      order: int | None) -> StrengthSetId:
+    def save_strength(
+        self, block: BlockId, data: StrengthData, row: StrengthSetId | None, order: int | None
+    ) -> StrengthSetId:
         values = encode_strength(data)
         values["exercise_id"] = values.pop("exercise")
         values["rm_reference_id"] = values.pop("rm_reference")
-        instance = StrengthSet.objects.get(pk=row) if row is not None else StrengthSet(block_id=block)
+        instance = (
+            StrengthSet.objects.get(pk=row) if row is not None else StrengthSet(block_id=block)
+        )
         for key, value in values.items():
             setattr(instance, key, value)
         if order is not None:
@@ -128,8 +155,9 @@ class DjangoManualRepository:
         instance.save()
         return StrengthSetId(instance.pk)
 
-    def save_interval(self, block: BlockId, data: IntervalData, row: IntervalId | None,
-                      order: int | None) -> IntervalId:
+    def save_interval(
+        self, block: BlockId, data: IntervalData, row: IntervalId | None, order: int | None
+    ) -> IntervalId:
         instance = Interval.objects.get(pk=row) if row is not None else Interval(block_id=block)
         instance.repetitions = data.repetitions
         instance.target = encode_metrics(data.target)

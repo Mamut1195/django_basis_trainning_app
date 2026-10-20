@@ -14,10 +14,11 @@ from django.db import close_old_connections, connections
 from django.test import TestCase, TransactionTestCase, override_settings, skipUnlessDBFeature
 from django.utils import timezone
 
-from basis.bootstrap.sync import synchronization, synchronize
-from basis.bootstrap.transactions import DjangoUnitOfWork
+from basis.adapters.django.transactions import DjangoUnitOfWork
+from basis.bootstrap.sync import synchronization
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.sync.adapters.actions import Conflict, sync_session
+from basis.modules.sync.adapters.input_actions import synchronize
 from basis.modules.sync.adapters.models import SyncReceipt
 from basis.modules.sync.domain.operations import Receipt
 from basis.modules.training.adapters.models import Session
@@ -75,7 +76,8 @@ class DjangoReceiptTests(ReceiptContract, TestCase):
     def test_receipt_save_failure_rolls_back_actual_inner_committed_training(self) -> None:
         sid = SessionId(uuid4())
         with patch(
-            "basis.modules.sync.adapters.receipts.SyncReceipt.objects.create", side_effect=RuntimeError("receipt")
+            "basis.modules.sync.adapters.receipts.SyncReceipt.objects.create",
+            side_effect=RuntimeError("receipt"),
         ):
             with self.assertRaisesRegex(RuntimeError, "receipt"):
                 synchronize(self.owner, uuid4(), payload(sid))
@@ -88,7 +90,8 @@ class DjangoReceiptTests(ReceiptContract, TestCase):
         changed = payload(sid, 1)
         changed["title"] = "Changed"
         with patch(
-            "basis.modules.sync.adapters.receipts.SyncReceipt.objects.create", side_effect=RuntimeError("receipt")
+            "basis.modules.sync.adapters.receipts.SyncReceipt.objects.create",
+            side_effect=RuntimeError("receipt"),
         ):
             with self.assertRaises(RuntimeError):
                 synchronize(self.owner, uuid4(), changed)

@@ -30,11 +30,9 @@ __all__ = (
     "CatalogAdministration",
     "DeleteClassifications",
     "DeleteExercises",
-
     "ExerciseNames",
     "CoachExercise",
     "CoachExercises",
-
     "Catalog",
     "DeleteClassification",
     "DeleteExercise",

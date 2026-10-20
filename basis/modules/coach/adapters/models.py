@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 
-from basis.bootstrap.persistence import Owned
+from basis.adapters.django.persistence import Owned
 
 
 class UsagePeriod(models.Model):

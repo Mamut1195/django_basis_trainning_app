@@ -23,5 +23,6 @@ def metric_rows(block: Block, source: str = "actual") -> list[MetricRow]:
     values = cast(dict[str, object], getattr(block, source))
     return [
         {"label": definitions[key].label, "value": value, "unit": definitions[key].unit}
-        for key, value in values.items() if key in definitions
+        for key, value in values.items()
+        if key in definitions
     ]

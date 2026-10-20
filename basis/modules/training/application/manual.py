@@ -113,17 +113,28 @@ class ManualRepository(Protocol):
     def create_session(self, id: SessionId, owner: AccountId, data: ManualSessionData) -> None: ...
     def add_block(self, ref: ParentRef, sport: str, title: str, order: int) -> BlockId: ...
     def advance(self, ref: ParentRef, revision: Revision) -> None: ...
-    def save_metrics(self, block: BlockId, metrics: tuple[Metric, ...], *, actual: bool) -> None: ...
+    def save_metrics(
+        self, block: BlockId, metrics: tuple[Metric, ...], *, actual: bool
+    ) -> None: ...
     def strength_count(self, block: BlockId) -> int: ...
     def interval_count(self, block: BlockId) -> int: ...
-    def save_strength(self, block: BlockId, data: StrengthData, row: StrengthSetId | None, order: int | None) -> StrengthSetId: ...
-    def save_interval(self, block: BlockId, data: IntervalData, row: IntervalId | None, order: int | None) -> IntervalId: ...
+    def save_strength(
+        self, block: BlockId, data: StrengthData, row: StrengthSetId | None, order: int | None
+    ) -> StrengthSetId: ...
+    def save_interval(
+        self, block: BlockId, data: IntervalData, row: IntervalId | None, order: int | None
+    ) -> IntervalId: ...
 
 
 class ManualTraining:
-    def __init__(self, repository: ManualRepository, uow: Callable[[], UnitOfWork],
-                 authorization: WriteAuthorization, ids: SessionIds,
-                 references: RMReferences) -> None:
+    def __init__(
+        self,
+        repository: ManualRepository,
+        uow: Callable[[], UnitOfWork],
+        authorization: WriteAuthorization,
+        ids: SessionIds,
+        references: RMReferences,
+    ) -> None:
         self.repository = repository
         self.uow = uow
         self.authorization = authorization
@@ -155,6 +166,7 @@ class ManualTraining:
             id = self.ids.new()
             self.repository.create_session(id, command.owner, command.data)
             from ..domain.manual import SessionParent
+
             self.repository.add_block(SessionParent(id), command.sport, command.block_title, 1)
             work.commit()
             return id
@@ -179,8 +191,12 @@ class ManualTraining:
         with self.uow() as work:
             self._lock(command.owner, command.parent, command.revision)
             validate_heading(command.sport, command.title)
-            result = self.repository.add_block(command.parent, command.sport, command.title,
-                                               self.repository.block_count(command.parent) + 1)
+            result = self.repository.add_block(
+                command.parent,
+                command.sport,
+                command.title,
+                self.repository.block_count(command.parent) + 1,
+            )
             work.commit()
             return result
 
@@ -189,7 +205,9 @@ class ManualTraining:
             block = self._block(command.owner, command.block)
             parent = self._lock(command.owner, block.parent, command.revision)
             metrics = validate_sport_metrics(block.sport, command.metrics)
-            self.repository.save_metrics(block.id, metrics, actual=not isinstance(parent.ref, PlannedParent))
+            self.repository.save_metrics(
+                block.id, metrics, actual=not isinstance(parent.ref, PlannedParent)
+            )
             work.commit()
 
     def save_strength(self, command: SaveStrength) -> StrengthSetId:
@@ -205,11 +223,20 @@ class ManualTraining:
             validate_strength(block.sport, parent, command.data)
             if command.data.rm_reference is not None:
                 reference = self.references.get(MeasuredRMId(command.data.rm_reference))
-                validate_strength_reference(reference.owner if reference else None,
-                    reference.exercise if reference else None, reference.measured_on if reference else None,
-                    command.owner, ExerciseId(command.data.exercise), parent.date)
-            result = self.repository.save_strength(block.id, command.data, command.row,
-                self.repository.strength_count(block.id) + 1 if command.row is None else None)
+                validate_strength_reference(
+                    reference.owner if reference else None,
+                    reference.exercise if reference else None,
+                    reference.measured_on if reference else None,
+                    command.owner,
+                    ExerciseId(command.data.exercise),
+                    parent.date,
+                )
+            result = self.repository.save_strength(
+                block.id,
+                command.data,
+                command.row,
+                self.repository.strength_count(block.id) + 1 if command.row is None else None,
+            )
             work.commit()
             return result
 
@@ -224,7 +251,11 @@ class ManualTraining:
                 if parent.from_prescription:
                     require_interval_prescription(current.data, command.data)
             validate_interval(block.sport, parent, command.data)
-            result = self.repository.save_interval(block.id, command.data, command.row,
-                self.repository.interval_count(block.id) + 1 if command.row is None else None)
+            result = self.repository.save_interval(
+                block.id,
+                command.data,
+                command.row,
+                self.repository.interval_count(block.id) + 1 if command.row is None else None,
+            )
             work.commit()
             return result

@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db.models import Q
 
-from basis.bootstrap.billing import mark_pending
 from basis.modules.billing.adapters.actions import ProviderUnavailable, reconcile
 from basis.modules.billing.adapters.models import BillingAccount
+from basis.modules.billing.adapters.record_actions import mark_pending
 
 
 class Command(BaseCommand):

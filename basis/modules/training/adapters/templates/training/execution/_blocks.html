@@ -1,0 +1,34 @@
+{% load training_tags %}
+{% for block in blocks %}
+  <c-basis.card>
+    <div class="stack-sm">
+      <div class="row">
+        <div>
+          <span class="pill">{{ block.get_sport_display }}</span>
+          <h2>{{ block.title }}</h2>
+        </div>
+        {% if editable and write_access %}
+          <a href="{% url 'block-metrics' block.pk %}">
+            {% if block.session_id %}
+              Registrar variables
+            {% else %}
+              Definir variables
+            {% endif %}
+          </a>
+        {% endif %}
+      </div>
+      {% include 'training/execution/_metrics.html' %}
+      {% if block.sport == 'strength' %}
+        {% include 'training/execution/_strength.html' %}
+      {% else %}
+        {% include 'training/execution/_intervals.html' %}
+      {% endif %}
+    </div>
+  </c-basis.card>
+{% empty %}
+  <c-basis.card>
+    <c-basis.empty title="Añade el primer bloque">
+      Una sesión puede combinar varias disciplinas.
+    </c-basis.empty>
+  </c-basis.card>
+{% endfor %}

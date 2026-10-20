@@ -7,7 +7,8 @@ from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
-from basis.bootstrap.admin_actions import (
+from basis.adapters.web.framework import owner
+from basis.modules.athletes.adapters.administration_actions import (
     delete_admin_profiles,
     delete_admin_rms,
     delete_admin_workouts,
@@ -15,7 +16,6 @@ from basis.bootstrap.admin_actions import (
     save_admin_rm,
     save_admin_workout,
 )
-from basis.bootstrap.web_framework import owner
 
 from .models import User, UserExerciseRM, WorkoutData
 

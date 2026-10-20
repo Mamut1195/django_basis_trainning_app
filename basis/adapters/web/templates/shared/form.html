@@ -1,0 +1,23 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <div class="form-width stack">
+    <c-basis.page-heading :title="title" :subtitle="subtitle" />
+    <c-basis.form-frame :form="form" :revision="revision" submit="{{ submit|default:'Guardar' }}">
+      {% for extra in extra_forms %}
+        <fieldset>
+          <legend>
+            {% if extra.prefix == 'target' %}
+              Objetivo
+            {% elif extra.prefix == 'actual' %}
+              Resultado real
+            {% else %}
+              Bloque de entrenamiento
+            {% endif %}
+          </legend>
+          <c-basis.error-summary :form="extra" />
+          <div class="form-fields">{{ extra.as_div }}</div>
+        </fieldset>
+      {% endfor %}
+    </c-basis.form-frame>
+  </div>
+{% endblock %}

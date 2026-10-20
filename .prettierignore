@@ -1,0 +1,6 @@
+**/vendor/**
+staticfiles/
+artifacts/
+docs/
+.cache/
+.venv*/

@@ -1,0 +1,14 @@
+{% load static %}
+<c-vars href="/" class="" label="BASIS, inicio" product="" />
+<a class="brand {{ class }}" href="{{ href }}" aria-label="{{ label }}">
+  <span class="brand-mark">
+    <img class="brand-logo"
+         src="{% static 'basis/brand/logo.svg' %}"
+         alt="BASIS"
+         width="314"
+         height="198">
+  </span>
+  {% if product %}
+    <span class="eyebrow brand-product" aria-hidden="true">{{ product }}</span>
+  {% endif %}
+</a>

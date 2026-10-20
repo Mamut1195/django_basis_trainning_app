@@ -1,0 +1,22 @@
+[
+  {
+    "file": "htmx.min.js",
+    "url": "https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js",
+    "sha256": "d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717"
+  },
+  {
+    "file": "alpine.min.js",
+    "url": "https://cdn.jsdelivr.net/npm/alpinejs@3.17.4/dist/cdn.min.js",
+    "sha256": "232519394c6c8fdba6f362b1d9da16106db513cdbf899011f00daab4051df31c"
+  },
+  {
+    "file": "alpine-focus.min.js",
+    "url": "https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.17.4/dist/cdn.min.js",
+    "sha256": "ea7e215444f5110619549621cd0760cedfe273f708b144d4e658a87b702555f9"
+  },
+  {
+    "file": "alpine-collapse.min.js",
+    "url": "https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.17.4/dist/cdn.min.js",
+    "sha256": "c7661d4e2cf0465e3cd693190debb5f592ac72dcc4cfe650581273767558b27b"
+  }
+]

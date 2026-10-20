@@ -56,3 +56,6 @@ docker-compose.override.yml
 node_modules/
 npm-debug.log
 yarn.lock
+
+!basis/**/static/
+!basis/**/static/**

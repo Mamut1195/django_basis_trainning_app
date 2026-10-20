@@ -92,3 +92,17 @@ $env:DJANGO_SETTINGS_MODULE = 'config.test_settings'
 Para comprobar las carreras con bloqueos reales, define `DATABASE_URL` apuntando a un PostgreSQL local de pruebas. SQLite omite esas pruebas. El recorrido de navegador está en `scripts/browser_smoke.py`; usa una cuenta de demostración y un servidor local en el puerto 8765. Lee las variables `BROWSER_EXECUTABLE`, `BASIS_E2E_EMAIL` y `BASIS_E2E_PASSWORD`.
 
 Linear es el estado del roadmap P-MAM-12. Un ticket solo puede pasar a Done cuando todo su alcance esté validado y exista un commit integrado en `main`; estar en el árbol de trabajo de esa rama no basta.
+
+## Formato de presentación
+
+Instalar `requirements-dev.txt` y ejecutar `npm ci --ignore-scripts`. Ruff está fijado en requirements.txt, djLint en requirements-dev.txt y Prettier en package-lock.json.
+
+```powershell
+python -m ruff format basis config tests tests_architecture scripts/architecture_check.py scripts/browser_smoke.py scripts/acceptance_browser.py scripts/verify_environment.py
+python -m djlint basis --reformat
+npm run format
+```
+
+Para comprobar sin modificar: añadir `--check` a Ruff format, usar `python -m djlint basis --check` y `npm run format:check`. CI aplica estos controles. Python usa 100 columnas; Django/Cotton, CSS y JavaScript usan dos espacios. Se excluyen migraciones históricas, evidencias, recursos generados y código de terceros. Prettier conserva el orden de las reglas CSS; JavaScript continúa en esta entrega.
+
+Referencias: [djLint Django](https://djlint.com/docs/languages/django/), [instalación fijada de Prettier](https://prettier.io/docs/install.html).

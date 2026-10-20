@@ -1,0 +1,15 @@
+<dialog id="sync-conflict" aria-labelledby="sync-conflict-title">
+  <div class="stack-sm">
+    <h2 id="sync-conflict-title">Hay dos versiones de esta sesión</h2>
+    <p>Tu registro local sigue guardado. Compara las versiones y decide cuál conservar.</p>
+    <h3>Tu versión local</h3>
+    <pre id="conflict-local"></pre>
+    <h3>Versión del servidor</h3>
+    <pre id="conflict-remote"></pre>
+    <div class="actions">
+      <button type="button" data-conflict="server">Conservar servidor</button>
+      <button type="button" data-conflict="local">Enviar mi versión revisada</button>
+      <button type="button" data-conflict="close">Revisar después</button>
+    </div>
+  </div>
+</dialog>

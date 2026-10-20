@@ -1,0 +1,5 @@
+<c-vars tone="info" />
+<div class="notice {{ tone }}"
+     role="{% if tone == 'error' %}alert{% else %}status{% endif %}"
+     {{ attrs }}>{{ slot }}
+</div>

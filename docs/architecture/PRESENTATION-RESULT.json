@@ -1,0 +1,114 @@
+{
+  "base_commit": "717cc1b",
+  "status": "LOCAL_VERIFIED_PENDING_GIT_INTEGRATION",
+  "checks": {
+    "postgresql": {
+      "status": "VERIFIED",
+      "tests": 246,
+      "skipped": 0,
+      "temporary": true,
+      "version": "18.4",
+      "listener": "127.0.0.1:55449",
+      "server_stopped": true
+    },
+    "pure": {
+      "status": "VERIFIED",
+      "tests": 174,
+      "skipped": 0
+    },
+    "mypy_core": {
+      "status": "VERIFIED",
+      "files": 113
+    },
+    "mypy_django": {
+      "status": "VERIFIED",
+      "files": 318
+    },
+    "import_contracts": {
+      "status": "VERIFIED",
+      "kept": 8,
+      "broken": 0
+    },
+    "architecture": "VERIFIED",
+    "ruff_lint": "VERIFIED",
+    "ruff_format": "VERIFIED",
+    "djlint_format": "VERIFIED",
+    "prettier_format": "VERIFIED",
+    "django_check": "VERIFIED",
+    "migration_drift": "VERIFIED_NO_CHANGES",
+    "model_registry": {
+      "status": "VERIFIED",
+      "business_models": 28,
+      "unique_definitions": 28
+    },
+    "static_collection": "VERIFIED",
+    "template_origins": {
+      "status": "VERIFIED",
+      "templates": 39
+    },
+    "recovery_full_cycle": "VERIFIED",
+    "form_variants": "VERIFIED",
+    "export_owner_isolation": {
+      "status": "VERIFIED",
+      "sections": 19
+    },
+    "service_worker_missing_asset_and_source_invalidation": "VERIFIED",
+    "git_diff_check": "VERIFIED",
+    "remote_ci": "NOT RUN",
+    "git_integration": "UNAVAILABLE: .git/index.lock Permission denied",
+    "browser": {
+      "status": "VERIFIED",
+      "checks": 21,
+      "desktop": "1440x1000",
+      "mobile": "390x844",
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "source_sha256": "f4806664064c1ef3c1c9f73cff68c61d7098c77e29ee110a633f497f8fabc391",
+      "source_unchanged": true,
+      "server_stopped": true,
+      "receipt": "docs/architecture/PRESENTATION-BROWSER-RESULT.json",
+      "source_readback": "VERIFIED: before/after/final manifest identical"
+    }
+  },
+  "preservation": {
+    "original_scenarios": 111,
+    "missing": [],
+    "protected_file_count": 2,
+    "protected_content_mismatches": [],
+    "migration_diff": []
+  },
+  "assets": {
+    "status": "VERIFIED",
+    "unchanged_vendor_brand_icon_files": 14,
+    "all_same_bytes": true
+  },
+  "out_of_scope": [
+    "TypeScript",
+    "predefined programs",
+    "production activation",
+    "live providers",
+    "physical devices"
+  ],
+  "linear": {
+    "ARCH-09": "MAM-830 In Progress",
+    "ARCH-10": "MAM-831 In Progress",
+    "readback": "VERIFIED: final evidence persisted on both descriptions; dependencies unchanged"
+  },
+  "format_only_patch": ".cache/presentation-format.patch",
+  "evidence_logs": {
+    "postgresql": ".cache/presentation-postgres-tests.log",
+    "pure": ".cache/presentation-pure.log",
+    "mypy_django": ".cache/presentation-mypy-final.log",
+    "imports": ".cache/presentation-imports.log",
+    "static": ".cache/presentation-static.log",
+    "postgres_stop": ".cache/presentation-postgres-stop.log",
+    "browser": ".cache/presentation-browser-20261019-r7/result.json"
+  },
+  "recovery": {
+    ".cache/presentation-format.patch": "15286f8c56299d43d536c2f4821c5c9bad17813a94db14cd7cff733adf543791",
+    ".cache/presentation-final.patch": "5a29514be32aef1f2cf1c586704da172dd1eff80590865f0e51386c891540407",
+    ".cache/presentation-candidate.zip": "0a371afc8ad0f6670957f35a14dfd3e932076dde7f9250ac0802facc1c9205a5"
+  }
+}

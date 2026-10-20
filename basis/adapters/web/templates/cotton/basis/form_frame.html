@@ -1,0 +1,17 @@
+<c-vars form submit="Guardar" revision="" />
+<c-basis.card>
+  <form method="post" class="stack" data-form-submit {{ attrs }}>
+    {% csrf_token %}
+    {% if revision %}<input type="hidden" name="revision" value="{{ revision }}">{% endif %}
+    <c-basis.error-summary :form="form" />
+    <div class="form-fields">{{ form.as_div }}</div>
+    {{ slot }}
+    <div class="actions">
+      <c-ui.button type="submit" variant="primary">
+        {{ submit }}
+      </c-ui.button>
+      <a href="/" data-back>Volver</a>
+      <c-basis.submit-status />
+    </div>
+  </form>
+</c-basis.card>

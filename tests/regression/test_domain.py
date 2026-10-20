@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
-from basis.bootstrap.proposal_actions import validate_proposal
 from basis.modules.sync.adapters.actions import Conflict
 from basis.modules.sync.adapters.models import SyncReceipt
 from basis.modules.training.adapters.actions import revise_plan, start_session
@@ -24,6 +23,7 @@ from basis.modules.training.adapters.models import (
     TrekStage,
     TrekTrip,
 )
+from basis.modules.training.adapters.planning_actions import validate_proposal
 
 from .contracts import (
     build_plan,

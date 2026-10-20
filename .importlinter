@@ -93,4 +93,5 @@ forbidden_modules =
     daily_trainning_app
     config
     basis.bootstrap
+    basis.adapters
 allow_indirect_imports = False

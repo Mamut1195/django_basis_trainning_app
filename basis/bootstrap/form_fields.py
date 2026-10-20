@@ -1,17 +1,5 @@
-"""Compose athlete-owned reference selection into training input fields."""
+"""Compose athlete-owned measured reference fields into training input adapters."""
 
-from datetime import date
-
-from django import forms
-from django.db import models
-
-from basis.modules.athletes.adapters.form_fields import DjangoRMChoices, restrict_reference_field
-from basis.shared.identifiers import AccountId
-
-
-def configure_rm_choices(
-    field: forms.ModelChoiceField[models.Model],
-    owner: int,
-    through: date,
-) -> None:
-    restrict_reference_field(field, DjangoRMChoices(), AccountId(owner), through)
+from basis.modules.athletes.adapters.reference_fields import (
+    configure_rm_choices as configure_rm_choices,
+)

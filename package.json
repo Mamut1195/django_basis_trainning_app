@@ -1,0 +1,11 @@
+{
+  "name": "basis-presentation",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write \"assets/css/**/*.css\" \"assets/js/**/*.js\" \"basis/**/static/basis/**/*.css\" \"basis/**/static/basis/**/*.js\" --no-error-on-unmatched-pattern",
+    "format:check": "prettier --check \"assets/css/**/*.css\" \"assets/js/**/*.js\" \"basis/**/static/basis/**/*.css\" \"basis/**/static/basis/**/*.js\" --no-error-on-unmatched-pattern"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

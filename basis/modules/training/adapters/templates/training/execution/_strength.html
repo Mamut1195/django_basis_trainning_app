@@ -1,0 +1,42 @@
+<div class="table-wrap">
+  <table>
+    <caption class="muted">Series · objetivo y resultado</caption>
+    <thead>
+      <tr>
+        <th scope="col">Ejercicio</th>
+        <th scope="col">Objetivo</th>
+        <th scope="col">Real</th>
+        <th scope="col">RPE / RIR real</th>
+        <th scope="col">Descanso</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for set in block.sets.all %}
+        <tr>
+          <td>
+            {{ set.exercise.nombre }}
+            <br>
+            <small>{{ set.get_kind_display }} · {{ set.get_side_display }}</small>
+          </td>
+          <td>{{ set.target_reps|default_if_none:'—' }} × {{ set.target_kg|default_if_none:'—' }} kg</td>
+          <td>{{ set.actual_reps|default_if_none:'—' }} × {{ set.actual_kg|default_if_none:'—' }} kg</td>
+          <td>{{ set.actual_rpe|default_if_none:'—' }} / {{ set.actual_rir|default_if_none:'—' }}</td>
+          <td>
+            {{ set.rest_seconds|default_if_none:'—' }} s
+            {% if editable and write_access %}
+              <br>
+              <a href="{% url 'set-edit' set.pk %}">Registrar resultado</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">Sin series registradas.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if editable and write_access %}
+  <a href="{% url 'set-new' block.pk %}">Añadir serie +</a>
+{% endif %}

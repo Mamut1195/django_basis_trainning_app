@@ -1,0 +1,16 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.card>
+    <div class="stack">
+      <h1>{{ title }}</h1>
+      <p>{{ text }}</p>
+      {% if billing_link %}
+        <c-ui.button href="{% url 'billing' %}" variant="primary">
+          Ver suscripción
+        </c-ui.button>
+      {% else %}
+        <a href="{% url 'login' %}">Iniciar sesión</a>
+      {% endif %}
+    </div>
+  </c-basis.card>
+{% endblock %}

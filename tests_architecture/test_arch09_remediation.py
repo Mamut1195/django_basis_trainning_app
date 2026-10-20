@@ -25,8 +25,14 @@ class GitSimulation(module.Runner):
         self.corrupt_blob = False
         self.mode = "100755"
 
-    def git(self, arguments: list[str], label: str, *, allowed: tuple[int, ...] = (0,),
-            data: bytes | None = None) -> module.Result:
+    def git(
+        self,
+        arguments: list[str],
+        label: str,
+        *,
+        allowed: tuple[int, ...] = (0,),
+        data: bytes | None = None,
+    ) -> module.Result:
         output = b""
         code = 0
         while arguments[0] == "-c":
@@ -41,7 +47,13 @@ class GitSimulation(module.Runner):
                 output, code = (self.candidate.encode(), 0) if self.candidate else (b"", 1)
             else:
                 ref = arguments[1]
-                output = (self.head if ref == "HEAD" else self.main_ref if ref == "refs/heads/main" else module.BASE).encode()
+                output = (
+                    self.head
+                    if ref == "HEAD"
+                    else self.main_ref
+                    if ref == "refs/heads/main"
+                    else module.BASE
+                ).encode()
         elif command == "diff":
             if "--quiet" in arguments:
                 code = 1 if self.staged else 0
@@ -67,7 +79,9 @@ class GitSimulation(module.Runner):
                 content = module.safe_path(relative).read_bytes()
                 if self.corrupt_blob:
                     content += b"wrong"
-                output += b"f" * 40 + b" blob " + str(len(content)).encode() + b"\n" + content + b"\n"
+                output += (
+                    b"f" * 40 + b" blob " + str(len(content)).encode() + b"\n" + content + b"\n"
+                )
         elif command == "diff-tree":
             output = b"".join(path.encode() + b"\0" for path in self.manifest.files)
         elif command in ("switch", "add", "update-index", "commit", "merge"):
@@ -76,7 +90,9 @@ class GitSimulation(module.Runner):
                 self.branch = arguments[-1]
                 if "-c" in arguments:
                     self.candidate = module.BASE
-                self.head = self.main_ref if self.branch == "main" else self.candidate or module.BASE
+                self.head = (
+                    self.main_ref if self.branch == "main" else self.candidate or module.BASE
+                )
             elif command == "add":
                 self.staged = True
             elif command == "commit":
@@ -87,7 +103,9 @@ class GitSimulation(module.Runner):
             raise AssertionError("Unexpected simulated Git command: " + repr(arguments))
         if code not in allowed:
             raise RuntimeError("Simulated nonzero Git exit")
-        return module.Result(code, output, b"", self.directory / (label + ".out"), self.directory / (label + ".err"))
+        return module.Result(
+            code, output, b"", self.directory / (label + ".out"), self.directory / (label + ".err")
+        )
 
 
 class RemediationRunnerTests(TestCase):
@@ -98,21 +116,42 @@ class RemediationRunnerTests(TestCase):
         replacement = patch.object(module, "ROOT", self.root)
         replacement.start()
         self.addCleanup(replacement.stop)
-        self.manifest = module.Manifest((module.MANIFEST, module.RECEIPT, "manage.py", "source file.py"),
-            ("retired.py",), (module.MANIFEST, "manage.py", "source file.py"), ("seed.py",), 111, 224)
-        module.write_json(self.root / module.MANIFEST, {
-            "base_commit": module.BASE, "files": list(self.manifest.files),
-            "deleted_files": list(self.manifest.deleted), "verification_files": list(self.manifest.verification),
-            "protected_files": list(self.manifest.protected), "pure_tests": 111, "postgresql_tests": 224,
-        })
+        self.manifest = module.Manifest(
+            (module.MANIFEST, module.RECEIPT, "manage.py", "source file.py"),
+            ("retired.py",),
+            (module.MANIFEST, "manage.py", "source file.py"),
+            ("seed.py",),
+            111,
+            224,
+        )
+        module.write_json(
+            self.root / module.MANIFEST,
+            {
+                "base_commit": module.BASE,
+                "files": list(self.manifest.files),
+                "deleted_files": list(self.manifest.deleted),
+                "verification_files": list(self.manifest.verification),
+                "protected_files": list(self.manifest.protected),
+                "pure_tests": 111,
+                "postgresql_tests": 224,
+            },
+        )
         (self.root / "manage.py").write_text("print('config')\n", encoding="utf-8")
         (self.root / "source file.py").write_text("value = 1\n", encoding="utf-8")
         (self.root / "seed.py").write_text("unrelated user contents\n", encoding="utf-8")
 
     def browser(self, directory: Path) -> dict[str, object]:
-        result: dict[str, object] = {"status": "VERIFIED", "browser_closed": True, "server_stopped": True,
-            "browser": {"status": "VERIFIED", "checks": sorted(module.BROWSER_CHECKS),
-                        "javascript_errors": [], "external_responses": []}}
+        result: dict[str, object] = {
+            "status": "VERIFIED",
+            "browser_closed": True,
+            "server_stopped": True,
+            "browser": {
+                "status": "VERIFIED",
+                "checks": sorted(module.BROWSER_CHECKS),
+                "javascript_errors": [],
+                "external_responses": [],
+            },
+        }
         module.write_json(directory / "result.json", result)
         module.write_json(directory / "browser-closed.json", {"browser_closed": True})
         return result
@@ -121,30 +160,71 @@ class RemediationRunnerTests(TestCase):
         original = self.root / ".cache/arch09-remediation" / ("b" * 32)
         original.mkdir(parents=True)
         checks: dict[str, object] = {}
-        labels = ("architecture", "pure-tests", "core-types", "django-types", "imports", "ruff",
-            "django-check", "migrations", "static-assets", "docker-access", "postgres-start",
-            "loopback-binding", "postgres-version", "postgres-image", "postgres-tests", "real-browser")
+        labels = (
+            "architecture",
+            "pure-tests",
+            "core-types",
+            "django-types",
+            "imports",
+            "ruff",
+            "django-check",
+            "migrations",
+            "static-assets",
+            "docker-access",
+            "postgres-start",
+            "loopback-binding",
+            "postgres-version",
+            "postgres-image",
+            "postgres-tests",
+            "real-browser",
+        )
         for label in labels:
             stdout, stderr = original / (label + ".out"), original / (label + ".err")
             text = "Contracts: 8 kept, 0 broken.\n" if label == "imports" else ""
             stdout.write_text(text, encoding="utf-8")
-            stderr.write_text("Ran 111 tests\nOK\n" if label == "pure-tests" else "Ran 224 tests\nOK\n" if label == "postgres-tests" else "", encoding="utf-8")
-            checks[label] = {"status": "VERIFIED", "exit_code": 0,
-                "stdout": stdout.relative_to(self.root).as_posix(), "stderr": stderr.relative_to(self.root).as_posix()}
+            stderr.write_text(
+                "Ran 111 tests\nOK\n"
+                if label == "pure-tests"
+                else "Ran 224 tests\nOK\n"
+                if label == "postgres-tests"
+                else "",
+                encoding="utf-8",
+            )
+            checks[label] = {
+                "status": "VERIFIED",
+                "exit_code": 0,
+                "stdout": stdout.relative_to(self.root).as_posix(),
+                "stderr": stderr.relative_to(self.root).as_posix(),
+            }
         hashes, modes = module.source_hashes(self.manifest)
-        result: dict[str, object] = {"status": "VERIFIED", "base_commit": module.BASE, "run_id": "b" * 32,
-            "tests": 224, "pure_tests": 111, "skipped": 0, "container_stopped": True,
-            "source_hashes": hashes, "source_hash_modes": modes, "deleted_files": list(self.manifest.deleted),
-            "protected_hashes": module.protected_hashes(self.manifest), "checks": checks,
-            "browser": self.browser(original / "browser")}
+        result: dict[str, object] = {
+            "status": "VERIFIED",
+            "base_commit": module.BASE,
+            "run_id": "b" * 32,
+            "tests": 224,
+            "pure_tests": 111,
+            "skipped": 0,
+            "container_stopped": True,
+            "source_hashes": hashes,
+            "source_hash_modes": modes,
+            "deleted_files": list(self.manifest.deleted),
+            "protected_hashes": module.protected_hashes(self.manifest),
+            "checks": checks,
+            "browser": self.browser(original / "browser"),
+        }
         module.write_json(original / "receipt.json", result)
         module.write_json(self.root / module.RECEIPT, result)
         return result
 
     def simulated(self) -> GitSimulation:
-        return GitSimulation(self.root / ("integration-" + str(len(tuple(self.root.glob("integration-*"))))), self.manifest)
+        return GitSimulation(
+            self.root / ("integration-" + str(len(tuple(self.root.glob("integration-*"))))),
+            self.manifest,
+        )
 
-    def test_manifest_includes_manage_contents_and_excludes_seed_and_receipt_self_hash(self) -> None:
+    def test_manifest_includes_manage_contents_and_excludes_seed_and_receipt_self_hash(
+        self,
+    ) -> None:
         self.assertEqual(module.Manifest.load(), self.manifest)
         data = module.read_json(self.root / module.MANIFEST)
         data["verification_files"] = [*self.manifest.verification, module.RECEIPT]
@@ -162,15 +242,26 @@ class RemediationRunnerTests(TestCase):
             module.Manifest.load()
 
     def test_hash_normalization_and_binary_hashes(self) -> None:
-        self.assertEqual(module.normalized_hash(b"\xef\xbb\xbfline\r\n", "text.py"), module.normalized_hash(b"line\n", "text.py"))
-        self.assertNotEqual(module.normalized_hash(b"line\r\n", "image.png"), module.normalized_hash(b"line\n", "image.png"))
+        self.assertEqual(
+            module.normalized_hash(b"\xef\xbb\xbfline\r\n", "text.py"),
+            module.normalized_hash(b"line\n", "text.py"),
+        )
+        self.assertNotEqual(
+            module.normalized_hash(b"line\r\n", "image.png"),
+            module.normalized_hash(b"line\n", "image.png"),
+        )
 
     def test_native_capture_preserves_stderr_nonzero_and_paths_with_spaces(self) -> None:
         module.self_test(module.Runner(self.root / "native space output"))
 
     def test_runner_disables_provider_smtp_and_uses_temporary_secret(self) -> None:
         runner = module.Runner(self.root / "environment")
-        for key in ("DEEPSEEK_API_KEY", "POLAR_ACCESS_TOKEN", "POLAR_WEBHOOK_SECRET", "POLAR_PRODUCT_ID"):
+        for key in (
+            "DEEPSEEK_API_KEY",
+            "POLAR_ACCESS_TOKEN",
+            "POLAR_WEBHOOK_SECRET",
+            "POLAR_PRODUCT_ID",
+        ):
             self.assertEqual(runner.environment[key], "")
         self.assertEqual(runner.environment["AI_ENABLED"], "0")
         self.assertIn("locmem", runner.environment["EMAIL_BACKEND"])
@@ -180,8 +271,16 @@ class RemediationRunnerTests(TestCase):
         runner = module.Runner(self.root / "whitespace")
         original = runner.git
 
-        def inherited_autocrlf(arguments: list[str], label: str, *, allowed: tuple[int, ...] = (0,), data: bytes | None = None) -> module.Result:
-            return original(["-c", "core.autocrlf=true", *arguments], label, allowed=allowed, data=data)
+        def inherited_autocrlf(
+            arguments: list[str],
+            label: str,
+            *,
+            allowed: tuple[int, ...] = (0,),
+            data: bytes | None = None,
+        ) -> module.Result:
+            return original(
+                ["-c", "core.autocrlf=true", *arguments], label, allowed=allowed, data=data
+            )
 
         with patch.object(runner, "git", inherited_autocrlf):
             module.whitespace_preflight(runner, self.manifest)
@@ -195,14 +294,22 @@ class RemediationRunnerTests(TestCase):
     def test_suite_rejects_skips_and_wrong_counts(self) -> None:
         for body in (b"Ran 224 tests\nOK (skipped=1)\n", b"Ran 223 tests\nOK\n"):
             with self.assertRaises(RuntimeError):
-                module.assert_suite(module.Result(0, b"", body, self.root, self.root), 224, "PostgreSQL")
+                module.assert_suite(
+                    module.Result(0, b"", body, self.root, self.root), 224, "PostgreSQL"
+                )
 
-    def test_browser_requires_exact_names_javascript_silence_external_response_silence_and_cleanup(self) -> None:
+    def test_browser_requires_exact_names_javascript_silence_external_response_silence_and_cleanup(
+        self,
+    ) -> None:
         directory = self.root / "browser"
         good = self.browser(directory)
         self.assertEqual(module.browser_evidence(directory), good)
         browser = module.object_map(good["browser"])
-        for key, bad in (("checks", [str(i) for i in range(14)]), ("javascript_errors", ["uncaught"]), ("external_responses", [{"host": "outside"}])):
+        for key, bad in (
+            ("checks", [str(i) for i in range(14)]),
+            ("javascript_errors", ["uncaught"]),
+            ("external_responses", [{"host": "outside"}]),
+        ):
             original = browser[key]
             browser[key] = bad
             module.write_json(directory / "result.json", good)
@@ -232,7 +339,9 @@ class RemediationRunnerTests(TestCase):
     def test_resume_rechecks_original_native_test_logs(self) -> None:
         self.receipt()
         original = self.root / ".cache/arch09-remediation" / ("b" * 32)
-        (original / "postgres-tests.err").write_text("Ran 224 tests\nOK (skipped=1)\n", encoding="utf-8")
+        (original / "postgres-tests.err").write_text(
+            "Ran 224 tests\nOK (skipped=1)\n", encoding="utf-8"
+        )
         with self.assertRaisesRegex(RuntimeError, "without skips"):
             module.verified_receipt(self.simulated(), self.manifest)
 
@@ -253,7 +362,10 @@ class RemediationRunnerTests(TestCase):
         runner = self.simulated()
         runner.branch, runner.candidate, runner.staged = module.BRANCH, module.BASE, True
         output = StringIO()
-        with patch.object(module, "verify", side_effect=AssertionError("Services must not rerun")), redirect_stdout(output):
+        with (
+            patch.object(module, "verify", side_effect=AssertionError("Services must not rerun")),
+            redirect_stdout(output),
+        ):
             result = module.complete(runner, self.manifest, 55440, resume=True)
         self.assertIn("without rerunning services", output.getvalue())
         self.assertIn("integrated in main at " + CANDIDATE, output.getvalue())
@@ -269,7 +381,12 @@ class RemediationRunnerTests(TestCase):
                 if already_merged:
                     runner.head = runner.main_ref = CANDIDATE
                 output = StringIO()
-                with patch.object(module, "verify", side_effect=AssertionError("Services must not rerun")), redirect_stdout(output):
+                with (
+                    patch.object(
+                        module, "verify", side_effect=AssertionError("Services must not rerun")
+                    ),
+                    redirect_stdout(output),
+                ):
                     module.complete(runner, self.manifest, 55440, resume=True)
                 self.assertIn("without rerunning services", output.getvalue())
                 self.assertIn("integrated in main at " + CANDIDATE, output.getvalue())

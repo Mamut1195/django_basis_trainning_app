@@ -2,9 +2,9 @@
 
 from django.contrib.auth.base_user import AbstractBaseUser
 
-from basis.bootstrap import planning
-from basis.bootstrap import progress as progress_application
-from basis.bootstrap import training as execution
+from basis.modules.training.adapters import execution_actions as execution
+from basis.modules.training.adapters import planning_actions as planning
+from basis.modules.training.adapters import progress_actions as progress_application
 from basis.modules.training.public import Unavailable
 
 from .models import PlannedSession, Session, TrainingPlan, TrekTrip
@@ -12,7 +12,6 @@ from .models import PlannedSession, Session, TrainingPlan, TrekTrip
 
 def session_snapshot(session: Session) -> dict[str, object]:
     return execution.snapshot(session.owner_id, session.pk)
-
 
 
 def start_session(owner: AbstractBaseUser, planned: PlannedSession) -> Session:

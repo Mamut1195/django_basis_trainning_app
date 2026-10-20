@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.http import Http404
 
 from basis.bootstrap.manual_training import manual_training
-from basis.bootstrap.training import snapshot
+from basis.modules.training.adapters.execution_actions import snapshot
 from basis.shared.identifiers import (
     AccountId,
     BlockId,
@@ -54,8 +54,13 @@ def translated(owner: int, operation: Callable[[], T]) -> T:
         raise Http404 from error
     except ManualConflict as error:
         # Imported here at the web composition boundary, never by the core.
-        from basis.bootstrap.web_framework import Conflict
-        current = snapshot(owner, error.current.ref.id) if isinstance(error.current.ref, SessionParent) else None
+        from basis.adapters.web.framework import Conflict
+
+        current = (
+            snapshot(owner, error.current.ref.id)
+            if isinstance(error.current.ref, SessionParent)
+            else None
+        )
         raise Conflict(current) from None
     except (ManualInvalid, InvalidPlanning, InvalidSportMetrics, ValueError) as error:
         raise ValidationError(str(error)) from None
@@ -92,28 +97,53 @@ def expected_revision(value: object) -> Revision:
 
 
 def create_session(owner: int, row: Session, sport: str, title: str) -> SessionId:
-    data = ManualSessionData(row.title, row.date, row.duration_seconds,
-                            DurationProtocol(row.duration_protocol), row.reported_rpe, row.notes)
-    return translated(owner, lambda: manual_training().create(CreateManualSession(AccountId(owner), data, sport, title)))
+    data = ManualSessionData(
+        row.title,
+        row.date,
+        row.duration_seconds,
+        DurationProtocol(row.duration_protocol),
+        row.reported_rpe,
+        row.notes,
+    )
+    return translated(
+        owner,
+        lambda: manual_training().create(CreateManualSession(AccountId(owner), data, sport, title)),
+    )
 
 
-def add_block(owner: int, parent: Session | PlannedSession, revision: object, sport: str, title: str) -> BlockId:
-    command = AddBlock(AccountId(owner), parent_ref(parent), expected_revision(revision), sport, title)
+def add_block(
+    owner: int, parent: Session | PlannedSession, revision: object, sport: str, title: str
+) -> BlockId:
+    command = AddBlock(
+        AccountId(owner), parent_ref(parent), expected_revision(revision), sport, title
+    )
     return translated(owner, lambda: manual_training().add_block(command))
 
 
 def save_metrics(owner: int, block: Block, revision: object, data: dict[str, object]) -> None:
-    command = SaveBlockMetrics(AccountId(owner), BlockId(block.pk), expected_revision(revision), metrics(data))
+    command = SaveBlockMetrics(
+        AccountId(owner), BlockId(block.pk), expected_revision(revision), metrics(data)
+    )
     translated(owner, lambda: manual_training().save_metrics(command))
 
 
 def save_strength(owner: int, row: StrengthSet, revision: object, *, creating: bool) -> None:
-    command = SaveStrength(AccountId(owner), BlockId(row.block_id), expected_revision(revision),
-                           strength_data(row), None if creating else StrengthSetId(row.pk))
+    command = SaveStrength(
+        AccountId(owner),
+        BlockId(row.block_id),
+        expected_revision(revision),
+        strength_data(row),
+        None if creating else StrengthSetId(row.pk),
+    )
     translated(owner, lambda: manual_training().save_strength(command))
 
 
 def save_interval(owner: int, row: Interval, revision: object, *, creating: bool) -> None:
-    command = SaveInterval(AccountId(owner), BlockId(row.block_id), expected_revision(revision),
-                           interval_data(row), None if creating else IntervalId(row.pk))
+    command = SaveInterval(
+        AccountId(owner),
+        BlockId(row.block_id),
+        expected_revision(revision),
+        interval_data(row),
+        None if creating else IntervalId(row.pk),
+    )
     translated(owner, lambda: manual_training().save_interval(command))

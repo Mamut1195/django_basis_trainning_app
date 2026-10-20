@@ -102,7 +102,7 @@ class WebFlowTests(TestCase):
         self.assertEqual({icon["sizes"] for icon in manifest["icons"]}, {"192x192", "512x512"})
         response = self.client.get("/service-worker.js")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "credentials:'omit'")
+        self.assertRegex(response.content.decode(), r"credentials\s*:\s*['\"]omit['\"]")
 
     def test_signup_requires_verification_then_login(self) -> None:
         self.client.logout()

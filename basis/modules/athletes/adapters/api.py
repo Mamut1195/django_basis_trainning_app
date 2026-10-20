@@ -9,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from basis.bootstrap.permissions import require_write_access
+from basis.adapters.web.permissions import require_write_access
 
 from .models import User, UserExerciseRM, WorkoutData
 from .serializers import UserExerciseRMSerializer, UserSerializer, WorkoutDataSerializer

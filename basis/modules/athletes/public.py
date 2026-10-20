@@ -30,7 +30,11 @@ from .application.records import (
     RecordWorkout,
 )
 from .application.references import RMChoices, RMReference, RMReferences
-from .application.workouts import calculate_workout
+from .application.workouts import (
+    calculate_workout,
+    decide_workout_reference,
+    validate_workout_reference,
+)
 from .domain.records import (
     AthleteUnavailable,
     InvalidAthleteData,
@@ -56,6 +60,7 @@ from .domain.workouts import (
     WorkoutCalculation,
     WorkoutContext,
     WorkoutMetrics,
+    WorkoutReferenceDecision,
     require_positive_rm,
     validate_preferences,
 )
@@ -69,7 +74,6 @@ __all__ = (
     "DeleteAdministrativeProfiles",
     "DeleteAdministrativeRMs",
     "DeleteAdministrativeWorkouts",
-
     "InvalidAthleteField",
     "MeasuredReference",
     "PreviousWorkout",
@@ -77,9 +81,11 @@ __all__ = (
     "WorkoutCalculation",
     "WorkoutMetrics",
     "calculate_workout",
+    "decide_workout_reference",
+    "validate_workout_reference",
+    "WorkoutReferenceDecision",
     "require_positive_rm",
     "validate_preferences",
-
     "RMChoices",
     "AthletePresentation",
     "AthleteHistory",
@@ -117,3 +123,5 @@ __all__ = (
     "validate_sport",
     "validate_wellness",
 )
+
+from .application.export import AthleteExport as AthleteExport

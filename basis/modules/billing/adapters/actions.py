@@ -18,14 +18,20 @@ from basis.shared.identifiers import AccountId
 
 from .models import BillingAccount
 
-__all__ = ("ProviderUnavailable", "checkout", "portal", "polar_request", "reconcile", "safe_provider_url")
+__all__ = (
+    "ProviderUnavailable",
+    "checkout",
+    "portal",
+    "polar_request",
+    "reconcile",
+    "safe_provider_url",
+)
 
 
-def polar_request(
-    method: str, path: str, *, json: Mapping[str, object] | None = None
-) -> object:
+def polar_request(method: str, path: str, *, json: Mapping[str, object] | None = None) -> object:
     return request(
-        method, path,
+        method,
+        path,
         token=settings.POLAR_ACCESS_TOKEN,
         product_id=settings.POLAR_PRODUCT_ID,
         sandbox=settings.POLAR_SANDBOX,

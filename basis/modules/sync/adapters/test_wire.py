@@ -27,17 +27,23 @@ from .wire import WireSource
 class OfflineWireTests(SimpleTestCase):
     def test_digest_uses_original_unicode_and_numeric_representations(self) -> None:
         payload: dict[str, object] = {
-            "id": str(uuid4()), "revision": 0, "notes": "caf\u00e9", "blocks": None,
+            "id": str(uuid4()),
+            "revision": 0,
+            "notes": "caf\u00e9",
+            "blocks": None,
         }
         mutation = uuid4()
         source = WireSource(mutation, payload, AccountId(1), changes)
-        expected = hashlib.sha256(json.dumps(
-            payload, sort_keys=True, separators=(",", ":")
-        ).encode()).hexdigest()
+        expected = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
         self.assertEqual(source.identity().digest, expected)
-        self.assertEqual(source.identity().digest, WireSource(
-            mutation, dict(reversed(tuple(payload.items()))), AccountId(1), changes
-        ).identity().digest)
+        self.assertEqual(
+            source.identity().digest,
+            WireSource(mutation, dict(reversed(tuple(payload.items()))), AccountId(1), changes)
+            .identity()
+            .digest,
+        )
         numeric = dict(payload, duration_seconds=0)
         floating = dict(payload, duration_seconds=0.0)
         self.assertNotEqual(
@@ -59,18 +65,31 @@ class OfflineWireTests(SimpleTestCase):
 
     def test_snapshot_codec_preserves_child_ids_order_scales_null_and_zero(self) -> None:
         initial = SessionState(
-            SessionId(uuid4()), AccountId(4), date(2026, 10, 19), revision=Revision(7),
-            duration_seconds=0, reported_rpe=Decimal("0.00"),
+            SessionId(uuid4()),
+            AccountId(4),
+            date(2026, 10, 19),
+            revision=Revision(7),
+            duration_seconds=0,
+            reported_rpe=Decimal("0.00"),
             blocks=(
-                BlockData("strength", id=93, order=9, sets=(
-                    StrengthData(12, target_kg=Decimal("50.000"), actual_reps=0),
-                )),
-                BlockData("running", id=28, order=3, target=(
-                    Metric(MetricName.DISTANCE_M, Decimal("123.4500")),
-                ), intervals=(IntervalData(actual_rpe=Decimal("0.00")),)),
+                BlockData(
+                    "strength",
+                    id=93,
+                    order=9,
+                    sets=(StrengthData(12, target_kg=Decimal("50.000"), actual_reps=0),),
+                ),
+                BlockData(
+                    "running",
+                    id=28,
+                    order=3,
+                    target=(Metric(MetricName.DISTANCE_M, Decimal("123.4500")),),
+                    intervals=(IntervalData(actual_rpe=Decimal("0.00")),),
+                ),
             ),
         )
         snapshot = encode_session(initial)
         self.assertEqual(encode_session(decode_snapshot(initial.owner, snapshot)), snapshot)
         self.assertEqual(decode_snapshot(initial.owner, snapshot), initial)
-        self.assertEqual(decode_snapshot(AccountId(8), snapshot), replace(initial, owner=AccountId(8)))
+        self.assertEqual(
+            decode_snapshot(AccountId(8), snapshot), replace(initial, owner=AccountId(8))
+        )

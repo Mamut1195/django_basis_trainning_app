@@ -1,16 +1,4 @@
-"""Compose catalog-owned fields into record input serializers."""
+"""Compose catalog-owned serializer fields into athlete input adapters."""
 
-from rest_framework import serializers
-
-from basis.modules.catalog.adapters.models import Exercise
-from basis.modules.catalog.adapters.serializers import ExerciseSerializer
-
-
-def exercise_field() -> serializers.Serializer[Exercise]:
-    return ExerciseSerializer(read_only=True)
-
-
-def exercise_reference() -> serializers.PrimaryKeyRelatedField[Exercise]:
-    return serializers.PrimaryKeyRelatedField(
-        queryset=Exercise.objects.all(), source="exercise", write_only=True
-    )
+from basis.modules.catalog.adapters.api_fields import exercise_field as exercise_field
+from basis.modules.catalog.adapters.api_fields import exercise_reference as exercise_reference

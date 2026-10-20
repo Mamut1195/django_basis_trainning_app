@@ -77,3 +77,5 @@ __all__ = (
     "Proposal",
     "ProposalUnavailable",
 )
+
+from .application.export import CoachExport as CoachExport

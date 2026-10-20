@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_cotton",
     "django_cotton_ui",
+    "basis.adapters.web.apps.WebConfig",
     "basis.modules.accounts.adapters.apps.AccountsConfig",
     "basis.modules.athletes.adapters.apps.AthletesConfig",
     "basis.modules.catalog.adapters.apps.CatalogConfig",
@@ -55,7 +56,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "basis.bootstrap.middleware.PrivateResponsesMiddleware",
+    "basis.adapters.web.middleware.PrivateResponsesMiddleware",
 ]
 CORS_ALLOWED_ORIGINS = list(
     filter(
@@ -66,14 +67,14 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "basis.bootstrap.context_processors.app_context",
+                "basis.adapters.web.context_processors.app_context",
             ]
         },
     }
@@ -107,7 +108,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"user": "300/min", "anon": "20/min"},
-    "EXCEPTION_HANDLER": "basis.bootstrap.api_errors.exception_handler",
+    "EXCEPTION_HANDLER": "basis.adapters.web.api_errors.exception_handler",
 }
 LANGUAGE_CODE = "es"
 TIME_ZONE = "America/Guayaquil"
@@ -115,7 +116,7 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "assets"]
+STATICFILES_DIRS: list[Path] = []
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},

@@ -1,0 +1,28 @@
+{% load training_tags %}
+{% if block.target %}
+  <details>
+    <summary>Ver prescripción</summary>
+    <dl class="metric-list">
+      {% for metric in block|metric_rows:'target' %}
+        <div>
+          <dt>{{ metric.label }}</dt>
+          <dd>
+            {{ metric.value }} {{ metric.unit }}
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
+  </details>
+{% endif %}
+{% if block.actual %}
+  <dl class="metric-list">
+    {% for metric in block|metric_rows %}
+      <div>
+        <dt>{{ metric.label }}</dt>
+        <dd>
+          {{ metric.value }} {{ metric.unit }}
+        </dd>
+      </div>
+    {% endfor %}
+  </dl>
+{% endif %}

@@ -16,15 +16,37 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
-from basis.bootstrap.api import api_router
-from basis.modules.accounts.adapters.views import BasisLoginView, BasisPasswordResetView
+from basis.adapters.web.api import api_router
+from basis.modules.accounts.adapters.web.views import BasisLoginView, BasisPasswordResetView
 
 urlpatterns = [
-    path("", include("basis.bootstrap.web")),
+    path("", include("basis.adapters.web.urls")),
     path("accounts/login/", BasisLoginView.as_view(), name="login"),
     path("accounts/password_reset/", BasisPasswordResetView.as_view(), name="password_reset"),
+    path(
+        "accounts/password_reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="accounts/auth/password_reset_done.html"
+        ),
+        name="password_reset_done",
+    ),
+    path(
+        "accounts/reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="accounts/auth/password_reset_confirm.html"
+        ),
+        name="password_reset_confirm",
+    ),
+    path(
+        "accounts/reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="accounts/auth/password_reset_complete.html"
+        ),
+        name="password_reset_complete",
+    ),
     path("accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
     # Todas las rutas de los ViewSets dentro de `/api/`

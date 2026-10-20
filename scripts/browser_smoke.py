@@ -5,13 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 import traceback
 from pathlib import Path
 from typing import cast
 from urllib.parse import urlparse
 from uuid import uuid4
 
-from playwright.sync_api import APIResponse, Error, Page, Route, sync_playwright
+from playwright.sync_api import APIResponse, ConsoleMessage, Error, Page, Route, sync_playwright
 from playwright.sync_api import Response as BrowserResponse
 
 
@@ -55,6 +56,117 @@ def outbox(page: Page) -> list[dict[str, object]]:
     return [mapping(row) for row in value]
 
 
+def wait_for_outbox(page: Page, count: int) -> None:
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        current = len(outbox(page))
+        if current == count:
+            return
+        page.wait_for_timeout(100)
+    raise AssertionError(f"Expected {count} queued operations, last observed {current}")
+
+
+def wait_for_snapshot(page: Page, url: str, revision: int, title: str) -> dict[str, object]:
+    deadline = time.monotonic() + 15
+    current: dict[str, object] = {}
+    while time.monotonic() < deadline:
+        response = page.request.get(url)
+        assert response.status == 200
+        current = mapping(json_body(response)["session"])
+        if current["revision"] == revision and current["title"] == title:
+            return current
+        page.wait_for_timeout(100)
+    raise AssertionError("Server snapshot did not settle: " + json.dumps(current))
+
+
+def seed_stale_local_mutation(page: Page, item: dict[str, object]) -> None:
+    """Seed a captured old local operation; all conflict transport remains real HTTP."""
+    page.evaluate(
+        """async item => {
+      const db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open('basis-offline-v1', 1);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(['outbox', 'sessions'], 'readwrite');
+        tx.objectStore('outbox').put(item);
+        tx.objectStore('sessions').put({
+          key: item.account + ':' + item.session.id, account: item.account,
+          session: item.session, updated: Date.now()
+        });
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    }""",
+        item,
+    )
+
+
+def conflict_dialog_acceptance(
+    page: Page,
+    origin: str,
+    output: Path,
+    stale: dict[str, object],
+    completed_snapshot_url: str,
+    headers: dict[str, str],
+) -> None:
+    page.goto(origin + "/offline/")
+    seed_stale_local_mutation(page, stale)
+    page.locator("[data-sync-now]").click()
+    dialog = page.locator("#sync-conflict")
+    page.wait_for_function("document.querySelector('#sync-conflict').open")
+    assert mapping(json.loads(page.locator("#conflict-local").inner_text()))["revision"] == 1
+    assert mapping(json.loads(page.locator("#conflict-remote").inner_text()))["revision"] == 3
+    assert dialog.locator("[data-conflict=local]").is_disabled(), (
+        "Completed history must be protected"
+    )
+    page.screenshot(path=str(output / "conflict-completed-mobile.png"), full_page=True)
+    dialog.locator("[data-conflict=server]").click()
+    wait_for_outbox(page, 0)
+    assert not dialog.is_visible()
+    assert mapping(json_body(page.request.get(completed_snapshot_url))["session"])["revision"] == 3
+    session_url = create_session(page, origin, "Browser editable conflict")
+    snapshot_url = session_url.replace("/sessions/", "/api/sessions/") + "snapshot/"
+    body = json_body(page.request.get(snapshot_url))
+    initial = mapping(body["session"])
+    remote = dict(initial)
+    remote["title"] = "Remote changed title"
+    response = page.request.post(
+        origin + "/api/sync/",
+        data={
+            "mutation_id": str(uuid4()),
+            "account": body["account"],
+            "session": remote,
+        },
+        headers=headers,
+    )
+    assert response.status == 200
+    assert mapping(json_body(response)["session"])["revision"] == 2
+    local = dict(initial)
+    local["title"] = "Reviewed local title"
+    page.goto(origin + "/offline/")
+    seed_stale_local_mutation(
+        page,
+        {
+            "mutation_id": str(uuid4()),
+            "account": body["account"],
+            "session": local,
+            "created": 1,
+        },
+    )
+    page.locator("[data-sync-now]").click()
+    page.wait_for_function("document.querySelector('#sync-conflict').open")
+    assert not dialog.locator("[data-conflict=local]").is_disabled()
+    page.screenshot(path=str(output / "conflict-editable-mobile.png"), full_page=True)
+    dialog.locator("[data-conflict=local]").click()
+    final = wait_for_snapshot(page, snapshot_url, 3, "Reviewed local title")
+    wait_for_outbox(page, 0)
+    assert not dialog.is_visible()
+    assert final["revision"] == 3 and final["title"] == "Reviewed local title", final
+    assert final["status"] == "in_progress"
+
+
 def download_session(page: Page, origin: str) -> None:
     page.locator("[data-download-session]").click()
     page.wait_for_function(
@@ -70,6 +182,161 @@ def no_overflow(page: Page) -> None:
     )
 
 
+def service_worker_ready(page: Page) -> dict[str, object]:
+    try:
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            active: object = page.evaluate("""async () => {
+              const registration = await navigator.serviceWorker.getRegistration();
+              return registration?.active?.state === 'activated';
+            }""")
+            if active is True:
+                break
+            page.wait_for_timeout(100)
+        else:
+            raise Error("Service worker did not activate within 30 seconds")
+        navigation_required = not page.evaluate("navigator.serviceWorker.controller !== null")
+        if navigation_required:
+            page.goto(page.url)
+        page.wait_for_function("navigator.serviceWorker.controller !== null")
+        return {
+            "active": "activated",
+            "controlled": True,
+            "normal_navigation_required": navigation_required,
+        }
+    except Error as error:
+        diagnostic: object = page.evaluate("""async () => ({
+          registrations: (await navigator.serviceWorker.getRegistrations()).map(r => ({
+            scope: r.scope, scriptURL: r.active?.scriptURL, active: r.active?.state, waiting: r.waiting?.state, installing: r.installing?.state
+          })),
+          status: document.querySelector('#global-status')?.textContent,
+          controlled: navigator.serviceWorker.controller !== null, url: location.href
+        })""")
+        raise AssertionError(
+            "Service worker readiness failed: " + json.dumps(diagnostic)
+        ) from error
+
+
+def presentation_acceptance(page: Page, origin: str, output: Path) -> list[str]:
+    """Exercise real themes, keyboard navigation and a server-rejected form."""
+    captures: list[str] = []
+    dom_states: dict[str, object] = {}
+    for size, viewport in (
+        ("desktop", {"width": 1440, "height": 1000}),
+        ("mobile", {"width": 390, "height": 844}),
+    ):
+        page.set_viewport_size({"width": viewport["width"], "height": viewport["height"]})
+        for theme in ("light", "dark"):
+            page.evaluate("theme => localStorage.setItem('basis-theme', theme)", theme)
+            page.goto(origin + "/")
+            page.wait_for_function(
+                "theme => document.documentElement.classList.contains('dark') === (theme === 'dark')",
+                arg=theme,
+            )
+            page.evaluate("""async () => {
+              await document.fonts.ready;
+              await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            }""")
+            state: object = page.evaluate("""() => {
+              const inspect = selector => {
+                const node = document.querySelector(selector);
+                const style = getComputedStyle(node);
+                const rect = node.getBoundingClientRect();
+                return {text: node.textContent.trim(), color: style.color,
+                  background: style.backgroundColor, opacity: style.opacity,
+                  display: style.display, visibility: style.visibility, filter: style.filter,
+                  transform: style.transform, mixBlendMode: style.mixBlendMode,
+                  clipPath: style.clipPath, contentVisibility: style.contentVisibility,
+                  textFillColor: style.webkitTextFillColor,
+                  rect: {x: rect.x, y: rect.y, width: rect.width, height: rect.height}};
+              };
+              return {hero: inspect('.hero'), heading: inspect('.hero h2'),
+                button: inspect('.hero .actions a:first-child'), fonts: document.fonts.status};
+            }""")
+            dom_states[size + "-" + theme] = state
+            assert page.locator(".hero h2").is_visible()
+            assert page.evaluate("""() => {
+              const hero = getComputedStyle(document.querySelector('.hero'));
+              const heading = getComputedStyle(document.querySelector('.hero h2'));
+              return heading.color !== hero.backgroundColor && heading.opacity !== '0'
+                && hero.opacity !== '0' && heading.visibility === 'visible';
+            }"""), state
+            no_overflow(page)
+            name = "today-" + size + "-" + theme + ".png"
+            page.screenshot(path=str(output / name), full_page=True, animations="disabled")
+            page.locator(".hero").screenshot(
+                path=str(output / ("hero-" + size + "-" + theme + ".png")), animations="disabled"
+            )
+            page.screenshot(
+                path=str(output / ("viewport-" + size + "-" + theme + ".png")),
+                animations="disabled",
+            )
+            captures.append(name)
+    (output / "presentation-dom.json").write_text(
+        json.dumps(dom_states, indent=2), encoding="utf-8"
+    )
+    page.set_viewport_size({"width": 1440, "height": 1000})
+    page.goto(origin + "/")
+    page.keyboard.press("Tab")
+    skip = page.locator(".skip-link")
+    assert skip.evaluate("node => node === document.activeElement"), (
+        "First Tab must reach skip link"
+    )
+    assert skip.is_visible()
+    rectangle = skip.bounding_box()
+    assert rectangle is not None and rectangle["y"] >= 0, "Focused skip link is offscreen"
+    page.keyboard.press("Enter")
+    assert page.url.endswith("#main"), "Keyboard skip link did not reach the content"
+    toggle = page.locator("[data-theme-toggle]:visible").first
+    toggle.focus()
+    before = page.locator("html").evaluate("node => node.classList.contains('dark')")
+    page.keyboard.press("Enter")
+    assert page.locator("html").evaluate("node => node.classList.contains('dark')") != before
+    assert page.evaluate("localStorage.getItem('basis-theme')") == ("light" if before else "dark")
+    page.goto(origin + "/sessions/new/")
+    form = page.locator("form[data-form-submit]")
+    # Native validation is deliberately bypassed to exercise Django's server errors.
+    form.evaluate("node => node.noValidate = true")
+    form.locator("button[type=submit]").click()
+    summary = page.locator("[data-error-summary]").first
+    summary.wait_for(state="visible")
+    assert summary.get_attribute("role") == "alert"
+    assert summary.evaluate("node => node === document.activeElement"), "Errors must receive focus"
+    assert page.locator("#id_title").get_attribute("aria-invalid") == "true"
+    page.screenshot(path=str(output / "form-errors-desktop.png"), full_page=True)
+    summary.locator("a").first.focus()
+    page.keyboard.press("Enter")
+    assert page.locator("#id_title").evaluate("node => node === document.activeElement")
+    no_overflow(page)
+    page.locator("input[name=title]").fill("Loading state acceptance")
+    page.locator("select[name=block-sport]").select_option("hiking")
+    page.locator("input[name=block-title]").fill("Loading state block")
+
+    # A deliberate 204 response holds the document while the real submit event runs.
+    # create_session() below independently verifies a successful real HTTP save.
+    def hold_submit(route: Route) -> None:
+        if route.request.method == "POST":
+            route.fulfill(status=204)
+        else:
+            route.continue_()
+
+    page.route(origin + "/sessions/new/", hold_submit)
+    form.locator("button[type=submit]").click(no_wait_after=True)
+    page.wait_for_function(
+        "document.querySelector('[data-form-submit]')?.getAttribute('aria-busy') === 'true'"
+    )
+    page.wait_for_function(
+        "document.querySelector('[data-form-submit] button[type=submit]')?.disabled === true"
+    )
+    assert form.locator("button[type=submit]").is_disabled()
+    status = form.locator("[data-submit-status]")
+    assert status.is_visible() and status.text_content()
+    page.screenshot(path=str(output / "form-loading-desktop.png"), full_page=True)
+    page.unroute(origin + "/sessions/new/", hold_submit)
+    page.goto(origin + "/")
+    return captures
+
+
 def run(origin: str, output: Path, executable: str | None, password: str) -> dict[str, object]:
     parsed = urlparse(origin)
     if parsed.scheme != "http" or parsed.hostname != "127.0.0.1":
@@ -77,6 +344,7 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
     output.mkdir(parents=True, exist_ok=True)
     checks: list[str] = []
     errors: list[str] = []
+    console_errors: list[str] = []
     external_requests: list[dict[str, str]] = []
     external_responses: list[dict[str, str | int]] = []
     with sync_playwright() as playwright:
@@ -120,6 +388,12 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
                     )
 
             context.on("response", external_response)
+
+            def record_console(message: ConsoleMessage) -> None:
+                if message.type == "error":
+                    console_errors.append(message.text.replace(password, "[REDACTED]"))
+
+            context.on("console", record_console)
             page = context.new_page()
 
             def record_error(error: Error) -> None:
@@ -127,12 +401,17 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
 
             page.on("pageerror", record_error)
             login(page, origin, "owner@browser.test", password)
-            page.wait_for_function("navigator.serviceWorker.controller !== null")
-            page.screenshot(path=str(output / "today-desktop.png"), full_page=True)
-            no_overflow(page)
+            sw_readiness = service_worker_ready(page)
+            visual_screenshots = presentation_acceptance(page, origin, output)
+            checks.extend(
+                (
+                    "desktop_mobile_light_dark_screenshots",
+                    "keyboard_skip_link_and_theme_toggle",
+                    "server_error_summary_focus_and_field_link",
+                    "submit_busy_disabled_status_with_navigation_held",
+                )
+            )
             page.set_viewport_size({"width": 390, "height": 844})
-            page.screenshot(path=str(output / "today-mobile.png"), full_page=True)
-            no_overflow(page)
             for path in ("/plans/", "/progress/", "/coach/", "/profile/", "/billing/"):
                 response = page.goto(origin + path)
                 assert response is not None and response.status == 200, path
@@ -152,9 +431,7 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
             page.get_by_role("button", name="Abrir sesión", exact=True).last.click()
             assert page.locator("#offline-blocks-0-actual-pack_kg").input_value() == "7.25"
             page.locator("button[name=mode][value=complete]").click()
-            page.wait_for_function(
-                "window.basisPending && window.basisPending().then(count => count === 2)"
-            )
+            wait_for_outbox(page, 2)
             queued = sorted(
                 outbox(page), key=lambda row: int(str(mapping(row["session"])["revision"]))
             )
@@ -197,6 +474,14 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
             assert no_csrf.status == 403
             checks.extend(
                 ("idempotent_replay_historical_snapshot", "stale_revision_409", "csrf_403")
+            )
+            conflict_dialog_acceptance(page, origin, output, stale, snapshot_url, headers)
+            checks.extend(
+                (
+                    "real_conflict_dialog_keep_server",
+                    "completed_conflict_local_action_disabled",
+                    "real_conflict_dialog_review_local_and_refresh_revision",
+                )
             )
             observer = context.new_page()
             observer.on("pageerror", record_error)
@@ -260,8 +545,11 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
                 "desktop": "1440x1000",
                 "mobile": "390x844",
                 "checks": checks,
+                "visual_screenshots": visual_screenshots,
+                "loading_observation": "A 204 test response holds the document after the real submit event; the following session creation verifies server persistence.",
                 "completed_revision": result["revision"],
                 "javascript_errors": errors,
+                "service_worker_readiness": sw_readiness,
                 "blocked_external_requests": external_requests,
                 "environment_injected_blocked": {
                     "classification": "ENVIRONMENT_INJECTED_BLOCKED",
@@ -279,6 +567,9 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
             )
             return summary
         finally:
+            (output / "browser-console.json").write_text(
+                json.dumps(console_errors, indent=2), encoding="utf-8"
+            )
             (output / "completed-checks.json").write_text(
                 json.dumps(checks, indent=2), encoding="utf-8"
             )

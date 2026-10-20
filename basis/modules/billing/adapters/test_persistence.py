@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.db import connection, transaction
 from django.test import TestCase, TransactionTestCase
 
-from basis.bootstrap.transactions import DjangoUnitOfWork
+from basis.adapters.django.transactions import DjangoUnitOfWork
 from basis.modules.athletes.public import BillingProfile
 from basis.modules.billing.adapters.models import BillingAccount, WebhookReceipt
 from basis.shared.identifiers import AccountId

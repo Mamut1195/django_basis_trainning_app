@@ -16,3 +16,14 @@ class PlanChoice:
 class TrainingPresentation(Protocol):
     def plans(self, owner: AccountId) -> tuple[PlanChoice, ...]: ...
     def goal_choices(self, owner: AccountId) -> tuple[tuple[GoalId, str], ...]: ...
+
+
+@dataclass(frozen=True)
+class PlanSummary:
+    pk: int
+    owner_id: int
+    title: str
+
+
+class PlanSummaries(Protocol):
+    def read(self, owner: AccountId, plan: int) -> PlanSummary: ...

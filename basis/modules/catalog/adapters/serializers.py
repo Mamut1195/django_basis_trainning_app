@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from basis.bootstrap.catalog import save_classification, save_exercise
+from basis.modules.catalog.adapters.record_actions import save_classification, save_exercise
 from basis.shared.text import normalized_name
 
 from .models import Classification, Exercise

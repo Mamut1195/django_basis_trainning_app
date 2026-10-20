@@ -1,0 +1,241 @@
+{
+  "status": "VERIFIED",
+  "database": "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.cache\\presentation-browser-20261019-r7\\browser.sqlite3",
+  "server_stopped": true,
+  "provider_calls": "DISABLED",
+  "smtp": "DISABLED",
+  "origin": "http://127.0.0.1:60383",
+  "server_pid": 17936,
+  "browser": {
+    "status": "VERIFIED",
+    "browser": "155.0.4283.62",
+    "desktop": "1440x1000",
+    "mobile": "390x844",
+    "checks": [
+      "desktop_mobile_light_dark_screenshots",
+      "keyboard_skip_link_and_theme_toggle",
+      "server_error_summary_focus_and_field_link",
+      "submit_busy_disabled_status_with_navigation_held",
+      "desktop_mobile_navigation",
+      "real_offline_reload",
+      "fractional_result_persisted",
+      "ordered_two_operation_outbox",
+      "completed_revision_three",
+      "idempotent_replay_historical_snapshot",
+      "stale_revision_409",
+      "csrf_403",
+      "real_conflict_dialog_keep_server",
+      "completed_conflict_local_action_disabled",
+      "real_conflict_dialog_review_local_and_refresh_revision",
+      "real_csrf_logout_post",
+      "other_tab_logout_redirect",
+      "logout_clears_local_account",
+      "account_switch_hides_sessions",
+      "foreign_snapshot_404",
+      "foreign_queue_403"
+    ],
+    "visual_screenshots": [
+      "today-desktop-light.png",
+      "today-desktop-dark.png",
+      "today-mobile-light.png",
+      "today-mobile-dark.png"
+    ],
+    "loading_observation": "A 204 test response holds the document after the real submit event; the following session creation verifies server persistence.",
+    "completed_revision": 3,
+    "javascript_errors": [],
+    "service_worker_readiness": {
+      "active": "activated",
+      "controlled": true,
+      "normal_navigation_required": false
+    },
+    "blocked_external_requests": [
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/accounts/login/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/sessions/new/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/sessions/new/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/plans/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/progress/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/coach/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/profile/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/billing/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/sessions/new/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/sessions/cc13fbcf-e72d-4f18-b542-2a411a993e2c/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/offline/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/offline/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/sessions/new/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/sessions/35457676-9925-4032-b0c6-ef8041fa7f58/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/offline/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/profile/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/profile/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/accounts/login/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/accounts/login/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/accounts/login/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/",
+        "frame_origin": "http://127.0.0.1:60383"
+      },
+      {
+        "host": "me.kis.v2.scr.kaspersky-labs.com",
+        "resource_type": "script",
+        "frame_path": "/offline/",
+        "frame_origin": "http://127.0.0.1:60383"
+      }
+    ],
+    "environment_injected_blocked": {
+      "classification": "ENVIRONMENT_INJECTED_BLOCKED",
+      "exact_host": "me.kis.v2.scr.kaspersky-labs.com",
+      "attempts": 29,
+      "resources": [
+        "script"
+      ],
+      "assumption": "Antivirus scripts attached to local frames, absent application source; every outside-origin request remains aborted."
+    },
+    "external_responses": []
+  },
+  "browser_closed": true,
+  "source_sha256": "f4806664064c1ef3c1c9f73cff68c61d7098c77e29ee110a633f497f8fabc391",
+  "source_unchanged": true
+}

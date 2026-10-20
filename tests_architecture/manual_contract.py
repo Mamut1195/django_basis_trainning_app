@@ -30,9 +30,14 @@ class ManualContract:
     fail_write: Callable[[str], None]
 
     def create(self) -> SessionId:
-        return self.service.create(CreateManualSession(self.owner,
-            ManualSessionData("Manual", date(2026, 1, 1), 0, reported_rpe=Decimal(0)),
-            "running", "Run"))
+        return self.service.create(
+            CreateManualSession(
+                self.owner,
+                ManualSessionData("Manual", date(2026, 1, 1), 0, reported_rpe=Decimal(0)),
+                "running",
+                "Run",
+            )
+        )
 
     def test_contract_manual_session_and_initial_block_commit_together(self) -> None:
         id = self.create()
@@ -51,14 +56,18 @@ class ManualContract:
 
     def test_contract_block_and_revision_commit_together(self) -> None:
         id = self.create()
-        self.service.add_block(AddBlock(self.owner, SessionParent(id), Revision(1), "cycling", "Ride"))
+        self.service.add_block(
+            AddBlock(self.owner, SessionParent(id), Revision(1), "cycling", "Ride")
+        )
         assert self.counts() == (1, 2)
         assert self.revision(SessionParent(id)) == 2
 
     def test_contract_stale_revision_cannot_create_child(self) -> None:
         id = self.create()
         try:
-            self.service.add_block(AddBlock(self.owner, SessionParent(id), Revision(0), "running", "Run"))
+            self.service.add_block(
+                AddBlock(self.owner, SessionParent(id), Revision(0), "running", "Run")
+            )
         except ManualConflict:
             pass
         else:
@@ -70,8 +79,14 @@ class ManualContract:
         id = self.create()
         self.fail_write("save_metrics")
         try:
-            self.service.save_metrics(SaveBlockMetrics(self.owner, self.first_block(id), Revision(1),
-                (Metric(MetricName.DURATION_SECONDS, Decimal(0)),)))
+            self.service.save_metrics(
+                SaveBlockMetrics(
+                    self.owner,
+                    self.first_block(id),
+                    Revision(1),
+                    (Metric(MetricName.DURATION_SECONDS, Decimal(0)),),
+                )
+            )
         except OSError:
             pass
         else:
@@ -81,7 +96,9 @@ class ManualContract:
     def test_contract_owner_guard_does_not_depend_on_repository_filters(self) -> None:
         id = self.create()
         try:
-            self.service.add_block(AddBlock(self.other, SessionParent(id), Revision(1), "running", "Foreign"))
+            self.service.add_block(
+                AddBlock(self.other, SessionParent(id), Revision(1), "running", "Foreign")
+            )
         except Unavailable:
             pass
         else:

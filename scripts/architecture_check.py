@@ -49,8 +49,10 @@ def violations(source: str, module: str, is_package: bool = False) -> list[str]:
     errors: list[str] = []
     if own is not None and (own not in MODULES or (layer is not None and layer not in LAYERS)):
         errors.append(f"{module}: module must use a declared business area and layer")
-    if len(parts) > 1 and parts[1] not in ("shared", "bootstrap", "modules"):
-        errors.append(f"{module}: code must live in shared, bootstrap or a business module")
+    if len(parts) > 1 and parts[1] not in ("shared", "bootstrap", "modules", "adapters"):
+        errors.append(
+            f"{module}: code must live in shared, bootstrap, technical adapters or a business module"
+        )
     for line, target in import_targets(tree, module, is_package):
         dest = target.split(".")
         reason: str | None = None
@@ -60,8 +62,8 @@ def violations(source: str, module: str, is_package: bool = False) -> list[str]:
             reason = "core imports HTTP, configuration or persistence infrastructure"
         elif core and dest[0] not in sys.stdlib_module_names | {"basis", "__future__"}:
             reason = "core imports infrastructure or a third party"
-        elif core and dest[:2] == ["basis", "bootstrap"]:
-            reason = "core imports bootstrap"
+        elif core and dest[:2] in (["basis", "bootstrap"], ["basis", "adapters"]):
+            reason = "core imports composition or technical adapters"
         elif parts[:2] == ["basis", "shared"] and dest[:2] == ["basis", "modules"]:
             reason = "shared imports a business module"
         elif dest[:2] == ["basis", "modules"]:
@@ -83,14 +85,18 @@ def violations(source: str, module: str, is_package: bool = False) -> list[str]:
             reason = "dynamic import helpers are forbidden in core"
         if reason:
             errors.append(f"{module}:{line}: {reason}: {target}")
-    if layer == "adapters" and parts[-1] == "views":
+    if (
+        layer == "adapters" and (parts[-1] == "views" or "web" in parts[4:])
+    ) or module == "basis.adapters.web.platform_views":
         model_names = {
             alias.asname or alias.name
             for node in ast.walk(tree)
-            if isinstance(node, ast.ImportFrom) and node.module
+            if isinstance(node, ast.ImportFrom)
+            and node.module
             and (node.module == "models" or node.module.endswith(".models"))
             for alias in node.names
         }
+
         def root_name(node: ast.AST) -> str | None:
             if isinstance(node, ast.Name):
                 return node.id
@@ -99,21 +105,75 @@ def violations(source: str, module: str, is_package: bool = False) -> list[str]:
             if isinstance(node, ast.Call):
                 return root_name(node.func)
             return None
+
         for line, target in import_targets(tree, module, is_package):
             if target == "django.db.transaction" or target.startswith("django.db.transaction."):
-                errors.append(f"{module}:{line}: web views must delegate transactions to application cases")
+                errors.append(
+                    f"{module}:{line}: web views must delegate transactions to application cases"
+                )
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
                 continue
             method = node.func.attr
             form_binding = method == "save" and any(
-                kw.arg == "commit" and isinstance(kw.value, ast.Constant) and kw.value.value is False
+                kw.arg == "commit"
+                and isinstance(kw.value, ast.Constant)
+                and kw.value.value is False
                 for kw in node.keywords
             )
             direct_save = method == "save" and not form_binding
-            direct_mutation = method in {"create", "get_or_create", "update_or_create", "update", "delete", "bulk_create", "bulk_update"} and root_name(node.func.value) in model_names
+            direct_mutation = (
+                method
+                in {
+                    "create",
+                    "get_or_create",
+                    "update_or_create",
+                    "update",
+                    "delete",
+                    "bulk_create",
+                    "bulk_update",
+                }
+                and root_name(node.func.value) in model_names
+            )
             if direct_save or direct_mutation:
-                errors.append(f"{module}:{node.lineno}: web views must delegate persistence to typed application cases")
+                errors.append(
+                    f"{module}:{node.lineno}: web views must delegate persistence to typed application cases"
+                )
+    if parts[:2] == ["basis", "bootstrap"] and "tests" not in parts:
+        forbidden_calls = {
+            "filter",
+            "get",
+            "create",
+            "update",
+            "delete",
+            "save",
+            "get_or_create",
+            "update_or_create",
+            "render",
+            "redirect",
+            "JsonResponse",
+            "HttpResponse",
+            "serialize",
+            "loads",
+            "dumps",
+            "atomic",
+            "execute",
+        }
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                name = (
+                    node.func.id
+                    if isinstance(node.func, ast.Name)
+                    else node.func.attr
+                    if isinstance(node.func, ast.Attribute)
+                    else ""
+                )
+                if name in forbidden_calls:
+                    errors.append(f"{module}:{node.lineno}: bootstrap is composition only: {name}")
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and any(
+                arg.arg == "request" for arg in node.args.args
+            ):
+                errors.append(f"{module}:{node.lineno}: HTTP input belongs in adapters")
     if core:
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
@@ -190,21 +250,30 @@ def inventory_errors(root: Path) -> list[str]:
     return errors
 
 
-
 def final_layout_errors(root: Path) -> list[str]:
     """ADR-002 final runtime layout; historical tests are not installed apps."""
     errors: list[str] = []
     for package in ("daily_trainning_app", "basis_trainning_app"):
         for path in sorted((root / package).rglob("*.py")):
-            errors.append(f"Retired application/configuration source remains: {path.relative_to(root)}")
-    for filename in ("__init__.py", "settings.py", "test_settings.py", "urls.py", "asgi.py", "wsgi.py"):
+            errors.append(
+                f"Retired application/configuration source remains: {path.relative_to(root)}"
+            )
+    for filename in (
+        "__init__.py",
+        "settings.py",
+        "test_settings.py",
+        "urls.py",
+        "asgi.py",
+        "wsgi.py",
+    ):
         if not (root / "config" / filename).is_file():
             errors.append(f"Required configuration entry point missing: config/{filename}")
     for path in sorted((root / "training").rglob("*.py")):
         errors.append(f"Retired training source namespace remains: {path.relative_to(root)}")
     for path in sorted((root / "config").glob("*.py")):
-        for line, target in import_targets(ast.parse(path.read_text(encoding="utf-8")),
-                                           "config." + path.stem, False):
+        for line, target in import_targets(
+            ast.parse(path.read_text(encoding="utf-8")), "config." + path.stem, False
+        ):
             if target.split(".")[0] in ("daily_trainning_app", "training", "basis_trainning_app"):
                 errors.append(f"Project configuration imports retired runtime: {path.name}:{line}")
     return errors

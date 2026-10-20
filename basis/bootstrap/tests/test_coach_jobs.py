@@ -12,8 +12,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, close_old_connections, connections
 from django.test import TestCase, TransactionTestCase, override_settings, skipUnlessDBFeature
 
+from basis.adapters.django.transactions import DjangoUnitOfWork
 from basis.bootstrap.tests.test_coach_edges import account
-from basis.bootstrap.transactions import DjangoUnitOfWork
 from basis.modules.coach.adapters.actions import enqueue
 from basis.modules.coach.adapters.jobs import DjangoJobsRepository
 from basis.modules.coach.adapters.models import AIJob, UsagePeriod

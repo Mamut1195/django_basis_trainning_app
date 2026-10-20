@@ -1,0 +1,22 @@
+<div id="job-result"
+     class="stack"
+     {% if job.status == 'pending' or job.status == 'running' %}hx-get="{% url 'job-detail' job.pk %}" hx-trigger="every 3s" hx-swap="outerHTML"{% endif %}>
+  <c-basis.card>
+    <div class="stack-sm">
+      <p class="eyebrow">{{ job.get_kind_display }} · {{ job.status }}</p>
+      <h2>{{ job.prompt }}</h2>
+      {% if display_answer %}
+        <p class="prose">{{ display_answer }}</p>
+      {% elif job.status == 'pending' or job.status == 'running' %}
+        <p role="status">Preparando tu respuesta… Puedes volver después sin perder la consulta.</p>
+      {% endif %}
+      {% if job.error %}<p class="notice error">{{ job.error }}</p>{% endif %}
+      {% if proposal %}
+        <c-ui.button href="{% url 'proposal-review' proposal.pk %}" variant="primary">
+          Revisar propuesta
+        </c-ui.button>
+      {% endif %}
+      <small>Modelo: {{ job.reported_model|default:job.requested_model }} · Contexto del {{ job.created_at|date:'j M Y H:i' }}</small>
+    </div>
+  </c-basis.card>
+</div>

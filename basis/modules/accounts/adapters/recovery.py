@@ -14,6 +14,6 @@ class DjangoPasswordRecovery:
         self.form.save(
             use_https=command.secure,
             request=self.request,
-            email_template_name="registration/password_reset_email.html",
-            subject_template_name="registration/password_reset_subject.txt",
+            email_template_name="accounts/auth/password_reset_email.html",
+            subject_template_name="accounts/auth/password_reset_subject.txt",
         )

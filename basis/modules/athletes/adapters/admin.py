@@ -9,9 +9,12 @@ from django.forms.models import BaseModelFormSet
 from django.http import HttpRequest
 from django.utils.timezone import now
 
-from basis.bootstrap.admin_actions import delete_admin_workouts, save_admin_workout
-from basis.bootstrap.presentation import exercise_fatigue
-from basis.bootstrap.web_framework import owner
+from basis.adapters.web.framework import owner
+from basis.adapters.web.presentation import exercise_fatigue
+from basis.modules.athletes.adapters.administration_actions import (
+    delete_admin_workouts,
+    save_admin_workout,
+)
 
 from .admin_actions import AthleteAdministrativeAdmin
 from .models import User, UserExerciseRM, WorkoutData

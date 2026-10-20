@@ -5,11 +5,11 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from basis.bootstrap.proposal_actions import validate_proposal
 from basis.modules.coach.adapters.actions import context_snapshot, request_body
-from basis.modules.coach.adapters.forms import ProposalReviewForm
+from basis.modules.coach.adapters.web.forms import ProposalReviewForm
 from basis.modules.training.adapters.actions import revise_plan, start_session
 from basis.modules.training.adapters.models import StrengthSet
+from basis.modules.training.adapters.planning_actions import validate_proposal
 
 from .contracts import build_plan, progress_report, required, session_snapshot, sync_session
 from .factories import account, exercise, proposal, session
