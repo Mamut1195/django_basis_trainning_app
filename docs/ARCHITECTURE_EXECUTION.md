@@ -1,43 +1,35 @@
 # Goal
 
-Complete the serial migration to a strict typed hexagonal Django/PostgreSQL monolith before functional acceptance. The final architecture, rather than legacy persistence structure, is authoritative. No predefined-program feature is included.
+Finish the strict typed hexagonal Django/PostgreSQL monolith before functional acceptance. ADR-002 authorizes the final module schema and removal of daily_trainning_app; predefined programs remain future work.
 
 # Context
 
-ARCH-01 through ARCH-07 are integrated. Current main:105ac188be24fbd960a1bf6941dbafa3104455ee. ARCH-07 independently verified199 PostgreSQL/no skips, stopped owned container,53 manifest paths and normalized tree/HEAD hashes; run524117c46a6149878edce8c22d124277. MAM-828 Done. ARCH-08/MAM-829 In Progress with two implementers and primary orchestration. See architecture/ARCH-08-PLAN.md.
-
-Original baseline08dcd02 discovered111 tests. Unrelated user changes remain seed.py168 additions/56 deletions and manage.py mode only; exclude them from architecture commits. No repository AGENTS.md was found; supplied global agreements apply.
+ARCH-01..08 are integrated. Current main24f98532112230640e8a5346dad5e55dcb52627e,218 PostgreSQL/no skips; run fe03da62e81f444facf4eadf1baf0b70, stopped container,31 manifest paths and normalized tree/HEAD hashes verified. MAM-829 Done. The repeated Complete-Arch08 error is its correct reviewed-base guard, not an integration failure. ARCH-09/MAM-830 In Progress, ARCH-10/MAM-831 Backlog. Preserve user seed.py edits and manage.py mode.
 
 # Constraints
 
-ADR-002 supersedes the original final-schema compatibility rule: no production exists, and the user authorizes reorganizing apps/models/tables/migrations to achieve the proposed architecture. ARCH-09 must remove daily_trainning_app, place ORM models in final module persistence adapters and remove temporary bridges. ARCH-10 verifies the final structure from an empty temporary database. Keep stage08 schema unchanged only to bound its delivery. Preserve unrelated user work and do not unnecessarily delete local data.
-
-Preserve business behavior, owner authorization, CSRF, URLs/JSON and offline operations during extraction. No live providers, paid calls, SMTP or production. Do not modify ACLs, bypass execution policy, use alternate Git indexes/checkouts, stash/reset/clean or overwrite unrelated work. Git/Docker completion uses the external operator script when session access is blocked.
+Domain/application independent of Django/providers/HTTP/ORM. Cross-module public typed contracts only. Explicit bootstrap injection, no mandatory event bus/generic CRUD repository. Preserve routes/JSON/exports/offline queue/auth/CSRF/owner behavior. Seven final app labels and new initial migrations are authorized under ADR-002, on disposable databases only. No original DB mutation, live provider/paid/SMTP calls, ACL changes, execution-policy bypass, destructive Git recovery or history rewriting.
 
 # Affected areas
 
-ARCH-08: typed synchronization operation/receipt/replay coordinator, deferred source conversion, injected training recorder/snapshot codecs, explicit account/auth/UoW composition, Django receipt persistence, canonical JSON and web adapters, fully typed legacy services facade. Primary owns public IDs/exports, strict scope/inventory/CI, docs/scripts and independent parity verification. Final legacy package/model/app/migration relocation belongs to ARCH-09.
+ARCH-09:28 models across seven module adapters, initial migrations/AppConfigs, forms/views/API/admin/commands, final public read contracts and typed composition. Unregistered training/tests preserves baseline scenarios; all production basis/project configuration is strict. Old runtime/model/migration sources and temporary typed bridges retire. See architecture/ARCH-09-PLAN.md.
 
 # Implementation steps
 
-1. Completed ARCH-01..07 serial integration gates; preserve evidence and Done states.
-2. Core/receipt executor implements pure operation policy, transaction/receipt ports, persistence and fake/real contracts/races. Wire/web executor implements canonical hashing/deferred conversion, historical snapshot codec, HTTP and typed services bindings. Two disjoint implementers; primary orchestrates/reviews/contracts/configuration/evidence only.
-3. Freeze and jointly verify core/Django strict types, architecture/public/inventory/import, Ruff, pure tests, Django/no migrations/static and full regression. Compare exact legacy canonical/result/error behavior on a temporary database; keep offline assets/queue schema unchanged.
-4. Prepare scripts/Complete-Arch08.ps1 and explicit manifest/counts. External verification repeats gates on an owned temporary Docker PostgreSQL18.4, requires every test/no skips, stops container and records source hashes before a scoped commit and fast-forward main; no push.
-5. Read back SHA/logs/receipt/stopped-container/source and HEAD hashes/committed completeness. Only then mark MAM-829 Done and begin ARCH-09 final structure removal. ARCH-10 verifies full acceptance including empty-database migration.
+1. Three authorized executors implement disjoint persistence, web and operational bindings. Primary orchestrates/reviews/public exports/configuration/evidence, not business implementation.
+2. Verify pure and real repository/transaction/model contracts, owner/CSRF/web compatibility, all baseline test scenarios, unchanged offline assets and stable external export tags. Fresh initial migrations and final content types/permissions must work on empty DBs.
+3. Independently freeze/check strict core+Django/DRF typing, AST/public/inventory and import contracts, Ruff, Django/no drift/static and SQLite regression. Publish exact manifest including deletions and actual counts/evidence.
+4. External Complete-Arch09 verifies fresh disposable Docker PostgreSQL/all races with zero skips, binds source hashes and retired-path absence, stops its owned container, stages only reviewed scope, commits and fast-forwards main. Assistant Docker access remains denied. Do not close on a working tree or user summary alone.
+5. Read back SHA/logs/receipt/stopped container/hashes/all committed additions/deletions. Mark ARCH-09 Done only then. ARCH-10 separately verifies final architecture plus complete web/offline acceptance and reconciles Linear/documentation before closing the epic.
 
 # Required skills
 
-task-planning, safe-git-workflow, verify-before-complete. Primary orchestrates and verifies; two authorized agents implement.
+task-planning, safe-git-workflow, verify-before-complete, systematic-debugging for reproduced failures.
 
 # Validation
 
-Per stage record VERIFIED / FAILED / NOT RUN, actual exit codes and log paths. Required: strict core/Django typing without broad exceptions, AST/public/inventory and Import Linter boundaries including type-only imports, Ruff, pure tests, common fake/Django contracts, Django system check and expected migrations, complete temporary PostgreSQL regression including concurrency. Verify final ARCH-08 counts from actual logs before publishing scripts/receipt.
+Record VERIFIED/FAILED/NOT RUN using actual logs and exit codes. No silent model frontiers, global missing-import exclusions or new Any escapes. Retain all baseline tests and user changes. PostgreSQL zero-skips and main readback required. Browser/device and remote CI evidence must not be inferred from API/unit tests. Stage scripts02..08 are historical evidence after final package relocation; use the current stage script.
 
 # Risks
 
-Receipt lookup/replay must precede authorization and late payload/revision/child conversion, while IDs and canonical digest stay before replay under the account lock. Preserve numeric and Unicode JSON hashing, owner scope, stale/completed conflict precedence, cached child IDs/order/Decimal scales and exact web errors. Outer receipt failure must roll back an inner committed execution. Avoid foreign ORM/adapter imports; inject existing training adapters in bootstrap. Remote CI and real-browser/device offline acceptance remain NOT RUN unless independently executed.
-
-## ARCH-08 candidate gate
-
-Two disjoint implementers finished; primary independently verified105 pure tests, strict89/140 files, eight import contracts, AST/Ruff/Django/no migrations/static,218 SQLite tests with five PostgreSQL-only skips,23 differential cases/zero differences,31-file completeness/stable source hashes and native PowerShell syntax. Run scripts/Complete-Arch08.ps1 externally for Docker PostgreSQL218/no skips and explicit scoped main integration. MAM-829 stays In Progress; ARCH-09 waits for SHA/logs/receipt/hash readback. Then remove daily_trainning_app and complete the final architecture under ADR-002.
+App-label changes affect permissions/admin/export internals; external export-v1 tags stay compatible. Final deletion manifests verify absence instead of attempting to hash deleted files. User seed.py remains inactive and imports the retired application; seed_demo is the current supported demo command. Ignored compiled caches are not tracked source or registered apps; no bypass of rejected cleanup is attempted. ARCH-10 acceptance remains pending after ARCH-09 delivery.

@@ -1,7 +1,7 @@
 """Existing billing-row lock for account budget coordination."""
 
+from basis.modules.billing.adapters.models import BillingAccount
 from basis.shared.identifiers import AccountId
-from training.models import BillingAccount
 
 from ..domain.records import BillingState
 from .django import billing_state

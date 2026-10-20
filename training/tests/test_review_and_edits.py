@@ -3,17 +3,17 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from training.ai import context_snapshot, request_body
-from training.forms import ProposalReviewForm
-from training.models import StrengthSet
-from training.proposals import build_plan, validate_proposal
-from training.services import (
+from basis.bootstrap.proposal_actions import build_plan, validate_proposal
+from basis.modules.coach.adapters.actions import context_snapshot, request_body
+from basis.modules.coach.adapters.forms import ProposalReviewForm
+from basis.modules.sync.adapters.actions import sync_session
+from basis.modules.training.adapters.actions import (
     progress_report,
     revise_plan,
     session_snapshot,
     start_session,
-    sync_session,
 )
+from basis.modules.training.adapters.models import StrengthSet
 
 from .factories import account, exercise, proposal, session
 

@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH08_2026-10-19.md",
-    "execution_state": "ARCH-01..07 integrated/verified; ARCH-08 locally verified, external PostgreSQL/main pending",
+    "handoff": "docs/HANDOFF_ARCH09_2026-10-19.md",
+    "execution_state": "ARCH-08 integrated; ARCH-09 candidate locally verified; external PostgreSQL/main gate pending",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -852,25 +852,25 @@
         "code": "ARCH-08",
         "id": "MAM-829",
         "title": "ARCH-08 â€” SincronizaciÃ³n offline",
-        "status": "In Progress",
+        "status": "Done",
         "depends_on": [
           "ARCH-07"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local:105 pure; mypy89/140;8 imports; AST/Ruff/Django/no migrations/static;218 SQLite with5 PostgreSQL-only skips;23 parity cases zero differences;31-file manifest/stable hashes. External PostgreSQL/main NOT RUN",
-        "evidence": "docs/architecture/ARCH-08-VERIFICATION.md"
+        "integrated_commit": "24f98532112230640e8a5346dad5e55dcb52627e",
+        "verification": "VERIFIED:218 PostgreSQL/no skips; stopped container;31 committed paths and normalized tree/HEAD hashes; run fe03da62e81f444facf4eadf1baf0b70",
+        "evidence": "docs/architecture/ARCH-08-RESULT.json"
       },
       {
         "code": "ARCH-09",
         "id": "MAM-830",
         "title": "ARCH-09 â€” IntegraciÃ³n y retiro del legado",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-08"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null,
+        "verification": "VERIFIED local:111 pure; mypy95/229;8 imports; AST/Ruff/Django/no migration drift/static;224 SQLite (5 PostgreSQL-only skips);45 routes/offline/export compatibility;170 files+61 explicit deletions. PostgreSQL/main NOT RUN",
+        "evidence": "docs/architecture/ARCH-09-VERIFICATION.md",
         "scope_amendment": "Remove daily_trainning_app; final models/apps/schema/migrations may be reorganized. See ADR-002."
       },
       {

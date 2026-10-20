@@ -1,10 +1,18 @@
-"""Owner-scoped persistence; historical calculations remain in legacy model hooks."""
+"""Owner-scoped persistence over typed athlete models."""
 
 from dataclasses import fields
-from typing import Protocol, cast
 
 from django.db import models
 
+from basis.modules.athletes.adapters.models import (
+    AthleteSettings,
+    Measurement,
+    SportProfile,
+    UserExerciseRM,
+    Wellness,
+)
+from basis.modules.athletes.adapters.models import User as Athlete
+from basis.modules.athletes.adapters.models import WorkoutData as WorkoutRow
 from basis.shared.identifiers import (
     AccountId,
     MeasuredRMId,
@@ -13,10 +21,6 @@ from basis.shared.identifiers import (
     WellnessId,
     WorkoutId,
 )
-from daily_trainning_app.models import User as Athlete
-from daily_trainning_app.models import UserExerciseRM
-from daily_trainning_app.models import WorkoutData as WorkoutRow
-from training.models import AthleteSettings, Measurement, SportProfile, Wellness
 
 from ..domain.records import (
     AthleteUnavailable,
@@ -30,14 +34,8 @@ from ..domain.records import (
 )
 
 
-class LegacySave(Protocol):
-    def save(self) -> None: ...
-
-
 def persist(row: models.Model) -> None:
-    # Exact transitional signature bridge. Calls the real full_clean/save hooks;
-    # historical RM references and metric derivation are never reimplemented here.
-    cast(LegacySave, row).save()
+    row.save()
 
 
 def assign(

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 
-from basis.shared.identifiers import AthleteId, ExerciseId
+from basis.shared.identifiers import AccountId, AthleteId, ExerciseId
 
 METRICS_VERSION = "legacy-strength-v3"
 QUANTUM = Decimal("0.01")
@@ -158,3 +158,20 @@ def reference_is_frozen(same_context: bool, reference_id: int | None, metrics_ve
     return same_context and (
         reference_id is not None or metrics_version in {METRICS_VERSION, "legacy-volume-v2"}
     )
+
+
+def validate_strength_reference(
+    reference_owner: AccountId | None,
+    reference_exercise: ExerciseId | None,
+    reference_date: date | None,
+    owner: AccountId,
+    exercise: ExerciseId,
+    performed_on: date,
+) -> None:
+    if (
+        reference_owner != owner
+        or reference_exercise != exercise
+        or reference_date is None
+        or reference_date > performed_on
+    ):
+        raise ValueError("Referencia RM ajena, incompatible o futura.")

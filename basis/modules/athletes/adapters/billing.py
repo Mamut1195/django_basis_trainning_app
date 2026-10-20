@@ -2,8 +2,8 @@
 
 from uuid import UUID
 
+from basis.modules.athletes.adapters.models import User as Athlete
 from basis.shared.identifiers import AccountId
-from daily_trainning_app.models import User as Athlete
 
 from ..application.billing import BillingProfile
 

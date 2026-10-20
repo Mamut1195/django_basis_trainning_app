@@ -1,0 +1,54 @@
+{
+  "status": "VERIFIED",
+  "base_commit": "24f98532112230640e8a5346dad5e55dcb52627e",
+  "route_names_and_patterns": {
+    "status": "VERIFIED",
+    "count": 45,
+    "same_order": true
+  },
+  "offline_assets": [
+    {
+      "path": "assets/js/offline.js",
+      "normalized_sha256": "55b9ce2067a2b4533294301decd1688ebfde4a780af9d812da5dcc1309afcd4a"
+    },
+    {
+      "path": "templates/training/offline.html",
+      "normalized_sha256": "a8807633ea84a872dc07c5f45bd0e7a4136ab4069a864b1a89d2a09eadca392a"
+    }
+  ],
+  "baseline_test_methods": {
+    "baseline_test_method_definitions": 198,
+    "current_test_method_definitions": 204,
+    "missing": [],
+    "added": [
+      [
+        "ExportCompatibilityTests",
+        "test_internal_app_reorganization_preserves_owner_and_external_model_tags"
+      ],
+      [
+        "FinalInstallationTests",
+        "test_all_concrete_models_have_their_final_module_owner"
+      ],
+      [
+        "FinalInstallationTests",
+        "test_fresh_database_contains_final_tables_and_applied_initial_migrations"
+      ],
+      [
+        "FinalInstallationTests",
+        "test_content_types_and_authorization_permissions_use_final_labels"
+      ],
+      [
+        "FinalInstallationTests",
+        "test_operational_commands_are_registered_in_final_modules"
+      ],
+      [
+        "HistoricalPresentationTests",
+        "test_archived_exercise_name_remains_visible_only_in_its_owners_history"
+      ]
+    ]
+  },
+  "export_v1": "Preserved external model tags and owner isolation; targeted and full Django regression",
+  "schema_change": "ADR-002: seven basis_<area> labels,28 models,new initial migrations; original database untouched",
+  "real_browser_device": "NOT RUN",
+  "providers": "NOT RUN"
+}

@@ -1,6 +1,6 @@
 """Preserve DRF's existing write-denial exception at the infrastructure boundary."""
 
-from rest_framework.exceptions import PermissionDenied  # type: ignore[import-untyped]
+from rest_framework.exceptions import PermissionDenied
 
 from basis.shared.identifiers import AccountId
 

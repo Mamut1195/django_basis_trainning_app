@@ -5,9 +5,13 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
-from daily_trainning_app.strength_metrics import MetricsInputError, calculate_strength_metrics
-from training.domain import internal_load, validate_metrics
-from training.models import StrengthSet
+from basis.modules.training.adapters.metrics import (
+    calculate_legacy_strength as calculate_strength_metrics,
+)
+from basis.modules.training.adapters.metrics import internal_load_legacy as internal_load
+from basis.modules.training.adapters.metrics import validate_metrics
+from basis.modules.training.adapters.models import StrengthSet
+from basis.modules.training.public import MetricsInputError
 
 
 class MetricsBoundaryTests(SimpleTestCase):

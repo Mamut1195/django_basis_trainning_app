@@ -2,9 +2,9 @@
 
 from typing import Callable
 
+from basis.modules.sync.adapters.models import SyncReceipt
 from basis.modules.training.public import SessionState
 from basis.shared.identifiers import AccountId, MutationId, PayloadDigest
-from training.models import SyncReceipt
 
 from ..domain.operations import Receipt
 

@@ -10,6 +10,7 @@ from basis.modules.training.adapters.django import (
     UUIDSessionIds,
     session_state,
 )
+from basis.modules.training.adapters.models import Session
 from basis.modules.training.adapters.wire import decode_record, encode_session
 from basis.modules.training.public import (
     ReadSession,
@@ -20,7 +21,6 @@ from basis.modules.training.public import (
     require_editable,
 )
 from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
-from training.models import Session
 
 
 def training() -> Training:

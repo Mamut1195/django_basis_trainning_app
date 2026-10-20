@@ -10,10 +10,10 @@ from django.test import TestCase, TransactionTestCase
 
 from basis.bootstrap.transactions import DjangoUnitOfWork
 from basis.modules.athletes.public import BillingProfile
+from basis.modules.billing.adapters.models import BillingAccount, WebhookReceipt
 from basis.shared.identifiers import AccountId
 from tests_architecture.billing_contract import BillingContract
 from tests_architecture.test_billing import PUBLIC, Clock, Gateway
-from training.models import BillingAccount, WebhookReceipt
 
 from ..application.service import Billing, Checkout, WebhookEvent, Webhooks
 from ..domain.records import ProviderUnavailable

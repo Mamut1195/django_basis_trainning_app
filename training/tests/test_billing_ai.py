@@ -11,23 +11,24 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from standardwebhooks.webhooks import Webhook
 
-from training.ai import INPUT_RATE, LIMITS, OUTPUT_RATE, enqueue, process_one, settle
-from training.billing import ProviderUnavailable, checkout, reconcile
-from training.models import (
-    AIJob,
-    AIServiceState,
-    BillingAccount,
-    TrialFund,
-    UsagePeriod,
-    WebhookReceipt,
+from basis.modules.billing.adapters.actions import ProviderUnavailable, checkout, reconcile
+from basis.modules.billing.adapters.models import BillingAccount, WebhookReceipt
+from basis.modules.coach.adapters.actions import (
+    INPUT_RATE,
+    LIMITS,
+    OUTPUT_RATE,
+    enqueue,
+    process_one,
+    settle,
 )
+from basis.modules.coach.adapters.models import AIJob, AIServiceState, TrialFund, UsagePeriod
 
 from .factories import account
 
 
 @override_settings(POLAR_PRODUCT_ID="basis-monthly", POLAR_ACCESS_TOKEN="test-not-a-credential")
 class BillingTests(TestCase):
-    @patch("training.billing.polar_request")
+    @patch("basis.modules.billing.adapters.actions.polar_request")
     def test_first_seen_paid_subscription_remembers_its_trial(self, request):
         request.return_value = self.state(
             "active", trial_start=(timezone.now() - timedelta(days=7)).isoformat()
@@ -55,7 +56,7 @@ class BillingTests(TestCase):
             "active_subscriptions": [row] if status else [],
         }
 
-    @patch("training.billing.polar_request")
+    @patch("basis.modules.billing.adapters.actions.polar_request")
     def test_authoritative_reconcile_and_no_access_from_redirect(self, request):
         self.client.force_login(self.user)
         self.user.billing.status = "inactive"
@@ -72,7 +73,7 @@ class BillingTests(TestCase):
         self.assertFalse(row.entitled)
         self.assertTrue(row.trial_used)
 
-    @patch("training.billing.polar_request")
+    @patch("basis.modules.billing.adapters.actions.polar_request")
     def test_cancel_keeps_access_until_period_end_and_product_filtered(self, request):
         request.return_value = self.state(cancel_at_period_end=True)
         row = reconcile(self.user)
@@ -81,7 +82,7 @@ class BillingTests(TestCase):
         request.return_value = self.state(product_id="other-product")
         self.assertFalse(reconcile(self.user).entitled)
 
-    @patch("training.billing.polar_request")
+    @patch("basis.modules.billing.adapters.actions.polar_request")
     def test_checkout_selects_server_product_and_verifies_price_trial(self, request):
         billing = self.user.billing
         billing.status = "inactive"
@@ -111,7 +112,7 @@ class BillingTests(TestCase):
         POLAR_WEBHOOK_SECRET="whsec_"
         + base64.b64encode(b"basis-test-secret-for-signature").decode()
     )
-    @patch("training.billing.polar_request")
+    @patch("basis.modules.billing.adapters.actions.polar_request")
     def test_signed_webhook_replay_and_out_of_order_use_current_state(self, request):
         request.return_value = self.state()
         self.assertEqual(
@@ -252,7 +253,7 @@ class AIBudgetTests(TestCase):
         with self.assertRaises(ProviderUnavailable):
             self.enqueue()
 
-    @patch("training.ai.httpx.Client")
+    @patch("basis.modules.coach.adapters.actions.httpx.Client")
     def test_worker_makes_one_call_and_timeout_is_not_retried(self, client):
         job = self.enqueue()
         client.return_value.__enter__.return_value.post.side_effect = httpx.ReadTimeout("timeout")
@@ -263,8 +264,8 @@ class AIBudgetTests(TestCase):
         self.assertEqual(job.status, "uncertain")
 
     def test_context_never_contains_another_accounts_data(self):
-        from training.ai import context_snapshot
-        from training.models import Goal
+        from basis.modules.coach.adapters.actions import context_snapshot
+        from basis.modules.training.adapters.models import Goal
 
         other = account("private")
         Goal.objects.create(owner=other, title="Private goal", sport="running")

@@ -9,9 +9,11 @@ from django.db import close_old_connections, connections
 from django.test import TransactionTestCase, override_settings, skipUnlessDBFeature
 from django.utils import timezone
 
-from training.ai import enqueue
-from training.models import SyncReceipt, TrialFund, UsagePeriod
-from training.services import session_snapshot, sync_session
+from basis.modules.coach.adapters.actions import enqueue
+from basis.modules.coach.adapters.models import TrialFund, UsagePeriod
+from basis.modules.sync.adapters.actions import sync_session
+from basis.modules.sync.adapters.models import SyncReceipt
+from basis.modules.training.adapters.actions import session_snapshot
 
 from .factories import account, session
 

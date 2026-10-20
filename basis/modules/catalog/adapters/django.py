@@ -1,13 +1,12 @@
 """Catalog persistence over existing tables; protected deletion remains Django's."""
 
 from dataclasses import fields
-from typing import Protocol, cast
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
+from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.shared.identifiers import AccountId, ClassificationId, ExerciseId
-from daily_trainning_app.models import Classification, Exercise
 
 from ..domain.catalog import (
     CatalogDenied,
@@ -16,10 +15,6 @@ from ..domain.catalog import (
     catalog_allowed,
     valid_muscle_names,
 )
-
-
-class LegacySave(Protocol):
-    def save(self) -> None: ...
 
 
 def exercise_data(row: Exercise) -> ExerciseData:
@@ -71,8 +66,7 @@ class DjangoCatalogRepository:
             elif name == "musculos_principales":
                 value = list(value)
             setattr(row, name, value)
-        # Transitional signature only: execute Exercise.full_clean + save unchanged.
-        cast(LegacySave, row).save()
+        row.save()
         return ExerciseId(row.pk)
 
     def delete_classification(self, id: ClassificationId) -> None:

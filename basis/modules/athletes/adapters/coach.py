@@ -1,8 +1,8 @@
 """Owner-scoped coach projection; no unrelated identity/contact data."""
 
+from basis.modules.athletes.adapters.models import AthleteSettings, SportProfile, Wellness
+from basis.modules.athletes.adapters.models import User as Athlete
 from basis.shared.identifiers import AccountId
-from daily_trainning_app.models import User as Athlete
-from training.models import AthleteSettings, SportProfile, Wellness
 
 from ..application.coach import AthleteCoachContext
 from .django import preferences_data, sport_data, wellness_data

@@ -4,8 +4,11 @@ import os
 from pathlib import Path
 
 import dj_database_url
+import django_stubs_ext
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
+
+django_stubs_ext.monkeypatch()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
@@ -34,8 +37,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_cotton",
     "django_cotton_ui",
-    "daily_trainning_app",
-    "training",
+    "basis.modules.accounts.adapters.apps.AccountsConfig",
+    "basis.modules.athletes.adapters.apps.AthletesConfig",
+    "basis.modules.catalog.adapters.apps.CatalogConfig",
+    "basis.modules.training.adapters.apps.TrainingConfig",
+    "basis.modules.billing.adapters.apps.BillingConfig",
+    "basis.modules.coach.adapters.apps.CoachConfig",
+    "basis.modules.sync.adapters.apps.SyncConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -47,7 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "training.middleware.PrivateResponsesMiddleware",
+    "basis.bootstrap.middleware.PrivateResponsesMiddleware",
 ]
 CORS_ALLOWED_ORIGINS = list(
     filter(
@@ -65,7 +73,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "training.context_processors.app_context",
+                "basis.bootstrap.context_processors.app_context",
             ]
         },
     }
@@ -99,7 +107,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"user": "300/min", "anon": "20/min"},
-    "EXCEPTION_HANDLER": "training.api_errors.exception_handler",
+    "EXCEPTION_HANDLER": "basis.bootstrap.api_errors.exception_handler",
 }
 LANGUAGE_CODE = "es"
 TIME_ZONE = "America/Guayaquil"

@@ -1,4 +1,4 @@
-"""Athlete composition and temporary ORM form/serializer compatibility bindings."""
+"""Athlete composition and typed Django form/serializer input bindings."""
 
 from collections.abc import Mapping
 
@@ -11,6 +11,15 @@ from basis.modules.athletes.adapters.django import (
     sport_data,
     wellness_data,
 )
+from basis.modules.athletes.adapters.models import (
+    AthleteSettings,
+    Measurement,
+    SportProfile,
+    UserExerciseRM,
+    Wellness,
+)
+from basis.modules.athletes.adapters.models import User as Athlete
+from basis.modules.athletes.adapters.models import WorkoutData as WorkoutRow
 from basis.modules.athletes.public import (
     Athletes,
     EditPreferences,
@@ -32,10 +41,6 @@ from basis.shared.identifiers import (
     WellnessId,
     WorkoutId,
 )
-from daily_trainning_app.models import User as Athlete
-from daily_trainning_app.models import UserExerciseRM
-from daily_trainning_app.models import WorkoutData as WorkoutRow
-from training.models import AthleteSettings, Measurement, SportProfile, Wellness
 
 
 def athletes() -> Athletes:

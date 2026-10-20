@@ -148,32 +148,49 @@ def validate_schedule(
         raise InvalidPlanning("La sesi\u00f3n debe pertenecer a un microciclo y sus fechas.")
 
 
+def validate_plan_version(
+    lineage: LineageId,
+    version: int,
+    previous_lineage: LineageId | None,
+    previous_version: int | None,
+) -> None:
+    if previous_lineage is not None and (
+        previous_lineage != lineage or previous_version is None or version != previous_version + 1
+    ):
+        raise InvalidPlanning("La versi\u00f3n debe continuar el plan anterior.")
+
+
+def validate_prescribed_results(has_results: bool, *, block_level: bool = False) -> None:
+    if has_results:
+        article = "Una" if block_level else "La"
+        raise InvalidPlanning(f"{article} prescripci\u00f3n no contiene resultados reales.")
+
+
 def validate_prescription(blocks: tuple[BlockData, ...]) -> None:
     if not 1 <= len(blocks) <= 30:
         raise InvalidPlanning("Una sesi\u00f3n necesita entre 1 y 30 bloques.")
     for block in blocks:
-        if block.actual:
-            raise InvalidPlanning("Una prescripci\u00f3n no contiene resultados reales.")
+        validate_prescribed_results(bool(block.actual), block_level=True)
         for row in block.sets:
-            if any(
-                value is not None
-                for value in (
-                    row.actual_kg,
-                    row.actual_reps,
-                    row.actual_rpe,
-                    row.actual_rir,
-                    row.actual_rest_seconds,
-                    row.isometric_seconds,
+            validate_prescribed_results(
+                any(
+                    value is not None
+                    for value in (
+                        row.actual_kg,
+                        row.actual_reps,
+                        row.actual_rpe,
+                        row.actual_rir,
+                        row.actual_rest_seconds,
+                        row.isometric_seconds,
+                    )
                 )
-            ):
-                raise InvalidPlanning("La prescripci\u00f3n no contiene resultados reales.")
+            )
         for interval in block.intervals:
-            if (
-                interval.actual
+            validate_prescribed_results(
+                bool(interval.actual)
                 or interval.actual_rpe is not None
                 or interval.actual_rest_seconds is not None
-            ):
-                raise InvalidPlanning("La prescripci\u00f3n no contiene resultados reales.")
+            )
 
 
 def validate_definition(data: PlanDefinition) -> None:

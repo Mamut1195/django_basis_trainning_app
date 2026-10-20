@@ -5,6 +5,7 @@ from typing import cast
 
 from django.db import connection
 
+from basis.modules.coach.adapters.models import AIJob, AIServiceState, TrialFund, UsagePeriod
 from basis.shared.identifiers import (
     AccountId,
     AIRequestKey,
@@ -13,7 +14,6 @@ from basis.shared.identifiers import (
     TrialFundId,
     UsagePeriodId,
 )
-from training.models import AIJob, AIServiceState, TrialFund, UsagePeriod
 
 from ..domain.jobs import Fund, Job, JobKind, Usage
 from .context_wire import decode_context, encode_context

@@ -11,10 +11,11 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from daily_trainning_app.models import User as Athlete
-from daily_trainning_app.models import UserExerciseRM, WorkoutData
-from training.ai import context_snapshot
-from training.models import BillingAccount, Goal
+from basis.modules.athletes.adapters.models import User as Athlete
+from basis.modules.athletes.adapters.models import UserExerciseRM, WorkoutData
+from basis.modules.billing.adapters.models import BillingAccount
+from basis.modules.coach.adapters.actions import context_snapshot
+from basis.modules.training.adapters.models import Goal
 
 from .factories import account, exercise, session
 

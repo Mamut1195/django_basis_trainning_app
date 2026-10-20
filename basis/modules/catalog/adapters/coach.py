@@ -1,7 +1,7 @@
 """Stable bounded exercise ordering, including historical archived exercises."""
 
+from basis.modules.catalog.adapters.models import Exercise
 from basis.shared.identifiers import ExerciseId
-from daily_trainning_app.models import Exercise
 
 from ..application.coach import CoachExercise
 

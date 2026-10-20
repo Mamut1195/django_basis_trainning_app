@@ -15,30 +15,32 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from daily_trainning_app.models import Classification, Exercise, UserExerciseRM
-from training.domain import SPORTS, internal_load, pace_seconds, validate_metrics
-from training.models import (
+from basis.bootstrap.proposal_actions import build_plan, validate_proposal
+from basis.modules.athletes.adapters.models import SportProfile, UserExerciseRM
+from basis.modules.catalog.adapters.models import Classification, Exercise
+from basis.modules.sync.adapters.actions import Conflict, sync_session
+from basis.modules.training.adapters.actions import (
+    progress_report,
+    revise_plan,
+    session_snapshot,
+    start_session,
+    trip_summary,
+)
+from basis.modules.training.adapters.metrics import internal_load_legacy as internal_load
+from basis.modules.training.adapters.metrics import pace_seconds_legacy as pace_seconds
+from basis.modules.training.adapters.metrics import validate_metrics
+from basis.modules.training.adapters.models import (
     Block,
     Goal,
     Interval,
     PlannedSession,
     Session,
-    SportProfile,
     StrengthSet,
     TrainingPlan,
     TrekStage,
     TrekTrip,
 )
-from training.proposals import build_plan, validate_proposal
-from training.services import (
-    Conflict,
-    progress_report,
-    revise_plan,
-    session_snapshot,
-    start_session,
-    sync_session,
-    trip_summary,
-)
+from basis.modules.training.public import SPORTS
 
 from .factories import account
 

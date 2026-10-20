@@ -3,8 +3,8 @@
 from datetime import datetime
 from uuid import UUID
 
+from basis.modules.billing.adapters.models import BillingAccount, WebhookReceipt
 from basis.shared.identifiers import AccountId
-from training.models import BillingAccount, WebhookReceipt
 
 from ..application.service import WebhookEvent
 from ..domain.records import BillingState

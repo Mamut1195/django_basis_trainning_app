@@ -9,14 +9,13 @@ from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from daily_trainning_app.api.serializers import WorkoutDataSerializer
-from daily_trainning_app.models import User, UserExerciseRM, WorkoutData
-from daily_trainning_app.strength_metrics import (
-    METRICS_VERSION,
-    MetricsInputError,
-    calculate_strength_metrics,
+from basis.modules.athletes.adapters.models import User, UserExerciseRM, WorkoutData
+from basis.modules.athletes.adapters.serializers import WorkoutDataSerializer
+from basis.modules.training.adapters.metrics import (
+    calculate_legacy_strength as calculate_strength_metrics,
 )
-from training.models import StrengthSet
+from basis.modules.training.adapters.models import StrengthSet
+from basis.modules.training.public import METRICS_VERSION, MetricsInputError
 
 from .factories import account, exercise
 

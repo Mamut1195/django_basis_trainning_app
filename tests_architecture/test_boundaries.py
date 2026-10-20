@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.architecture_check import violations
+from scripts.architecture_check import final_layout_errors, violations
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -44,6 +44,22 @@ class BoundaryTests(unittest.TestCase):
                     "basis.modules.training.adapters.repository",
                 )
             )
+
+    def test_adapters_cannot_import_retired_runtime(self) -> None:
+        for source in ("from training.models import Session", "import daily_trainning_app"):
+            self.assertTrue(violations(source, "basis.modules.training.adapters.views"))
+
+    def test_final_layout_rejects_runtime_but_allows_historical_tests(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "training" / "tests").mkdir(parents=True)
+            (root / "training" / "tests" / "test_history.py").write_text("", encoding="utf-8")
+            self.assertFalse(final_layout_errors(root))
+            (root / "training" / "models.py").write_text("", encoding="utf-8")
+            self.assertEqual(len(final_layout_errors(root)), 1)
+            (root / "daily_trainning_app").mkdir()
+            (root / "daily_trainning_app" / "__init__.py").write_text("", encoding="utf-8")
+            self.assertEqual(len(final_layout_errors(root)), 2)
 
     def test_public_contract_import_is_allowed(self) -> None:
         self.assertFalse(

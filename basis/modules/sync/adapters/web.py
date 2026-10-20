@@ -6,7 +6,7 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from rest_framework.exceptions import PermissionDenied  # type: ignore[import-untyped]
+from rest_framework.exceptions import PermissionDenied
 
 from basis.shared.identifiers import AccountId
 

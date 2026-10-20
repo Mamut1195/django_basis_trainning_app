@@ -1,4 +1,4 @@
-"""Composition and compatibility bindings for legacy ModelSerializers."""
+"""Catalog composition and typed serializer input bindings."""
 
 from collections.abc import Mapping
 
@@ -8,6 +8,7 @@ from basis.modules.catalog.adapters.django import (
     DjangoCatalogRepository,
     exercise_data,
 )
+from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.modules.catalog.public import (
     Catalog,
     ClassificationData,
@@ -15,7 +16,6 @@ from basis.modules.catalog.public import (
     SaveExercise,
 )
 from basis.shared.identifiers import AccountId, ClassificationId, ExerciseId
-from daily_trainning_app.models import Classification, Exercise
 
 
 def catalog() -> Catalog:

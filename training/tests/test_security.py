@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from daily_trainning_app.models import UserExerciseRM, WorkoutData
+from basis.modules.athletes.adapters.models import UserExerciseRM, WorkoutData
 
 from .factories import account, exercise, session
 

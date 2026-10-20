@@ -1,6 +1,6 @@
 -r requirements.txt
 playwright==1.64.0
 mypy==1.19.1
-django-stubs==5.2.9
-django-stubs-ext==5.2.9
+django-stubs==6.1.2
+djangorestframework-stubs==3.18.1
 import-linter==2.11

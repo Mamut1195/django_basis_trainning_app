@@ -8,6 +8,7 @@ from .application.catalog import (
     SaveExercise,
 )
 from .application.coach import CoachExercise, CoachExercises
+from .application.presentation import ExerciseNames
 from .domain.catalog import (
     CatalogDenied,
     ClassificationData,
@@ -17,6 +18,7 @@ from .domain.catalog import (
 )
 
 __all__ = (
+    "ExerciseNames",
     "CoachExercise",
     "CoachExercises",
 

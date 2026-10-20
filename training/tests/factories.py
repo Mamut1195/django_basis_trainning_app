@@ -3,9 +3,11 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from daily_trainning_app.models import Classification, Exercise
-from daily_trainning_app.models import User as Athlete
-from training.models import AthleteSettings, BillingAccount, Block, Goal, Session
+from basis.modules.athletes.adapters.models import AthleteSettings
+from basis.modules.athletes.adapters.models import User as Athlete
+from basis.modules.billing.adapters.models import BillingAccount
+from basis.modules.catalog.adapters.models import Classification, Exercise
+from basis.modules.training.adapters.models import Block, Goal, Session
 
 
 def account(name="athlete", status="active"):

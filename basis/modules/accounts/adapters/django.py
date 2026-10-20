@@ -10,8 +10,8 @@ from django.core import signing
 from django.core.mail import send_mail
 from django.urls import reverse
 
+from basis.modules.accounts.adapters.models import RateWindow
 from basis.shared.identifiers import AccountId
-from training.models import RateWindow
 
 from ..application.identity import RegisterAccount
 from ..domain.identity import (

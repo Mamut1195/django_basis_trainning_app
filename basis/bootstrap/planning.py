@@ -1,4 +1,4 @@
-"""Planning composition and narrow legacy ORM/form compatibility bindings."""
+"""Planning composition and typed Django input bindings."""
 
 from datetime import date
 
@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 
 from basis.bootstrap.billing import write_authorization
 from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
+from basis.modules.training.adapters.models import Cycle, Goal, PlannedSession, TrainingPlan
 from basis.modules.training.adapters.plan_wire import INVALID, proposal_definition
 from basis.modules.training.adapters.planning import (
     DjangoPlanRepository,
@@ -26,7 +27,6 @@ from basis.modules.training.public import (
     ScheduleSession,
 )
 from basis.shared.identifiers import AccountId, CycleId, GoalId, PlanId, PlannedSessionId, Revision
-from training.models import Cycle, Goal, PlannedSession, TrainingPlan
 
 
 def planning() -> Planning:

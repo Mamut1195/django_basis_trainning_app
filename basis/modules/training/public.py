@@ -29,6 +29,7 @@ from .application.planning import (
     SaveGoal,
     ScheduleSession,
 )
+from .application.presentation import PlanChoice, TrainingPresentation
 from .application.progress import (
     AddStage,
     CreateTrip,
@@ -51,6 +52,7 @@ from .domain.execution import (
     StrengthData,
     Unavailable,
     require_editable,
+    validate_component_sport,
 )
 from .domain.planning import (
     CycleDefinition,
@@ -69,6 +71,8 @@ from .domain.planning import (
     validate_dates,
     validate_definition,
     validate_goal,
+    validate_plan_version,
+    validate_prescribed_results,
     validate_prescription,
     validate_schedule,
 )
@@ -105,6 +109,7 @@ from .domain.strength import (
     reference_is_frozen,
     reference_matches,
     validate_repetition_prescription,
+    validate_strength_reference,
 )
 from .domain.trekking import (
     InvalidTrekking,
@@ -116,6 +121,12 @@ from .domain.trekking import (
 )
 
 __all__ = (
+    "validate_strength_reference",
+    "validate_prescribed_results",
+    "validate_plan_version",
+    "validate_component_sport",
+    "TrainingPresentation",
+    "PlanChoice",
     "CoachGoal",
     "CoachRecentSession",
     "CoachBasePlan",

@@ -3,16 +3,7 @@
 from dataclasses import fields
 from datetime import date
 
-from basis.shared.identifiers import (
-    AccountId,
-    CycleId,
-    GoalId,
-    LineageId,
-    PlanId,
-    PlannedSessionId,
-    Revision,
-)
-from training.models import (
+from basis.modules.training.adapters.models import (
     Block,
     Cycle,
     Goal,
@@ -21,6 +12,15 @@ from training.models import (
     Session,
     StrengthSet,
     TrainingPlan,
+)
+from basis.shared.identifiers import (
+    AccountId,
+    CycleId,
+    GoalId,
+    LineageId,
+    PlanId,
+    PlannedSessionId,
+    Revision,
 )
 
 from ..application.planning import AddCycle, ScheduleSession

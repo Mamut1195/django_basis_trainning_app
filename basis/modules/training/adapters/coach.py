@@ -2,8 +2,8 @@
 
 from datetime import date, timedelta
 
+from basis.modules.training.adapters.models import Goal, Session, TrainingPlan
 from basis.shared.identifiers import AccountId, GoalId, PlanId
-from training.models import Goal, Session, TrainingPlan
 
 from ..application.coach import (
     CoachBasePlan,

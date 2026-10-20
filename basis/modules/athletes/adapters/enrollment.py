@@ -2,9 +2,9 @@
 
 from datetime import date
 
+from basis.modules.athletes.adapters.models import AthleteSettings
+from basis.modules.athletes.adapters.models import User as Athlete
 from basis.shared.identifiers import AccountId, AthleteId
-from daily_trainning_app.models import User as Athlete
-from training.models import AthleteSettings
 
 from ..domain.records import require_legacy_link
 

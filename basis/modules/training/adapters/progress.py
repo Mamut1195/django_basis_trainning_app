@@ -4,8 +4,8 @@ from datetime import date
 
 from django.db.models.functions import TruncDate
 
+from basis.modules.training.adapters.models import PlannedSession, Session, TrekStage, TrekTrip
 from basis.shared.identifiers import AccountId, SessionId, TrekStageId, TrekTripId
-from training.models import PlannedSession, Session, TrekStage, TrekTrip
 
 from ..application.progress import AddStage, CreateTrip
 from ..domain.execution import DurationProtocol

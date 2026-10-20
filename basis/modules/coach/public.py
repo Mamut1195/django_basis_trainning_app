@@ -10,6 +10,7 @@ from .application.jobs import (
     Provider,
 )
 from .application.jobs import Contexts as ContextSource
+from .application.presentation import CoachPresentation, UsageSummary
 from .application.proposals import (
     AcceptProposal,
     CreateProposal,
@@ -40,6 +41,8 @@ from .domain.jobs import (
 from .domain.proposals import Proposal, ProposalUnavailable
 
 __all__ = (
+    "CoachPresentation",
+    "UsageSummary",
     "Contexts",
     "ContextSource",
     "CoachConfiguration",

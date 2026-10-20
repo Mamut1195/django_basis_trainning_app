@@ -1,14 +1,19 @@
-"""Django persistence adapter over stable legacy tables and model registration."""
+"""Owner-scoped execution persistence over module-owned Django models."""
 
 from dataclasses import fields
-from typing import Protocol, cast
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from basis.modules.training.adapters.models import (
+    Block,
+    Interval,
+    PlannedSession,
+    Session,
+    StrengthSet,
+)
 from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
-from training.models import Block, Interval, PlannedSession, Session, StrengthSet
 
 from ..domain.execution import (
     BlockData,
@@ -24,14 +29,8 @@ from ..domain.execution import (
 from .wire import encode_metrics, encode_strength, interval, metrics, strength
 
 
-class _LegacySave(Protocol):
-    def save(self) -> None: ...
-
-
 def save_validated(row: models.Model) -> None:
-    # Transitional signature bridge: ValidatedModel.save is still unannotated.
-    # Keep its real full_clean + save behavior; remove bridge when ORM is typed.
-    cast(_LegacySave, row).save()
+    row.save()
 
 
 def model_values(row: models.Model, names: tuple[str, ...]) -> dict[str, object]:

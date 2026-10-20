@@ -1,22 +1,22 @@
 # Arquitectura y límites de operación
 
-Estado 2026-10-19: ARCH-01 a ARCH-07 integrados y verificados; main/105ac188be24fbd960a1bf6941dbafa3104455ee,199 pruebas PostgreSQL sin omisiones. ARCH-08 en curso con dos implementadores y orquestación central. Alcance final: [ADR-002](architecture/ADR-002-FINAL-PERSISTENCE.md).
+Status 2026-10-19: ARCH-01 through ARCH-08 integrated and independently verified; main/24f98532112230640e8a5346dad5e55dcb52627e,218 PostgreSQL tests/no skips. ARCH-09 implements final module persistence and web adapters under [ADR-002](architecture/ADR-002-FINAL-PERSISTENCE.md); PostgreSQL/main acceptance pending.
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01 a ARCH-07 integrados; ARCH-08/MAM-829 en curso. Arquitectura antes de retomar aceptación funcional. ADR-002 reemplaza las restricciones iniciales de conservación de tablas, etiquetas y migraciones: ARCH-09 retirará daily_trainning_app y registrará los modelos en los adaptadores finales de los módulos. ARCH-10 verificará la estructura completa desde una base temporal nueva.
+**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01 through ARCH-08 integrated; ARCH-09/MAM-830 in progress. Arquitectura antes de retomar aceptación funcional. ADR-002 reemplaza las restricciones iniciales de conservación de tablas, etiquetas y migraciones: ARCH-09 retirará daily_trainning_app y registrará los modelos en los adaptadores finales de los módulos. ARCH-10 verificará la estructura completa desde una base temporal nueva.
 
 `basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
 | Módulo | Responsabilidad y fuente actual | Etapa principal |
 | --- | --- | --- |
-| accounts | Identidad/verificación/recuperación en training/views y daily_trainning_app | ARCH-03 |
-| athletes | Perfil/preferencias/mediciones/bienestar y RM/historial heredado | ARCH-03, ARCH-05 |
-| catalog | Ejercicios y variantes en daily_trainning_app | ARCH-03 |
-| training | Ejecución, planificación/versiones, métricas y multideporte en training/models, services, domain, forms y views | ARCH-02, ARCH-04, ARCH-05 |
-| billing | Acceso comercial/Polar en training/access y billing | ARCH-06 |
-| coach | Contexto/propuestas/trabajos/presupuesto en training/ai y proposals | ARCH-07 |
-| sync | Revisiones/recibos/conflictos en training/services y vistas API | ARCH-08 |
+| accounts | Identity, verification and recovery; own typed domain/application/adapters | ARCH-03, ARCH-09 |
+| athletes | Profile, preferences, measurements, wellness, RM and historical workouts | ARCH-03, ARCH-05, ARCH-09 |
+| catalog | Exercise/classification catalog and staff API/admin | ARCH-03, ARCH-09 |
+| training | Execution, planning/versioning, metrics and multisport | ARCH-02, ARCH-04, ARCH-05, ARCH-09 |
+| billing | Commercial policy, Polar, reconciliation and webhook adapters | ARCH-06, ARCH-09 |
+| coach | Authorized context, proposals, jobs and budget accounting | ARCH-07, ARCH-09 |
+| sync | Revision, receipt, replay and offline-conflict coordination | ARCH-08, ARCH-09 |
 
 ### Contratos de implementación
 
@@ -34,7 +34,7 @@ ARCH-04 introducirá una definición tipada independiente de procedencia, con va
 
 `mypy-core.ini`: estricto, sin plugin ni inicializar Django; `mypy-django.ini`: estricto con django-stubs/test_settings para basis, incluidos adaptadores y bootstrap. No hay ignore_missing_imports ni exclusiones globales. Ambas configuraciones prohíben Any explícito y procedente de imports sin tipos. Las áreas migradas deben agregarse al alcance estricto desde su primer commit, y salir del inventario pendiente; las excepciones locales de terceros se documentarán individualmente (ninguna en ARCH-01).
 
-Se fijan Python 3.13, Django 5.2.18, mypy 1.19.1 y django-stubs/django-stubs-ext 5.2.9, compatibles según la [matriz del proyecto django-stubs](https://github.com/typeddjango/django-stubs#version-compatibility). Import Linter 2.11. El inventario `docs/architecture/legacy-baseline.json` congela los archivos de 08dcd02; `legacy-pending.json` solo puede reducirse. El control compara HEAD y HEAD^ donde existen; CI obtiene dos commits. El legado no está certificado como estrictamente tipado por estas configuraciones. Las migraciones históricas y wrappers Django se conservarán según necesidad, y se registrarán sus límites de aceptación.
+Se fijan Python 3.13, Django 5.2.18, mypy 1.19.1 y django-stubs/django-stubs-ext 6.1.2 and djangorestframework-stubs 3.18.1, compatibles según la [matriz del proyecto django-stubs](https://github.com/typeddjango/django-stubs#version-compatibility). Import Linter 2.11. El inventario `docs/architecture/legacy-baseline.json` congela los archivos de 08dcd02; `legacy-pending.json` solo puede reducirse. El control compara HEAD y HEAD^ donde existen; CI obtiene dos commits. El legado no está certificado como estrictamente tipado por estas configuraciones. ADR-002 retires the old runtime packages and migrations; the final seven module applications have typed initial migrations. Only explicitly inventoried historical tests, protected user files and existing standalone tools remain outside the strict runtime scope.
 
 ### Ejecución y evidencia
 
@@ -43,7 +43,7 @@ ARCH-01 → ARCH-02 → ARCH-03 → ARCH-04 → ARCH-05 → ARCH-06 → ARCH-07 
 ## Implementación existente y límites que deben conservarse
 
 
-Monolito modular Django con plantillas en servidor y API de sesión/CSRF. `daily_trainning_app` conserva los perfiles, catálogo, RM y registros anteriores. `training` contiene planificación, ejecución, bienestar, trekking, sincronización y los límites de proveedores. Los servicios transaccionales se comparten entre vistas web, sincronización y aceptación de propuestas.
+Django modular monolith with server-rendered templates and session/CSRF API. Runtime code resides under basis/modules and explicit bootstrap composition; daily_trainning_app and the training runtime are retired in the ARCH-09 candidate. The unregistered training/tests namespace preserves baseline regression scenarios. Model classes live in each module's adapters/models.py, registered as basis_<area>, with initial migrations under adapters/migrations. All 28 models and configuration are in strict type scope; no silent model import frontier remains.
 
 La cuenta `auth.User` se vincula explícitamente a un perfil privado mediante OneToOne. Todas las consultas privadas se filtran por la cuenta autenticada; un identificador enviado por el navegador nunca elige el dueño de un registro. El catálogo común se administra mediante permisos de personal. Los ejercicios referenciados se protegen frente al borrado en cascada.
 

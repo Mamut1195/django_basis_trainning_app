@@ -5,8 +5,8 @@ from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
 
-from training.models import Goal, Session
-from training.proposals import build_plan
+from basis.bootstrap.proposal_actions import build_plan
+from basis.modules.training.adapters.models import Goal, Session
 
 from .factories import account, proposal, session
 

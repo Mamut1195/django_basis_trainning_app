@@ -3,6 +3,12 @@
 from .application.billing import BillingProfile, BillingProfiles
 from .application.coach import AthleteCoachContext, AthleteCoachContexts
 from .application.enrollment import AthleteEnrollment
+from .application.presentation import (
+    AthleteHistory,
+    AthletePresentation,
+    ExerciseName,
+    HistoricalWorkout,
+)
 from .application.records import (
     Athletes,
     EditPreferences,
@@ -13,6 +19,7 @@ from .application.records import (
     RecordWellness,
     RecordWorkout,
 )
+from .application.references import RMReference, RMReferences
 from .domain.records import (
     AthleteUnavailable,
     InvalidAthleteData,
@@ -33,6 +40,12 @@ from .domain.records import (
 )
 
 __all__ = (
+    "AthletePresentation",
+    "AthleteHistory",
+    "HistoricalWorkout",
+    "ExerciseName",
+    "RMReference",
+    "RMReferences",
     "AthleteCoachContext",
     "AthleteCoachContexts",
     "BillingProfile",

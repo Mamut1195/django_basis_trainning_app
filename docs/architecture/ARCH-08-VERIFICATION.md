@@ -40,3 +40,8 @@ training/services.py is now fully in strict scope and leaves pending inventory. 
 ## Integration gate
 
 Run scripts/Complete-Arch08.ps1 externally. It checks main/base/empty index, self-tests native stderr/nonzero capture, repeats controls, uses its own temporary Docker PostgreSQL18.4 without host volumes, requires218 tests/zero skips, stops the container, records source hashes and commits only31 manifest paths on arch/08-sync before fast-forwarding main without push. Receipt: ARCH-08-RESULT.json; integration: .cache/arch08-integration.json. Independent SHA/logs/receipt/stopped-container/source-and-HEAD hash/completeness readback is required before MAM-829 Done or ARCH-09.
+
+
+## Independent main readback
+
+VERIFIED: main/24f98532112230640e8a5346dad5e55dcb52627e;218 PostgreSQL tests/zero skips; all recorded gates exit zero; owned container stopped. Run fe03da62e81f444facf4eadf1baf0b70. Integration receipt,31 committed manifest files and all normalized tree/HEAD hashes independently checked before ARCH-09 edits. MAM-829 Done. A repeated Complete-Arch08 invocation correctly rejects this later main; do not change its base guard. Stage scripts/evidence are historical after final model relocation; use the current stage script.

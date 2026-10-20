@@ -54,7 +54,9 @@ def violations(source: str, module: str, is_package: bool = False) -> list[str]:
     for line, target in import_targets(tree, module, is_package):
         dest = target.split(".")
         reason: str | None = None
-        if core and dest[0] in INFRASTRUCTURE_STDLIB:
+        if dest[0] in ("daily_trainning_app", "training"):
+            reason = "legacy runtime imports are forbidden"
+        elif core and dest[0] in INFRASTRUCTURE_STDLIB:
             reason = "core imports HTTP, configuration or persistence infrastructure"
         elif core and dest[0] not in sys.stdlib_module_names | {"basis", "__future__"}:
             reason = "core imports infrastructure or a third party"
@@ -144,6 +146,9 @@ def inventory_errors(root: Path) -> list[str]:
                         f"Silent imports must name an exact pending legacy module: {module}"
                     )
     for path in tracked:
+        # A tracked deletion is part of the candidate, not pending legacy code.
+        if not (root / path).is_file():
+            continue
         strict = any(
             path == entry or path.startswith(entry.rstrip("/") + "/") for entry in strict_entries
         )
@@ -151,6 +156,24 @@ def inventory_errors(root: Path) -> list[str]:
             errors.append(f"Python file outside strict scope and legacy inventory: {path}")
         if strict and path in pending:
             errors.append(f"Strict code cannot be exempted as legacy: {path}")
+    return errors
+
+
+
+def final_layout_errors(root: Path) -> list[str]:
+    """ADR-002 final runtime layout; historical tests are not installed apps."""
+    errors: list[str] = []
+    for path in sorted((root / "daily_trainning_app").rglob("*.py")):
+        errors.append(f"Retired daily application source remains: {path.relative_to(root)}")
+    for path in sorted((root / "training").rglob("*.py")):
+        relative = path.relative_to(root / "training")
+        if relative.parts[0] != "tests" and relative.as_posix() != "__init__.py":
+            errors.append(f"Retired training runtime source remains: {path.relative_to(root)}")
+    for path in sorted((root / "basis_trainning_app").glob("*.py")):
+        for line, target in import_targets(ast.parse(path.read_text(encoding="utf-8")),
+                                           "basis_trainning_app." + path.stem, False):
+            if target.split(".")[0] in ("daily_trainning_app", "training"):
+                errors.append(f"Project configuration imports retired runtime: {path.name}:{line}")
     return errors
 
 
@@ -164,6 +187,7 @@ def main() -> int:
             module = module.removesuffix(".__init__")
         errors.extend(violations(path.read_text(encoding="utf-8"), module, is_package))
     errors.extend(inventory_errors(ROOT))
+    errors.extend(final_layout_errors(ROOT))
     for error in errors:
         print(error)
     if not errors:

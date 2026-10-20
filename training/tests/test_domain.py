@@ -7,25 +7,26 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
-from training.domain import internal_load, pace_seconds, validate_metrics
-from training.models import (
-    Block,
-    Session,
-    StrengthSet,
-    SyncReceipt,
-    TrainingPlan,
-    TrekStage,
-    TrekTrip,
-)
-from training.proposals import build_plan, validate_proposal
-from training.services import (
-    Conflict,
+from basis.bootstrap.proposal_actions import build_plan, validate_proposal
+from basis.modules.sync.adapters.actions import Conflict, sync_session
+from basis.modules.sync.adapters.models import SyncReceipt
+from basis.modules.training.adapters.actions import (
     progress_report,
     revise_plan,
     session_snapshot,
     start_session,
-    sync_session,
     trip_summary,
+)
+from basis.modules.training.adapters.metrics import internal_load_legacy as internal_load
+from basis.modules.training.adapters.metrics import pace_seconds_legacy as pace_seconds
+from basis.modules.training.adapters.metrics import validate_metrics
+from basis.modules.training.adapters.models import (
+    Block,
+    Session,
+    StrengthSet,
+    TrainingPlan,
+    TrekStage,
+    TrekTrip,
 )
 
 from .factories import account, exercise, proposal, session

@@ -21,7 +21,7 @@ El entorno `.venv` preexistente tiene estructura Linux. Se conserva; utiliza otr
 ```powershell
 uv --cache-dir .cache/uv venv .venv-win --python 3.13
 uv --cache-dir .cache/uv pip install --python .venv-win/Scripts/python.exe -r requirements-dev.txt
-$env:BASIS_DATABASE_PATH = '.cache/dev.sqlite3'
+$env:BASIS_DATABASE_PATH = '.cache/dev-arch09.sqlite3'
 .venv-win/Scripts/python.exe manage.py migrate
 ```
 
@@ -40,13 +40,9 @@ La configuración se recibe del entorno del proceso; no se carga `.env` automát
 
 ## Datos anteriores
 
-`db.sqlite3` no fue migrada durante esta entrega. Antes de actualizarla, conserva un respaldo. Las migraciones añaden identidades únicas sin adivinar qué cuenta posee los perfiles anteriores. El operador puede verificar la titularidad y ejecutar:
+ARCH-09 follows [ADR-002](docs/architecture/ADR-002-FINAL-PERSISTENCE.md): there is no production deployment and the final module schema starts from an empty database. The original `db.sqlite3` is untouched; these initial migrations are not an in-place upgrade for the retired application schema. Use a new development database path as above. The old copy-migration verifier has been retired.
 
-```powershell
-.venv-win/Scripts/python.exe manage.py link_legacy_profile --account-id 123 --profile-id 456
-```
-
-La verificación del correo sigue siendo independiente. Las métricas heredadas se conservan con procedencia `legacy-unverified`; no se convierten retrospectivamente en RPE real ni en sesiones detalladas inventadas. `seed.py` conserva los datos sintéticos previos, pero su reinicio destructivo quedó deshabilitado.
+`link_legacy_profile --account-id 123 --profile-id 456` remains available for explicitly linking an unassigned profile already present in the final schema. Email verification remains independent. Historical records retain `legacy-unverified` provenance; no results are invented. The user's `seed.py` is preserved outside this migration and imports the retired application; use `manage.py seed_demo` for the current architecture.
 
 ## Integraciones y operación
 
@@ -81,8 +77,13 @@ Programa respaldos fuera de este servidor y prueba su restauración. Los archivo
 
 ```powershell
 $env:DJANGO_SETTINGS_MODULE = 'basis_trainning_app.test_settings'
-.venv-win/Scripts/python.exe manage.py test training.tests --noinput
+.venv-win/Scripts/python.exe manage.py test training.tests basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
 .venv-win/Scripts/python.exe manage.py makemigrations --check --dry-run
+.venv-win/Scripts/python.exe -m unittest discover -s tests_architecture
+.venv-win/Scripts/python.exe -m mypy --config-file mypy-core.ini
+.venv-win/Scripts/python.exe -m mypy --config-file mypy-django.ini
+.venv-win/Scripts/python.exe scripts/architecture_check.py
+.venv-win/Scripts/lint-imports.exe
 .venv-win/Scripts/ruff.exe check .
 ```
 

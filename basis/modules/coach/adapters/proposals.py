@@ -1,21 +1,17 @@
 """Proposal persistence and model-answer decoding at the JSON boundary."""
 
 import json
-from typing import Callable, Protocol, cast
+from typing import Callable
 
 from django.core.exceptions import ValidationError
 
+from basis.modules.coach.adapters.models import PlanProposal
 from basis.modules.training.public import InvalidPlanning, PlanDefinition, PlanningUnavailable
 from basis.shared.identifiers import AccountId, JobId, PlanId, ProposalId
-from training.models import PlanProposal
 
 from ..application.proposals import CreateProposal, Proposals
 from ..domain.jobs import CoachInvalid, Job
 from ..domain.proposals import Proposal, ProposalUnavailable
-
-
-class LegacyProposalSave(Protocol):
-    def save(self) -> None: ...
 
 
 class DjangoProposalRepository:
@@ -58,7 +54,7 @@ class DjangoProposalRepository:
             if proposal.definition is None:
                 raise ValueError("Edited proposal requires a definition")
             row.content = self._source(proposal.definition)
-        cast(LegacyProposalSave, row).save()
+        row.save()
 
     def create(self, command: CreateProposal) -> ProposalId:
         row = PlanProposal.objects.create(

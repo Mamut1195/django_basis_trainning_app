@@ -1,0 +1,11 @@
+# Strict runtime typing
+
+ARCH-09 removes both exact silent legacy-model frontiers. mypy-core.ini still loads no Django plugin; mypy-django.ini covers all basis and basis_trainning_app, including models, initial migrations, adapters, composition and project configuration, using Django and DRF plugins. No global missing-import exemption or Any exception was added. The two old DRF import-untyped ignores are removed.
+
+Pinned tooling: mypy1.19.1, django-stubs6.1.2, django-stubs-ext6.1.2, djangorestframework-stubs3.18.1; runtime remains Python3.13/Django5.2.18/DRF3.18.3. The current official django-stubs matrix lists Django5.2 as partial coverage for its6.1 line; DRF3.18 stubs require that line. This is an explicit upstream coverage limit, not a local suppression. All actual project modules must pass strict checks and runtime regression on the pinned stack. See https://github.com/typeddjango/django-stubs#version-compatibility and https://github.com/typeddjango/djangorestframework-stubs/blob/master/pyproject.toml .
+
+django_stubs_ext.monkeypatch enables runtime generic annotations for Django forms/admin; the extension is therefore pinned in runtime requirements. The plugin and stub packages remain development dependencies. New code uses typed model generics, commands/results, public read DTOs/ports and explicit conversion at framework boundaries.
+
+The immutable08dcd02 baseline inventory is unchanged. Pending inventory contains only unregistered historical regression tests, protected seed.py/manage.py and unchanged standalone operations/browser/environment tools. It contains no business runtime, model, migration or project-configuration exemption. Deleted tracked files are recognized as deletions rather than pending source. Static contracts reject retired runtime imports in every basis layer and project imports, including TYPE_CHECKING.
+
+Final local type checks: VERIFIED95 core files and229 complete Django/DRF/runtime files;111 pure tests. Both exact legacy-model silent frontiers and both DRF import-untyped exceptions are gone. Catalog and proposal LegacySave protocols/casts are retired; direct typed model save hooks remain. Presentation plan/goal IDs use PlanId/GoalId; historical exercise names arrive through a batched public catalog read port.

@@ -162,3 +162,10 @@ def start_execution(prescription: Prescription, session_id: SessionId, today: da
         planned=prescription.id,
         blocks=tuple(replace(b, id=None) for b in prescription.blocks),
     )
+
+
+def validate_component_sport(sport: str, *, strength: bool) -> None:
+    if strength and sport != "strength":
+        raise InvalidExecution("Las series de fuerza requieren un bloque de fuerza.")
+    if not strength and sport == "strength":
+        raise InvalidExecution("Usa series para fuerza.")
