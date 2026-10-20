@@ -2,6 +2,8 @@
 
 from collections.abc import Mapping
 
+from django.core.exceptions import ValidationError
+
 from basis.bootstrap.transactions import DjangoUnitOfWork
 from basis.modules.catalog.adapters.django import (
     DjangoCatalogAuthorization,
@@ -12,6 +14,7 @@ from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.modules.catalog.public import (
     Catalog,
     ClassificationData,
+    InvalidCatalogData,
     SaveClassification,
     SaveExercise,
 )
@@ -44,11 +47,14 @@ def save_exercise(
     candidate = row if row is not None else Exercise()
     for name, value in values.items():
         setattr(candidate, name, value)
-    id = catalog().save_exercise(
-        SaveExercise(
-            AccountId(actor),
-            exercise_data(candidate),
-            ExerciseId(row.pk) if row is not None else None,
+    try:
+        id = catalog().save_exercise(
+            SaveExercise(
+                AccountId(actor),
+                exercise_data(candidate),
+                ExerciseId(row.pk) if row is not None else None,
+            )
         )
-    )
+    except InvalidCatalogData as error:
+        raise ValidationError({error.field: str(error)}) from error
     return Exercise.objects.get(pk=id)

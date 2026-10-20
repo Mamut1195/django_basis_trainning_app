@@ -2,11 +2,18 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from django import forms
 from django.contrib import admin
-from django.db.models import QuerySet
+from django.db.models import Model, QuerySet
+from django.forms.models import BaseModelFormSet
 from django.http import HttpRequest
 from django.utils.timezone import now
 
+from basis.bootstrap.admin_actions import delete_admin_workouts, save_admin_workout
+from basis.bootstrap.presentation import exercise_fatigue
+from basis.bootstrap.web_framework import owner
+
+from .admin_actions import AthleteAdministrativeAdmin
 from .models import User, UserExerciseRM, WorkoutData
 
 
@@ -46,20 +53,36 @@ class WorkoutDataInline(admin.TabularInline[WorkoutData, User]):
     @admin.display(description="Fatigue Level")
     def get_nivel_fatiga(self, obj: WorkoutData) -> str:
         """Devuelve el nivel de fatiga desde el modelo Exercise"""
-        return obj.exercise.nivel_fatiga if obj.exercise else "No asignado"
+        return exercise_fatigue(obj.exercise_id)
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin[User]):
+class UserAdmin(AthleteAdministrativeAdmin[User]):
     list_display = ("id", "nombre", "email", "fecha_inicio")
     search_fields = ("nombre", "email")
     ordering = ("fecha_inicio",)
     # Permite ver los entrenamientos dentro de cada usuario
     inlines = [WorkoutDataInline]
 
+    def save_formset(
+        self,
+        request: HttpRequest,
+        form: forms.ModelForm[User],
+        formset: BaseModelFormSet[Model, forms.ModelForm[Model]],
+        change: bool,
+    ) -> None:
+        rows = formset.save(commit=False)
+        actor = owner(request).pk
+        if formset.deleted_objects:
+            delete_admin_workouts(actor, tuple(row.pk for row in formset.deleted_objects))
+        for row in rows:
+            assert isinstance(row, WorkoutData)
+            save_admin_workout(actor, row, not row._state.adding)
+        formset.save_m2m()
+
 
 @admin.register(UserExerciseRM)
-class UserExerciseRMAdmin(admin.ModelAdmin[UserExerciseRM]):
+class UserExerciseRMAdmin(AthleteAdministrativeAdmin[UserExerciseRM]):
     """
     Admin para gestionar el historial de 1RM por usuario y ejercicio.
     """
@@ -71,7 +94,7 @@ class UserExerciseRMAdmin(admin.ModelAdmin[UserExerciseRM]):
 
 
 @admin.register(WorkoutData)
-class WorkoutDataAdmin(admin.ModelAdmin[WorkoutData]):
+class WorkoutDataAdmin(AthleteAdministrativeAdmin[WorkoutData]):
     list_display = (
         "id",
         "user",
@@ -105,4 +128,4 @@ class WorkoutDataAdmin(admin.ModelAdmin[WorkoutData]):
     @admin.display(description="Fatigue Level")
     def get_nivel_fatiga(self, obj: WorkoutData) -> str:
         """Devuelve el nivel de fatiga desde Exercise"""
-        return obj.exercise.nivel_fatiga if obj.exercise else "No asignado"
+        return exercise_fatigue(obj.exercise_id)

@@ -1,5 +1,10 @@
 """Supported catalog commands and values."""
 
+from .application.administration import (
+    CatalogAdministration,
+    DeleteClassifications,
+    DeleteExercises,
+)
 from .application.catalog import (
     Catalog,
     DeleteClassification,
@@ -13,11 +18,19 @@ from .domain.catalog import (
     CatalogDenied,
     ClassificationData,
     ExerciseData,
+    InvalidCatalogData,
     catalog_allowed,
     valid_muscle_names,
+    validate_exercise,
 )
 
 __all__ = (
+    "InvalidCatalogData",
+    "validate_exercise",
+    "CatalogAdministration",
+    "DeleteClassifications",
+    "DeleteExercises",
+
     "ExerciseNames",
     "CoachExercise",
     "CoachExercises",

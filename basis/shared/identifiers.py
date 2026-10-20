@@ -34,3 +34,7 @@ TrekStageId = NewType("TrekStageId", int)
 
 MutationId = NewType("MutationId", UUID)
 PayloadDigest = NewType("PayloadDigest", str)
+
+BlockId = NewType("BlockId", int)
+StrengthSetId = NewType("StrengthSetId", int)
+IntervalId = NewType("IntervalId", int)

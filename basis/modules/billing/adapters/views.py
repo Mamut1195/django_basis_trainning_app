@@ -10,17 +10,16 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from basis.bootstrap import presentation
-from basis.bootstrap.billing import webhooks
+from basis.bootstrap.billing import account_row, webhooks
 from basis.bootstrap.web_framework import owner
 
 from . import actions as polar
-from .models import BillingAccount
 from .web import InvalidWebhook, decode_event, encode_result
 
 
 @login_required
 def billing_page(request: HttpRequest) -> HttpResponse:
-    account, _ = BillingAccount.objects.get_or_create(owner=owner(request))
+    account = account_row(owner(request).pk)
     return render(
         request,
         "training/billing.html",

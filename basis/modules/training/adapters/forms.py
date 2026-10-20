@@ -7,6 +7,7 @@ from django import forms
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db.models import Model
 
+from basis.bootstrap.form_fields import configure_rm_choices
 from basis.modules.training.public import SPORTS, VARIABLES
 
 from .models import (
@@ -231,10 +232,7 @@ class StrengthSetForm(forms.ModelForm[StrengthSet]):
         parent = block.session if block.session_id else block.planned
         assert parent is not None
         rm_field = cast(forms.ModelChoiceField[Model], self.fields["rm_reference"])
-        assert rm_field.queryset is not None
-        rm_field.queryset = rm_field.queryset.filter(
-            user__account_id=parent.owner_id, fecha_registro__lte=parent.date
-        )
+        configure_rm_choices(rm_field, parent.owner_id, parent.date)
         if block.planned_id:
             for key in (
                 "actual_reps",

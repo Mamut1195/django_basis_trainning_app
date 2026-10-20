@@ -91,6 +91,6 @@ forbidden_modules =
     httpx
     training
     daily_trainning_app
-    basis_trainning_app
+    config
     basis.bootstrap
 allow_indirect_imports = False

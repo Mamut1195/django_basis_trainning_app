@@ -244,10 +244,14 @@
       await exportLocal();
       if(!confirm('Se descargó una copia de tus registros pendientes. ¿Cerrar sesión y borrar la copia de este dispositivo?'))return;
     }
-    for(const store of ['sessions','outbox','archive'])for(const row of await all(store))await write(store,store==='outbox'?row.mutation_id:row.key,true);
-    localStorage.removeItem('basis-account');localStorage.removeItem('basis-timer');
-    new BroadcastChannel('basis-auth').postMessage({type:'logout',account:scope});
-    event.target.submit();
+    try {
+      const response=await fetch(event.target.action,{method:'POST',body:new FormData(event.target),credentials:'same-origin'});
+      if(!response.ok)throw new Error('Logout failed');
+      for(const store of ['sessions','outbox','archive'])for(const row of await all(store))await write(store,store==='outbox'?row.mutation_id:row.key,true);
+      localStorage.removeItem('basis-account');localStorage.removeItem('basis-timer');
+      channel.postMessage({type:'logout',account:scope});
+      location.assign(response.url);
+    } catch(_) { status('No se pudo cerrar la sesi\u00f3n. Tus registros locales se conservan; vuelve a intentarlo.'); }
   });
   addEventListener('online',sync);
   const channel=new BroadcastChannel('basis-auth');channel.onmessage=event=>{if(event.data?.type==='logout'&&event.data.account===scope)location.replace('/accounts/login/');};

@@ -23,7 +23,12 @@ from basis.shared.identifiers import (
     Revision,
 )
 
-from ..application.planning import AddCycle, ScheduleSession
+from ..application.planning import (
+    AddCycle,
+    CycleCreationContext,
+    ScheduleCreationContext,
+    ScheduleSession,
+)
 from ..domain.execution import BlockData, StrengthData
 from ..domain.planning import (
     CycleDefinition,
@@ -123,6 +128,10 @@ def save_prescription(parent: PlannedSession, data: tuple[BlockData, ...]) -> No
 
 
 class DjangoPlanRepository:
+    def goal_owner(self, goal: GoalId) -> AccountId | None:
+        owner = Goal.objects.filter(pk=goal).values_list("owner_id", flat=True).first()
+        return AccountId(owner) if owner is not None else None
+
     def snapshot(self, owner: AccountId, plan: PlanId, *, lock: bool) -> PlanSnapshot:
         query = TrainingPlan.objects.filter(owner_id=owner, pk=plan)
         row = (query.select_for_update() if lock else query).first()
@@ -200,6 +209,30 @@ class DjangoPlanRepository:
         values = {field.name: getattr(data, field.name) for field in fields(GoalData)}
         row = Goal.objects.create(owner_id=owner, **values)
         return GoalId(row.pk)
+
+    def cycle_context(self, command: AddCycle) -> CycleCreationContext:
+        plan = TrainingPlan.objects.get(pk=command.plan, owner_id=command.owner)
+        parent = (
+            Cycle.objects.get(pk=command.parent, plan__owner_id=command.owner)
+            if command.parent is not None
+            else None
+        )
+        return CycleCreationContext(
+            plan.start_date,
+            plan.end_date,
+            cycle_definition(parent) if parent is not None else None,
+            parent is None or parent.plan_id == plan.pk,
+            TrainingPlan.objects.filter(previous_id=plan.pk).exists(),
+        )
+
+    def schedule_context(self, command: ScheduleSession) -> ScheduleCreationContext:
+        plan = TrainingPlan.objects.get(pk=command.plan, owner_id=command.owner)
+        cycle = Cycle.objects.get(pk=command.cycle, plan__owner_id=command.owner)
+        return ScheduleCreationContext(
+            cycle_definition(cycle),
+            cycle.plan_id == plan.pk,
+            TrainingPlan.objects.filter(previous_id=plan.pk).exists(),
+        )
 
     def add_cycle(self, command: AddCycle) -> CycleId:
         plan = TrainingPlan.objects.get(pk=command.plan, owner_id=command.owner)

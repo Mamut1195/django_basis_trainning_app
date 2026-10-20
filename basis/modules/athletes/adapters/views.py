@@ -5,7 +5,13 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
-from basis.bootstrap.athletes import save_observation, save_preferences, save_profile, save_rm
+from basis.bootstrap.athletes import (
+    preferences_row,
+    save_observation,
+    save_preferences,
+    save_profile,
+    save_rm,
+)
 from basis.bootstrap.web_framework import owner, write_required
 
 from .forms import (
@@ -16,12 +22,12 @@ from .forms import (
     SportProfileForm,
     WellnessForm,
 )
-from .models import AthleteSettings, Measurement, SportProfile, User, UserExerciseRM, Wellness
+from .models import Measurement, SportProfile, User, UserExerciseRM, Wellness
 
 
 @login_required
 def profile(request: HttpRequest) -> HttpResponse:
-    preferences, _ = AthleteSettings.objects.get_or_create(owner=owner(request))
+    preferences = preferences_row(owner(request).pk)
     return render(
         request,
         "training/profile.html",
@@ -45,7 +51,7 @@ def profile_edit(request: HttpRequest) -> HttpResponse:
 
 @write_required
 def preferences_edit(request: HttpRequest) -> HttpResponse:
-    preferences, _ = AthleteSettings.objects.get_or_create(owner=owner(request))
+    preferences = preferences_row(owner(request).pk)
     form = PreferencesForm(request.POST or None, instance=preferences)
     if request.method == "POST" and form.is_valid():
         save_preferences(owner(request).pk, form.save(commit=False))

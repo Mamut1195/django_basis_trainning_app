@@ -7,4 +7,4 @@ COPY --chown=app:app . .
 USER app
 RUN DJANGO_DEBUG=1 python manage.py collectstatic --noinput
 EXPOSE 8000
-CMD ["gunicorn", "basis_trainning_app.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "40", "--access-logfile", "-", "--access-logformat", "%(m)s %(s)s %(L)s %(b)s", "--error-logfile", "-"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "40", "--access-logfile", "-", "--access-logformat", "%(m)s %(s)s %(L)s %(b)s", "--error-logfile", "-"]

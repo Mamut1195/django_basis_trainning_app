@@ -1,6 +1,7 @@
 """Owner-scoped persistence over typed athlete models."""
 
 from dataclasses import fields
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.db import models
 
@@ -15,6 +16,8 @@ from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.athletes.adapters.models import WorkoutData as WorkoutRow
 from basis.shared.identifiers import (
     AccountId,
+    AthleteId,
+    ExerciseId,
     MeasuredRMId,
     MeasurementId,
     SportProfileId,
@@ -25,6 +28,7 @@ from basis.shared.identifiers import (
 from ..domain.records import (
     AthleteUnavailable,
     MeasuredRMData,
+    MeasuredRMState,
     MeasurementData,
     PreferencesData,
     ProfileData,
@@ -32,6 +36,72 @@ from ..domain.records import (
     WellnessData,
     WorkoutData,
 )
+from ..domain.workouts import MeasuredReference, PreviousWorkout, WorkoutCalculation, WorkoutContext
+
+
+def workout_data(row: WorkoutRow) -> WorkoutData:
+    return WorkoutData(
+        ExerciseId(row.exercise_id),
+        row.fecha,
+        row.sets,
+        row.reps,
+        row.peso,
+        row.rpe_objetivo,
+        row.rpe_real,
+    )
+
+
+def measured_reference(row: UserExerciseRM | None) -> MeasuredReference | None:
+    if row is None:
+        return None
+    return MeasuredReference(
+        MeasuredRMId(row.pk),
+        AthleteId(row.user_id),
+        MeasuredRMData(ExerciseId(row.exercise_id), row.peso_maximo_rm, row.fecha_registro),
+    )
+
+
+def workout_context_for(
+    athlete: Athlete, data: WorkoutData, id: WorkoutId | None
+) -> WorkoutContext:
+    row = (
+        WorkoutRow.objects.select_for_update().filter(user=athlete, pk=id).first()
+        if id is not None
+        else None
+    )
+    if id is not None and row is None:
+        raise AthleteUnavailable
+    previous = (
+        PreviousWorkout(
+            AthleteId(row.user_id),
+            workout_data(row),
+            measured_reference(row.rm_referencia),
+            row.metrics_version,
+        )
+        if row is not None
+        else None
+    )
+    reference = (
+        UserExerciseRM.objects.filter(
+            user=athlete,
+            exercise_id=data.exercise,
+            fecha_registro__lte=data.fecha,
+            peso_maximo_rm__gt=0,
+        )
+        .order_by("-fecha_registro", "-pk")
+        .first()
+    )
+    return WorkoutContext(AthleteId(athlete.pk), previous, measured_reference(reference))
+
+
+def apply_calculation(row: WorkoutRow, calculation: WorkoutCalculation) -> None:
+    row.rm_referencia_id = calculation.reference
+    metrics = calculation.metrics
+    row.total_reps, row.carga = metrics.total_reps, metrics.load_kg_reps
+    row.intensidad_relativa = float(metrics.relative_intensity_percent or 0)
+    row.volumen_relativo = float(metrics.relative_volume or 0)
+    row.rm_sesion = float(metrics.estimated_1rm_kg or 0)
+    row.metrics_version = calculation.version
 
 
 def persist(row: models.Model) -> None:
@@ -56,7 +126,6 @@ def assign(
         if name == "availability":
             value = list(value)
         setattr(row, name, value)
-
 
 
 def profile_data(row: Athlete) -> ProfileData:
@@ -126,6 +195,39 @@ class DjangoAthleteRecords:
         row, _ = AthleteSettings.objects.get_or_create(owner_id=owner)
         return preferences_data(row)
 
+    def timezone_exists(self, name: str) -> bool:
+        try:
+            ZoneInfo(name)
+            return True
+        except (ZoneInfoNotFoundError, ValueError):
+            return False
+
+    def rm_context(
+        self, owner: AccountId, id: MeasuredRMId | None
+    ) -> tuple[AthleteId, MeasuredRMState | None]:
+        athlete = self.athlete(owner)
+        row = (
+            UserExerciseRM.objects.select_for_update().filter(user=athlete, pk=id).first()
+            if id is not None
+            else None
+        )
+        if id is not None and row is None:
+            raise AthleteUnavailable
+        previous = (
+            MeasuredRMState(
+                AthleteId(row.user_id),
+                MeasuredRMData(ExerciseId(row.exercise_id), row.peso_maximo_rm, row.fecha_registro),
+            )
+            if row is not None
+            else None
+        )
+        return AthleteId(athlete.pk), previous
+
+    def workout_context(
+        self, owner: AccountId, data: WorkoutData, id: WorkoutId | None
+    ) -> WorkoutContext:
+        return workout_context_for(self.athlete(owner), data, id)
+
     def save_preferences(self, owner: AccountId, data: PreferencesData) -> None:
         row, _ = AthleteSettings.objects.get_or_create(owner_id=owner)
         assign(row, data)
@@ -180,7 +282,13 @@ class DjangoAthleteRecords:
         persist(row)
         return MeasuredRMId(row.pk)
 
-    def save_workout(self, owner: AccountId, data: WorkoutData, id: WorkoutId | None) -> WorkoutId:
+    def save_workout(
+        self,
+        owner: AccountId,
+        data: WorkoutData,
+        id: WorkoutId | None,
+        calculation: WorkoutCalculation,
+    ) -> WorkoutId:
         athlete = self.athlete(owner)
         row = (
             WorkoutRow(user=athlete)
@@ -190,5 +298,6 @@ class DjangoAthleteRecords:
         if row is None:
             raise AthleteUnavailable
         assign(row, data)
+        apply_calculation(row, calculation)
         persist(row)
         return WorkoutId(row.pk)

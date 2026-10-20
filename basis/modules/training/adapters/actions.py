@@ -1,7 +1,6 @@
 """Django entry actions for execution, plan versions and progress."""
 
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.db import transaction
 
 from basis.bootstrap import planning
 from basis.bootstrap import progress as progress_application
@@ -16,7 +15,6 @@ def session_snapshot(session: Session) -> dict[str, object]:
 
 
 
-@transaction.atomic
 def start_session(owner: AbstractBaseUser, planned: PlannedSession) -> Session:
     try:
         state = execution.start(owner.pk, planned.pk)

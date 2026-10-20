@@ -5,6 +5,7 @@ from typing import Callable, Protocol
 
 from basis.shared.identifiers import (
     AccountId,
+    AthleteId,
     MeasuredRMId,
     MeasurementId,
     SportProfileId,
@@ -15,6 +16,7 @@ from basis.shared.ports import UnitOfWork
 
 from ..domain.records import (
     MeasuredRMData,
+    MeasuredRMState,
     MeasurementData,
     PreferencesData,
     ProfileData,
@@ -23,9 +25,17 @@ from ..domain.records import (
     WorkoutData,
     normalized_profile,
     require_adult,
+    require_unchanged_rm,
     validate_sport,
     validate_wellness,
 )
+from ..domain.workouts import (
+    WorkoutCalculation,
+    WorkoutContext,
+    require_positive_rm,
+    validate_preferences,
+)
+from .workouts import calculate_workout
 
 
 class WriteAuthorization(Protocol):
@@ -36,6 +46,13 @@ class AthleteRecords(Protocol):
     def profile(self, owner: AccountId) -> ProfileData: ...
     def save_profile(self, owner: AccountId, data: ProfileData) -> None: ...
     def preferences(self, owner: AccountId) -> PreferencesData: ...
+    def timezone_exists(self, name: str) -> bool: ...
+    def rm_context(
+        self, owner: AccountId, id: MeasuredRMId | None
+    ) -> tuple[AthleteId, MeasuredRMState | None]: ...
+    def workout_context(
+        self, owner: AccountId, data: WorkoutData, id: WorkoutId | None
+    ) -> WorkoutContext: ...
     def save_preferences(self, owner: AccountId, data: PreferencesData) -> None: ...
     def save_sport(
         self, owner: AccountId, data: SportData, id: SportProfileId | None
@@ -48,7 +65,11 @@ class AthleteRecords(Protocol):
         self, owner: AccountId, data: MeasuredRMData, id: MeasuredRMId | None
     ) -> MeasuredRMId: ...
     def save_workout(
-        self, owner: AccountId, data: WorkoutData, id: WorkoutId | None
+        self,
+        owner: AccountId,
+        data: WorkoutData,
+        id: WorkoutId | None,
+        calculation: WorkoutCalculation,
     ) -> WorkoutId: ...
 
 
@@ -111,7 +132,10 @@ class Athletes:
         return self.records.profile(owner)
 
     def preferences(self, owner: AccountId) -> PreferencesData:
-        return self.records.preferences(owner)
+        with self.uow() as work:
+            result = self.records.preferences(owner)
+            work.commit()
+            return result
 
     def edit_profile(self, command: EditProfile) -> None:
         with self.uow() as work:
@@ -123,6 +147,9 @@ class Athletes:
     def edit_preferences(self, command: EditPreferences) -> None:
         with self.uow() as work:
             self.authorization.require(command.owner)
+            validate_preferences(
+                command.data, self.records.timezone_exists(command.data.timezone_name)
+            )
             self.records.save_preferences(command.owner, command.data)
             work.commit()
 
@@ -152,6 +179,10 @@ class Athletes:
     def record_rm(self, command: RecordRM) -> MeasuredRMId:
         with self.uow() as work:
             self.authorization.require(command.owner)
+            athlete, previous = self.records.rm_context(command.owner, command.id)
+            require_positive_rm(command.data.peso_maximo_rm)
+            if previous is not None:
+                require_unchanged_rm(previous, MeasuredRMState(athlete, command.data))
             result = self.records.save_rm(command.owner, command.data, command.id)
             work.commit()
             return result
@@ -159,6 +190,8 @@ class Athletes:
     def record_workout(self, command: RecordWorkout) -> WorkoutId:
         with self.uow() as work:
             self.authorization.require(command.owner)
-            result = self.records.save_workout(command.owner, command.data, command.id)
+            context = self.records.workout_context(command.owner, command.data, command.id)
+            calculation = calculate_workout(command.data, context)
+            result = self.records.save_workout(command.owner, command.data, command.id, calculation)
             work.commit()
             return result

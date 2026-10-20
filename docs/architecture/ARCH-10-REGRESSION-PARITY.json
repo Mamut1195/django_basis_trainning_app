@@ -1,0 +1,76 @@
+{
+  "status": "VERIFIED",
+  "scenarios": 111,
+  "files": [
+    {
+      "file": "tests/regression/test_billing_ai.py",
+      "scenario_count": 15,
+      "names_preserved": true,
+      "prior_assertion_calls": 53,
+      "current_assertion_calls": 53
+    },
+    {
+      "file": "tests/regression/test_concurrency.py",
+      "scenario_count": 3,
+      "names_preserved": true,
+      "prior_assertion_calls": 7,
+      "current_assertion_calls": 7
+    },
+    {
+      "file": "tests/regression/test_domain.py",
+      "scenario_count": 11,
+      "names_preserved": true,
+      "prior_assertion_calls": 41,
+      "current_assertion_calls": 41
+    },
+    {
+      "file": "tests/regression/test_environment_verifier.py",
+      "scenario_count": 7,
+      "names_preserved": true,
+      "prior_assertion_calls": 37,
+      "current_assertion_calls": 37
+    },
+    {
+      "file": "tests/regression/test_private_access.py",
+      "scenario_count": 14,
+      "names_preserved": true,
+      "prior_assertion_calls": 48,
+      "current_assertion_calls": 48
+    },
+    {
+      "file": "tests/regression/test_review_and_edits.py",
+      "scenario_count": 6,
+      "names_preserved": true,
+      "prior_assertion_calls": 11,
+      "current_assertion_calls": 11
+    },
+    {
+      "file": "tests/regression/test_security.py",
+      "scenario_count": 9,
+      "names_preserved": true,
+      "prior_assertion_calls": 27,
+      "current_assertion_calls": 27
+    },
+    {
+      "file": "tests/regression/test_strength_metrics.py",
+      "scenario_count": 32,
+      "names_preserved": true,
+      "prior_assertion_calls": 120,
+      "current_assertion_calls": 120
+    },
+    {
+      "file": "tests/regression/test_training_contract.py",
+      "scenario_count": 6,
+      "names_preserved": true,
+      "prior_assertion_calls": 90,
+      "current_assertion_calls": 90
+    },
+    {
+      "file": "tests/regression/test_web.py",
+      "scenario_count": 8,
+      "names_preserved": true,
+      "prior_assertion_calls": 26,
+      "current_assertion_calls": 26
+    }
+  ]
+}

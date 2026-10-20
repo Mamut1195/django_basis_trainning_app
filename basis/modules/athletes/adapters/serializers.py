@@ -11,6 +11,7 @@ from rest_framework.request import Request
 
 from basis.bootstrap.api_fields import exercise_field, exercise_reference
 from basis.bootstrap.athletes import write_legacy_rm, write_legacy_workout
+from basis.modules.athletes.public import InvalidAthleteData, require_positive_rm
 from basis.modules.training.public import METRICS_VERSION
 
 from .models import User, UserExerciseRM, WorkoutData
@@ -126,8 +127,10 @@ class UserExerciseRMSerializer(OwnedRecordSerializer[UserExerciseRM]):
         ]
 
     def validate_peso_maximo_rm(self, value: Decimal) -> Decimal:
-        if value <= 0:
-            raise serializers.ValidationError("El 1RM debe ser mayor a 0.")
+        try:
+            require_positive_rm(value)
+        except InvalidAthleteData as error:
+            raise serializers.ValidationError(str(error)) from error
         return value
 
 

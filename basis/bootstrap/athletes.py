@@ -1,6 +1,10 @@
 """Athlete composition and typed Django form/serializer input bindings."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from functools import wraps
+from typing import ParamSpec, TypeVar
+
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 
 from basis.bootstrap.billing import write_authorization
 from basis.bootstrap.transactions import DjangoUnitOfWork
@@ -24,6 +28,8 @@ from basis.modules.athletes.public import (
     Athletes,
     EditPreferences,
     EditProfile,
+    InvalidAthleteData,
+    InvalidAthleteField,
     MeasuredRMData,
     MeasurementData,
     RecordMeasurement,
@@ -33,6 +39,7 @@ from basis.modules.athletes.public import (
     RecordWorkout,
     WorkoutData,
 )
+from basis.modules.training.public import MetricsInputError
 from basis.shared.identifiers import (
     AccountId,
     ExerciseId,
@@ -42,19 +49,46 @@ from basis.shared.identifiers import (
     WorkoutId,
 )
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def translate_errors(function: Callable[P, R]) -> Callable[P, R]:
+    @wraps(function)
+    def wrapped(*args: P.args, **kwargs: P.kwargs) -> R:
+        try:
+            return function(*args, **kwargs)
+        except InvalidAthleteField as error:
+            raise ValidationError({error.field: str(error)}) from error
+        except InvalidAthleteData as error:
+            raise ValidationError(str(error)) from error
+        except MetricsInputError as error:
+            field = NON_FIELD_ERRORS if error.field in WorkoutRow.METRIC_FIELDS else error.field
+            raise ValidationError({field: f"{error.field}: {error}"}) from error
+
+    return wrapped
+
+
+def preferences_row(owner: int) -> AthleteSettings:
+    athletes().preferences(AccountId(owner))
+    return AthleteSettings.objects.get(owner_id=owner)
+
 
 def athletes() -> Athletes:
     return Athletes(DjangoAthleteRecords(), write_authorization(), DjangoUnitOfWork)
 
 
+@translate_errors
 def save_profile(owner: int, row: Athlete) -> None:
     athletes().edit_profile(EditProfile(AccountId(owner), profile_data(row)))
 
 
+@translate_errors
 def save_preferences(owner: int, row: AthleteSettings) -> None:
     athletes().edit_preferences(EditPreferences(AccountId(owner), preferences_data(row)))
 
 
+@translate_errors
 def save_observation(owner: int, row: SportProfile | Wellness | Measurement) -> None:
     service, account = athletes(), AccountId(owner)
     if isinstance(row, SportProfile):
@@ -75,6 +109,7 @@ def save_observation(owner: int, row: SportProfile | Wellness | Measurement) -> 
         )
 
 
+@translate_errors
 def save_rm(owner: int, row: UserExerciseRM) -> None:
     row.pk = athletes().record_rm(
         RecordRM(
@@ -84,6 +119,7 @@ def save_rm(owner: int, row: UserExerciseRM) -> None:
     )
 
 
+@translate_errors
 def write_legacy_rm(
     owner: int, values: Mapping[str, object], row: UserExerciseRM | None = None
 ) -> UserExerciseRM:
@@ -104,6 +140,7 @@ def write_legacy_rm(
     return UserExerciseRM.objects.get(pk=id)
 
 
+@translate_errors
 def write_legacy_workout(
     owner: int, values: Mapping[str, object], row: WorkoutRow | None = None
 ) -> WorkoutRow:

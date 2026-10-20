@@ -54,7 +54,7 @@ def violations(source: str, module: str, is_package: bool = False) -> list[str]:
     for line, target in import_targets(tree, module, is_package):
         dest = target.split(".")
         reason: str | None = None
-        if dest[0] in ("daily_trainning_app", "training"):
+        if dest[0] in ("daily_trainning_app", "training", "basis_trainning_app"):
             reason = "legacy runtime imports are forbidden"
         elif core and dest[0] in INFRASTRUCTURE_STDLIB:
             reason = "core imports HTTP, configuration or persistence infrastructure"
@@ -83,6 +83,37 @@ def violations(source: str, module: str, is_package: bool = False) -> list[str]:
             reason = "dynamic import helpers are forbidden in core"
         if reason:
             errors.append(f"{module}:{line}: {reason}: {target}")
+    if layer == "adapters" and parts[-1] == "views":
+        model_names = {
+            alias.asname or alias.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom) and node.module
+            and (node.module == "models" or node.module.endswith(".models"))
+            for alias in node.names
+        }
+        def root_name(node: ast.AST) -> str | None:
+            if isinstance(node, ast.Name):
+                return node.id
+            if isinstance(node, ast.Attribute):
+                return root_name(node.value)
+            if isinstance(node, ast.Call):
+                return root_name(node.func)
+            return None
+        for line, target in import_targets(tree, module, is_package):
+            if target == "django.db.transaction" or target.startswith("django.db.transaction."):
+                errors.append(f"{module}:{line}: web views must delegate transactions to application cases")
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+                continue
+            method = node.func.attr
+            form_binding = method == "save" and any(
+                kw.arg == "commit" and isinstance(kw.value, ast.Constant) and kw.value.value is False
+                for kw in node.keywords
+            )
+            direct_save = method == "save" and not form_binding
+            direct_mutation = method in {"create", "get_or_create", "update_or_create", "update", "delete", "bulk_create", "bulk_update"} and root_name(node.func.value) in model_names
+            if direct_save or direct_mutation:
+                errors.append(f"{module}:{node.lineno}: web views must delegate persistence to typed application cases")
     if core:
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
@@ -163,16 +194,18 @@ def inventory_errors(root: Path) -> list[str]:
 def final_layout_errors(root: Path) -> list[str]:
     """ADR-002 final runtime layout; historical tests are not installed apps."""
     errors: list[str] = []
-    for path in sorted((root / "daily_trainning_app").rglob("*.py")):
-        errors.append(f"Retired daily application source remains: {path.relative_to(root)}")
+    for package in ("daily_trainning_app", "basis_trainning_app"):
+        for path in sorted((root / package).rglob("*.py")):
+            errors.append(f"Retired application/configuration source remains: {path.relative_to(root)}")
+    for filename in ("__init__.py", "settings.py", "test_settings.py", "urls.py", "asgi.py", "wsgi.py"):
+        if not (root / "config" / filename).is_file():
+            errors.append(f"Required configuration entry point missing: config/{filename}")
     for path in sorted((root / "training").rglob("*.py")):
-        relative = path.relative_to(root / "training")
-        if relative.parts[0] != "tests" and relative.as_posix() != "__init__.py":
-            errors.append(f"Retired training runtime source remains: {path.relative_to(root)}")
-    for path in sorted((root / "basis_trainning_app").glob("*.py")):
+        errors.append(f"Retired training source namespace remains: {path.relative_to(root)}")
+    for path in sorted((root / "config").glob("*.py")):
         for line, target in import_targets(ast.parse(path.read_text(encoding="utf-8")),
-                                           "basis_trainning_app." + path.stem, False):
-            if target.split(".")[0] in ("daily_trainning_app", "training"):
+                                           "config." + path.stem, False):
+            if target.split(".")[0] in ("daily_trainning_app", "training", "basis_trainning_app"):
                 errors.append(f"Project configuration imports retired runtime: {path.name}:{line}")
     return errors
 

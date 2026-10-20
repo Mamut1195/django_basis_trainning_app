@@ -17,7 +17,7 @@ jobs:
           --health-cmd "pg_isready -U postgres"
           --health-interval 10s --health-timeout 5s --health-retries 5
     env:
-      DJANGO_SETTINGS_MODULE: basis_trainning_app.test_settings
+      DJANGO_SETTINGS_MODULE: config.test_settings
       DATABASE_URL: postgresql://postgres:test-only@127.0.0.1:5432/basis
     steps:
       - uses: actions/checkout@v7
@@ -37,5 +37,5 @@ jobs:
       - run: lint-imports
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
-      - run: python manage.py test training.tests basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
+      - run: python manage.py test tests.regression basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
       - run: python manage.py collectstatic --noinput

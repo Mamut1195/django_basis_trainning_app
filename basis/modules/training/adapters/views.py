@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from typing import cast
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,6 +12,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from basis.bootstrap import presentation
+from basis.bootstrap.manual_training import manual_training
 from basis.bootstrap.planning import (
     reschedule,
     save_cycle,
@@ -22,10 +21,11 @@ from basis.bootstrap.planning import (
     save_scheduled,
 )
 from basis.bootstrap.progress import save_stage, save_trip
-from basis.bootstrap.training import edit_revision
 from basis.bootstrap.web_framework import Conflict, owner, public_id, sync_session, write_required
-from basis.modules.training.public import ExecutionConflict
+from basis.shared.identifiers import AccountId, PlannedSessionId, SessionId
 
+from ..domain.manual import EmptyPrescription, SessionParent
+from . import manual_actions as mutations
 from .actions import progress_report, revise_plan, session_snapshot, start_session, trip_summary
 from .forms import (
     BlockForm,
@@ -50,7 +50,6 @@ from .models import (
     TrainingPlan,
     TrekTrip,
 )
-from .wire import encode_session
 
 
 @login_required
@@ -159,7 +158,9 @@ def scheduled_detail(request: HttpRequest, pk: int) -> HttpResponse:
 @require_POST
 def scheduled_start(request: HttpRequest, pk: int) -> HttpResponse:
     planned = get_object_or_404(PlannedSession, pk=pk, owner=owner(request))
-    if not planned.blocks.exists():
+    try:
+        manual_training().start_preflight(AccountId(owner(request).pk), PlannedSessionId(planned.pk))
+    except EmptyPrescription:
         messages.error(request, "Añade al menos un bloque antes de comenzar.")
         return redirect("scheduled-detail", pk=pk)
     return redirect("session-detail", pk=start_session(owner(request), planned).pk)
@@ -198,12 +199,11 @@ def session_new(request: HttpRequest) -> HttpResponse:
     form = SessionForm(request.POST or None)
     block_form = BlockForm(request.POST or None, prefix="block")
     if request.method == "POST" and form.is_valid() and block_form.is_valid():
-        with transaction.atomic():
-            session = form.save(commit=False)
-            session.owner = owner(request)
-            session.save()
-            Block.objects.create(session=session, **block_form.cleaned_data)
-        return redirect("session-detail", pk=session.pk)
+        session_id = mutations.create_session(
+            owner(request).pk, form.save(commit=False),
+            block_form.cleaned_data["sport"], block_form.cleaned_data["title"],
+        )
+        return redirect("session-detail", pk=session_id)
     return render(
         request,
         "training/form.html",
@@ -232,7 +232,8 @@ def session_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
 
 @write_required
 def session_edit(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
-    session = get_object_or_404(Session, pk=pk, owner=owner(request), status="in_progress")
+    mutations.inspect_metadata(owner(request).pk, SessionParent(SessionId(pk)))
+    session = get_object_or_404(Session, pk=pk, owner=owner(request))
     form = SessionForm(request.POST or None, instance=session)
     if request.method == "POST" and form.is_valid():
         snapshot = session_snapshot(session)
@@ -256,25 +257,11 @@ def session_edit(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
 def get_parent(
     request: HttpRequest, kind: str, pk: int | str | uuid.UUID | None
 ) -> Session | PlannedSession:
-    from django.http import Http404
-
-    if kind not in ("session", "planned"):
-        raise Http404
-    try:
-        parent: Session | PlannedSession
-        if kind == "session":
-            parent = get_object_or_404(Session, pk=str(pk), owner=owner(request))
-        else:
-            parent = get_object_or_404(PlannedSession, pk=str(pk), owner=owner(request))
-    except (ValueError, ValidationError):
-        raise Http404 from None
-    if isinstance(parent, Session) and parent.status == "completed":
-        raise ValidationError("Esta ejecución está completada y se conserva como historial.")
-    if isinstance(parent, PlannedSession) and (
-        parent.executions.exists() or TrainingPlan.objects.filter(previous=parent.plan).exists()
-    ):
-        raise ValidationError("Crea otra versión del plan para cambiar la prescripción.")
-    return parent
+    ref = mutations.parse_parent(kind, pk)
+    mutations.inspect_parent(owner(request).pk, ref)
+    if isinstance(ref, SessionParent):
+        return get_object_or_404(Session, pk=ref.id, owner=owner(request))
+    return get_object_or_404(PlannedSession, pk=ref.id, owner=owner(request))
 
 
 def block_redirect(block: Block) -> HttpResponse:
@@ -282,30 +269,6 @@ def block_redirect(block: Block) -> HttpResponse:
         "session-detail" if block.session_id else "scheduled-detail",
         pk=block.session_id or block.planned_id,
     )
-
-
-def touch_parent(parent: Session | PlannedSession, expected: object) -> None:
-    current: Session | PlannedSession
-    if isinstance(parent, Session):
-        current = Session.objects.select_for_update().get(pk=parent.pk)
-    else:
-        current = PlannedSession.objects.select_for_update().get(pk=parent.pk)
-    try:
-        expected_revision = int(cast(str | int, expected))
-    except (TypeError, ValueError):
-        raise ValidationError("Recarga la página antes de guardar.") from None
-    if isinstance(current, Session):
-        try:
-            current.revision = edit_revision(current, expected_revision)
-        except ExecutionConflict as exc:
-            if exc.current.revision == expected_revision:
-                raise ValidationError("La sesión ya se completó.") from None
-            raise Conflict(encode_session(exc.current)) from None
-    else:
-        if current.revision != expected_revision:
-            raise Conflict(None)
-        current.revision += 1
-    current.save()
 
 
 @write_required
@@ -320,14 +283,12 @@ def set_edit(request: HttpRequest, pk: int) -> HttpResponse:
         request, "session" if block.session_id else "planned", block.session_id or block.planned_id
     )
     form = StrengthSetForm(request.POST or None, instance=row, block=block)
-    if block.session is not None and block.session.planned_id:
-        for key, field in form.fields.items():
-            if key.startswith("target_") or key in ("exercise", "rest_seconds", "rm_reference"):
-                field.disabled = True
+    for key in mutations.edit_form_policy(owner(request).pk, parent).strength_read_only:
+        if key in form.fields:
+            form.fields[key].disabled = True
     if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            touch_parent(parent, request.POST.get("revision"))
-            form.save()
+        mutations.save_strength(owner(request).pk, form.save(commit=False),
+                                request.POST.get("revision"), creating=False)
         return block_redirect(block)
     return render(
         request,
@@ -352,15 +313,12 @@ def interval_edit(request: HttpRequest, pk: int) -> HttpResponse:
     metrics = MetricsForm(
         request.POST or None, sport=block.sport, initial=getattr(row, attr), prefix="metrics"
     )
-    if block.session is not None and block.session.planned_id:
-        for key in ("repetitions", "rest_seconds", "target_rpe"):
-            form.fields[key].disabled = True
+    for key in mutations.edit_form_policy(owner(request).pk, parent).interval_read_only:
+        form.fields[key].disabled = True
     if request.method == "POST" and form.is_valid() and metrics.is_valid():
-        with transaction.atomic():
-            touch_parent(parent, request.POST.get("revision"))
-            row = form.save(commit=False)
-            setattr(row, attr, metrics.cleaned_data)
-            row.save()
+        row = form.save(commit=False)
+        setattr(row, attr, metrics.cleaned_data)
+        mutations.save_interval(owner(request).pk, row, request.POST.get("revision"), creating=False)
         return block_redirect(block)
     return render(
         request,
@@ -379,13 +337,9 @@ def block_new(request: HttpRequest, kind: str, pk: int | str | uuid.UUID | None)
     parent = get_parent(request, kind, pk)
     form = BlockForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            touch_parent(parent, request.POST.get("revision"))
-            relation = {"session": parent} if kind == "session" else {"planned": parent}
-            block = Block.objects.create(
-                **relation, order=parent.blocks.count() + 1, **form.cleaned_data
-            )
-        return block_redirect(block)
+        block_id = mutations.add_block(owner(request).pk, parent, request.POST.get("revision"),
+                                       form.cleaned_data["sport"], form.cleaned_data["title"])
+        return block_redirect(get_object_or_404(Block, pk=block_id))
     return render(
         request,
         "training/form.html",
@@ -410,10 +364,7 @@ def block_metrics(request: HttpRequest, pk: int) -> HttpResponse:
     attr = "actual" if block.session_id else "target"
     form = MetricsForm(request.POST or None, sport=block.sport, initial=getattr(block, attr))
     if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            touch_parent(parent, request.POST.get("revision"))
-            setattr(block, attr, form.cleaned_data)
-            block.save()
+        mutations.save_metrics(owner(request).pk, block, request.POST.get("revision"), form.cleaned_data)
         return block_redirect(block)
     return render(
         request,
@@ -435,11 +386,8 @@ def set_new(request: HttpRequest, pk: int) -> HttpResponse:
     )
     form = StrengthSetForm(request.POST or None, block=block)
     if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            touch_parent(parent, request.POST.get("revision"))
-            row = form.save(commit=False)
-            row.order = block.sets.count() + 1
-            row.save()
+        mutations.save_strength(owner(request).pk, form.save(commit=False),
+                                request.POST.get("revision"), creating=True)
         return block_redirect(block)
     return render(
         request,
@@ -467,13 +415,10 @@ def interval_new(request: HttpRequest, pk: int) -> HttpResponse:
         and target.is_valid()
         and (not actual or actual.is_valid())
     ):
-        with transaction.atomic():
-            touch_parent(parent, request.POST.get("revision"))
-            row = form.save(commit=False)
-            row.order = block.intervals.count() + 1
-            row.target = target.cleaned_data
-            row.actual = actual.cleaned_data if actual else {}
-            row.save()
+        row = form.save(commit=False)
+        row.target = target.cleaned_data
+        row.actual = actual.cleaned_data if actual else {}
+        mutations.save_interval(owner(request).pk, row, request.POST.get("revision"), creating=True)
         return block_redirect(block)
     return render(
         request,

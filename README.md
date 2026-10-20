@@ -2,6 +2,8 @@
 
 PWA de entrenamiento para cuentas individuales privadas. Django 5.2 LTS sirve la interfaz y la API; Django Cotton UI, HTMX y Alpine proporcionan los componentes e interacciones. PostgreSQL es obligatorio en producción. No usa OpenDesign.
 
+La arquitectura actual se organiza en `config/`, `basis/modules/<area>/{domain,application,adapters}`, contratos `public.py`, `basis/bootstrap/` y `basis/shared/`. Las pruebas originales están en `tests/regression/`. Consulta la [estructura y estado de aceptación](docs/ARCHITECTURE.md) y el [mapa de entradas y casos de uso](docs/architecture/ENTRYPOINTS.md). ARCH-09 está reabierto para verificar e integrar sus correcciones; la épica aún no está cerrada.
+
 ## Funcionalidad implementada
 
 - Registro de adultos, verificación por correo, acceso y recuperación de contraseña.
@@ -76,8 +78,8 @@ Programa respaldos fuera de este servidor y prueba su restauración. Los archivo
 ## Verificación
 
 ```powershell
-$env:DJANGO_SETTINGS_MODULE = 'basis_trainning_app.test_settings'
-.venv-win/Scripts/python.exe manage.py test training.tests basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
+$env:DJANGO_SETTINGS_MODULE = 'config.test_settings'
+.venv-win/Scripts/python.exe manage.py test tests.regression basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
 .venv-win/Scripts/python.exe manage.py makemigrations --check --dry-run
 .venv-win/Scripts/python.exe -m unittest discover -s tests_architecture
 .venv-win/Scripts/python.exe -m mypy --config-file mypy-core.ini

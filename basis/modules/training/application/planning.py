@@ -1,6 +1,6 @@
 """Planning coordination through concrete ports and explicit units of work."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Callable, Protocol
 
@@ -15,10 +15,14 @@ from ..domain.planning import (
     PlanSnapshot,
     ScheduledDefinition,
     ScheduledState,
+    require_current_plan,
+    require_plan_ownership,
     require_reschedulable,
     revision_definition,
+    validate_cycle,
     validate_definition,
     validate_goal,
+    validate_schedule,
 )
 from .execution import WriteAuthorization
 
@@ -66,13 +70,32 @@ class RescheduleSession:
     revision: Revision
 
 
+@dataclass(frozen=True)
+class CycleCreationContext:
+    plan_start: date
+    plan_end: date
+    parent: CycleDefinition | None
+    same_plan: bool
+    has_successor: bool = False
+
+
+@dataclass(frozen=True)
+class ScheduleCreationContext:
+    cycle: CycleDefinition
+    same_plan: bool
+    has_successor: bool = False
+
+
 class PlanRepository(Protocol):
+    def goal_owner(self, goal: GoalId) -> AccountId | None: ...
     def snapshot(self, owner: AccountId, plan: PlanId, *, lock: bool) -> PlanSnapshot: ...
     def create(
         self, owner: AccountId, data: PlanDefinition, previous: PlanHeader | None
     ) -> PlanHeader: ...
     def save_goal(self, owner: AccountId, data: GoalData) -> GoalId: ...
+    def cycle_context(self, command: AddCycle) -> CycleCreationContext: ...
     def add_cycle(self, command: AddCycle) -> CycleId: ...
+    def schedule_context(self, command: ScheduleSession) -> ScheduleCreationContext: ...
     def schedule(self, command: ScheduleSession) -> PlannedSessionId: ...
     def scheduled(
         self, owner: AccountId, id: PlannedSessionId, *, lock: bool
@@ -96,23 +119,29 @@ class Planning:
             clock,
         )
 
+    def _create_validated(self, command: CreatePlan) -> PlanHeader:
+        previous = (
+            self.repository.snapshot(command.owner, command.previous, lock=False).header
+            if command.previous is not None
+            else None
+        )
+        validate_definition(command.definition)
+        require_plan_ownership(
+            command.owner, self.repository.goal_owner(command.definition.goal), previous
+        )
+        return self.repository.create(command.owner, command.definition, previous)
+
     def create(self, command: CreatePlan) -> PlanHeader:
-        # Creation is also used by rollback-only AI validation. Entry adapters retain
-        # existing write-access checks; persistence always scopes goal/previous to owner.
         with self.uow() as work:
-            previous = (
-                self.repository.snapshot(command.owner, command.previous, lock=False).header
-                if command.previous is not None
-                else None
-            )
-            validate_definition(command.definition)
-            result = self.repository.create(command.owner, command.definition, previous)
+            self.authorization.require(command.owner)
+            result = self._create_validated(command)
             work.commit()
             return result
 
     def preview(self, command: CreatePlan) -> None:
+        # Validation deliberately has no commercial guard and never commits.
         with self.uow():
-            self.create(command)
+            self._create_validated(command)
 
     def revise(self, command: RevisePlan) -> PlanHeader:
         with self.uow() as work:
@@ -135,6 +164,18 @@ class Planning:
     def add_cycle(self, command: AddCycle) -> CycleId:
         with self.uow() as work:
             self.authorization.require(command.owner)
+            context = self.repository.cycle_context(command)
+            require_current_plan(context.has_successor)
+            data = replace(
+                command.data, parent=context.parent.key if context.parent is not None else None
+            )
+            validate_cycle(
+                data,
+                context.plan_start,
+                context.plan_end,
+                context.parent,
+                same_plan=context.same_plan,
+            )
             result = self.repository.add_cycle(command)
             work.commit()
             return result
@@ -142,6 +183,9 @@ class Planning:
     def schedule(self, command: ScheduleSession) -> PlannedSessionId:
         with self.uow() as work:
             self.authorization.require(command.owner)
+            context = self.repository.schedule_context(command)
+            require_current_plan(context.has_successor)
+            validate_schedule(command.data, context.cycle, same_plan=context.same_plan)
             result = self.repository.schedule(command)
             work.commit()
             return result
@@ -151,6 +195,7 @@ class Planning:
             self.authorization.require(command.owner)
             current = self.repository.scheduled(command.owner, command.session, lock=True)
             require_reschedulable(current, command.revision)
+            validate_schedule(replace(current.definition, date=command.date), current.cycle)
             result = self.repository.reschedule(current, command.date)
             work.commit()
             return result

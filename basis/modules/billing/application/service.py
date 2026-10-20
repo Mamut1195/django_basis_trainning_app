@@ -72,6 +72,17 @@ class Billing:
             raise VerificationRequired("Verifica tu correo antes de iniciar la prueba.")
         return profile
 
+    def mark_pending(self, command: OwnerBilling) -> None:
+        with self.uow_factory() as work:
+            self.repository.mark_pending(command.owner)
+            work.commit()
+
+    def ensure(self, command: OwnerBilling) -> BillingState:
+        with self.uow_factory() as work:
+            result = self.repository.lock(command.owner)
+            work.commit()
+            return result
+
     def checkout(self, command: Checkout) -> str:
         with self.uow_factory() as uow:
             profile = self.profile(command.owner)

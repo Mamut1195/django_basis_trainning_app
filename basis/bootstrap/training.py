@@ -8,9 +8,7 @@ from basis.bootstrap.transactions import DjangoClock, DjangoUnitOfWork
 from basis.modules.training.adapters.django import (
     DjangoSessionRepository,
     UUIDSessionIds,
-    session_state,
 )
-from basis.modules.training.adapters.models import Session
 from basis.modules.training.adapters.wire import decode_record, encode_session
 from basis.modules.training.public import (
     ReadSession,
@@ -18,7 +16,6 @@ from basis.modules.training.public import (
     SessionState,
     StartSession,
     Training,
-    require_editable,
 )
 from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
 
@@ -50,8 +47,3 @@ def record(owner: int, payload: Mapping[str, object]) -> dict[str, object]:
     return encode_session(
         training().record_from(mutation, lambda: decode_record(AccountId(owner), payload).changes)
     )
-
-
-def edit_revision(row: Session, expected: int) -> int:
-    current = session_state(row)
-    return int(require_editable(current, current.owner, Revision(expected)))

@@ -1,23 +1,7 @@
 {
   "baseline_commit": "08dcd020ad9e7ae2809b4a2376c8ae4cddd6b36e",
   "files": [
-    "manage.py",
     "scripts/backup_db.py",
-    "scripts/browser_smoke.py",
-    "scripts/verify_environment.py",
-    "seed.py",
-    "training/__init__.py",
-    "training/tests/__init__.py",
-    "training/tests/factories.py",
-    "training/tests/test_billing_ai.py",
-    "training/tests/test_concurrency.py",
-    "training/tests/test_domain.py",
-    "training/tests/test_environment_verifier.py",
-    "training/tests/test_private_access.py",
-    "training/tests/test_review_and_edits.py",
-    "training/tests/test_security.py",
-    "training/tests/test_strength_metrics.py",
-    "training/tests/test_training_contract.py",
-    "training/tests/test_web.py"
+    "seed.py"
   ]
 }

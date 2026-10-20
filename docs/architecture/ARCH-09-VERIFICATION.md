@@ -23,3 +23,8 @@ NOT RUN: ARCH-09 Docker PostgreSQL and scoped Git/main integration. Docker CLI c
 Remote CI, browser/device offline and real providers: NOT RUN. No paid/network provider calls. User seed.py and manage.py stay outside the manifest. Original databases are untouched; new initial migrations target empty test/development databases under ADR-002.
 
 The local source directory may retain ignored compiled caches for the retired application; it has no Python source or registered AppConfig. Automatic approval review rejected recursive cache-directory cleanup; no bypass or alternative deletion was attempted. Tracked source deletion is independently checked and is the repository acceptance criterion.
+
+
+## Independent main readback
+
+VERIFIED main/337f12d8d6b78d52c77c3e7e821ab2af1351cdc8, parent24f98532112230640e8a5346dad5e55dcb52627e; run d98c1c2dddfc4774abf395d83f19daa9. Actual PostgreSQL logs224/OK/no skips, all gate exit codes zero and owned container stopped. The170 committed manifest files and61 absent retired paths are independently checked, including all normalized receipt/HEAD hashes. Completion initially stopped on surplus EOF newline in api.py. Only that newline was removed; identical AST and original/current hashes are explicitly recorded in post_verification_corrections; original PostgreSQL receipt retained. No new PostgreSQL execution was claimed for the formatting correction. Exact-state continuation verified working/index/HEAD before and after scoped commit/ff main. MAM-830 Done. Only seed.py168/56 and manage.py mode remain outside integration.

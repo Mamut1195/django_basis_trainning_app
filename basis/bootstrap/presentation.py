@@ -9,7 +9,7 @@ from basis.modules.coach.adapters.presentation import DjangoCoachPresentation
 from basis.modules.coach.public import CoachPresentation, UsageSummary
 from basis.modules.training.adapters.presentation import DjangoTrainingPresentation
 from basis.modules.training.public import PlanChoice, TrainingPresentation
-from basis.shared.identifiers import AccountId, GoalId
+from basis.shared.identifiers import AccountId, ExerciseId, GoalId
 
 
 def athlete_reads() -> AthletePresentation:
@@ -47,3 +47,8 @@ def progress_history(owner: int) -> dict[str, object]:
         "wellness_records": result.wellness_records,
         "measurements": result.measurements,
     }
+
+
+def exercise_fatigue(exercise: int | None) -> str:
+    value = DjangoExerciseNames().fatigue(ExerciseId(exercise)) if exercise is not None else None
+    return value if value is not None else "No asignado"

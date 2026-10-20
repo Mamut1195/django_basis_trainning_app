@@ -4,7 +4,7 @@ Finish the strict typed hexagonal Django/PostgreSQL monolith before functional a
 
 # Context
 
-ARCH-01..08 are integrated. Current main24f98532112230640e8a5346dad5e55dcb52627e,218 PostgreSQL/no skips; run fe03da62e81f444facf4eadf1baf0b70, stopped container,31 manifest paths and normalized tree/HEAD hashes verified. MAM-829 Done. The repeated Complete-Arch08 error is its correct reviewed-base guard, not an integration failure. ARCH-09/MAM-830 In Progress, ARCH-10/MAM-831 Backlog. Preserve user seed.py edits and manage.py mode.
+ARCH-01..08 are integrated. Current main337f12d8d6b78d52c77c3e7e821ab2af1351cdc8 contains the structural ARCH-09 delivery, verified224 PostgreSQL/no skips. ARCH-09/MAM-830 was reopened after the user and source audit identified remaining business writes in web/admin, validation deferred to persistence and old configuration naming. The new remediation is a separate candidate; prior PostgreSQL evidence does not certify its bytes. ARCH-10/MAM-831 is In Progress for acceptance, not complete. Preserve user seed.py edits and manage.py working-tree mode; manage.py content is now in scope to activate config.
 
 # Constraints
 
@@ -12,14 +12,14 @@ Domain/application independent of Django/providers/HTTP/ORM. Cross-module public
 
 # Affected areas
 
-ARCH-09:28 models across seven module adapters, initial migrations/AppConfigs, forms/views/API/admin/commands, final public read contracts and typed composition. Unregistered training/tests preserves baseline scenarios; all production basis/project configuration is strict. Old runtime/model/migration sources and temporary typed bridges retire. See architecture/ARCH-09-PLAN.md.
+ARCH-09 remediation:28 models across seven module adapters, initial migrations/AppConfigs, actual typed web/admin/command cases, pure policies and concrete public read projections. config owns settings/URLs/ASGI/WSGI. tests/regression preserves all111 baseline scenarios under strict typing; old training source is retired. See architecture/ARCH-10-PLAN.md, architecture/ARCH-10-AUDIT.md and architecture/ENTRYPOINTS.md for the approved corrections and evidence.
 
 # Implementation steps
 
 1. Three authorized executors implement disjoint persistence, web and operational bindings. Primary orchestrates/reviews/public exports/configuration/evidence, not business implementation.
 2. Verify pure and real repository/transaction/model contracts, owner/CSRF/web compatibility, all baseline test scenarios, unchanged offline assets and stable external export tags. Fresh initial migrations and final content types/permissions must work on empty DBs.
 3. Independently freeze/check strict core+Django/DRF typing, AST/public/inventory and import contracts, Ruff, Django/no drift/static and SQLite regression. Publish exact manifest including deletions and actual counts/evidence.
-4. External Complete-Arch09 verifies fresh disposable Docker PostgreSQL/all races with zero skips, binds source hashes and retired-path absence, stops its owned container, stages only reviewed scope, commits and fast-forwards main. Assistant Docker access remains denied. Do not close on a working tree or user summary alone.
+4. External Complete-Arch09-Remediation verifies fresh disposable Docker PostgreSQL/all races with zero skips and real browser acceptance, binds all runtime/test/config/asset source hashes and retired-path absence, stops owned processes/container, stages only reviewed scope, commits and fast-forwards main. Preserve manage.py original index mode100755. Assistant Docker access remains denied. Do not close on a working tree or user summary alone; the old Complete-Arch09 script is historical and must not be rerun on the remediation.
 5. Read back SHA/logs/receipt/stopped container/hashes/all committed additions/deletions. Mark ARCH-09 Done only then. ARCH-10 separately verifies final architecture plus complete web/offline acceptance and reconciles Linear/documentation before closing the epic.
 
 # Required skills

@@ -16,3 +16,7 @@ class RMReference:
 
 class RMReferences(Protocol):
     def get(self, reference: MeasuredRMId) -> RMReference | None: ...
+
+
+class RMChoices(Protocol):
+    def eligible(self, owner: AccountId, through: date) -> tuple[MeasuredRMId, ...]: ...

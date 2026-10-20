@@ -1,0 +1,158 @@
+{
+  "status": "VERIFIED_LOCAL_ONLY",
+  "checks": {
+    "architecture": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "scripts/architecture_check.py"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\architecture.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\architecture.stderr.log"
+    },
+    "core-types": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--config-file",
+        "mypy-core.ini"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\core-types-frozen.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\core-types-frozen.stderr.log"
+    },
+    "imports": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\lint-imports.exe",
+        "--no-cache"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\imports.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\imports.stderr.log"
+    },
+    "ruff": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\ruff-frozen.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\ruff-frozen.stderr.log"
+    },
+    "pure": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests_architecture"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\pure-frozen.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\pure-frozen.stderr.log"
+    },
+    "django-check": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "manage.py",
+        "check"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\django-check.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\django-check.stderr.log"
+    },
+    "migrations": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "manage.py",
+        "makemigrations",
+        "--check",
+        "--dry-run"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\migrations.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\migrations.stderr.log"
+    },
+    "static-assets": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "manage.py",
+        "collectstatic",
+        "--noinput"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\static-assets.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\static-assets.stderr.log"
+    },
+    "native-runner": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "scripts/arch09_remediation.py",
+        "self-test"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\native-runner.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\native-runner.stderr.log"
+    },
+    "django-types": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--config-file",
+        "mypy-django.ini"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\django-types.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\django-types.stderr.log"
+    },
+    "sqlite-tests": {
+      "status": "VERIFIED",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\Jonnathan\\Mamut system\\django-basis-trainning-app\\.venv-win\\Scripts\\python.exe",
+        "manage.py",
+        "test",
+        "tests.regression",
+        "basis.bootstrap.tests",
+        "basis.modules.billing.adapters.test_persistence",
+        "basis.modules.billing.adapters.test_polar",
+        "basis.modules.training.adapters.test_metrics",
+        "basis.modules.sync.adapters.test_wire",
+        "--noinput"
+      ],
+      "stdout": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\sqlite-tests.stdout.log",
+      "stderr": ".cache\\arch09-remediation-local-79e28ffb06264f56874734867fd1f021\\sqlite-tests.stderr.log"
+    }
+  },
+  "pure_tests": 166,
+  "sqlite_tests": 240,
+  "sqlite_skipped_postgresql_only": 5,
+  "mypy_core_files": 108,
+  "mypy_django_files": 267,
+  "import_contracts": 8,
+  "browser_checks": 14,
+  "postgresql": "NOT RUN on remediation candidate",
+  "git_integration": "NOT RUN; recovery tests use simulation only",
+  "powershell_wrappers": "Parser VERIFIED; local execution NOT RUN due existing ExecutionPolicy; no bypass",
+  "browser_evidence": "docs/architecture/ARCH-10-BROWSER-RESULT.json",
+  "protected": [
+    "seed.py",
+    "manage.py working-file mode; content is scoped"
+  ]
+}

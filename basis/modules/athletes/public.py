@@ -1,5 +1,15 @@
 """Supported athlete commands, values and shared enrollment contract."""
 
+from .application.administration import (
+    AdministrativeProfile,
+    AthleteAdministration,
+    DeleteAdministrativeProfiles,
+    DeleteAdministrativeRMs,
+    DeleteAdministrativeWorkouts,
+    SaveAdministrativeProfile,
+    SaveAdministrativeRM,
+    SaveAdministrativeWorkout,
+)
 from .application.billing import BillingProfile, BillingProfiles
 from .application.coach import AthleteCoachContext, AthleteCoachContexts
 from .application.enrollment import AthleteEnrollment
@@ -19,7 +29,8 @@ from .application.records import (
     RecordWellness,
     RecordWorkout,
 )
-from .application.references import RMReference, RMReferences
+from .application.references import RMChoices, RMReference, RMReferences
+from .application.workouts import calculate_workout
 from .domain.records import (
     AthleteUnavailable,
     InvalidAthleteData,
@@ -38,8 +49,38 @@ from .domain.records import (
     validate_sport,
     validate_wellness,
 )
+from .domain.workouts import (
+    InvalidAthleteField,
+    MeasuredReference,
+    PreviousWorkout,
+    WorkoutCalculation,
+    WorkoutContext,
+    WorkoutMetrics,
+    require_positive_rm,
+    validate_preferences,
+)
 
 __all__ = (
+    "AdministrativeProfile",
+    "AthleteAdministration",
+    "SaveAdministrativeProfile",
+    "SaveAdministrativeRM",
+    "SaveAdministrativeWorkout",
+    "DeleteAdministrativeProfiles",
+    "DeleteAdministrativeRMs",
+    "DeleteAdministrativeWorkouts",
+
+    "InvalidAthleteField",
+    "MeasuredReference",
+    "PreviousWorkout",
+    "WorkoutContext",
+    "WorkoutCalculation",
+    "WorkoutMetrics",
+    "calculate_workout",
+    "require_positive_rm",
+    "validate_preferences",
+
+    "RMChoices",
     "AthletePresentation",
     "AthleteHistory",
     "HistoricalWorkout",

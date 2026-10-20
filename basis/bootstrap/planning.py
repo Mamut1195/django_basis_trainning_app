@@ -30,9 +30,7 @@ from basis.shared.identifiers import AccountId, CycleId, GoalId, PlanId, Planned
 
 
 def planning() -> Planning:
-    return Planning(
-        DjangoPlanRepository(), write_authorization(), DjangoUnitOfWork, DjangoClock()
-    )
+    return Planning(DjangoPlanRepository(), write_authorization(), DjangoUnitOfWork, DjangoClock())
 
 
 def build_proposal(
@@ -85,25 +83,31 @@ def save_goal(owner: int, row: Goal) -> int:
 
 
 def save_cycle(owner: int, row: Cycle) -> None:
-    row.pk = planning().add_cycle(
-        AddCycle(
-            AccountId(owner),
-            PlanId(row.plan_id),
-            cycle_definition(row),
-            CycleId(row.parent_id) if row.parent_id is not None else None,
+    try:
+        row.pk = planning().add_cycle(
+            AddCycle(
+                AccountId(owner),
+                PlanId(row.plan_id),
+                cycle_definition(row),
+                CycleId(row.parent_id) if row.parent_id is not None else None,
+            )
         )
-    )
+    except InvalidPlanning as error:
+        raise ValidationError(str(error)) from error
 
 
 def save_scheduled(owner: int, row: PlannedSession) -> int:
-    return planning().schedule(
-        ScheduleSession(
-            AccountId(owner),
-            PlanId(row.plan_id),
-            CycleId(row.cycle_id),
-            ScheduledDefinition(str(row.cycle_id), row.title, row.date, notes=row.notes),
+    try:
+        return planning().schedule(
+            ScheduleSession(
+                AccountId(owner),
+                PlanId(row.plan_id),
+                CycleId(row.cycle_id),
+                ScheduledDefinition(str(row.cycle_id), row.title, row.date, notes=row.notes),
+            )
         )
-    )
+    except InvalidPlanning as error:
+        raise ValidationError(str(error)) from error
 
 
 def reschedule(owner: int, session: int, date: date, revision: int) -> None:

@@ -7,7 +7,7 @@ from basis.shared.identifiers import AccountId, ClassificationId, ExerciseId
 from basis.shared.ports import UnitOfWork
 from basis.shared.text import normalized_name
 
-from ..domain.catalog import ClassificationData, ExerciseData
+from ..domain.catalog import ClassificationData, ExerciseData, validate_exercise
 
 
 class CatalogAuthorization(Protocol):
@@ -72,6 +72,7 @@ class Catalog:
     def save_exercise(self, command: SaveExercise) -> ExerciseId:
         with self.uow() as work:
             self.authorization.require_write(command.actor)
+            validate_exercise(command.data)
             result = self.repository.save_exercise(
                 replace(command.data, nombre=normalized_name(command.data.nombre)), command.id
             )

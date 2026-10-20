@@ -15,10 +15,52 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Sequence
 from pathlib import Path
+from typing import NoReturn, NotRequired, TypedDict, cast
+
+
+class Step(TypedDict):
+    name: str
+    status: str
+    error_type: NotRequired[str]
+    reason: NotRequired[str]
+    seconds: NotRequired[float]
+
+
+class Dependencies(TypedDict):
+    checked: int
+    mismatches: list[dict[str, str | None]]
+
+
+class Runtime(TypedDict):
+    health_get: int
+    login_get: int
+    login_post: int
+    authenticated_session: bool
+    csrf_checks: bool
+
+
+class VerificationReport(TypedDict, total=False):
+    schema_version: int
+    status: str
+    settings_module: str
+    database_engine: str
+    database_url_inherited: bool
+    cleanup: str
+    steps: list[Step]
+    temporary_database: str
+    error: str
+    error_type: str
+    exit_code: int
+    versions: dict[str, str]
+    requirements_sha256: str
+    dependencies: Dependencies
+    runtime: Runtime
+
 
 ROOT = Path(__file__).resolve().parents[1]
-SETTINGS = "basis_trainning_app.test_settings"
+SETTINGS = "config.test_settings"
 STAGES = ("dependencies", "isolation", "check", "migrate", "makemigrations", "runtime")
 
 
@@ -26,7 +68,7 @@ class VerificationError(Exception):
     """A verification invariant failed; never include environment values in its message."""
 
 
-def safe_environment(database):
+def safe_environment(database: Path) -> dict[str, str]:
     """Allow only OS bootstrap variables; never forward application configuration."""
     environment = {
         key: value
@@ -54,7 +96,7 @@ def safe_environment(database):
     return environment
 
 
-def require_disposable(database):
+def require_disposable(database: Path | str) -> None:
     """Reject existing databases and paths outside our exclusive scratch directory."""
     cache = ROOT / ".cache"
     database = Path(database)
@@ -71,7 +113,7 @@ def require_disposable(database):
         raise VerificationError("unsafe_database_path")
 
 
-def dependency_check(report):
+def dependency_check(report: VerificationReport) -> None:
     import django
 
     report["versions"] = {
@@ -81,7 +123,7 @@ def dependency_check(report):
     }
     requirements = (ROOT / "requirements.txt").read_bytes()
     report["requirements_sha256"] = hashlib.sha256(requirements).hexdigest()
-    mismatches = []
+    mismatches: list[dict[str, str | None]] = []
     checked = 0
     for line in requirements.decode("utf-8-sig").splitlines():
         line = line.strip()
@@ -102,7 +144,7 @@ def dependency_check(report):
         raise VerificationError("dependency_mismatch")
 
 
-def configure_django(database):
+def configure_django(database: Path) -> None:
     # Run before django.setup(), migrations, checks or any database access.
     require_disposable(database)
     if "DATABASE_URL" in os.environ or os.environ.get("BASIS_DATABASE_PATH") != str(database):
@@ -146,7 +188,7 @@ def configure_django(database):
         raise VerificationError("database_isolation_failed")
 
 
-def runtime_check(report):
+def runtime_check(report: VerificationReport) -> None:
     from django.contrib.auth import SESSION_KEY, get_user_model
     from django.test import Client
 
@@ -177,9 +219,12 @@ def runtime_check(report):
     }
 
 
-def worker_main(database):
+def worker_main(database: Path | str) -> NoReturn:
     """Internal subprocess entry: raw Django output never enters the JSON report."""
-    report = {"status": "FAILED", "steps": [{"name": s, "status": "NOT RUN"} for s in STAGES]}
+    report: VerificationReport = {
+        "status": "FAILED",
+        "steps": [{"name": s, "status": "NOT RUN"} for s in STAGES],
+    }
     database = Path(database)
     exit_code = 1
     # Suppress tracebacks, command output, warnings and logs which might contain data.
@@ -206,7 +251,8 @@ def worker_main(database):
                             call_command("makemigrations", check=True, dry_run=True, verbosity=0)
                     step["status"] = "VERIFIED"
                 except (Exception, SystemExit) as error:
-                    step.update(status="FAILED", error_type=type(error).__name__)
+                    step["status"] = "FAILED"
+                    step["error_type"] = type(error).__name__
                     # Only our own fixed error identifiers are safe to expose.
                     if isinstance(error, VerificationError):
                         step["reason"] = str(error)
@@ -232,9 +278,9 @@ def worker_main(database):
     raise SystemExit(exit_code)
 
 
-def run_verification(python, timeout=180):
+def run_verification(python: Path | str, timeout: int = 180) -> tuple[VerificationReport, int]:
     """Own and clean only a directory allocated by TemporaryDirectory for this run."""
-    report = {
+    report: VerificationReport = {
         "schema_version": 1,
         "status": "FAILED",
         "settings_module": SETTINGS,
@@ -274,7 +320,10 @@ def run_verification(python, timeout=180):
             check=False,
         )
         try:
-            result = json.loads(child.stdout)
+            raw: object = json.loads(child.stdout)
+            if not isinstance(raw, dict):
+                raise ValueError
+            result = cast(VerificationReport, raw)
             if result["status"] not in {"VERIFIED", "FAILED"} or not isinstance(
                 result["steps"], list
             ):
@@ -306,7 +355,7 @@ def run_verification(python, timeout=180):
     return report, exit_code
 
 
-def main(argv=None):
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--python", required=True, type=Path, help="Path to the installed Python 3.13"

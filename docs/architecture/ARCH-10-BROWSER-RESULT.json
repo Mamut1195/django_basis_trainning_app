@@ -1,0 +1,1765 @@
+{
+  "status": "VERIFIED",
+  "files": [
+    {
+      "path": "assets/brand/identity.json",
+      "sha256": "25c594591aa0700c1e1cdb09ea9c2ce43117ccc94eb99e39e7798e57a05a8664",
+      "normalized_sha256": "85655756e2e38c18650e3aed8b8c8e092c93cd66c9ca9d06cb9ca1dd9c4c60be"
+    },
+    {
+      "path": "assets/brand/logo-original.svg",
+      "sha256": "00830a819481179a65b338081a36243458b6b44a721c173e95410e6a86678bfd",
+      "normalized_sha256": "00830a819481179a65b338081a36243458b6b44a721c173e95410e6a86678bfd"
+    },
+    {
+      "path": "assets/brand/logo.svg",
+      "sha256": "3885f4631a3225b4293f3926fabdd6ea1516c7dd5d26a1d1cb6ebfb41fcc3437",
+      "normalized_sha256": "3f4413cd45546d498320c9955dac10a9e6ca18759964f5ef1abdfb95590d8bea"
+    },
+    {
+      "path": "assets/brand/sources.json",
+      "sha256": "dc29b507e0202b745971bc8a6cc4ddca5046fcf1b5862d98b8f61e74e0727b06",
+      "normalized_sha256": "ed3ba2baa6b4081af0a41a966efe2fdfd9a48926cf8b61a9ba51b4389625859c"
+    },
+    {
+      "path": "assets/css/app.css",
+      "sha256": "81d5700b2a672fa491241b483f94e5c6ce86f7723c897eb3fdc91f08bda154a9",
+      "normalized_sha256": "521ebdb403ba0252bf5c847fb3331cec7e170ef87acf9cb8081c9c9f31a96f43"
+    },
+    {
+      "path": "assets/css/tokens.css",
+      "sha256": "9c8cd463758303fb48274c8533bece20f1856063bccb78e2cb81c4d79e23eb0f",
+      "normalized_sha256": "396ef4e23edc1794ef1afc64d45ec46151668a2925039195965ac4e4198c8087"
+    },
+    {
+      "path": "assets/icons/icon-192.png",
+      "sha256": "a9947ce930a78128ac194243f8b8cd72f3a67f009718ea7eb6459de16f3e3273",
+      "normalized_sha256": "a9947ce930a78128ac194243f8b8cd72f3a67f009718ea7eb6459de16f3e3273"
+    },
+    {
+      "path": "assets/icons/icon-512.png",
+      "sha256": "1e425eb5edd9287ac07f70faed0da6e5232a01f895d862e5a9b84886bee72b38",
+      "normalized_sha256": "1e425eb5edd9287ac07f70faed0da6e5232a01f895d862e5a9b84886bee72b38"
+    },
+    {
+      "path": "assets/icons/icon.svg",
+      "sha256": "4a3f619bfc52baeb22bb49d9de09ccf426c1357e6180e1a0148e96e4c81a9ea0",
+      "normalized_sha256": "4256c7daa008c12fbc673fbba35cfa28300fd16e2c35816ec81eff665ee04c67"
+    },
+    {
+      "path": "assets/js/app.js",
+      "sha256": "dd85eb6275a394d71b799e29e9e07209b42edae61b93c523d123d9c1a1d75334",
+      "normalized_sha256": "dd85eb6275a394d71b799e29e9e07209b42edae61b93c523d123d9c1a1d75334"
+    },
+    {
+      "path": "assets/js/offline.js",
+      "sha256": "654d1b646cf98c202e44e324eba1be579abfa2e009660ab3ce24bb60633eac31",
+      "normalized_sha256": "654d1b646cf98c202e44e324eba1be579abfa2e009660ab3ce24bb60633eac31"
+    },
+    {
+      "path": "assets/js/theme.js",
+      "sha256": "f34f9722cdb7d5539ce1cc8dd0a30e94965e3c29af9f29fa3ff54e9ff290cb66",
+      "normalized_sha256": "f34f9722cdb7d5539ce1cc8dd0a30e94965e3c29af9f29fa3ff54e9ff290cb66"
+    },
+    {
+      "path": "assets/vendor/LICENSE-alpine.txt",
+      "sha256": "08b7502da6e7aa1d0bbdc97d220fbf669b9366c61bd0f072238283c89bc4773a",
+      "normalized_sha256": "08b7502da6e7aa1d0bbdc97d220fbf669b9366c61bd0f072238283c89bc4773a"
+    },
+    {
+      "path": "assets/vendor/LICENSE-htmx.txt",
+      "sha256": "d3d2456f76414f2456104660ebd65aff1c04cd7966b942bdabd63f3cdb316a38",
+      "normalized_sha256": "d3d2456f76414f2456104660ebd65aff1c04cd7966b942bdabd63f3cdb316a38"
+    },
+    {
+      "path": "assets/vendor/alpine-collapse.min.js",
+      "sha256": "c7661d4e2cf0465e3cd693190debb5f592ac72dcc4cfe650581273767558b27b",
+      "normalized_sha256": "c7661d4e2cf0465e3cd693190debb5f592ac72dcc4cfe650581273767558b27b"
+    },
+    {
+      "path": "assets/vendor/alpine-focus.min.js",
+      "sha256": "ea7e215444f5110619549621cd0760cedfe273f708b144d4e658a87b702555f9",
+      "normalized_sha256": "ea7e215444f5110619549621cd0760cedfe273f708b144d4e658a87b702555f9"
+    },
+    {
+      "path": "assets/vendor/alpine.min.js",
+      "sha256": "232519394c6c8fdba6f362b1d9da16106db513cdbf899011f00daab4051df31c",
+      "normalized_sha256": "232519394c6c8fdba6f362b1d9da16106db513cdbf899011f00daab4051df31c"
+    },
+    {
+      "path": "assets/vendor/htmx.min.js",
+      "sha256": "d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717",
+      "normalized_sha256": "d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717"
+    },
+    {
+      "path": "assets/vendor/sources.json",
+      "sha256": "fe0484ab53cda7463a04d4215738c1d814fa2c520cd66adb4828c6d1c56be6e6",
+      "normalized_sha256": "e3037f75b1ad448bfbdcb9f4c5a4bc8e69c83bb6e789d0e565bab0a4018d296d"
+    },
+    {
+      "path": "basis/__init__.py",
+      "sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff",
+      "normalized_sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff"
+    },
+    {
+      "path": "basis/bootstrap/__init__.py",
+      "sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff",
+      "normalized_sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff"
+    },
+    {
+      "path": "basis/bootstrap/acceptance_fixture.py",
+      "sha256": "7bee929e16fa01dfb9b0e6ad2b04b0403a727f921361a306da436d9bceafee3c",
+      "normalized_sha256": "59f3cd7e78561e5c88fc48722598ffa70940bd6ae30493853bb6cc673c1257c4"
+    },
+    {
+      "path": "basis/bootstrap/accounts.py",
+      "sha256": "0d2e1f29ba0c8920626f394965916830d10f3d2da9e28707e1f01353576861e1",
+      "normalized_sha256": "9ce7d852b70ddf09211147abd789a32ce0cd261f94ae26a4d532cdefffa5c57a"
+    },
+    {
+      "path": "basis/bootstrap/admin_actions.py",
+      "sha256": "7845c197d13d98a1591456a6aa6b22de83b7ddb64f9a99169f254b95c0ee2b0c",
+      "normalized_sha256": "95ac219f74328273ebc6cc8249c061ca12b25a53127139b967d707b9ff39dc10"
+    },
+    {
+      "path": "basis/bootstrap/api.py",
+      "sha256": "c4907608690647e7efcc5a1b063b6b675887818636e1b2f0ed4027b11196ad35",
+      "normalized_sha256": "54285d0d8aa13c6ce27a67e60bb91bc1a82af5bcd73d4d12a80ed11f633318ff"
+    },
+    {
+      "path": "basis/bootstrap/api_errors.py",
+      "sha256": "698dd969539493efe39f50eb0a53d95b9230f98acbdda81ef35e728fb499789a",
+      "normalized_sha256": "a58b1bf371b00d25e2387e7d54ccb385f24c4f748476d92e6be10f496c4f60e4"
+    },
+    {
+      "path": "basis/bootstrap/api_fields.py",
+      "sha256": "c8fa84024f457ab9642de327a0fd5754df2f3501923057d036e493789dbd04b3",
+      "normalized_sha256": "84173e91a448830dde417ccaea58765bd361b087531423d1958639380143ef60"
+    },
+    {
+      "path": "basis/bootstrap/athletes.py",
+      "sha256": "63768f18db595a014dca5de1b4e37c59314e9d811039d6d35d07c732d2a7657a",
+      "normalized_sha256": "bb831027b7c37ecd7082706f54dd42d360e5ddadf75bffe452acd1e7fda1651e"
+    },
+    {
+      "path": "basis/bootstrap/billing.py",
+      "sha256": "52be4225c5393fee358933f3736c3a66dc534f80affa7459acb8eca73f39bd1d",
+      "normalized_sha256": "cf68ac48805269b6213fb288840327a58e71b6e4b7b57993c0b53fa6f89d81ad"
+    },
+    {
+      "path": "basis/bootstrap/brand.py",
+      "sha256": "4ba966814b2f37ba6d2c8cafd54b9152c89c5c1bb337f85afa12c0524db7bcb3",
+      "normalized_sha256": "742fc6be44ccd571c8209960172e17a41909849be1e4b8f4406b085a726b0160"
+    },
+    {
+      "path": "basis/bootstrap/catalog.py",
+      "sha256": "e4b0c42b547d4a04b3aedc6bcb61e7e9359ff6376e49ce51126f2a7854b4977f",
+      "normalized_sha256": "12b6acdaf62e946f1a21bbb17462c0043c5eb1b0d4878d2310b9d03dc6d2b80c"
+    },
+    {
+      "path": "basis/bootstrap/coach.py",
+      "sha256": "a0f42e84e3aaa30fa9bae22f14d12213d4f0233438c511e22d015781479bb20d",
+      "normalized_sha256": "eb038e25f3fa912392a2079993d18547599a1413420d08255ae9cbe5dfb3f106"
+    },
+    {
+      "path": "basis/bootstrap/context_processors.py",
+      "sha256": "b1304d0290b6e98e8d6e1248a2591958f50e16b5367ad98cc43898364a6b2ea2",
+      "normalized_sha256": "e0cac48a8bc2a5915c833e1163c693e6f9d85909838b73bba014c8c9aac2c815"
+    },
+    {
+      "path": "basis/bootstrap/demo.py",
+      "sha256": "00f0068603c8c3c5f265225536fd2005ab518b53a38aa4efb0ad6bd9bdf45f18",
+      "normalized_sha256": "51deb68d7b1af1c39d2d5fea105a4d769f33e059bb7ef1e0f42183e2e0ac43c7"
+    },
+    {
+      "path": "basis/bootstrap/form_fields.py",
+      "sha256": "85d7d335f1ea9ce9efa79108b4166916c614b8b432ab6c859069a94da02e3617",
+      "normalized_sha256": "00a1fbc951d7b8f752c7f705efcc658051a3b85870414857aecfb4d0e123bd15"
+    },
+    {
+      "path": "basis/bootstrap/manual_training.py",
+      "sha256": "6ae43236736e8383f6ed2f39448344c6ca25acd3819f373b93508101ffe69ca3",
+      "normalized_sha256": "6ae43236736e8383f6ed2f39448344c6ca25acd3819f373b93508101ffe69ca3"
+    },
+    {
+      "path": "basis/bootstrap/middleware.py",
+      "sha256": "217f088a3efbb2586cb5734a559a8768cd22ec3b072d20bbf0e1ca0241b02f90",
+      "normalized_sha256": "3f8ce27f087daf86b47f394de9ac941c2aa8a847d463ab55b67178c675e25986"
+    },
+    {
+      "path": "basis/bootstrap/model_validation.py",
+      "sha256": "ac1f73f443034d97891ccc61224c0d124176240091c287b9b185a80348042306",
+      "normalized_sha256": "0f17163d8c7f5786fbdacafa6d6bc18db5330349eb3b00e1540bd4eff2f0bf6a"
+    },
+    {
+      "path": "basis/bootstrap/permissions.py",
+      "sha256": "00fe2325669457fefcb8ceac05c42be0790ab39635d8fc50eb5ab86688c89d49",
+      "normalized_sha256": "9cde2263f7fb7d89873063f9cc8454e107b80961daa4c08ec7504763f592ec7c"
+    },
+    {
+      "path": "basis/bootstrap/persistence.py",
+      "sha256": "91c4cacdfacead8a9ad46cf3c4e659af1dea7adce6181ec44fe4bfa005e97e9e",
+      "normalized_sha256": "9870b50c079a854b54dd71a1ac187558c6451de7155890eef74e94e14617bba2"
+    },
+    {
+      "path": "basis/bootstrap/planning.py",
+      "sha256": "f42d330b2e89d18af023fed79825e797d59d9c69a47dafa993c9fbdaf4a82174",
+      "normalized_sha256": "a96cea6cb16883937378cd8d579e9f0c19af54c99cbf6b4cc439265968306231"
+    },
+    {
+      "path": "basis/bootstrap/platform_views.py",
+      "sha256": "8600e9ef093c9f78762868773d4d10779a949825750dbdd6176eb2ee9323a09f",
+      "normalized_sha256": "8742a0cfa8e20477366709e93cf064dde36cfa5d2b04213d5f88bb88b4d04367"
+    },
+    {
+      "path": "basis/bootstrap/presentation.py",
+      "sha256": "749b082e9de211eef71163a4b1b6a910581a062ed1f624192bb10480c1167f60",
+      "normalized_sha256": "2d3f3bec1407b458371699292a0c76db0774994e552a42fc5b7bf899a8be5196"
+    },
+    {
+      "path": "basis/bootstrap/progress.py",
+      "sha256": "171e8ee97d39bc14e94adc8490dac171e5cc13da6c2d600787c35fe9951c5331",
+      "normalized_sha256": "25086f85004b2d5c5fcd4290d0a408c6a518f84cf101e764b0ae2e2c52c21f19"
+    },
+    {
+      "path": "basis/bootstrap/proposal_actions.py",
+      "sha256": "f14776c3ef5178ef0ca637743f661543151858206338c1442607a4b1bf0207bb",
+      "normalized_sha256": "2137fc5da5580d2c764012e51ab543dab52a07d2a8e4da1fddfa4e100115c886"
+    },
+    {
+      "path": "basis/bootstrap/sync.py",
+      "sha256": "6cc36b20f2c3527515c8fa8c9e67e3ccf28ef7a971acfe991d31ab1c1deaf220",
+      "normalized_sha256": "61b0a164f35225c5e07bd561df5eb63aab2fb73161b8e6ffb4198bafe9e947e3"
+    },
+    {
+      "path": "basis/bootstrap/tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_administration.py",
+      "sha256": "afecf1d3aa1637858bd9709246a9b997c5aa18143733d4b4750d54765cb65ba7",
+      "normalized_sha256": "6fa6372bde68d5e1e0d53142d85f9f1f5bf24c431114ef6545acfeef56772d91"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_billing_web.py",
+      "sha256": "85a48a9b7bbce515d0c9398cc719c2336fe7362b3d3f4734c10773af71459a41",
+      "normalized_sha256": "61c8ec40b26e3f2ae63b8d363ab23b1a4b1f2900d2f6f0747d976d537ec7bde0"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_coach_edges.py",
+      "sha256": "4b6ebd4335ce1c0bdb2e3b7955babe11fe81c332253b8d6a90a3ae8a2ad0940b",
+      "normalized_sha256": "d76d28d5374b880ccff8e869e70b928997bc7fe5958c3fbdf5b36bf32ca9ba02"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_coach_jobs.py",
+      "sha256": "6004d5a177c34593ffdc0ca9df0d81684ee06dd868b4cefe2b9e03dd1fc3eeeb",
+      "normalized_sha256": "0e47333c7ed7cb4863d6187012ca4d7e73794c4a7e0683c2b8284a0821b02331"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_execution.py",
+      "sha256": "47e733455da4e41ea6dec357a704c94f874951d32b53fd40982f56572cca27d0",
+      "normalized_sha256": "5fc890b748ca5ed07a0351179bd1ea4189b213bef196a84c595427fbc474f36b"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_export.py",
+      "sha256": "ebf1d68174806579dc09f7e15cf37ea874d511195e83c2887645ef74a0530fd7",
+      "normalized_sha256": "dbe0133073e0d074336035883097d499fa503a3e3b36b24a2ac4742beeeea201"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_identity.py",
+      "sha256": "2d5b183dbbba1b2dbe85c730d4fa5d03a4b4bf74313e2ed9e7382136e75c58c9",
+      "normalized_sha256": "2980b1e8772b9396063b9fd64062dfdd24988befba3eea1541e3905f9fc09fcd"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_installation.py",
+      "sha256": "020fe564f85a55c1e50eaf76399b944a1d3f533a457c556c46502060bf40e487",
+      "normalized_sha256": "6b3006971e1c2ff8c4c45631f19e82a4a553b78585e82b73e2b418859978a237"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_manual_training.py",
+      "sha256": "03eb7e77378d866f9e5faf10dfaf0c985b9b30daf0e0d42b9424f189e49e685f",
+      "normalized_sha256": "03eb7e77378d866f9e5faf10dfaf0c985b9b30daf0e0d42b9424f189e49e685f"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_planning.py",
+      "sha256": "13c93a57e2210871303dd43cd0c4c43d5c0b1df26a849ff10e81470724a5548c",
+      "normalized_sha256": "632fdb23256ce17feff5856acd0dd96c20d03ae41b7860db401178fe693ad670"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_presentation.py",
+      "sha256": "e9507e15cc1a9dd5cb50dccec785e0cc1809c950c22b4c81a88fafc45e612093",
+      "normalized_sha256": "db96f03d9edc2458b4d721e107d67267c15974b1d1259d1d2f291bf95d4ef926"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_progress.py",
+      "sha256": "50a8265b09575cd8cd70133c6b6c555449a6e11503de7d12545546a3e7b2216a",
+      "normalized_sha256": "1ae7cc6a9a8891c00ddc1316bf1ada5ff93529bbf2edf304db12d3e40a128c4d"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_read_boundaries.py",
+      "sha256": "87ff25ef61cdb2486716864c5cc5b7a12265bb5facacd744756e2847948c269e",
+      "normalized_sha256": "8f577805eec926722172bf84e919a64533ccb7056d2c6aad46c2c2e468edcd66"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_sync_receipts.py",
+      "sha256": "d0c2fcce78b8a0817eda00cc7d5b3c8bfd53ca48cfc9e54e9e63e19363517db4",
+      "normalized_sha256": "6f1dfb7fdb08309987877a6daaf245a8dab5367992028717063d071bf6e6962a"
+    },
+    {
+      "path": "basis/bootstrap/tests/test_sync_web.py",
+      "sha256": "d06a00ed4ab8359dc857e3f1edd931c77a8c2d929612ee81b820709e2821e45d",
+      "normalized_sha256": "6eb28f179ae148b1334cdbc402965e89e014e140a271aa7dae01b043d6715a86"
+    },
+    {
+      "path": "basis/bootstrap/training.py",
+      "sha256": "2ed3cf495c8441f0f3cda54695bbbe49b4c3061d2fc54872b9195ae5311f489e",
+      "normalized_sha256": "2ed3cf495c8441f0f3cda54695bbbe49b4c3061d2fc54872b9195ae5311f489e"
+    },
+    {
+      "path": "basis/bootstrap/transactions.py",
+      "sha256": "6ea4d9a3e5fec788a8bdc506214f003ff1e65ea22a8ca88d8766ad00d9db23c8",
+      "normalized_sha256": "1270e19b0e332c01432400a6d2c01becd34a1198e325b984784eeb6c02876706"
+    },
+    {
+      "path": "basis/bootstrap/web.py",
+      "sha256": "e5c301443988bc76fa587f40ac81b65808a8ae8c425cce1586948eb3c5a23fb7",
+      "normalized_sha256": "882210e8cfe541b9c5450161d717c073447b5a86a12dc6c95e254312a8fdd73c"
+    },
+    {
+      "path": "basis/bootstrap/web_framework.py",
+      "sha256": "f01c279b2d80faa235648b54a0bbf6827826a6f45c5fb72d6898a91242a63407",
+      "normalized_sha256": "1f745d64b14133e1cb32c6755ae251c30aea83014c93ac59fe22ab3c18217b8f"
+    },
+    {
+      "path": "basis/bootstrap/web_records.py",
+      "sha256": "8288f7a1644f93adf002615d9dc63d042f8fe34c1487ca51e1f865d6fced1546",
+      "normalized_sha256": "be88c83244ecc1e150f078a4c2ced7f84c3eaf5f372fab852396336ec3ba816d"
+    },
+    {
+      "path": "basis/modules/__init__.py",
+      "sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff",
+      "normalized_sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff"
+    },
+    {
+      "path": "basis/modules/accounts/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/apps.py",
+      "sha256": "9687c28f014927e5ab0600cf13ed7c86ab7c4faa96bd9aaae26c032c00fedd0a",
+      "normalized_sha256": "2cba991954f66e4b5fff9cf6dff89a54843aa6c55701433c3bef06dd48ed70bc"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/coach.py",
+      "sha256": "61096f1b79c96e14afbe383cce220fd459d33ab45ddb82e197019302c89b813e",
+      "normalized_sha256": "f26f020e58a960603246875d1e09c8cc4d01dc091ac58a9d70f3ca56934f36d6"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/django.py",
+      "sha256": "bf223ae2ed90ad4418cfe02c190c97cdf41734a684aed94763d7174b40debb2e",
+      "normalized_sha256": "fd7886c819f4079935840d31b88080336ffab9b6028162b5e05b45e4c02b59d8"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/forms.py",
+      "sha256": "5d25d56765653f81fe66bf0ac91113595ea14f7205813339e4f927e29e1f57ff",
+      "normalized_sha256": "3544786c132c4f23b9f8f3ab221f87e8890ed16a5785e05bcdc114a390d9f1d1"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/management/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/management/commands/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/management/commands/link_legacy_profile.py",
+      "sha256": "4def8052cbe12c176cc9f162deb5aff7b4ce0ddfbd5cfdb90c8fc5633c6d0181",
+      "normalized_sha256": "6b35648b313fca354d296b563920c4ec8608c0f971a4849da5992064cc175837"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/management/commands/seed_demo.py",
+      "sha256": "35c9708fcb1bb393e906a53dcce55d6690c2125624cb27fdf1e4d4239812ab00",
+      "normalized_sha256": "44b961b10cdd813c897219c1576eab50069d4519eb77c15bb258ed3d0adfd9e1"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/migrations/0001_initial.py",
+      "sha256": "9c574dae35b333879576125c78aec8e0d602dcd3b328e64bfbdef1002372881a",
+      "normalized_sha256": "615dce273a06441801ecdb3253dfa6dd7a2bc7b55b7d6be6ff449251981878ac"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/models.py",
+      "sha256": "8a3fbd95cdb029c49628fb70ce907b33ca2f5bf5610f7409e47dc2da941aaa02",
+      "normalized_sha256": "7d71b548118a2a0fc5cbcc0c30c804dcc838a18afd79b3609b57d2f09b5fba8a"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/recovery.py",
+      "sha256": "5e092d9fe750765ce4ab0be1d9170c21fe1784b42d38a742970919686fa42843",
+      "normalized_sha256": "198605cd632fd6c995e81bac9bcf7d4849bc7ed44e7ba2987a716a9bb9cc486d"
+    },
+    {
+      "path": "basis/modules/accounts/adapters/views.py",
+      "sha256": "0009e4dbe26a306c69b136fe18061b8704596fa7b94ced3f4cf31cae673fdfec",
+      "normalized_sha256": "d609ef1fb359ef39c13323d05969e56721e8e54b12dc9058d8082c781fd10bca"
+    },
+    {
+      "path": "basis/modules/accounts/application/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/accounts/application/coach.py",
+      "sha256": "155caf840f9dfdfd3e36a2981f228edd456a31521f979e75aaf1acf02771519e",
+      "normalized_sha256": "a5bfdef0492152eb9777cbf94ffb458a5984dadf83cecae10034241abd513078"
+    },
+    {
+      "path": "basis/modules/accounts/application/identity.py",
+      "sha256": "36f60311b4c17e0f9c87d94a7ff5f6a4970c978aed4d9da900698f5226b359f3",
+      "normalized_sha256": "192eb31c53db4a6501a67a50859dd8b9de1cb4d7882ac7207be9f52c76e21f52"
+    },
+    {
+      "path": "basis/modules/accounts/application/recovery.py",
+      "sha256": "f33f99b38f5cb3e61851389bff0fd22762bca4f72bdd1ffbdcf6b00535664b02",
+      "normalized_sha256": "6ed03d2a2993ddd9dbac722758c20420456b05d59b69b27c9c2d21dcca53bcca"
+    },
+    {
+      "path": "basis/modules/accounts/domain/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/accounts/domain/identity.py",
+      "sha256": "9c71b82ca6ef7fcb1ef0e154822a453dff0a38376ec123208aa9813196f33547",
+      "normalized_sha256": "bc61fbe3b49feea506b4dcfb674e7be55c6eca93a45a8000840edca0beb05ed0"
+    },
+    {
+      "path": "basis/modules/accounts/public.py",
+      "sha256": "297a18aa5ee3026f72ae8682944104cf71963a813dc43dbd8f02d1630d7ac307",
+      "normalized_sha256": "7fab3b3419be4f9881f740039b1bc0092a0052dab04548088917f0b53d0d39bd"
+    },
+    {
+      "path": "basis/modules/athletes/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/admin.py",
+      "sha256": "bbdd809abadb234e2f3465799b5dfdf1131fd9682b6073341a3c1588b4a5c7b3",
+      "normalized_sha256": "5d143132f0fdbba951d2811272c29d482affa0948fdea6e049c45bd2cfefb9cd"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/admin_actions.py",
+      "sha256": "7fa911d99badb01e74bcab9ded2edadebb036deb10bfd77363e674b06b9665ba",
+      "normalized_sha256": "0a7fecd02c2a5ee18b6b45f7be89ece49696dd50df279c0ae8f9c1bc9e14376f"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/administration.py",
+      "sha256": "8b3d5f6f091100b12ac939642ade71f720bb7ffc481c8347fa95537580df081b",
+      "normalized_sha256": "6d59d2b5774bbc213fddfd8c236998d65f1d4524a8d03acb20b2e445c368e076"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/api.py",
+      "sha256": "bae643f62215d856896b85d2b313685a5ee772d69918ef918b9556e313e5b685",
+      "normalized_sha256": "ddcf689bf62340dab7ea6445b6e7aa4cc03e4c69b5f2dd533e7509fbe3db2e33"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/apps.py",
+      "sha256": "902942bd704faedc3289b57670ef2d0ffcfafc385d617b4ee60385305a760bd2",
+      "normalized_sha256": "fa93d296eddc6a37cb761697cd2955d284a1d25915f1a8f7478a65bb7be6a63d"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/billing.py",
+      "sha256": "7b2c12cfdecf941e2ca69c43c8632573f1575e9681b7bbaa8a76595d25898a4f",
+      "normalized_sha256": "45937e80b02d0782c3801be8ec9e413f38c85e73b203b1566cfd7991b42a3d11"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/coach.py",
+      "sha256": "a7633fc0064eed75df5a9fe53824b261f42b7cb9510430e3e13989e776c52a3e",
+      "normalized_sha256": "cc1a4fcfc146fca568881565f97149fcad70e47589591490419b50332f0bfd8a"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/django.py",
+      "sha256": "36cfc3f1c7d9da40731071b1cadfc04d4a3d3c5e3dcb09dbaa33f62501441dba",
+      "normalized_sha256": "93a418459991fcdb48c5f68935c7c96776b37f63acacb8eaa5b56692bac50a0a"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/enrollment.py",
+      "sha256": "45c7f67546dcaed19c53e871b866811a6e9c333d3119b5b32ff4fe2fd4545118",
+      "normalized_sha256": "9994011f6e1a677cd91e1d36b30defc65161210769498eebc7e748de5bd04f2d"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/form_fields.py",
+      "sha256": "c3535e0a56761bceb774caeacf5657f18268aa5ac75c40435831467cefbb4a8b",
+      "normalized_sha256": "93c3b7a81d65d2539b21ae694f6b3f5acca01887f8f193bad82e837a739d4ec9"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/forms.py",
+      "sha256": "b1a6d09451dea49e7dec4c3bac035d4f731a54a62ee0ce2de06bd66710134754",
+      "normalized_sha256": "a4f40c55390231f133ae3af7fff4578c57799e0dbbfcbcd61f6ca7ee396cd15a"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/migrations/0001_initial.py",
+      "sha256": "f466a35694fb404747f2ac30832fccd89d013e32daa3d6164a406ef2311a9749",
+      "normalized_sha256": "18aabfbc66fbe3744e4c9f2d9c960b6d2523750a316141024e76e5e1fadda9af"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/models.py",
+      "sha256": "341abdad17071ffc57f96f72fb545e337973f91835ed72e1eaf20646ab0625aa",
+      "normalized_sha256": "c46dd2f9b280529ce427855dc220e2be43d4bebb2a8c469b89da8aca58194d46"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/presentation.py",
+      "sha256": "afeddfcc91942f2fb0ba5f2e76c99629fa1e281e1a39e7aa972952305104f069",
+      "normalized_sha256": "cb71e50f7092d260c3d530752b9977226600d35aef8376d3cd8d61bcdf781b18"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/references.py",
+      "sha256": "139c62b0d17411e800a2e8d30a501214cd689af0030a6defb58242e30b5f6207",
+      "normalized_sha256": "59e083029bbfbaac2efa2fef7e3a4570e8e442d1517df6314429b8d84a122e6a"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/serializers.py",
+      "sha256": "195774bd9eff3b607d9498c756f6433c26afa8c201705ccd5456f6ffd25b7945",
+      "normalized_sha256": "9966f444c4e6578fb00eca81b0f764dfbf10fc2c4d840f12910be676986cdb47"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/views.py",
+      "sha256": "7265c4e0f3a70b334fe24263af8fb8548be79c6f918d5278046eeb5ef1717598",
+      "normalized_sha256": "771c4ab2269f23fc9251829eb42497e52b99129a407a0c6bc1abe4b8dc96d0a2"
+    },
+    {
+      "path": "basis/modules/athletes/adapters/workout_metrics.py",
+      "sha256": "d9dbc8111cf824488eb3b52ca941837866f523d37cbb0c902d3d7c06ad17de0e",
+      "normalized_sha256": "02a941c1692736be762555796a9209271d55c6622cd263f3d4b306eee79c0551"
+    },
+    {
+      "path": "basis/modules/athletes/application/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/athletes/application/administration.py",
+      "sha256": "ebd8c3685208c44ca3d5488d3ed48cc57ec7f37f5e1ab921d6ce2a329aaafc09",
+      "normalized_sha256": "32430fa499618990f81caa762e71fff166c6c4ae4fba976f62049aad805f534e"
+    },
+    {
+      "path": "basis/modules/athletes/application/billing.py",
+      "sha256": "8365186f9e98d90980a883cc90c9613a4cbb5cfd7deedadefcabd6ca27613357",
+      "normalized_sha256": "121ee8d19c830f81fde40905b05b34cc06615cf7bea0b5067eec9e74e6f7341f"
+    },
+    {
+      "path": "basis/modules/athletes/application/coach.py",
+      "sha256": "4ae7892c30c266224aff2aadd65afd73534ff4395d4fc5223ce70d36f9e498e6",
+      "normalized_sha256": "c1645a3345965dfa246253c3b0562fdd9598ecc48630d03c5eafc2a4b133174b"
+    },
+    {
+      "path": "basis/modules/athletes/application/enrollment.py",
+      "sha256": "87b25e5671ed8bc881601a81e97e599f39d2d81596bd11bc3a0360d68cf9f2ed",
+      "normalized_sha256": "ae768ed1b6aebe0a6dabe8d36364d84a131a5213bfe81c78a752ed3bd702ac46"
+    },
+    {
+      "path": "basis/modules/athletes/application/presentation.py",
+      "sha256": "fec727e6d24704c61a4b98ca0217afadf7df6969438a0085613ccf1c373a231a",
+      "normalized_sha256": "9a45439fc2862a440f3b6de08d358f56008660b578db833577d24d3cb937a5d9"
+    },
+    {
+      "path": "basis/modules/athletes/application/records.py",
+      "sha256": "669b7154fa64a0dc52bb2ff6d87a6185f57d6a6d9b2f0665291b281e31400b76",
+      "normalized_sha256": "dc2242f7360d9730d48f7ddf59e96548e3562d5df4bf1c7ee76e4d69f48b6059"
+    },
+    {
+      "path": "basis/modules/athletes/application/references.py",
+      "sha256": "1753895814a0a29c7d764a592b6473996a03cf2b33aced536ef26e64c16699f6",
+      "normalized_sha256": "40c18d4b6376d68cde9fb0a82872b21d3e0900f2df43d29f3ce5c6d5df877aed"
+    },
+    {
+      "path": "basis/modules/athletes/application/workouts.py",
+      "sha256": "4521017d1b5d231036d6ab3a62f84f985740195591de021fe76a068984ff8b4d",
+      "normalized_sha256": "0515941d314c440dc49a0da0c033420b381bcc2a7d3564eabd68800c82c13d17"
+    },
+    {
+      "path": "basis/modules/athletes/domain/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/athletes/domain/records.py",
+      "sha256": "9831ef1dedd01f63873f35aa70c23b8d399531cbcb17cb25b6fa4a696c002a48",
+      "normalized_sha256": "0b4a495cbe99a69460e5e2dc88d6a16f0748fc4cde5b4a1e7595835f1115c0c2"
+    },
+    {
+      "path": "basis/modules/athletes/domain/workouts.py",
+      "sha256": "2ff33055eeef35e686767d0e2ad4d4af686f1b064e81657d2c66f0ff2ce7397d",
+      "normalized_sha256": "f3507266646f50f79fba81dec906839b38f9e57ea4dfe79d7c05641d4bba5f58"
+    },
+    {
+      "path": "basis/modules/athletes/public.py",
+      "sha256": "e456ab5d8ff0bea266166aa7ae61122f214d77dc03b23324ea58d40496fe9ddd",
+      "normalized_sha256": "d7aea98e5a943c04f67bf8e78f3fdc78fb5d93eb02d35ade0e51ff3a1b32a180"
+    },
+    {
+      "path": "basis/modules/billing/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/billing/adapters/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/billing/adapters/access.py",
+      "sha256": "1783ade20caed09d1ab1e102387da00164a024ac44e02d0c9b7e0aab8562e06a",
+      "normalized_sha256": "e5d1fb53d8d97a09609f14806dbd346e22bf5c8446161896916aac549ec2f2b6"
+    },
+    {
+      "path": "basis/modules/billing/adapters/actions.py",
+      "sha256": "d636860bbde7ed8e4460d1034076d6515df31bc2a7e287343c779a4f2b7c36e5",
+      "normalized_sha256": "99fb4390fd204670b79bf282f8300177e94f2ac506ed02d637e7ff211e64129f"
+    },
+    {
+      "path": "basis/modules/billing/adapters/apps.py",
+      "sha256": "86aff61b1188dfdf931c32853c54197ea455c6da4d337b6fe38dc26b8f9eac19",
+      "normalized_sha256": "18d0102bd744610145d03e56786adae4505b522ad8df007291e022f66d17787b"
+    },
+    {
+      "path": "basis/modules/billing/adapters/authorization.py",
+      "sha256": "b02b68d7a5802969e4c1e1817b29a94711d5273fb704cb446e4ad445c019b358",
+      "normalized_sha256": "8b1ea311beae2483b800471486bc58f48fe99f66107cb5893673ee134dae6265"
+    },
+    {
+      "path": "basis/modules/billing/adapters/coach.py",
+      "sha256": "86a443941fa7db98506e8e9cf9c7cd27ca3830220cbc2eee4702e75a6e1f1b7b",
+      "normalized_sha256": "58b68a143606348441e5f7b6e589e5a59500201ae7e4e2b1c26d9b8de98be62c"
+    },
+    {
+      "path": "basis/modules/billing/adapters/django.py",
+      "sha256": "5d97bf5db0846c694dfa852a0c9770350cd1580a2200a7a99e3ebd7c1b892871",
+      "normalized_sha256": "f2386454a8e31b8f5a53b60fdf24aa9f4fa04565ce5a877b0f7ed2653e4beb13"
+    },
+    {
+      "path": "basis/modules/billing/adapters/enrollment.py",
+      "sha256": "0ddf8a3d4e78b7d5a6aaac7184afc437792f28e530055a34a731bd6f1d3ae22f",
+      "normalized_sha256": "6c1b958263217adb031b03529c520b3ad1d6f90e139c7b4f3e479165c9fa5ae5"
+    },
+    {
+      "path": "basis/modules/billing/adapters/management/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/billing/adapters/management/commands/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/billing/adapters/management/commands/reconcile_billing.py",
+      "sha256": "0d73e77c7b2171d24b1faf17b4bdcacbe09d6527f0027b76c08660c3076213a0",
+      "normalized_sha256": "34f07799e1e7851e9b68381f04f6ab8f4ded99a4ab9d2546f97dd017220ea226"
+    },
+    {
+      "path": "basis/modules/billing/adapters/migrations/0001_initial.py",
+      "sha256": "4fbd677f655e9aca44628da088fecd1c5b488d873379bb82e13b61bc9ac6a333",
+      "normalized_sha256": "aa578bd8f2e6d94c4a88591f0609befac6a0c1d8afbbba83a7e70e3c6b94fd3f"
+    },
+    {
+      "path": "basis/modules/billing/adapters/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/billing/adapters/models.py",
+      "sha256": "531c9db484519306ea577023a6b61de957d6f776658b268b1b73cc0a63c51d18",
+      "normalized_sha256": "ca25e1ae2416ac7a86106cbb485fd21d0ecca7b078ee8a4eceb4e34a097aba25"
+    },
+    {
+      "path": "basis/modules/billing/adapters/polar.py",
+      "sha256": "a09b54be7cf06eef8b8633ba16eefc05db097b7925cdb62c97c8d98d960ad2ed",
+      "normalized_sha256": "73695487fa1746f5e396804aa289eae0b16633ac7abaeb88ad1c5a27d40e2f08"
+    },
+    {
+      "path": "basis/modules/billing/adapters/test_persistence.py",
+      "sha256": "ab892b68f5d18bdcdbc1fc0df22a09995c8a7586527a528ea8cbaac39b75b1b2",
+      "normalized_sha256": "b52d3e61027c4cf80dd8d9d79965510cb6e2e006969df0b272ba9f947f0dbcf8"
+    },
+    {
+      "path": "basis/modules/billing/adapters/test_polar.py",
+      "sha256": "9782789d58bf1e5b9149da0b0f41446336a14737eb6142259a7544caec5b7af4",
+      "normalized_sha256": "cdb9fe9a6e662e9e92f3853dd133d79cfdb349a5e60cfe907016ff74ddc0e070"
+    },
+    {
+      "path": "basis/modules/billing/adapters/views.py",
+      "sha256": "e71e45aa60173749fb44852f524f48e5e0b9c2e6994ccc5ae20d26a8a4dac754",
+      "normalized_sha256": "f01b8c1e89179bd1172664da5066c934e49c9a0bccbf00d7096360805fcd13bb"
+    },
+    {
+      "path": "basis/modules/billing/adapters/web.py",
+      "sha256": "4d2e24f315cc6c0bb35f102ab4d51b718540a27772b2e321b52d1ada73783f91",
+      "normalized_sha256": "c845c78ee0fda6794fe45608f0ec9b0c437e9ef9371c1277196756447ac97629"
+    },
+    {
+      "path": "basis/modules/billing/application/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/billing/application/coach.py",
+      "sha256": "d86de972c1617585c03c010c0acc17ce8f1fb9e9399e6b5a70b86773de93363f",
+      "normalized_sha256": "5be0c13af1bdb65a31a1b0a80107d52ba0e5f632b6a4ec07f0ddfd1ad203aea7"
+    },
+    {
+      "path": "basis/modules/billing/application/enrollment.py",
+      "sha256": "c20e729947eb8aef4a4ec3448cc5f85bb29ea6488ece4defc53dd250e6e5eac6",
+      "normalized_sha256": "8b1bdbf7410779b45b05f14c03d6b5ef3fd24d381a3738253aa6306eb75ce5d2"
+    },
+    {
+      "path": "basis/modules/billing/application/service.py",
+      "sha256": "be1f9e686d74a0403967aa9a63522be8f4feb1979baa5f40aa3714714212fb9c",
+      "normalized_sha256": "50a6bcc4e1d43527bdf06de003189776dce5d8a43f2cbfa7f9c49d297ed4c6df"
+    },
+    {
+      "path": "basis/modules/billing/domain/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/billing/domain/records.py",
+      "sha256": "22e1bcd48207f1c90f76d5d078f2dd915f3be3d38824100f28ca68ac2c6faee9",
+      "normalized_sha256": "0245af98474bf8781930b1b5d6da114a1865d1522c8ca3f98dc0388ab00312c1"
+    },
+    {
+      "path": "basis/modules/billing/public.py",
+      "sha256": "9693400d2d17a625eb83022ebead6dd5ef0e97eba7c83bd52962456cdd8f2f6f",
+      "normalized_sha256": "e5ce370f83500042e3a94167b1dc75222e0397321bf5d5f23d701baa3daa8408"
+    },
+    {
+      "path": "basis/modules/catalog/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/admin.py",
+      "sha256": "3935cf9ffac12231374758f376491601f7dd8dc5b1423c9d8df3c5bf29f46c75",
+      "normalized_sha256": "1ce94dd371fc855a182f995a52b1a381713e4ef2af0eb97bc11ffdcc2f42714e"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/admin_actions.py",
+      "sha256": "7949186e64647b51f661b68c9dcd63b811cf48d3c995d9d14495694bce87b1fe",
+      "normalized_sha256": "6a359ae019d2d78e563f01b38bae16d1a9c2be9c44cbdc54c5b7380011d42729"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/administration.py",
+      "sha256": "439661300382acf54da36b3db7f6cd57803029f04ecd1eb065276e3edf29f47e",
+      "normalized_sha256": "0d65e26a395dc69c5953ad1ac48033dba7ca0969fd54c0adaa5666fff016fd6e"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/api.py",
+      "sha256": "6148f30fa05f931c518aa7c0c8f4c1f1d9c1ffef628aa7e8a011c65870793922",
+      "normalized_sha256": "483a7c8ffbf521dd220082a1589e15b7d85c1030ec4001b85ce051c2a7e89832"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/apps.py",
+      "sha256": "49c1966ad4276d1a80fd6d3b8e8a3defb26468b856ffbf6bf124ef993dfd583f",
+      "normalized_sha256": "d52458e798ebd3ea1bd7e872f74c777c9ee825de6ccf36ad5e6658e221280549"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/coach.py",
+      "sha256": "1d9d55f10bb15ad90c5a92c498da0c4ffbaade25b9a703b13b1ff59c14438e0d",
+      "normalized_sha256": "9d224b3a5b3d4344d60af41345742545a7201331fd398a0f9813ff9ce015071b"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/django.py",
+      "sha256": "de07c9dd26194da10938d28f664f4b9aa77aee4418e575cb9370e09c4b407ab8",
+      "normalized_sha256": "9033546efdc95bd1228c3676c20cd92c4ecd05c23bcffd2818e437f958b6685b"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/migrations/0001_initial.py",
+      "sha256": "45c2cd9f90d5385d378c8c8ad60ce67cca668651bbb0af123e6a2b68a2be950d",
+      "normalized_sha256": "35390378622f932460d051bc8141a1ff32b392b3073aeae0dadf49bb92988f75"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/models.py",
+      "sha256": "166b17036d35bd8361e1208e90a9694e3a53fec6a408a16e9a79c7fc1578bcb7",
+      "normalized_sha256": "9ab89da80e99425c1decf712ed7f7502b70c9bdbee8917b6d19367a1afab67a1"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/presentation.py",
+      "sha256": "0c22c51d48ef5a2381a521a6dded782ca1f6572f8593d080f2a5baa285a10442",
+      "normalized_sha256": "bad44af7390812774c2a2234422084c361053f8bd1370df8af22317275497917"
+    },
+    {
+      "path": "basis/modules/catalog/adapters/serializers.py",
+      "sha256": "760371409562092946bf432a492fae01fd147314291a428cd313c4db6e626257",
+      "normalized_sha256": "164d4d4c65fe9b0aa29c9950d6a82b0c37fae2acc2f4e7fbda15e550442699f2"
+    },
+    {
+      "path": "basis/modules/catalog/application/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/catalog/application/administration.py",
+      "sha256": "7dcd11f34dae6398ad5a39c1d176f90e2880e7dcf282afc8aa2701e2d299646d",
+      "normalized_sha256": "117510ceda62ff0edd9177d5a50429e8f6c94fe69456ed79f34857092635ab5a"
+    },
+    {
+      "path": "basis/modules/catalog/application/catalog.py",
+      "sha256": "88fe2d757a3cebabaf8a8af3b4c7f24ce82e4b597e6b46e7f902fa336874e995",
+      "normalized_sha256": "4248a7b85f99d4fc1e718ccf821f41f41927c916bb8a3761733bb29a582e9aae"
+    },
+    {
+      "path": "basis/modules/catalog/application/coach.py",
+      "sha256": "fd059bbbc24757c15e4916eccf498b0a2ee4b523320a4a893df76b6fbe5d09b4",
+      "normalized_sha256": "4379e77597e420140e0100a27a1c238ff965600193bbb2c40dfbcdf2e88cb120"
+    },
+    {
+      "path": "basis/modules/catalog/application/presentation.py",
+      "sha256": "0fff83a23078950bbcaa60a762f5089cb289bb11793a476c6dd520d066725842",
+      "normalized_sha256": "3ae9d96f830b40a5cd756c3c94906fbd00fb3024a094dad5e0023ba98af0913d"
+    },
+    {
+      "path": "basis/modules/catalog/domain/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/catalog/domain/catalog.py",
+      "sha256": "09714b7ccfca5e2e8e0cb1d5788a06734042a9dd7e1309579fda99b5cb1c88e9",
+      "normalized_sha256": "524d43e1d99dd022d7cf63946d13d4b4cd1328b99f2cc1cd48163dc5c78614e7"
+    },
+    {
+      "path": "basis/modules/catalog/public.py",
+      "sha256": "566acd41dc80848e666e7922c648bcc88363a4ef316ea6901d7e84d1559b8cdd",
+      "normalized_sha256": "29545fce3836b8c9a00f7eac99b4733776d3363997a52754c2ff26f3804f0731"
+    },
+    {
+      "path": "basis/modules/coach/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/coach/adapters/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/coach/adapters/actions.py",
+      "sha256": "d832df98fe9983c754e9e7540eb49c43a87e231a8e7d88aba8523bff54c49d49",
+      "normalized_sha256": "a3d6fb3120a3427622366a70db4632055f31637818d96694b71d4f24b7c2d0e7"
+    },
+    {
+      "path": "basis/modules/coach/adapters/apps.py",
+      "sha256": "2fef568d5b76d1598c789d8b348410ccfb19dffa135a80946aa12a8d0298fb65",
+      "normalized_sha256": "448d25060072726fdd76aa10b69dabef879dca0a359e9f269d1dfd5f36fea970"
+    },
+    {
+      "path": "basis/modules/coach/adapters/context_wire.py",
+      "sha256": "074d5706fef62617bee63262d5c2dc90ce52688de5063853405d61aa4def17b8",
+      "normalized_sha256": "1f14b0e71095abfcd0b0bb9a4bf9cde20926cd7971e2bdd0539616f5ce20e620"
+    },
+    {
+      "path": "basis/modules/coach/adapters/forms.py",
+      "sha256": "c476b639ad40dd98486954f043652f61d96343191e4d82cb7026e205f7045d05",
+      "normalized_sha256": "8417ca49880f8c1a14fef45268edefabe47bd69fc8cbc159d1435e8b24747273"
+    },
+    {
+      "path": "basis/modules/coach/adapters/jobs.py",
+      "sha256": "165cc5b4edea249e2f01cd2a83c68f83599cea05a89b36fa4a7d281a633df770",
+      "normalized_sha256": "e32be234ab942499f179f4d4cec08bf565673093161ae26e9a39daf08260e45f"
+    },
+    {
+      "path": "basis/modules/coach/adapters/management/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/coach/adapters/management/commands/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/coach/adapters/management/commands/process_ai_jobs.py",
+      "sha256": "0bf7bee1ead8323379165f09a2215dd839da4a89095072bac59bdd03f31b948a",
+      "normalized_sha256": "64d7ce22b079bb48e1397c714458fbdce74ae472534ece1b8b102155ed5d9396"
+    },
+    {
+      "path": "basis/modules/coach/adapters/migrations/0001_initial.py",
+      "sha256": "604d1e3a1074e1a92dbd193d6da837b5771500427b18ddcf4257dedfd58c6ef7",
+      "normalized_sha256": "d42c041336673cc6591698bd19a426ad4481762a95cf93ddacc81db67e5c9e80"
+    },
+    {
+      "path": "basis/modules/coach/adapters/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/coach/adapters/models.py",
+      "sha256": "3098c2b460188172ed6c3a2a93a50fcb7b7586c4669b8ac46c6de3346767e75f",
+      "normalized_sha256": "ec0dc662f1b137c87d72b257a4f28428d71384593025149275527025286c1330"
+    },
+    {
+      "path": "basis/modules/coach/adapters/presentation.py",
+      "sha256": "0467f8b28dfd96273caf7aeef9440361b142ca7c70002b2bf577ae596ad4518f",
+      "normalized_sha256": "bac4f9c7855d65ba9dd3d6a3a046eaa3cb5cf1d75f0544c9e4022ea206f2b8f7"
+    },
+    {
+      "path": "basis/modules/coach/adapters/proposals.py",
+      "sha256": "476e7993293f2ca99e3e597b794879fec1580b2dd87de6ab25a8226e657375b0",
+      "normalized_sha256": "45c638248e0699a8851a6a783b8cc2a5154e652bc84e4c5968a5bddb3340e406"
+    },
+    {
+      "path": "basis/modules/coach/adapters/provider.py",
+      "sha256": "dc42a2a6bde45b9ba1bdc93a4770daf91ca3d128041d8214114dd2afb3b41ff2",
+      "normalized_sha256": "3c7583a767e60c838230669521ef887adf7d4d3a477a3362562a61cdf82a8547"
+    },
+    {
+      "path": "basis/modules/coach/adapters/views.py",
+      "sha256": "5a43580d00456342f165c3fef8453687c545541f852dc2345f7e217e56a0966e",
+      "normalized_sha256": "d602383633ebbbe8185c8aae8ad916e7905dd5c9afe60f17653347a92d550819"
+    },
+    {
+      "path": "basis/modules/coach/application/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/coach/application/context.py",
+      "sha256": "b17006ec719aacea8f6bb3c08c2fa268d4804d3afb30a28156d763a02ae08908",
+      "normalized_sha256": "37c9848760c66858bfd70687e899a29df6c235e49919e8c29ba0a4c1e95ce05c"
+    },
+    {
+      "path": "basis/modules/coach/application/jobs.py",
+      "sha256": "82faafa9e5c18a60c5fa536081c91244d18edd0014a722ec31eee25de7db9385",
+      "normalized_sha256": "ea2dd6714ceb38b42dccec1c3ec81a4fd3d9b39e0c447be602bea5c981a02382"
+    },
+    {
+      "path": "basis/modules/coach/application/presentation.py",
+      "sha256": "605a00d0de8c75198946761b89737a61797cce29e5f69fccc99b63f9eb6919ab",
+      "normalized_sha256": "6943b1561ff76f3e9434502523b8cc4d37285140546a96a8d63d8c79bf77d73a"
+    },
+    {
+      "path": "basis/modules/coach/application/proposals.py",
+      "sha256": "26f0eadbac56c92447a65fadd38f60f27eb59bcf0e2f3c812810179730153330",
+      "normalized_sha256": "d6d571f341081461147be92f224565a88b6db43210d603e99bb4af5eed78a5aa"
+    },
+    {
+      "path": "basis/modules/coach/domain/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/coach/domain/context.py",
+      "sha256": "09a21d908755232a4ebb80a0b4034aa91a5f4636c5caff9de3f13dfd4449185b",
+      "normalized_sha256": "3660bf74c79a1c2c28f0c1d35b87f850fc082df5f2e18f2b123870158f089a9e"
+    },
+    {
+      "path": "basis/modules/coach/domain/jobs.py",
+      "sha256": "86d12b4cc9e1d280db4480319e24acb50f10edd9caefb4c682678082fa7f2468",
+      "normalized_sha256": "09a6d23f283004d830ad77c56dea666e4891c6ce649b04e9ca73c60d2685d250"
+    },
+    {
+      "path": "basis/modules/coach/domain/prompts.py",
+      "sha256": "a12498e976f225e9424e439049de43056d45772a4e57861dec2dbf4bbe85f8f9",
+      "normalized_sha256": "8b6a920a1eb68de5bb005850991263d89903c54b7cd061216584c09852adee8b"
+    },
+    {
+      "path": "basis/modules/coach/domain/proposals.py",
+      "sha256": "60dcf4d871326b15f7cdfd432b71a9ec38b512dc89115a9a0537841d03d1edee",
+      "normalized_sha256": "219905b69418d19e3725a62650881ab28c8dd0fa3d743ebcc6440af2256f4b97"
+    },
+    {
+      "path": "basis/modules/coach/public.py",
+      "sha256": "2db50b64f55138508fd6d2c2322d6383a298255287aa7424f8a85d93d0b80a14",
+      "normalized_sha256": "e73501d2cdb7263e8aed11039c20dc7bdfbdd9e5ad3b6706ab2a6e95f1e63aa6"
+    },
+    {
+      "path": "basis/modules/sync/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/sync/adapters/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/sync/adapters/actions.py",
+      "sha256": "47a90d061096a5438c5599c66944efd2a79d97cdacb161fffabb8b77ffb40e82",
+      "normalized_sha256": "65b5fb60ad910883e1a70e208610f8470b4d3055f3c94d9e234b07811dcf6e3e"
+    },
+    {
+      "path": "basis/modules/sync/adapters/apps.py",
+      "sha256": "449c89d9fa43f94342273baa55f59b399542718d3a0511f3094124c2e14fc476",
+      "normalized_sha256": "3ee79c08b092821dc5c7e401719981be43d03832f268c9b4c505a684f0e94733"
+    },
+    {
+      "path": "basis/modules/sync/adapters/migrations/0001_initial.py",
+      "sha256": "8f4560349d8f99ca91e5601907c107950ca0608a86ff3f808e7132e7e8095022",
+      "normalized_sha256": "533f0b5be93cd82e4e89000453b714bca23c2e276e85abd75cf8fcd6d2d5ec0d"
+    },
+    {
+      "path": "basis/modules/sync/adapters/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/sync/adapters/models.py",
+      "sha256": "eefd7025a2784fec6eb218064fefc708882cbbb0c8bd43ab13f4305214f1e114",
+      "normalized_sha256": "443db25d5cfcdc52500d1d4f0b75eca8c02fd43396ab6eb78455b37b1319bc56"
+    },
+    {
+      "path": "basis/modules/sync/adapters/receipts.py",
+      "sha256": "689143f1d69c01549ea19aead5e473c40e25d0b0a113a76ead969fbfd063f117",
+      "normalized_sha256": "4079df21fdfc5286ecfc19646128adec6494c7e9d4879fb603173f9d296b68af"
+    },
+    {
+      "path": "basis/modules/sync/adapters/test_wire.py",
+      "sha256": "e1b793a30280138c4e38c2dd2fe0dfab64ad2254c9137266f6aa14a49a8505ea",
+      "normalized_sha256": "94ac56824bea1d0a2dfb32a836643f79298f36aad39ac7a37015bbdbf0dab18e"
+    },
+    {
+      "path": "basis/modules/sync/adapters/views.py",
+      "sha256": "9b1d57d4b1bc6a4b971eb2540f86490675b432830645299541c8cfa5e6105c3d",
+      "normalized_sha256": "d598494752209f418fbb9e9acf3c2edad7d004edad9b8ce47e908c9f0e192419"
+    },
+    {
+      "path": "basis/modules/sync/adapters/web.py",
+      "sha256": "be2b79ae8f626f092508e8500da510089921205480f813ec4856c1c0e606e19a",
+      "normalized_sha256": "da7c484a42eb21194d280a6833bed25f9bef6280fc12a075f79f5dfc35b8a2f0"
+    },
+    {
+      "path": "basis/modules/sync/adapters/wire.py",
+      "sha256": "09e0165b35c876b69bfcd1d0749e563538ad940254b2527309bc6b66ca87c8b2",
+      "normalized_sha256": "b9115e26ce7635e3ff63716349f7dc45adda898eb5a9c83ae98bfe654edc81a4"
+    },
+    {
+      "path": "basis/modules/sync/application/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/sync/application/operations.py",
+      "sha256": "4cc4c4339e17a0bff44087742a75c8dd4453478f8bb6b653d57c4189a57c54a2",
+      "normalized_sha256": "e7cb3bb04b53a7e514bd8458724bc6a37b3d7206ac6912a30a1cdd93ebf03f16"
+    },
+    {
+      "path": "basis/modules/sync/domain/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/sync/domain/operations.py",
+      "sha256": "bc8e5798e55252dff86eb16b55bca28f018757c98379ad26d788c2f38dea5733",
+      "normalized_sha256": "aae6bd365eabecfa5513b7b82fb73360a57b4cc58548480dc8f2cef4228dbfd2"
+    },
+    {
+      "path": "basis/modules/sync/public.py",
+      "sha256": "2aa49844acac2b62f0ee8a3d9d70066e7cf88e3796307d336545aebba047c4cf",
+      "normalized_sha256": "601ceb29258ee2de798f9dd072d5abf7caa27dd8d0f2978d4ef59007731c786e"
+    },
+    {
+      "path": "basis/modules/training/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/training/adapters/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/training/adapters/actions.py",
+      "sha256": "34909958ff8d05f945f2e982fd92dde3072a0b3ef316b5645b6ee35fda3185ab",
+      "normalized_sha256": "34909958ff8d05f945f2e982fd92dde3072a0b3ef316b5645b6ee35fda3185ab"
+    },
+    {
+      "path": "basis/modules/training/adapters/apps.py",
+      "sha256": "f948e66c0b7fbc2e8b884a9ddace7c8585235a06a9f17da326671ada08c94dcc",
+      "normalized_sha256": "69a3e1444b03684f9450e77c6f77f86836d334aa4b1e168d6067d5d34ed0b33b"
+    },
+    {
+      "path": "basis/modules/training/adapters/coach.py",
+      "sha256": "5dcdc6bf783656f515a26d71ae1c95a768118b98bb44a0f52685d6f2c5e5b088",
+      "normalized_sha256": "44d7782e999f4d8510c8c4a469edae9562966b0d1d05eb7d1149b653bc75f762"
+    },
+    {
+      "path": "basis/modules/training/adapters/django.py",
+      "sha256": "52766b78a9a1337b4c77712501c4eae8ca9f5e221595668c3eb8d70c294ec36e",
+      "normalized_sha256": "b14725e7a73e601ba06591f715b444befdf3126aae23f4cc888abbadb234bc6f"
+    },
+    {
+      "path": "basis/modules/training/adapters/forms.py",
+      "sha256": "ef4f1ff7cd5085208422ab35043b46321247fbe3b83b48ecbc2fd75e65f55506",
+      "normalized_sha256": "4d5d64c4721214cacd946a91fa80e88bdffab2c010c10ff85bb4c8c8f7a5925b"
+    },
+    {
+      "path": "basis/modules/training/adapters/manual_actions.py",
+      "sha256": "a38d2de47abb65e1889e5f873f1774b54045265e2c538b6e5a435cef9311e01e",
+      "normalized_sha256": "a38d2de47abb65e1889e5f873f1774b54045265e2c538b6e5a435cef9311e01e"
+    },
+    {
+      "path": "basis/modules/training/adapters/manual_repository.py",
+      "sha256": "d65d61a2d21b59383818f7d81d919de22f5d4c05df24cff7fc53bc89e37f10e7",
+      "normalized_sha256": "d65d61a2d21b59383818f7d81d919de22f5d4c05df24cff7fc53bc89e37f10e7"
+    },
+    {
+      "path": "basis/modules/training/adapters/metrics.py",
+      "sha256": "4ad44343bcf632c5335dd7c72c6b742b9c2db48e0f605cd4c196a0c7b2357b28",
+      "normalized_sha256": "57b564e1983b85afe5848c24ba38a7d1b9c613f27b09d948fb166c867eb92439"
+    },
+    {
+      "path": "basis/modules/training/adapters/migrations/0001_initial.py",
+      "sha256": "28c972dff4f867aee972c65eaa6a8ff758af67eb34fe08c76cf7d36dd9131f95",
+      "normalized_sha256": "2c7f92b6802bbabe32522529eb6cc8580a5edae801104830550b81deaa33a705"
+    },
+    {
+      "path": "basis/modules/training/adapters/migrations/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/training/adapters/models.py",
+      "sha256": "bf14f3f228bb2148a4f240bd6316914f8cdab1c5f6c4c48be0d99273317e9cb0",
+      "normalized_sha256": "bb7ba25c738e28f7e0c3be495571ef2240aca706d6d9c11bed34722dba1da22b"
+    },
+    {
+      "path": "basis/modules/training/adapters/plan_wire.py",
+      "sha256": "970b993d569366b9857cc1fbf4662bc31d541effb63c148fd7b4307efd753ca8",
+      "normalized_sha256": "90ad4da1393866663ac482aa7a7b4c1640aff2c2fa1d5f0df4c22cc61c2ea8c3"
+    },
+    {
+      "path": "basis/modules/training/adapters/planning.py",
+      "sha256": "182b7b11b70a02ca6b29fd19f4207b5ca2b0385a9dff4fa7dd2c39910c98267d",
+      "normalized_sha256": "1551254f4799a4208a85ffb260514df3ef1351823fd893033b97849bca214dc2"
+    },
+    {
+      "path": "basis/modules/training/adapters/presentation.py",
+      "sha256": "ff529f1d1e3a7d704642e98da2935e04c5764e6fdee41fdbe0806d907a20ec98",
+      "normalized_sha256": "5c55a865a7ecc4c1ebab80db68bf36f2e1101557ce477755ba85e4eac9dc427a"
+    },
+    {
+      "path": "basis/modules/training/adapters/progress.py",
+      "sha256": "5f3fd54138d88cd5620058c031d518fc14dd2e61dca748dffb4b4045b6a68479",
+      "normalized_sha256": "bb2bc79f0fc5c1c003092cba6610800692dfce67b03ea9b15bdd59891ca443da"
+    },
+    {
+      "path": "basis/modules/training/adapters/progress_wire.py",
+      "sha256": "97fb40d6cebbf534618631e5c24b097ef25f70fb0079c915b2311f44a3597464",
+      "normalized_sha256": "8a268533a1155455b9eb01a69eb2b63b9adfb85e34ffb811596a18214deab25c"
+    },
+    {
+      "path": "basis/modules/training/adapters/sync.py",
+      "sha256": "4ecf15e9cdcebfe11f6e6ee755a50c92c34d71c33a3a6c2b19b32afebcee11b5",
+      "normalized_sha256": "1929c2a09f679c586cdabb4ec4a9ca17045f849b3a445e1b21727e4736a02a0d"
+    },
+    {
+      "path": "basis/modules/training/adapters/templatetags/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "basis/modules/training/adapters/templatetags/training_tags.py",
+      "sha256": "085b999392d193f2dd36033de82aacf7b202c72231074ac3ffa2c3de38cee857",
+      "normalized_sha256": "fdc36e5f4390d1e0b9aadf4b4350eda600a9f63fee8ef03c90569afc47f52303"
+    },
+    {
+      "path": "basis/modules/training/adapters/test_metrics.py",
+      "sha256": "134882d0e22614473a5ae229919f9934ef7f30258e0289cd4defbdcbce63d2e1",
+      "normalized_sha256": "fe67ef188b6170b9a6a0d7bf1410ad2d2888df1884328e2fc17fb20b7cbcf010"
+    },
+    {
+      "path": "basis/modules/training/adapters/views.py",
+      "sha256": "f26e27ef7794be1513bc32c38b4a5b6b797a26c043c0afa758d75a28ea2b624a",
+      "normalized_sha256": "f26e27ef7794be1513bc32c38b4a5b6b797a26c043c0afa758d75a28ea2b624a"
+    },
+    {
+      "path": "basis/modules/training/adapters/wire.py",
+      "sha256": "1d25326f2814705dea6fd73fd9df5b5ef918bb821d0b4395a0ef63a6ac9c8056",
+      "normalized_sha256": "cc1dac24eb4129149f8e78f6b6ce98ac8189c409ddcb2a15283c6c1f61f62d50"
+    },
+    {
+      "path": "basis/modules/training/application/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/training/application/coach.py",
+      "sha256": "808b76a4199cf256f2da6a8dc349de34d1ce69d5544000450aa41576885e3cbf",
+      "normalized_sha256": "c84e971368db177c35593eb89414d9e308c3280302b6281866227b67b818d312"
+    },
+    {
+      "path": "basis/modules/training/application/execution.py",
+      "sha256": "99a54c9c8e5cde8b58ff6f72bda40e47dec5a8da418e39dcdac09edb597c854f",
+      "normalized_sha256": "90967d27de08f390a48411a4246891e9c893d61b9b2cf7314b7c2051d78f5f3d"
+    },
+    {
+      "path": "basis/modules/training/application/manual.py",
+      "sha256": "69d5bdd8883d5c85cc3e6ab836cce1142886d07cacc37b9829e4ede5e8924949",
+      "normalized_sha256": "69d5bdd8883d5c85cc3e6ab836cce1142886d07cacc37b9829e4ede5e8924949"
+    },
+    {
+      "path": "basis/modules/training/application/planning.py",
+      "sha256": "cf39da221eb35bcb5ee020f211518130668754265ddc34f2cb934bf2d1be3512",
+      "normalized_sha256": "aa3a051e53c2381b634ac592d45d309f803551e60d7d69d11a1fdea40b66480b"
+    },
+    {
+      "path": "basis/modules/training/application/presentation.py",
+      "sha256": "5d3aee2ab57828abe8b0ca2b88069c933d679cdb612050b85d3f32ad2bb9ce3a",
+      "normalized_sha256": "24e8d243c11a642a8db1fcdaac90f2c59b3bd86620aebfd2919c1c4853db035a"
+    },
+    {
+      "path": "basis/modules/training/application/progress.py",
+      "sha256": "769efc416f414f6ea57672e7935dbb182991e9fe62f00ae21e7f70a58e9c847e",
+      "normalized_sha256": "eddff177f5402ef8037c5bc56b875b7295ef768b8d62b601a755472e498bd75f"
+    },
+    {
+      "path": "basis/modules/training/domain/__init__.py",
+      "sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86",
+      "normalized_sha256": "c1fb6e81113c45c7b6ac5f475602dddc85a058c451c2e518237c44d8665f2c86"
+    },
+    {
+      "path": "basis/modules/training/domain/execution.py",
+      "sha256": "f892635ac131aef5cb7ecf0025ba7bbb4a1a9679be8bf65af9ad217a8e1ea646",
+      "normalized_sha256": "f1359ff9d8d2c58a1add80279f045303a2fa7f181240d1a488c6e37c624523a5"
+    },
+    {
+      "path": "basis/modules/training/domain/manual.py",
+      "sha256": "0c69872e72c928c3fc6cfde558028889a29f4e8604875273e1d2163cd47b7eed",
+      "normalized_sha256": "0c69872e72c928c3fc6cfde558028889a29f4e8604875273e1d2163cd47b7eed"
+    },
+    {
+      "path": "basis/modules/training/domain/planning.py",
+      "sha256": "17183c9a655ae834fb8ea43fccb94dd4009290458ecc5a6e5214967aec6fa6e8",
+      "normalized_sha256": "571509e7583bf9b8702de3144b15863e3d2c344280a72c074abbde50eae2d972"
+    },
+    {
+      "path": "basis/modules/training/domain/progress.py",
+      "sha256": "669166004d3aa9d199fc63b6f155449d7fee65280a084b5cb9204ab6785565a8",
+      "normalized_sha256": "ab54511e621d5e96e01c8b00a811f498b2b907164550d3cf578a7adeea14bcaa"
+    },
+    {
+      "path": "basis/modules/training/domain/sports.py",
+      "sha256": "6713fbabc5dc87a8ca59b018eaa84a52c47f3c6d4091dd68b2176ea18ec74dca",
+      "normalized_sha256": "56e8f5a244316afc60bb883f9eb0e6d7e34fa011a92b06f526a88a1356065848"
+    },
+    {
+      "path": "basis/modules/training/domain/strength.py",
+      "sha256": "5051b7a39974e270bde13b2fe4556dcb6671be517748ab5e8309652d60eea961",
+      "normalized_sha256": "0328709d03f043378b4964b18e6c3b88ca082b25dd827f92f336a48a50d48251"
+    },
+    {
+      "path": "basis/modules/training/domain/trekking.py",
+      "sha256": "5be2a2ff5d7ec14a98eed16c95cfc960d72f0608acf7ba818c8dd0e40ab28390",
+      "normalized_sha256": "883240e37e1cd69af61e81e626c5ccf5fbac47099629c547bdd42de7051d400b"
+    },
+    {
+      "path": "basis/modules/training/public.py",
+      "sha256": "ccf68ce882002851a9fd23da8e3fecca0079cd5cf5d4f47104d0a9e84f1a2f11",
+      "normalized_sha256": "dc79d3773cfbd22b735fe50cae0d540b3d78f346532cb7d18b2eaf76c29160f1"
+    },
+    {
+      "path": "basis/shared/__init__.py",
+      "sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff",
+      "normalized_sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff"
+    },
+    {
+      "path": "basis/shared/identifiers.py",
+      "sha256": "1b6c603f5135aff83212af98397759fcaf9f8572a759c2bd73c20fd447710615",
+      "normalized_sha256": "9ff425bcc761aa5a5097f4d66b0137410731cc00862b00cb2da49eef70038955"
+    },
+    {
+      "path": "basis/shared/ports.py",
+      "sha256": "7c51c0ca514eac5c07e4ce7ad8e2cb904d044b7205d50ded7dde8a62cd4378ac",
+      "normalized_sha256": "7c51c0ca514eac5c07e4ce7ad8e2cb904d044b7205d50ded7dde8a62cd4378ac"
+    },
+    {
+      "path": "basis/shared/text.py",
+      "sha256": "dd9ff721e60589d69de4b14e6c3694aac38baf85b1f3ecabadd4dff476c428d7",
+      "normalized_sha256": "407138db8d56722d6826a1bcdf460b27af4148e12439499c9d13c440639e7d95"
+    },
+    {
+      "path": "config/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "config/asgi.py",
+      "sha256": "a433f790e73249e69d2b082eefa80d6e1effb3d94cf1f62804791f4076feefbe",
+      "normalized_sha256": "a433f790e73249e69d2b082eefa80d6e1effb3d94cf1f62804791f4076feefbe"
+    },
+    {
+      "path": "config/settings.py",
+      "sha256": "f245bcbcf2e912b0250bc66bb3071906d93ff83e63f1f145c172ed475e5fbf32",
+      "normalized_sha256": "00029c03a566d641a46bb4935caec76336735a8b817e15e08270dd8e68b7f8ab"
+    },
+    {
+      "path": "config/test_settings.py",
+      "sha256": "a8bda7284fd3a3db7e91fccbb486ec2cef0279761a4b584940c8ada29aabaec1",
+      "normalized_sha256": "a8bda7284fd3a3db7e91fccbb486ec2cef0279761a4b584940c8ada29aabaec1"
+    },
+    {
+      "path": "config/urls.py",
+      "sha256": "0149ae9e84c86a9d2ab820f900cc90cec92f5694bab89bf335f8878253407c2b",
+      "normalized_sha256": "a1928fce2451bb3e9003528cdbbbd260862e3df77a00601f14e4421499341b49"
+    },
+    {
+      "path": "config/wsgi.py",
+      "sha256": "7fdd24c3a5e7669dc9ae10931df9ddfccd46972bd9dc38d33fe08ae8cbbeceb0",
+      "normalized_sha256": "7fdd24c3a5e7669dc9ae10931df9ddfccd46972bd9dc38d33fe08ae8cbbeceb0"
+    },
+    {
+      "path": "manage.py",
+      "sha256": "1351bf20443b86108d7a1fea58ccc68ea27e69206107c84b27e607bb1e3f9676",
+      "normalized_sha256": "1351bf20443b86108d7a1fea58ccc68ea27e69206107c84b27e607bb1e3f9676"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "sha256": "d90e3d20a88abf74786b15169037c262233e5926f5ca0b9369acceddf64e28c2",
+      "normalized_sha256": "d5f8f21f79cfac42dd4062bf01fa3739085eec56460bdbff0227631228576ccb"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "7e42388d5f31b384de924e4bf8f8a1a2ad1f43e2c6e0700b5335cbfda8a298a1",
+      "normalized_sha256": "16a58697b11d78e21005afd8440f41787880f530ac9781ef2efdfa5873cabcb2"
+    },
+    {
+      "path": "scripts/acceptance_browser.py",
+      "sha256": "10e2e465d4944e8eeff06eb50abd39ed4ef7bad6c71aa47fb8122250aea6f955",
+      "normalized_sha256": "915c9549bff8947e857f4401f1b1447b50ca6638df68d803c3b7ce4952ad00b7"
+    },
+    {
+      "path": "scripts/browser_smoke.py",
+      "sha256": "9d36c7bbbd476154496bdd6fce465476ad344be912317f563d0152ea4184e7e4",
+      "normalized_sha256": "fdc97ac7576eb87416e9b19d5d601314f83c4aa44be7a6dbaa99ab73b879aa61"
+    },
+    {
+      "path": "scripts/verify_environment.py",
+      "sha256": "6f981a4c33b3a6c2e480d86088fd70962e70f52c265677a449dc0f6d11a8e716",
+      "normalized_sha256": "627c1115b1d7cd58faca68f5a6ea3bd952870d8c06141e6e97be246077cfc168"
+    },
+    {
+      "path": "templates/base.html",
+      "sha256": "1847fc5fc4ea2804a422d85a3a62dda6fe737639cbdb72ae8adfe008a764874f",
+      "normalized_sha256": "1d3002323f69293bc82e58f0beb17c235ac5236e169a6046c76b0f86862168be"
+    },
+    {
+      "path": "templates/cotton/brand.html",
+      "sha256": "5c53e18b59bfdcde824564ab76de9d20f2c7f6616c67eda42d0fab020d5b014e",
+      "normalized_sha256": "5c53e18b59bfdcde824564ab76de9d20f2c7f6616c67eda42d0fab020d5b014e"
+    },
+    {
+      "path": "templates/cotton/card.html",
+      "sha256": "df09ab62c70571c819d09b0f2af0573ccd80ccb0da2237e2d2fe46c3c43340d8",
+      "normalized_sha256": "df09ab62c70571c819d09b0f2af0573ccd80ccb0da2237e2d2fe46c3c43340d8"
+    },
+    {
+      "path": "templates/cotton/empty.html",
+      "sha256": "0270625227dfd15454234e710af75633ff6fe546b01d2ed470d5cd58ef975d6c",
+      "normalized_sha256": "0270625227dfd15454234e710af75633ff6fe546b01d2ed470d5cd58ef975d6c"
+    },
+    {
+      "path": "templates/cotton/page_heading.html",
+      "sha256": "73b8f9d8d8501c9de2a9f5f4c9b6b9ea5371f2bec57c95a67ac210ecdab1dd28",
+      "normalized_sha256": "73b8f9d8d8501c9de2a9f5f4c9b6b9ea5371f2bec57c95a67ac210ecdab1dd28"
+    },
+    {
+      "path": "templates/registration/login.html",
+      "sha256": "33b24265e5f6436a4eed858371aa74ea4bc50643415f03d30219b4e330b5cf32",
+      "normalized_sha256": "33b24265e5f6436a4eed858371aa74ea4bc50643415f03d30219b4e330b5cf32"
+    },
+    {
+      "path": "templates/registration/password_reset_complete.html",
+      "sha256": "fa32969dc8ad7beda1db16ed363d3bed26abadd7530b47707229a7140f13ad59",
+      "normalized_sha256": "fa32969dc8ad7beda1db16ed363d3bed26abadd7530b47707229a7140f13ad59"
+    },
+    {
+      "path": "templates/registration/password_reset_confirm.html",
+      "sha256": "bea8fcd06d2ee2b6393d170586af6a8d1f2da17c4246e2681114cd7acf08a7b5",
+      "normalized_sha256": "bea8fcd06d2ee2b6393d170586af6a8d1f2da17c4246e2681114cd7acf08a7b5"
+    },
+    {
+      "path": "templates/registration/password_reset_done.html",
+      "sha256": "c1c5df35126ac477f2027853417550e08503cc292062c530b74a1c93c98dada8",
+      "normalized_sha256": "c1c5df35126ac477f2027853417550e08503cc292062c530b74a1c93c98dada8"
+    },
+    {
+      "path": "templates/registration/password_reset_email.html",
+      "sha256": "5c1dee78c792bf84c178dc657c8c472c21cce19075279b25c5a62317dd5c83d3",
+      "normalized_sha256": "5c1dee78c792bf84c178dc657c8c472c21cce19075279b25c5a62317dd5c83d3"
+    },
+    {
+      "path": "templates/registration/password_reset_form.html",
+      "sha256": "237d43f6766b436a1e1da306ca8457a2f940264179869212866b549d7afc8f02",
+      "normalized_sha256": "237d43f6766b436a1e1da306ca8457a2f940264179869212866b549d7afc8f02"
+    },
+    {
+      "path": "templates/service-worker.js",
+      "sha256": "7448e7a30d26646bda3436f31f0aa6f5dac111b68638255d24b20403f9178746",
+      "normalized_sha256": "7448e7a30d26646bda3436f31f0aa6f5dac111b68638255d24b20403f9178746"
+    },
+    {
+      "path": "templates/training/billing.html",
+      "sha256": "c8e14eec41f832ff230742c5c2ee4dbd970fbc719df3c0d62aa48380058dcc38",
+      "normalized_sha256": "7b2ca20b9b6fb84f572216212b4bb95b370398c7ccf480f59fccdafbee10367e"
+    },
+    {
+      "path": "templates/training/blocks.html",
+      "sha256": "ef352dcb189ebd6fd7d42219fd4907fe1d02da39987adbae032e896a75c15331",
+      "normalized_sha256": "b20c289acf3e9028c660e1def8e3a92d4fa54b95076986300ba37cb44c4d4efb"
+    },
+    {
+      "path": "templates/training/coach.html",
+      "sha256": "850d0788e290db4c532b107a8f8f01a24e0b13080754d15f5118e1900064c5e9",
+      "normalized_sha256": "f000a511f9503dc9c87eeb57a0317bdae9ba028531e3ff4721fe40b023681239"
+    },
+    {
+      "path": "templates/training/confirm.html",
+      "sha256": "31ba7f634ec39c950be223e15d2e7bd72a11310b8f22fc1755d26a2790e84da6",
+      "normalized_sha256": "31ba7f634ec39c950be223e15d2e7bd72a11310b8f22fc1755d26a2790e84da6"
+    },
+    {
+      "path": "templates/training/form.html",
+      "sha256": "c3c955dae4e965b2c345fb0216ce4978bf11ee1452fc22ea8b7801bbd5cc3929",
+      "normalized_sha256": "969dc90420b8c65b9bac90b0c2a5d5cf3c1ed6ce20be10bb39ba4a6636ccf409"
+    },
+    {
+      "path": "templates/training/job.html",
+      "sha256": "44d086625309acf0c3c1f67f647a1479208883f72ee7ddb0ce6f233eba516fcc",
+      "normalized_sha256": "44d086625309acf0c3c1f67f647a1479208883f72ee7ddb0ce6f233eba516fcc"
+    },
+    {
+      "path": "templates/training/job_fragment.html",
+      "sha256": "b491db185cdc3c41595dae519e0cbc893e8de0f07a366fcf53ba37e21bf09755",
+      "normalized_sha256": "c15fc6396261d5ea0ad1a501e746a2915503df820852406898a7f675af689b0c"
+    },
+    {
+      "path": "templates/training/legacy_history.html",
+      "sha256": "e6ba42eccf730e16255c6552912f2440a1a8b52d8cf34f8ef715eb4e67680f04",
+      "normalized_sha256": "e6ba42eccf730e16255c6552912f2440a1a8b52d8cf34f8ef715eb4e67680f04"
+    },
+    {
+      "path": "templates/training/notice.html",
+      "sha256": "fb746daec8d4e9c861549327f142e5a46b2619177c193e5f6174a8e8e319ff83",
+      "normalized_sha256": "fb746daec8d4e9c861549327f142e5a46b2619177c193e5f6174a8e8e319ff83"
+    },
+    {
+      "path": "templates/training/offline.html",
+      "sha256": "a8807633ea84a872dc07c5f45bd0e7a4136ab4069a864b1a89d2a09eadca392a",
+      "normalized_sha256": "a8807633ea84a872dc07c5f45bd0e7a4136ab4069a864b1a89d2a09eadca392a"
+    },
+    {
+      "path": "templates/training/plan_detail.html",
+      "sha256": "b56132b7222e6bbd2a4de361504157879418edf585687f141b052352b16c5188",
+      "normalized_sha256": "b56132b7222e6bbd2a4de361504157879418edf585687f141b052352b16c5188"
+    },
+    {
+      "path": "templates/training/plans.html",
+      "sha256": "724af3ac23e5175e6dc1d6d2aee5540025b7e67688fbd285be213c72b113488b",
+      "normalized_sha256": "724af3ac23e5175e6dc1d6d2aee5540025b7e67688fbd285be213c72b113488b"
+    },
+    {
+      "path": "templates/training/profile.html",
+      "sha256": "47aa1d877bf3951b74660a3c2e764185c5abd7ae2da67b247ee555b3190937c5",
+      "normalized_sha256": "a793840439d7a99db81e8703ec2ef0e6c28a09cdb2a2581392969665e995993c"
+    },
+    {
+      "path": "templates/training/progress.html",
+      "sha256": "d12933ed27d5dc9b4c4d5fffd19f95b48d454b91fc9457bf9222f8037331dc02",
+      "normalized_sha256": "d0e3505a3339454fd6fb87a7f5067c43b9541e1f28dbb1ca7ef91a6318172c1f"
+    },
+    {
+      "path": "templates/training/proposal.html",
+      "sha256": "2eed0021c94cbad8b769eff00cedabe98226977ed2545c0e453825272c58285f",
+      "normalized_sha256": "2eed0021c94cbad8b769eff00cedabe98226977ed2545c0e453825272c58285f"
+    },
+    {
+      "path": "templates/training/scheduled.html",
+      "sha256": "468614063623211d983b62965b650d115286e5a6bda7a6244406af78da74aa10",
+      "normalized_sha256": "468614063623211d983b62965b650d115286e5a6bda7a6244406af78da74aa10"
+    },
+    {
+      "path": "templates/training/session.html",
+      "sha256": "80fbf6b1b674e38da114548a5b92f4436f8578bb03bd91fdee5dd13ae6631faa",
+      "normalized_sha256": "80fbf6b1b674e38da114548a5b92f4436f8578bb03bd91fdee5dd13ae6631faa"
+    },
+    {
+      "path": "templates/training/today.html",
+      "sha256": "f874ef40586cb0c498d57f579134314cf9f09590df1cfe4e34d9b99851309b5d",
+      "normalized_sha256": "99ffa13f50122aa6282a8fe813df33ecaf83fd54183fd38016994e110a7e4053"
+    },
+    {
+      "path": "templates/training/trip.html",
+      "sha256": "50001f29e58f88a89eb1c6bf64b5d448073916e12cc27a1cdc414d1fc12717fe",
+      "normalized_sha256": "50001f29e58f88a89eb1c6bf64b5d448073916e12cc27a1cdc414d1fc12717fe"
+    },
+    {
+      "path": "tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/regression/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/regression/contracts.py",
+      "sha256": "3d40bc48b182907bc2626004a05b4f213a7582631dc804c39803c2e61cd2709d",
+      "normalized_sha256": "ebccab8a2f7fcb95b030dea5ea6cb63b5eca02492d91c34f3025a4cf86303132"
+    },
+    {
+      "path": "tests/regression/factories.py",
+      "sha256": "c5e8a6a805bc18d6a437418aad497f7857272774504e3f736545de8564c24362",
+      "normalized_sha256": "03175b3248f3d4d57d759d58fc5f27f0f42ef34342a568e382f8514602cdaa60"
+    },
+    {
+      "path": "tests/regression/test_billing_ai.py",
+      "sha256": "5de88a5a4559ac4f4648e931e0d3ebfacdb23e3c6a7f84393f01cab7f2823205",
+      "normalized_sha256": "e953e3d86f41d2da9494e886067c79c483a6374e3f7d8d5b40be67873c8fef62"
+    },
+    {
+      "path": "tests/regression/test_concurrency.py",
+      "sha256": "54bcc68b370a243456243ea28f21512740a47fbc2d9fe708593513799ed63b4a",
+      "normalized_sha256": "436a78370f61b44ce3c72d0a9b6f4b40abbfeb65323e2d69a484cd6b0c1205f3"
+    },
+    {
+      "path": "tests/regression/test_domain.py",
+      "sha256": "d4824467d0e15ea1a1652b682c9d87ab9c63ccee969092b61d46c33e912ffc5d",
+      "normalized_sha256": "4131f907511409c0d2c1f8ad7b822259b675a8d26f9282a62ff3afb1e7b01611"
+    },
+    {
+      "path": "tests/regression/test_environment_verifier.py",
+      "sha256": "a5de0d38c382ea5376afa79a3c48e806fd72f6735db3c00ff339efc3b45cc433",
+      "normalized_sha256": "55d466b2fe229885a67dd3be28ff463b92bd3d1aff883807c2009bad8a89fbdb"
+    },
+    {
+      "path": "tests/regression/test_private_access.py",
+      "sha256": "461e579e9d0a764b4966f6540d0b0c6b5349bc66b731290b0e7bc925777159de",
+      "normalized_sha256": "d000849490f5f0e2298b5db83676c0150ea690a932e8246060b84e90783f69c8"
+    },
+    {
+      "path": "tests/regression/test_review_and_edits.py",
+      "sha256": "31283eb46686d02041b22ec4bedd1f0be8e1b2be3a20b33f64c8bfa8db02ff8c",
+      "normalized_sha256": "d435c80d88392f27efcb6abf6a4045e975c055d2053d0c8e47defa5ff325cdda"
+    },
+    {
+      "path": "tests/regression/test_security.py",
+      "sha256": "f419da185d2ba828630920140ced2d4fd7785db8b5fcc2ff8156a3ed7a8fb8ca",
+      "normalized_sha256": "ec24d7968231b5d55c1f4294c1ad11e1067e1d3435e8622c6e7dbb24fb2e6e17"
+    },
+    {
+      "path": "tests/regression/test_strength_metrics.py",
+      "sha256": "37d6ac29c6e82a077e3d7868d13906aad8cf50ac1112a7127e680ac0568bbc17",
+      "normalized_sha256": "0c7c0133617ec57cc9911007b757aaf8e84846042825ab8e41681441d4be9a49"
+    },
+    {
+      "path": "tests/regression/test_training_contract.py",
+      "sha256": "f8414882b1b2fe708fbb7fc77eeda7c576a5730500b9cada2fd37162d87b4583",
+      "normalized_sha256": "9a52b89b64c836e4ca6ecd2ae69118c1cf2366319b13986d34a1b323cc4ea698"
+    },
+    {
+      "path": "tests/regression/test_web.py",
+      "sha256": "7ca8e5f30b1cb146f43c134ea74f2d8a5619d9522ae96b5f2049a82746c32b83",
+      "normalized_sha256": "478847f4d831fc662edd845235209b7e83c5ffa720f74cc5d2ac65ab09c7e69b"
+    },
+    {
+      "path": "tests_architecture/__init__.py",
+      "sha256": "41c65344073cf6297cd601fd7e897962adf9ed2aebddfd864f22101fb300d94c",
+      "normalized_sha256": "602787a57eda5af634e3ef5a69af07d0e9c990803e6fa7e3f58ac567558030ff"
+    },
+    {
+      "path": "tests_architecture/billing_contract.py",
+      "sha256": "cdebaa58bd1837f30ea5571e46b6d7c1f5c704e44a5d995dc040480529680bae",
+      "normalized_sha256": "c0372c9671678e46c1532ae39e6998b7126059dd1b4d9a8311140235efba0b36"
+    },
+    {
+      "path": "tests_architecture/coach_jobs_contract.py",
+      "sha256": "e3c0b50f2c0f42d6227e90483a5aa346eded2195ee559c191c30634b2186aa68",
+      "normalized_sha256": "c04953206c3fb613e8e0a4961996ae6e65a976e2cc8bebcdd9894892756c5b85"
+    },
+    {
+      "path": "tests_architecture/identity_contract.py",
+      "sha256": "e92498574e7777a11eb2386bb35ff81bd5dfaaf7fa4c0a928a99b5a34e4d6587",
+      "normalized_sha256": "e9e9841bf246fc0e38f1d7a489ed14f9c198aa4447aebccdf316a41ac27a1000"
+    },
+    {
+      "path": "tests_architecture/manual_contract.py",
+      "sha256": "72786c8f1cdcaa48ab1aa2c53b9af78c07d8085b966a2ab4cf0597dab671f852",
+      "normalized_sha256": "72786c8f1cdcaa48ab1aa2c53b9af78c07d8085b966a2ab4cf0597dab671f852"
+    },
+    {
+      "path": "tests_architecture/planning_contract.py",
+      "sha256": "c86dd3cf5872fb2853ed5ff234a4c22a8718c445568593c33fcf3028ca47d8f5",
+      "normalized_sha256": "7b9d8ae0ff415e858309d1b87a1d54043620af995515c946a2eab49a230271e5"
+    },
+    {
+      "path": "tests_architecture/progress_contract.py",
+      "sha256": "eb21b259f330159c9ce4edce7168924e75dc43598453939d28bb55930dc6a131",
+      "normalized_sha256": "79141630941f632b56c4aee3fe50d23bbea60215aa65ef19cc03575ae76d042a"
+    },
+    {
+      "path": "tests_architecture/repository_contract.py",
+      "sha256": "d04e68b4ba9994b96d6031265aee277ed761ceda3e03765d0bf8b51a720e5945",
+      "normalized_sha256": "67081247e32313f2078509d49ab9d933b5eb5e4b502e2ef66b7b1ddd695c1cc1"
+    },
+    {
+      "path": "tests_architecture/sync_contract.py",
+      "sha256": "e699af65d7c9271441cfdf5580326d941696277ddd781697f101ec6bd90876d0",
+      "normalized_sha256": "b2ad2576d984a47b5d5185527d56ab837e705dbe8153332d9d3d530df6bdb6b3"
+    },
+    {
+      "path": "tests_architecture/test_athlete_administration.py",
+      "sha256": "114547e0d7f9610b6671cc35251f4fcd3900a85a57d803d869c713db322d0a2e",
+      "normalized_sha256": "45642aa5eff3b4221468fb32dd2a692368da742f8f5b2702e13ccb42fb6cd193"
+    },
+    {
+      "path": "tests_architecture/test_athlete_records.py",
+      "sha256": "8a3a6b6ab5b6846430d66ebef42e87f1b6072c1726679d7557711b8fda3d3888",
+      "normalized_sha256": "cdc92a1bfc16233dc9740b6f6f3b5f52b1ca6e269d6e706639c837824b574e14"
+    },
+    {
+      "path": "tests_architecture/test_billing.py",
+      "sha256": "268f6fde757ea5b44990e1f4e9667cf2435b4a9e7ead5f2029631322d04e89f0",
+      "normalized_sha256": "f3785bd9bdbc8ec38bef438ec0a8e50d45f30ecaad5deaad1ca6cc0f5de59135"
+    },
+    {
+      "path": "tests_architecture/test_boundaries.py",
+      "sha256": "fcb7d72f6e72fd625c525ff5614d448a6990f40fd5287f7c8b834d63cf2699a5",
+      "normalized_sha256": "fbf498a26bc1167cd329c6199dd2bf6dc623053840ea17364c77787b82412f8a"
+    },
+    {
+      "path": "tests_architecture/test_catalog_policies.py",
+      "sha256": "7cc9a23782c6f83984dc606d36bd5948ae3c6073a22fe40938c41ed427db68c4",
+      "normalized_sha256": "82580400967c1406b225b42dcb54d8f986076494a776dd8b8045c03268fa3cf3"
+    },
+    {
+      "path": "tests_architecture/test_coach_jobs.py",
+      "sha256": "fe2d7be3b7f5f4a65521095ca0f69f0022359031234d6ab2c84c6146a3de035c",
+      "normalized_sha256": "bb7f5cd2530d51b53ffadc0209d4570c0dd19206b47475cbf2911f2bb2bf04fe"
+    },
+    {
+      "path": "tests_architecture/test_coach_proposals.py",
+      "sha256": "05c300cacaf4b2ed8cc1715ad432d2b04c570986235e23d23d687bef0e861769",
+      "normalized_sha256": "79152f9ecdd9e34bd840edfe1ad406dc0633d5f62d0c35c854c44f47d775b491"
+    },
+    {
+      "path": "tests_architecture/test_execution.py",
+      "sha256": "3b020dfe0497f5723b8ff377ca13732311b85240c69b4733a81384985fe586cd",
+      "normalized_sha256": "5e058b2569a1036525fba8fe06c352912dadf30217325fbe054b9e5f94adb413"
+    },
+    {
+      "path": "tests_architecture/test_identity.py",
+      "sha256": "1f6fafd78a1372ee30024f78c84f63beddd7fd5e567852d6ac6f7389890c37ca",
+      "normalized_sha256": "e8180950c79f1149043cdf0169de6aa973e316f1be4ff18d9c5e690748ed15bb"
+    },
+    {
+      "path": "tests_architecture/test_manual_training.py",
+      "sha256": "0503950a416fad8a0da8d667dbc9b131b818da4cf8693b3cf897b40941eca6a9",
+      "normalized_sha256": "0503950a416fad8a0da8d667dbc9b131b818da4cf8693b3cf897b40941eca6a9"
+    },
+    {
+      "path": "tests_architecture/test_persistence_rules.py",
+      "sha256": "dfcfd6e568bda31f87e33b7dc692f6553c896a744b087414886c494f4dc37986",
+      "normalized_sha256": "fe795ad76a280e466a8c450de5e5191c2cd541df07890456707da32b78c9adcd"
+    },
+    {
+      "path": "tests_architecture/test_planning.py",
+      "sha256": "6b34b684af55ca095be6f62ef490377be09dceed850f099bdf04fa2d44d56607",
+      "normalized_sha256": "ad3ca56465d85d3acda8aab44c8784f8ef5e612d5d23f71cb5ecd139a301f85d"
+    },
+    {
+      "path": "tests_architecture/test_progress.py",
+      "sha256": "4a2c5de4ad59d1aa2b90cc29b4e7917867182ac8a505d3192922d823b9601d76",
+      "normalized_sha256": "c387f9dddf32c0c14aa678feb41b3ffe3efe785acd70e8c5e3d96c44304d1da2"
+    },
+    {
+      "path": "tests_architecture/test_sport_metrics.py",
+      "sha256": "32954c3dcecaa86f91effd9e00d27198d2f563d943fc4f1835101def7873239f",
+      "normalized_sha256": "8ef959826c31acc61aa86200614645aa206f63be6d1fdb209c459b540a8d1e67"
+    },
+    {
+      "path": "tests_architecture/test_strength_metrics.py",
+      "sha256": "93e0e74eddba05cf1bbcd0517e1c8824fa55464f9bc45d25afa95d96272308e1",
+      "normalized_sha256": "9115651030b8115cc8f27c16f3ad679d54dfcc8cd5dca083d780cad3b84f113c"
+    },
+    {
+      "path": "tests_architecture/test_sync.py",
+      "sha256": "ced6b177752028afb48be19dc9cbef2a31f1c12712f38b3e32d1d18d620e62ab",
+      "normalized_sha256": "819206a4ca2919ed01892ddcfbae9635a36213f4f4872cc69857c590d908b480"
+    }
+  ],
+  "browser_receipt": ".cache/browser-acceptance/9f1edf3e2e91409c9189102b6c327922/result.json",
+  "source_tree_sha256": "aa0dfab0d8bdab32ad1a0ca0056e3123ab81777166bd7d818b7c215b263228b7",
+  "receipt_sha256": "ccbeaab0fe71fad0793594f4e6f259e434b9eace80dde4f831b2f7b52753bf51",
+  "browser_result_sha256": "2e9070c284a33f968fdf73f84a2d4a1ba7731b8ac97f1608a0cd4f16ebb78e1e",
+  "changed_files": [],
+  "new_files": [],
+  "checks": [
+    "desktop_mobile_navigation",
+    "real_offline_reload",
+    "fractional_result_persisted",
+    "ordered_two_operation_outbox",
+    "completed_revision_three",
+    "idempotent_replay_historical_snapshot",
+    "stale_revision_409",
+    "csrf_403",
+    "real_csrf_logout_post",
+    "other_tab_logout_redirect",
+    "logout_clears_local_account",
+    "account_switch_hides_sessions",
+    "foreign_snapshot_404",
+    "foreign_queue_403"
+  ],
+  "browser": "155.0.4283.62",
+  "desktop": "1440x1000",
+  "mobile": "390x844",
+  "server_stopped": true,
+  "browser_closed": true,
+  "javascript_errors": [],
+  "provider_calls": "DISABLED",
+  "smtp": "DISABLED",
+  "evidence_type": "REAL_LOCAL_EDGE_TEMPORARY_SQLITE",
+  "postgresql": "NOT RUN for this candidate",
+  "main_integration": "NOT RUN for this candidate",
+  "blocked_environment_scripts": {
+    "host": "me.kis.v2.scr.kaspersky-labs.com",
+    "count": 17,
+    "classification": "ENVIRONMENT_INJECTED_BLOCKED",
+    "basis": "Exact script host, local initiating frames, no product source references before classification, all external requests aborted; any other host fails."
+  },
+  "external_responses": []
+}

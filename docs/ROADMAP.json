@@ -739,8 +739,8 @@
     "done": 3
   },
   "architecture": {
-    "handoff": "docs/HANDOFF_ARCH09_2026-10-19.md",
-    "execution_state": "ARCH-08 integrated; ARCH-09 candidate locally verified; external PostgreSQL/main gate pending",
+    "handoff": "docs/HANDOFF_ARCH10_2026-10-19.md",
+    "execution_state": "ARCH-09 reopened after source audit;337f12d proves structural progress only. Completing actual case boundaries and config package before final acceptance.",
     "epic": "MAM-821",
     "code": "BASIS-ARCH",
     "status": "In Progress",
@@ -868,22 +868,22 @@
         "depends_on": [
           "ARCH-08"
         ],
-        "integrated_commit": null,
-        "verification": "VERIFIED local:111 pure; mypy95/229;8 imports; AST/Ruff/Django/no migration drift/static;224 SQLite (5 PostgreSQL-only skips);45 routes/offline/export compatibility;170 files+61 explicit deletions. PostgreSQL/main NOT RUN",
-        "evidence": "docs/architecture/ARCH-09-VERIFICATION.md",
-        "scope_amendment": "Remove daily_trainning_app; final models/apps/schema/migrations may be reorganized. See ADR-002."
+        "integrated_commit": "337f12d8d6b78d52c77c3e7e821ab2af1351cdc8",
+        "verification": "Remediation VERIFIED locally:166 pure tests,240 SQLite (5 PostgreSQL-only skips),strict108 core/267 Django files,8 import contracts,AST,Ruff,checks,no migration drift,static assets and native runner. Edge14 real workflows passed with344 unchanged bound sources. Fresh PostgreSQL/main integration NOT RUN. Prior337f12d verified224 belongs to structural delivery only.",
+        "evidence": "docs/architecture/ARCH-09-REMEDIATION-VERIFICATION.md",
+        "scope_amendment": "Actual application/domain extraction, public read projections, typed administrative cases, config package, strictly typed tests/regression. Remove retired packages. Preserve seed.py and original manage.py index mode100755; manage.py configuration content is in scope."
       },
       {
         "code": "ARCH-10",
         "id": "MAM-831",
         "title": "ARCH-10 â€” AceptaciÃ³n integral",
-        "status": "Backlog",
+        "status": "In Progress",
         "depends_on": [
           "ARCH-09"
         ],
         "integrated_commit": null,
-        "verification": "NOT RUN",
-        "evidence": null,
+        "verification": "Acceptance implementation/audit in progress; final commit NOT RUN",
+        "evidence": "docs/architecture/ARCH-10-PLAN.md",
         "scope_amendment": "Verify final package removal, empty-database migration and complete architecture/web/offline regression. See ADR-002."
       }
     ],

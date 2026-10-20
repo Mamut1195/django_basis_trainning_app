@@ -49,17 +49,42 @@ class BoundaryTests(unittest.TestCase):
         for source in ("from training.models import Session", "import daily_trainning_app"):
             self.assertTrue(violations(source, "basis.modules.training.adapters.views"))
 
-    def test_final_layout_rejects_runtime_but_allows_historical_tests(self) -> None:
+    def test_final_layout_rejects_old_namespaces_and_allows_regression_tests(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            (root / "training" / "tests").mkdir(parents=True)
-            (root / "training" / "tests" / "test_history.py").write_text("", encoding="utf-8")
+            (root / "config").mkdir()
+            for filename in ("__init__.py", "settings.py", "test_settings.py", "urls.py", "asgi.py", "wsgi.py"):
+                (root / "config" / filename).write_text("", encoding="utf-8")
+            (root / "tests" / "regression").mkdir(parents=True)
+            (root / "tests" / "regression" / "test_history.py").write_text("", encoding="utf-8")
+            (root / "training").mkdir()
             self.assertFalse(final_layout_errors(root))
             (root / "training" / "models.py").write_text("", encoding="utf-8")
             self.assertEqual(len(final_layout_errors(root)), 1)
             (root / "daily_trainning_app").mkdir()
             (root / "daily_trainning_app" / "__init__.py").write_text("", encoding="utf-8")
             self.assertEqual(len(final_layout_errors(root)), 2)
+
+    def test_views_reject_direct_writes_and_transactions_but_allow_binding(self) -> None:
+        module = "basis.modules.training.adapters.views"
+        for source in (
+            "from .models import Session\nSession.objects.create(title='x')",
+            "from .models import Session\nSession.objects.filter(pk=1).update(title='x')",
+            "from django.db import transaction",
+            "form.save()",
+        ):
+            with self.subTest(source=source):
+                self.assertTrue(violations(source, module))
+        self.assertFalse(violations("form.save(commit=False)", module))
+        self.assertFalse(violations("from .models import Session\nSession.objects.filter(pk=1)", module))
+        self.assertFalse(violations("cases().save_strength(command)", module))
+
+    def test_final_configuration_cannot_be_an_old_named_package(self) -> None:
+        self.assertTrue(violations("from basis_trainning_app import settings", "basis.modules.training.adapters.views"))
+        with tempfile.TemporaryDirectory() as folder:
+            errors = final_layout_errors(Path(folder))
+            self.assertEqual(len(errors), 6)
+            self.assertTrue(all("config/" in error for error in errors))
 
     def test_public_contract_import_is_allowed(self) -> None:
         self.assertFalse(

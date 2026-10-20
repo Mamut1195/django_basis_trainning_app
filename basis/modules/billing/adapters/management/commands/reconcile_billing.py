@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db.models import Q
 
+from basis.bootstrap.billing import mark_pending
 from basis.modules.billing.adapters.actions import ProviderUnavailable, reconcile
 from basis.modules.billing.adapters.models import BillingAccount
 
@@ -25,7 +26,7 @@ class Command(BaseCommand):
             try:
                 reconcile(row.owner)
             except ProviderUnavailable:
-                BillingAccount.objects.filter(pk=row.pk).update(needs_reconciliation=True)
+                mark_pending(row.owner_id)
                 failed += 1
         if failed:
             raise CommandError(

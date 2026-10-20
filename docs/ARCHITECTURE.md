@@ -1,10 +1,39 @@
 # Arquitectura y límites de operación
 
-Status 2026-10-19: ARCH-01 through ARCH-08 integrated and independently verified; main/24f98532112230640e8a5346dad5e55dcb52627e,218 PostgreSQL tests/no skips. ARCH-09 implements final module persistence and web adapters under [ADR-002](architecture/ADR-002-FINAL-PERSISTENCE.md); PostgreSQL/main acceptance pending.
+Estado 2026-10-19: ARCH-01..08 integrados. ARCH-09 tiene un primer commit estructural en main/337f12d8d6b78d52c77c3e7e821ab2af1351cdc8, verificado con 224 pruebas PostgreSQL, pero fue reabierto: mover archivos no completaba la arquitectura. La remediación actual extrae las escrituras, políticas y autorizaciones restantes y activa `config/`. Sus fuentes todavía requieren verificación PostgreSQL e integración propias. ARCH-10 y la épica siguen abiertos.
+
+## Estructura actual y contratos
+
+```text
+config/                         # settings, URLs, ASGI y WSGI de Django
+basis/
+  shared/                       # identificadores distintos, valores y protocolos comunes
+  bootstrap/                    # composición explícita y servicios de infraestructura
+  modules/
+    accounts/                   # identidad, verificación y recuperación
+    athletes/                   # perfil, preferencias, mediciones, RM e historial
+    catalog/                    # ejercicios y clasificaciones
+    training/                   # planificación, ejecución, métricas y trekking
+    billing/                    # acceso comercial, checkout, portal y conciliación
+    coach/                      # contexto, propuestas, trabajos y presupuestos
+    sync/                       # operaciones, revisiones, recibos y conflictos
+tests/regression/               # los 111 escenarios originales, ahora tipados
+tests_architecture/             # dominio, aplicación y contratos sin Django
+```
+
+Cada módulo contiene `domain/`, `application/`, `adapters/` y `public.py`. Domain define valores y reglas puras; application ejecuta comandos tipados usando puertos específicos; adapters implementa HTTP, ORM y proveedores. Los modelos y migraciones iniciales están en `adapters/models.py` y `adapters/migrations/` de las siete aplicaciones `basis_<area>`. La composición vive en bootstrap; config contiene configuración del framework. Ningún paquete de configuración anterior se conserva como puente.
+
+Las colaboraciones entre módulos pasan por contratos públicos, también cuando solo se importan tipos. Los adaptadores de lectura pueden consultar su propio ORM y convertir proyecciones; los de escritura llaman casos de uso. Las vistas manuales ya no abren transacciones ni guardan sesiones, bloques, series o intervalos directamente. Los casos de administración conservan los permisos nativos sin convertirse en una vía alternativa de reglas comerciales. Los hooks de modelos validan defensivamente con las mismas políticas puras.
+
+[Mapa verificable de entradas y casos de uso](architecture/ENTRYPOINTS.md). [Auditoría y resoluciones](architecture/ARCH-10-AUDIT.md). La ausencia física de `basis_trainning_app/` y `daily_trainning_app/` fue comprobada después de la limpieza del usuario; los controles también rechazan sus imports y fuentes activos. El namespace fuente anterior `training/` se retiró al trasladar las pruebas.
+
+`mypy-core.ini` comprueba núcleo y contratos sin plugin Django. `mypy-django.ini` añade todo basis, config, manage.py, las pruebas de regresión y las herramientas migradas, con plugins Django/DRF y sin exclusiones globales de errores. El inventario pendiente solo contiene el `seed.py` protegido del usuario y la herramienta independiente `scripts/backup_db.py`; no quedan fronteras silenciosas en el runtime. La compatibilidad parcial de las versiones de stubs se documenta en [ARCH-09-TYPING.md](architecture/ARCH-09-TYPING.md).
+
+Las secciones ARCH-03..08 al final describen entregas históricas y sus límites en aquel momento; sus rutas y cantidades no describen el candidato actual. Los recibos de cada etapa conservan su evidencia original. La remediación usa un recibo nuevo y no atribuye a sus fuentes las pruebas de un commit anterior.
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decisión aceptada, migración en curso.** Épica BASIS-ARCH/MAM-821. ARCH-01 through ARCH-08 integrated; ARCH-09/MAM-830 in progress. Arquitectura antes de retomar aceptación funcional. ADR-002 reemplaza las restricciones iniciales de conservación de tablas, etiquetas y migraciones: ARCH-09 retirará daily_trainning_app y registrará los modelos en los adaptadores finales de los módulos. ARCH-10 verificará la estructura completa desde una base temporal nueva.
+**Decision aceptada, remediacion en curso.** Epica BASIS-ARCH/MAM-821. ARCH-01..08 integrados; ARCH-09/MAM-830 reabierto y ARCH-10/MAM-831 en aceptacion. La arquitectura se termina antes de retomar aceptacion funcional. ADR-002 reemplaza la conservacion inicial de tablas, etiquetas y migraciones: los modelos pertenecen a los adaptadores finales y el esquema se verifica desde cero en bases temporales.
 
 `basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
@@ -26,7 +55,7 @@ La UoW Django confirmará explícitamente éxito y revertirá ante error o salid
 
 ### Planes y extensión futura
 
-ARCH-04 introducirá una definición tipada independiente de procedencia, con validación/creación privada comunes a manual e IA. Un futuro adaptador de programas podrá resolver ejercicios y fechas por ese contrato. Cada instancia conserva versión, prescripciones y resultados propios; editar una fuente no cambia historia. Esta migración no implementa catálogo, publicación ni interfaz de programas.
+PlanDefinition es una definición tipada independiente de procedencia, con validación y creación privada comunes a manual e IA. Un futuro adaptador de programas podrá resolver ejercicios y fechas por ese contrato. Cada instancia conserva versión, prescripciones y resultados propios; editar una fuente no cambia historia. Esta migración no implementa catálogo, publicación ni interfaz de programas.
 
 ### Controles de frontera y tipado
 
@@ -34,7 +63,7 @@ ARCH-04 introducirá una definición tipada independiente de procedencia, con va
 
 `mypy-core.ini`: estricto, sin plugin ni inicializar Django; `mypy-django.ini`: estricto con django-stubs/test_settings para basis, incluidos adaptadores y bootstrap. No hay ignore_missing_imports ni exclusiones globales. Ambas configuraciones prohíben Any explícito y procedente de imports sin tipos. Las áreas migradas deben agregarse al alcance estricto desde su primer commit, y salir del inventario pendiente; las excepciones locales de terceros se documentarán individualmente (ninguna en ARCH-01).
 
-Se fijan Python 3.13, Django 5.2.18, mypy 1.19.1 y django-stubs/django-stubs-ext 6.1.2 and djangorestframework-stubs 3.18.1, compatibles según la [matriz del proyecto django-stubs](https://github.com/typeddjango/django-stubs#version-compatibility). Import Linter 2.11. El inventario `docs/architecture/legacy-baseline.json` congela los archivos de 08dcd02; `legacy-pending.json` solo puede reducirse. El control compara HEAD y HEAD^ donde existen; CI obtiene dos commits. El legado no está certificado como estrictamente tipado por estas configuraciones. ADR-002 retires the old runtime packages and migrations; the final seven module applications have typed initial migrations. Only explicitly inventoried historical tests, protected user files and existing standalone tools remain outside the strict runtime scope.
+Se fijan Python 3.13, Django 5.2.18, mypy 1.19.1, django-stubs/django-stubs-ext 6.1.2 y djangorestframework-stubs 3.18.1. La matriz oficial declara compatibilidad parcial con Django 5.2: el alcance comprobado se documenta en [ARCH-09-TYPING.md](architecture/ARCH-09-TYPING.md). Import Linter 2.11. El inventario `docs/architecture/legacy-baseline.json` congela los archivos de 08dcd02; `legacy-pending.json` solo puede reducirse. El control compara HEAD y HEAD^ donde existen; CI obtiene dos commits. El legado no está certificado como estrictamente tipado por estas configuraciones. ADR-002 retires the old runtime packages and migrations; the final seven module applications have typed initial migrations. The regression suite is strictly typed. Only protected seed.py and standalone scripts/backup_db.py remain in the pending inventory; neither is an active runtime application.
 
 ### Ejecución y evidencia
 
@@ -43,7 +72,7 @@ ARCH-01 → ARCH-02 → ARCH-03 → ARCH-04 → ARCH-05 → ARCH-06 → ARCH-07 
 ## Implementación existente y límites que deben conservarse
 
 
-Django modular monolith with server-rendered templates and session/CSRF API. Runtime code resides under basis/modules and explicit bootstrap composition; daily_trainning_app and the training runtime are retired in the ARCH-09 candidate. The unregistered training/tests namespace preserves baseline regression scenarios. Model classes live in each module's adapters/models.py, registered as basis_<area>, with initial migrations under adapters/migrations. All 28 models and configuration are in strict type scope; no silent model import frontier remains.
+Django modular monolith with server-rendered templates and session/CSRF API. Runtime code resides under basis/modules and explicit bootstrap composition; retired application/configuration packages have no active source or registration. tests/regression preserves the original baseline scenarios under strict typing. Model classes live in each module's adapters/models.py, registered as basis_<area>, with initial migrations under adapters/migrations. All 28 models and config are in strict type scope; no silent model import frontier remains.
 
 La cuenta `auth.User` se vincula explícitamente a un perfil privado mediante OneToOne. Todas las consultas privadas se filtran por la cuenta autenticada; un identificador enviado por el navegador nunca elige el dueño de un registro. El catálogo común se administra mediante permisos de personal. Los ejercicios referenciados se protegen frente al borrado en cascada.
 

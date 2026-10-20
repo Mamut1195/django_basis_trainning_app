@@ -104,6 +104,13 @@ class ScheduledState:
     has_executions: bool
 
 
+def require_plan_ownership(
+    owner: AccountId, goal_owner: AccountId | None, previous: PlanHeader | None
+) -> None:
+    if goal_owner != owner or (previous is not None and previous.owner != owner):
+        raise InvalidPlanning("Propuesta incompleta, objetivo ajeno o estructura inv\u00e1lida.")
+
+
 def validate_goal(data: GoalData) -> None:
     if data.target_value is not None and not data.target_unit:
         raise InvalidPlanning("Indica la unidad del objetivo.")
@@ -220,9 +227,13 @@ def validate_definition(data: PlanDefinition) -> None:
         validate_prescription(session.blocks)
 
 
-def revision_definition(current: PlanSnapshot, today: date) -> PlanDefinition:
-    if current.has_successor:
+def require_current_plan(has_successor: bool) -> None:
+    if has_successor:
         raise InvalidPlanning("Ya existe una versi\u00f3n posterior.")
+
+
+def revision_definition(current: PlanSnapshot, today: date) -> PlanDefinition:
+    require_current_plan(current.has_successor)
     return replace(
         current.definition,
         sessions=tuple(

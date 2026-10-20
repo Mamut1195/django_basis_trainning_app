@@ -38,3 +38,12 @@ def valid_muscle_names(value: object) -> bool:
         and len(value) <= 30
         and all(isinstance(name, str) and len(name) <= 80 for name in value)
     )
+
+
+class InvalidCatalogData(Exception):
+    field = "musculos_principales"
+
+
+def validate_exercise(data: ExerciseData) -> None:
+    if not valid_muscle_names(list(data.musculos_principales)):
+        raise InvalidCatalogData("Usa una lista de nombres musculares.")

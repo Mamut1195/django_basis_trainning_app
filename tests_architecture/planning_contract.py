@@ -1,10 +1,18 @@
 """Shared plan/version contract for memory and Django repositories."""
 
 from dataclasses import replace
+from datetime import timedelta
 from typing import Callable
 
 from basis.modules.training.application.planning import PlanRepository
-from basis.modules.training.public import CreatePlan, PlanDefinition, Planning, RevisePlan
+from basis.modules.training.public import (
+    CreatePlan,
+    InvalidPlanning,
+    PlanDefinition,
+    Planning,
+    RescheduleSession,
+    RevisePlan,
+)
 from basis.shared.identifiers import AccountId, PlannedSessionId
 
 
@@ -49,3 +57,23 @@ class PlanningContract:
         assert tuple(replace(b, id=None) for b in current.definition.sessions[0].blocks) == tuple(
             replace(b, id=None) for b in before.definition.sessions[1].blocks
         )
+
+    def test_contract_reschedule_outside_cycle_does_not_write(self) -> None:
+        self.service.create(CreatePlan(self.owner, self.definition))
+        scheduled = self.repository.calendar(
+            self.owner, self.definition.start_date, self.definition.end_date
+        )[0]
+        try:
+            self.service.reschedule(
+                RescheduleSession(
+                    self.owner,
+                    scheduled.id,
+                    self.definition.end_date + timedelta(days=1),
+                    scheduled.revision,
+                )
+            )
+        except InvalidPlanning:
+            pass
+        else:
+            raise AssertionError("Out-of-cycle rescheduling must fail")
+        assert self.repository.scheduled(self.owner, scheduled.id, lock=False) == scheduled

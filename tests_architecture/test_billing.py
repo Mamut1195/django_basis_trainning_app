@@ -139,6 +139,24 @@ def subscription() -> Subscription:
 
 
 class MemoryBillingTests(BillingContract, TestCase):
+    def test_read_provisioning_commits_without_verification_or_gateway(self) -> None:
+        self.profiles.verified = False
+        result = self.service.ensure(OwnerBilling(self.owner))
+        self.assertEqual(result.owner, self.owner)
+        self.assertEqual(self.gateway.calls, 0)
+        self.assertTrue(self.memory.committed)
+
+    def test_failure_mark_commits_without_provider_and_does_not_create_missing_account(
+        self,
+    ) -> None:
+        self.service.mark_pending(OwnerBilling(OWNER))
+        self.assertEqual(self.memory.rows, {})
+        self.service.ensure(OwnerBilling(OWNER))
+        self.service.mark_pending(OwnerBilling(OWNER))
+        self.assertTrue(self.memory.rows[OWNER].needs_reconciliation)
+        self.assertTrue(self.memory.committed)
+        self.assertEqual(self.gateway.calls, 0)
+
     def setUp(self) -> None:
         self.memory = Memory()
         self.repository = self.memory

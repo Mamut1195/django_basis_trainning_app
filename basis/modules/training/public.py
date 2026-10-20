@@ -20,13 +20,27 @@ from .application.execution import (
     StartSession,
     Training,
 )
+from .application.manual import (
+    AddBlock,
+    BlockContext,
+    CreateManualSession,
+    IntervalContext,
+    ManualRepository,
+    ManualTraining,
+    SaveBlockMetrics,
+    SaveInterval,
+    SaveStrength,
+    StrengthContext,
+)
 from .application.planning import (
     AddCycle,
     CreatePlan,
+    CycleCreationContext,
     Planning,
     RescheduleSession,
     RevisePlan,
     SaveGoal,
+    ScheduleCreationContext,
     ScheduleSession,
 )
 from .application.presentation import PlanChoice, TrainingPresentation
@@ -54,6 +68,18 @@ from .domain.execution import (
     require_editable,
     validate_component_sport,
 )
+from .domain.manual import (
+    EmptyPrescription,
+    FormPolicy,
+    ManualConflict,
+    ManualInvalid,
+    ManualSessionData,
+    ParentRef,
+    ParentState,
+    PlannedParent,
+    SessionParent,
+    form_policy,
+)
 from .domain.planning import (
     CycleDefinition,
     CycleKind,
@@ -65,6 +91,8 @@ from .domain.planning import (
     PlanSnapshot,
     ScheduledDefinition,
     ScheduledState,
+    require_current_plan,
+    require_plan_ownership,
     require_reschedulable,
     revision_definition,
     validate_cycle,
@@ -121,6 +149,32 @@ from .domain.trekking import (
 )
 
 __all__ = (
+    "require_plan_ownership",
+    "require_current_plan",
+    "ManualSessionData",
+    "SessionParent",
+    "PlannedParent",
+    "ParentRef",
+    "ParentState",
+    "ManualInvalid",
+    "ManualConflict",
+    "EmptyPrescription",
+    "FormPolicy",
+    "form_policy",
+
+    "ManualTraining",
+    "ManualRepository",
+    "CreateManualSession",
+    "AddBlock",
+    "SaveBlockMetrics",
+    "SaveStrength",
+    "SaveInterval",
+    "BlockContext",
+    "StrengthContext",
+    "IntervalContext",
+
+    "CycleCreationContext",
+    "ScheduleCreationContext",
     "validate_strength_reference",
     "validate_prescribed_results",
     "validate_plan_version",

@@ -3,6 +3,7 @@ from __future__ import annotations
 from rest_framework import serializers
 
 from basis.bootstrap.catalog import save_classification, save_exercise
+from basis.shared.text import normalized_name
 
 from .models import Classification, Exercise
 
@@ -19,7 +20,7 @@ class ClassificationSerializer(serializers.ModelSerializer[Classification]):
         fields = ["id", "nombre"]
 
     def validate_nombre(self, value: str) -> str:
-        return " ".join(value.split()).title()
+        return normalized_name(value)
 
 
 class ExerciseSerializer(serializers.ModelSerializer[Exercise]):
