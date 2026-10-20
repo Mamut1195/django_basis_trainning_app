@@ -5,16 +5,19 @@ from django.db import models
 from django.db.models.base import ModelBase
 from django.utils.translation import gettext_lazy as _
 
+from basis.adapters.django.persistence import ValidatedModel
 from basis.modules.catalog.public import valid_muscle_names
 from basis.shared.text import normalized_name as normalize_text
 
 
-class Classification(models.Model):
+class Classification(ValidatedModel):
     nombre = models.CharField(max_length=255, unique=True, verbose_name=_("Name"))
 
     def clean(self) -> None:
         """Normaliza y limpia el nombre antes de guardarlo."""
         self.nombre = normalize_text(self.nombre)
+        if not self.nombre:
+            raise ValidationError({"nombre": "Indica un nombre."})
 
     def __str__(self) -> str:
         return self.nombre
@@ -51,6 +54,8 @@ class Exercise(models.Model):
 
     def clean(self) -> None:
         self.nombre = normalize_text(self.nombre)
+        if not self.nombre:
+            raise ValidationError({"nombre": "Indica un nombre."})
 
         if not valid_muscle_names(self.musculos_principales):
             raise ValidationError({"musculos_principales": "Usa una lista de nombres musculares."})

@@ -1,0 +1,51 @@
+{
+  "status": "VERIFIED",
+  "accepted_at": "2026-10-20",
+  "integrated_commit": "24484b7c8c5a4c0beb89ee1dc854c91581d7293a",
+  "source_readback": {
+    "files": 348,
+    "aggregate_sha256": "f4806664064c1ef3c1c9f73cff68c61d7098c77e29ee110a633f497f8fabc391",
+    "working_mismatches": [],
+    "head_blob_mismatches": [],
+    "head": "24484b7c8c5a4c0beb89ee1dc854c91581d7293a"
+  },
+  "ci": {
+    "run": 39367822734,
+    "job": 118448585157,
+    "postgres_tests": 246,
+    "skipped": 0,
+    "pure_tests": 174,
+    "core_mypy_files": 113,
+    "django_mypy_files": 318,
+    "status": "success"
+  },
+  "browser": {
+    "receipt": ".cache/continuation-baseline-browser-20261020-chromium/result.json",
+    "status": "VERIFIED",
+    "checks": 21,
+    "browser": "Chromium153.0.8010.12",
+    "source_unchanged": true,
+    "server_stopped": true
+  },
+  "linear": {
+    "MAM-830": "Done",
+    "MAM-831": "Done",
+    "MAM-821": "Done",
+    "functional_states_preserved": true,
+    "removed_epic_blockers": 31,
+    "dependency_edges": 95,
+    "dag": {
+      "acyclic": true,
+      "nodes": 45,
+      "dependencyEdges": 95
+    }
+  },
+  "notion": "UNAVAILABLE: no accessible BASIS page found",
+  "not_run": [
+    "physical devices",
+    "live providers",
+    "real SMTP",
+    "production"
+  ],
+  "historical_receipts_preserved": true
+}

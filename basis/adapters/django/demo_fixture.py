@@ -13,6 +13,7 @@ from basis.modules.billing.adapters.models import BillingAccount
 from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.modules.training.adapters.models import Goal, TrainingPlan
 from basis.modules.training.adapters.planning_actions import build_plan
+from basis.shared.text import normalized_name
 
 
 class Command(BaseCommand):
@@ -57,7 +58,16 @@ class Command(BaseCommand):
             owner=user, defaults={"availability": [1, 3, 5], "equipment": "Mancuernas y gimnasio"}
         )
         BillingAccount.objects.get_or_create(owner=user)
-        classification, _ = Classification.objects.get_or_create(nombre="Fuerza general")
+        classification_name = normalized_name("Fuerza general")
+        try:
+            classification, _ = Classification.objects.get_or_create(
+                nombre__iexact=classification_name, defaults={"nombre": classification_name}
+            )
+        except Classification.MultipleObjectsReturned as error:
+            raise CommandError(
+                "Hay clasificaciones equivalentes. Revisa el catálogo antes de crear la demostración; "
+                "no se fusionan ni borran datos."
+            ) from error
         for name in (
             "Sentadilla",
             "Peso muerto rumano",
@@ -65,7 +75,11 @@ class Command(BaseCommand):
             "Remo con mancuerna",
             "Plancha",
         ):
-            Exercise.objects.get_or_create(nombre=name, classification=classification)
+            canonical_name = normalized_name(name)
+            if not Exercise.objects.filter(
+                nombre__iexact=canonical_name, classification=classification
+            ).exists():
+                Exercise.objects.create(nombre=canonical_name, classification=classification)
         goal, _ = Goal.objects.get_or_create(
             owner=user, title="Demostración: construir una base", defaults={"sport": "running"}
         )

@@ -17,7 +17,7 @@
   </div>
   <c-basis.card title="Adherencia al plan">
     <p>
-      {{ report.completed_scheduled }} de {{ report.scheduled_past }} sesiones programadas hasta hoy completadas ? {{ report.adherence_percent|default_if_none:"Sin datos" }}
+      {{ report.completed_scheduled }} de {{ report.scheduled_past }} sesiones programadas hasta hoy completadas · {{ report.adherence_percent|default_if_none:"Sin datos" }}
       {% if report.adherence_percent != None %}
         %
       {% endif %}
