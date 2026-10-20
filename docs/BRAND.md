@@ -10,7 +10,7 @@ su uso es opcional y no cambia la obligación de reutilizar esta identidad.
 - Logo original: [Logo_blanco.svg](https://basisasesoria.fitness/Logo_blanco.svg).
 - CSS publicado: [agente-entrenamientos.CBAHeYg6.css](https://basisasesoria.fitness/_astro/agente-entrenamientos.CBAHeYg6.css).
 - Fecha de consulta: 2026-10-17. Huellas y procedencia en
-  `assets/brand/sources.json`; original sin modificar en `logo-original.svg`.
+  `basis/adapters/web/static/basis/brand/sources.json`; original sin modificar en `logo-original.svg`.
 - La página inspeccionada usa una pila de fuentes del sistema
   (`ui-sans-serif, system-ui, sans-serif`). Los preconnect de Google Fonts
   no prueban que exista una fuente personalizada cargada; no se añade ninguna.
@@ -30,14 +30,14 @@ contraste; no se presentan como un manual de marca original del sitio.
 
 ## Tokens y recursos locales
 
-`assets/brand/identity.json` contiene los colores de identidad compartidos por
-HTML y manifiesto PWA. `training/brand.py` los carga al iniciar cada proceso;
+`basis/adapters/web/static/basis/brand/identity.json` contiene los colores de identidad compartidos por
+HTML y manifiesto PWA. `basis/adapters/web/brand.py` los carga al iniciar cada proceso;
 reiniciar el servidor después de cambiar ese archivo. El contexto de plantilla
 expone `basis_brand`, y `base.html` define las variables `--basis-brand-*`.
-`assets/css/tokens.css` adapta esa identidad a tokens semánticos y Cotton UI,
+`basis/adapters/web/static/basis/css/tokens.css` adapta esa identidad a tokens semánticos y Cotton UI,
 además de centralizar tipografía, espaciado, radios, foco y movimiento.
 
-`templates/cotton/brand.html` compone el logo para cabeceras de escritorio,
+`basis/adapters/web/templates/cotton/basis/brand.html` compone el logo para cabeceras de escritorio,
 móvil y autenticación. Se sirve desde la app y no depende del sitio comercial,
 de CDN ni de una conexión al VPS en tiempo de uso.
 
@@ -47,7 +47,7 @@ El logotipo ya contiene la palabra BASIS; no se reconstruye con otra tipografía
 El fondo azul mantiene legible su relleno claro en ambos temas.
 
 Los iconos PWA usan el mismo vector, centrado en un fondo azul cuadrado. Los PNG
-192/512 se renderizan desde `assets/icons/icon.svg`; al cambiar identidad o logo
+192/512 se renderizan desde `basis/adapters/web/static/basis/icons/icon.svg`; al cambiar identidad o logo
 se deben regenerar esos derivados. El logo visible se precarga con el shell
 offline; la revisión del service worker cambia al cambiar esos recursos.
 

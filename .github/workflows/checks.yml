@@ -36,7 +36,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run format:check
       - run: djlint basis --check
-      - run: ruff format --check basis config tests tests_architecture scripts/architecture_check.py scripts/browser_smoke.py scripts/acceptance_browser.py scripts/verify_environment.py
+      - run: ruff format --check basis config tests tests_architecture scripts/architecture_check.py scripts/browser_smoke.py scripts/acceptance_browser.py scripts/ux_acceptance.py scripts/verify_environment.py
       - run: ruff check .
       - run: python scripts/architecture_check.py
       - run: python -m unittest discover -s tests_architecture

@@ -9,7 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from basis.adapters.django.persistence import Owned
+from basis.adapters.django.persistence import Owned, ValidatedModel
 from basis.modules.athletes.public import (
     InvalidAthleteData,
     SportData,
@@ -22,7 +22,7 @@ from basis.modules.training.public import (
 from basis.shared.text import normalized_name as normalize_text
 
 
-class User(models.Model):
+class User(ValidatedModel):
     account = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -58,6 +58,8 @@ class User(models.Model):
     def clean(self) -> None:
         if self.nombre:
             self.nombre = normalize_text(self.nombre)
+        if not self.nombre:
+            raise ValidationError({"nombre": "Indica un nombre."})
         if self.titulo:
             self.titulo = normalize_text(self.titulo)
         if self.pais:

@@ -43,6 +43,7 @@ def source_binding() -> dict[str, object]:
             "package-lock.json",
             "scripts/browser_smoke.py",
             "scripts/acceptance_browser.py",
+            "scripts/ux_acceptance.py",
         )
         if (ROOT / name).is_file()
     )

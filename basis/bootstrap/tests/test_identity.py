@@ -183,13 +183,14 @@ class AthleteIntegrationTests(TestCase):
         self.client.force_login(get_user_model().objects.get(pk=self.owner))
 
     def test_profile_and_preferences_forms_change_only_owner(self) -> None:
+        other_name = Athlete.objects.get(account_id=self.other).nombre
         result = self.client.post(
             "/profile/edit/", {"nombre": "  new name  ", "edad": 30, "peso": "0"}
         )
         assert result.status_code == 302
         profile = Athlete.objects.get(account_id=self.owner)
         assert profile.nombre == "New Name" and profile.peso == Decimal(0)
-        assert Athlete.objects.get(account_id=self.other).nombre == "other"
+        assert Athlete.objects.get(account_id=self.other).nombre == other_name
         result = self.client.post(
             "/profile/preferences/",
             {

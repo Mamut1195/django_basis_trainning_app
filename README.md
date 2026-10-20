@@ -2,7 +2,7 @@
 
 PWA de entrenamiento para cuentas individuales privadas. Django 5.2 LTS sirve la interfaz y la API; Django Cotton UI, HTMX y Alpine proporcionan los componentes e interacciones. PostgreSQL es obligatorio en producción. No usa OpenDesign.
 
-La arquitectura actual se organiza en `config/`, `basis/modules/<area>/{domain,application,adapters}`, contratos `public.py`, `basis/bootstrap/` y `basis/shared/`. Las pruebas originales están en `tests/regression/`. Consulta la [estructura y estado de aceptación](docs/ARCHITECTURE.md) y el [mapa de entradas y casos de uso](docs/architecture/ENTRYPOINTS.md). ARCH-09 está reabierto para verificar e integrar sus correcciones; la épica aún no está cerrada.
+La arquitectura actual se organiza en `config/`, `basis/modules/<area>/{domain,application,adapters}`, contratos `public.py`, `basis/bootstrap/` y `basis/shared/`. Las pruebas originales están en `tests/regression/`. Consulta la [estructura y estado de aceptación](docs/ARCHITECTURE.md) y el [mapa de entradas y casos de uso](docs/architecture/ENTRYPOINTS.md). A 2026-10-20, ARCH-01..10 y la épica BASIS-ARCH/MAM-821 están Done, con integración en `main/24484b7` y [recibo de aceptación](docs/architecture/ARCHITECTURE-ACCEPTANCE-2026-10-20.json). Los 31 tickets funcionales abiertos ya no están bloqueados por arquitectura; MAM-617, MAM-626 y MAM-627 siguen In Progress. La reapertura anterior se conserva en los [registros históricos](docs/ARCHITECTURE_EXECUTION.md).
 
 ## Funcionalidad implementada
 
@@ -44,13 +44,13 @@ La configuración se recibe del entorno del proceso; no se carga `.env` automát
 
 ARCH-09 follows [ADR-002](docs/architecture/ADR-002-FINAL-PERSISTENCE.md): there is no production deployment and the final module schema starts from an empty database. The original `db.sqlite3` is untouched; these initial migrations are not an in-place upgrade for the retired application schema. Use a new development database path as above. The old copy-migration verifier has been retired.
 
-`link_legacy_profile --account-id 123 --profile-id 456` remains available for explicitly linking an unassigned profile already present in the final schema. Email verification remains independent. Historical records retain `legacy-unverified` provenance; no results are invented. The user's `seed.py` is preserved outside this migration and imports the retired application; use `manage.py seed_demo` for the current architecture.
+`link_legacy_profile --account-id 123 --profile-id 456` remains available for explicitly linking an unassigned profile already present in the final schema. Email verification remains independent. Historical records retain `legacy-unverified` provenance; no results are invented. `seed.py` conserva su contenido histórico, pero rechaza ejecución e importación antes de cargar Django o abrir una base. Para demostraciones usa `manage.py seed_demo`, que exige flags de desarrollo y contraseña explícitos, es idempotente y no se ejecuta en el arranque/despliegue. Consulta la [política y evidencia de integridad](docs/HISTORY_INTEGRITY.md).
 
 ## Integraciones y operación
 
-Consulta [la arquitectura y contratos](docs/ARCHITECTURE.md), [el diccionario deportivo](docs/TRAINING_VARIABLES.md) y [la validación de esta entrega](docs/VALIDATION.md).
+Consulta [la arquitectura y contratos](docs/ARCHITECTURE.md), [el diccionario deportivo](docs/TRAINING_VARIABLES.md), [la validación histórica inicial](docs/VALIDATION.md) y [el readback actual de integridad](docs/HISTORY_INTEGRITY.md#readback-actual-tras-revisión-independiente-y-luna-2026-10-20).
 
-La app reutiliza el [logo y la identidad oficial de BASIS](docs/BRAND.md). Los colores compartidos se editan en `assets/brand/identity.json`; los tokens semánticos y de componentes están en `assets/css/tokens.css`.
+La app reutiliza el [logo y la identidad oficial de BASIS](docs/BRAND.md). Los colores compartidos se editan en `basis/adapters/web/static/basis/brand/identity.json`, cargado por `basis/adapters/web/brand.py`; los tokens semánticos y de componentes están en `basis/adapters/web/static/basis/css/tokens.css`.
 
 La primera tanda añade un [contrato deportivo con semana ejecutable](docs/TRAINING_CONTRACT.md), las [reglas de fuerza y sus límites](docs/STRENGTH_METRICS.md) y un [verificador de entorno aislado](docs/REPRODUCIBILITY.md). El avance y los criterios pendientes están en [el registro de integración](docs/IMPLEMENTATION_WAVE_01.md).
 

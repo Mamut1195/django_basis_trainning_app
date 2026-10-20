@@ -227,6 +227,9 @@ small {
   --color-accent-content: var(--hero-action-content);
   --color-accent-foreground: var(--hero-action-foreground);
 }
+.hero :focus-visible {
+  outline-color: var(--hero-foreground);
+}
 .pill {
   display: inline-block;
   padding: var(--space-1) var(--space-3);
@@ -542,7 +545,7 @@ details summary {
 
 /* Shared interaction states; appended to preserve the established cascade. */
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 3px solid var(--basis-brand-primary);
+  outline: var(--focus-width) solid var(--accent);
   outline-offset: 3px;
 }
 [aria-busy="true"] {
@@ -583,5 +586,20 @@ button:disabled,
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Measured UX controls: retain native inputs and expand their clickable labels. */
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+@media (max-width: 850px) {
+  .topbar .actions > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 }

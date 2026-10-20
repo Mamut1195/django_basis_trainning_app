@@ -1,3 +1,11 @@
+"""Retired destructive seed source, retained for reference only."""
+
+# Reject both execution and import before Django can open any database.
+raise RuntimeError(
+    "Legacy seed retired: destructive helpers are disabled. "
+    "Use manage.py seed_demo only against an isolated local demonstration database."
+)
+
 import os
 import django
 import random

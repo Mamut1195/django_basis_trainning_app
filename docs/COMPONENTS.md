@@ -18,3 +18,7 @@ Los formularios nativos siguen funcionando sin JavaScript. `forms.js` marca `ari
 Los parciales privados de ejecución son `_metrics`, `_strength`, `_intervals`, `_timer` y `_blocks` en training; `_result` en coach es la respuesta HTMX; `_conflict` pertenece a sync. No son componentes generales. `app.js` coordina estado de red/tema/HTMX; `timer.js` conserva el temporizador; `updates.js` maneja la activación del service worker; `offline.js` conserva el flujo cohesivo de almacenamiento, edición, replay y conflictos por cuenta.
 
 Revisar cambios con temas claro/oscuro, teclado y móvil. El foco visible, el resumen de errores, los botones deshabilitados y el estado de envío se verifican con el recorrido real de navegador. Las reglas nuevas se añaden al final de la cascada; no se reordenan reglas existentes.
+
+## Relación con los recorridos UX
+
+[UX_CONTRACT.md](UX_CONTRACT.md) vincula estos componentes con las tareas y estados de BASIS-012. El layout propietario es `basis/adapters/web/templates/shared/base.html`; tokens y comportamiento compartido viven en `basis/adapters/web/static/basis/{css,js}`. Las ocho composiciones BASIS anteriores reutilizan primitivas del kit: este inventario no declara cerrado el catálogo completo de variantes, licencias y swaps HTMX/Alpine exigido por BASIS-013.

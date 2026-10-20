@@ -1,3 +1,5 @@
+Current acceptance 2026-10-20: ARCH-01 through ARCH-10 and MAM-821 are Done after published main `24484b7`, actual PostgreSQL CI and fresh source-bound Chromium acceptance. See [acceptance receipt](architecture/ARCHITECTURE-ACCEPTANCE-2026-10-20.json) and [current work](DEVELOPMENT_2026-10-20.md). The following earlier execution notes retain their original historical state.
+
 # Goal
 
 Current presentation candidate: local work on main `717cc1b`, scope recorded in [PRESENTATION-PLAN](architecture/PRESENTATION-PLAN.md). ARCH-09/MAM-830 and ARCH-10/MAM-831 remain In Progress. New implementation/evidence are summarized in [PRESENTATION-VERIFICATION](architecture/PRESENTATION-VERIFICATION.md). Historical gate results below retain their original source attribution.

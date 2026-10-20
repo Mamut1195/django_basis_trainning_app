@@ -1,67 +1,155 @@
 {
-  "verified_at": "2026-10-19",
-  "epic": {
-    "id": "MAM-821",
+  "capturedAt": "2026-10-20",
+  "project": {
+    "identifier": "P-MAM-12",
+    "title": "BASIS Training — PWA multiusuario y entrenador IA",
     "status": "In Progress",
-    "blocks": [
-      "MAM-617",
-      "MAM-620",
-      "MAM-621",
-      "MAM-622",
-      "MAM-623",
-      "MAM-624",
-      "MAM-625",
-      "MAM-628",
-      "MAM-629",
-      "MAM-630",
-      "MAM-631",
-      "MAM-632",
-      "MAM-633",
-      "MAM-634",
-      "MAM-635",
-      "MAM-637",
-      "MAM-638",
-      "MAM-810",
-      "MAM-811",
-      "MAM-812",
-      "MAM-813",
-      "MAM-814",
-      "MAM-815",
-      "MAM-816",
-      "MAM-817",
-      "MAM-818",
-      "MAM-819",
-      "MAM-820",
-      "MAM-636",
-      "MAM-626",
-      "MAM-627"
-    ]
+    "url": "https://linear.app/mamutsystems/project/basis-training-pwa-multiusuario-y-entrenador-ia-88fbd05107c2"
   },
-  "issues": [
+  "epic": {
+    "identifier": "MAM-821",
+    "title": "BASIS-ARCH — Arquitectura hexagonal y tipado estricto",
+    "status": "Done",
+    "url": "https://linear.app/mamutsystems/issue/MAM-821/basis-arch-arquitectura-hexagonal-y-tipado-estricto",
+    "blockedBy": [],
+    "blocks": [],
+    "parent": null
+  },
+  "stages": [
     {
-      "id": "MAM-616",
-      "title": "BASIS-002 — Vincular cuenta y atleta y cerrar acceso a datos privados",
+      "identifier": "MAM-822",
+      "title": "ARCH-01 — Contratos y controles",
       "status": "Done",
-      "parent": null,
-      "blocked_by": [
-        "MAM-615"
-      ],
+      "url": "https://linear.app/mamutsystems/issue/MAM-822/arch-01-contratos-y-controles",
+      "blockedBy": [],
       "blocks": [
-        "MAM-810",
-        "MAM-637",
-        "MAM-633",
-        "MAM-632",
-        "MAM-620",
-        "MAM-617"
-      ]
+        "MAM-823"
+      ],
+      "parent": "MAM-821"
     },
     {
-      "id": "MAM-627",
+      "identifier": "MAM-823",
+      "title": "ARCH-02 — Primer flujo de entrenamiento",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-823/arch-02-primer-flujo-de-entrenamiento",
+      "blockedBy": [
+        "MAM-822"
+      ],
+      "blocks": [
+        "MAM-824"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-824",
+      "title": "ARCH-03 — Identidad, atleta y catálogo",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-824/arch-03-identidad-atleta-y-catalogo",
+      "blockedBy": [
+        "MAM-823"
+      ],
+      "blocks": [
+        "MAM-825"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-825",
+      "title": "ARCH-04 — Planificación y versiones",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-825/arch-04-planificacion-y-versiones",
+      "blockedBy": [
+        "MAM-824"
+      ],
+      "blocks": [
+        "MAM-826"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-826",
+      "title": "ARCH-05 — Métricas y multideporte",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-826/arch-05-metricas-y-multideporte",
+      "blockedBy": [
+        "MAM-825"
+      ],
+      "blocks": [
+        "MAM-827"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-827",
+      "title": "ARCH-06 — Facturación",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-827/arch-06-facturacion",
+      "blockedBy": [
+        "MAM-826"
+      ],
+      "blocks": [
+        "MAM-828"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-828",
+      "title": "ARCH-07 — Entrenador IA",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-828/arch-07-entrenador-ia",
+      "blockedBy": [
+        "MAM-827"
+      ],
+      "blocks": [
+        "MAM-829"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-829",
+      "title": "ARCH-08 — Sincronización offline",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-829/arch-08-sincronizacion-offline",
+      "blockedBy": [
+        "MAM-828"
+      ],
+      "blocks": [
+        "MAM-830"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-830",
+      "title": "ARCH-09 — Integración y retiro del legado",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-830/arch-09-integracion-y-retiro-del-legado",
+      "blockedBy": [
+        "MAM-829"
+      ],
+      "blocks": [
+        "MAM-831"
+      ],
+      "parent": "MAM-821"
+    },
+    {
+      "identifier": "MAM-831",
+      "title": "ARCH-10 — Aceptación integral",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-831/arch-10-aceptacion-integral",
+      "blockedBy": [
+        "MAM-830"
+      ],
+      "blocks": [],
+      "parent": "MAM-821"
+    }
+  ],
+  "functional": [
+    {
+      "identifier": "MAM-627",
       "title": "BASIS-013 — Integrar Django Cotton UI y tokens de diseño con HTMX",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-627/basis-013-integrar-django-cotton-ui-y-tokens-de-diseno-con-htmx",
+      "blockedBy": [
         "MAM-615",
         "MAM-626"
       ],
@@ -71,159 +159,100 @@
         "MAM-630",
         "MAM-629",
         "MAM-628"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-626",
+      "identifier": "MAM-626",
       "title": "BASIS-012 — Diseñar flujos UI UX y contrato visual basado en tokens",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-626/basis-012-disenar-flujos-ui-ux-y-contrato-visual-basado-en-tokens",
+      "blockedBy": [
         "MAM-618"
       ],
       "blocks": [
         "MAM-627"
-      ]
-    },
-    {
-      "id": "MAM-619",
-      "title": "BASIS-003 — Corregir métricas de fuerza y separar RPE objetivo, real y estimado",
-      "status": "Done",
-      "parent": null,
-      "blocked_by": [
-        "MAM-615",
-        "MAM-618"
       ],
-      "blocks": [
-        "MAM-625",
-        "MAM-623"
-      ]
+      "parent": null
     },
     {
-      "id": "MAM-615",
-      "title": "BASIS-001 — Restablecer arranque y entorno reproducible de Django",
-      "status": "Done",
-      "parent": null,
-      "blocked_by": [],
-      "blocks": [
-        "MAM-637",
-        "MAM-627",
-        "MAM-619",
-        "MAM-617",
-        "MAM-616"
-      ]
-    },
-    {
-      "id": "MAM-618",
-      "title": "BASIS-005 — Definir contrato deportivo para uso multiusuario y diccionario de variables",
-      "status": "Done",
-      "parent": null,
-      "blocked_by": [],
-      "blocks": [
-        "MAM-811",
-        "MAM-626",
-        "MAM-624",
-        "MAM-622",
-        "MAM-621",
-        "MAM-620",
-        "MAM-619"
-      ]
-    },
-    {
-      "id": "MAM-636",
+      "identifier": "MAM-636",
       "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación",
       "status": "Backlog",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-636/basis-022-evaluar-entrenador-ia-antes-de-habilitar-programacion-y",
+      "blockedBy": [
         "MAM-635",
         "MAM-633",
         "MAM-634"
       ],
       "blocks": [
         "MAM-638"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-820",
+      "identifier": "MAM-820",
       "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-820/basis-035-trekking-por-etapas-pernoctas-y-recuperacion-entre-dias",
+      "blockedBy": [
         "MAM-819",
         "MAM-624"
       ],
       "blocks": [
         "MAM-815",
         "MAM-638"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-819",
+      "identifier": "MAM-819",
       "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-819/basis-034-hiking-con-tiempos-desnivel-altitud-terreno-y-mochila",
+      "blockedBy": [
         "MAM-811"
       ],
       "blocks": [
         "MAM-820",
         "MAM-815"
-      ]
-    },
-    {
-      "id": "MAM-818",
-      "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas",
-      "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
-        "MAM-633",
-        "MAM-817"
       ],
-      "blocks": [
-        "MAM-638",
-        "MAM-635"
-      ]
+      "parent": null
     },
     {
-      "id": "MAM-817",
+      "identifier": "MAM-817",
       "title": "BASIS-032 — Prueba, permisos comerciales y conservación al vencer acceso",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-817/basis-032-prueba-permisos-comerciales-y-conservacion-al-vencer-acceso",
+      "blockedBy": [
         "MAM-816"
       ],
       "blocks": [
         "MAM-818",
         "MAM-638"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-816",
+      "identifier": "MAM-816",
       "title": "BASIS-031 — Polar checkout, portal y webhooks conciliados",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-816/basis-031-polar-checkout-portal-y-webhooks-conciliados",
+      "blockedBy": [
         "MAM-810"
       ],
       "blocks": [
         "MAM-817",
         "MAM-638"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-815",
+      "identifier": "MAM-815",
       "title": "BASIS-030 — Carga concurrente y analítica multideporte con procedencia",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-815/basis-030-carga-concurrente-y-analitica-multideporte-con-procedencia",
+      "blockedBy": [
         "MAM-820",
         "MAM-625",
         "MAM-814",
@@ -234,54 +263,54 @@
       "blocks": [
         "MAM-638",
         "MAM-633"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-814",
+      "identifier": "MAM-814",
       "title": "BASIS-029 — Natación manual con piscina, estilos y ritmo por 100 m",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-814/basis-029-natacion-manual-con-piscina-estilos-y-ritmo-por-100-m",
+      "blockedBy": [
         "MAM-811"
       ],
       "blocks": [
         "MAM-815"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-813",
+      "identifier": "MAM-813",
       "title": "BASIS-028 — Ciclismo manual con potencia y cadencia opcionales",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-813/basis-028-ciclismo-manual-con-potencia-y-cadencia-opcionales",
+      "blockedBy": [
         "MAM-811"
       ],
       "blocks": [
         "MAM-815"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-812",
+      "identifier": "MAM-812",
       "title": "BASIS-027 — Running manual con ritmo, desnivel y respuesta",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-812/basis-027-running-manual-con-ritmo-desnivel-y-respuesta",
+      "blockedBy": [
         "MAM-811"
       ],
       "blocks": [
         "MAM-815"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-811",
+      "identifier": "MAM-811",
       "title": "BASIS-026 — Bloques de resistencia, intervalos y umbrales por disciplina",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-811/basis-026-bloques-de-resistencia-intervalos-y-umbrales-por-disciplina",
+      "blockedBy": [
         "MAM-618",
         "MAM-623"
       ],
@@ -290,30 +319,30 @@
         "MAM-814",
         "MAM-813",
         "MAM-812"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-810",
+      "identifier": "MAM-810",
       "title": "BASIS-025 — Registro, verificación, recuperación y acceso multiusuario",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-810/basis-025-registro-verificacion-recuperacion-y-acceso-multiusuario",
+      "blockedBy": [
         "MAM-616"
       ],
       "blocks": [
         "MAM-816",
         "MAM-633",
         "MAM-620"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-638",
+      "identifier": "MAM-638",
       "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-638/basis-024-validar-producto-completo-en-web-movil-offline-e-ia",
+      "blockedBy": [
         "MAM-818",
         "MAM-815",
         "MAM-816",
@@ -327,60 +356,44 @@
         "MAM-628",
         "MAM-636"
       ],
-      "blocks": []
+      "blocks": [],
+      "parent": null
     },
     {
-      "id": "MAM-637",
+      "identifier": "MAM-637",
       "title": "BASIS-023 — Preparar despliegue sencillo, PostgreSQL, backups y CI",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-637/basis-023-preparar-despliegue-sencillo-postgresql-backups-y-ci",
+      "blockedBy": [
         "MAM-617",
         "MAM-616",
         "MAM-615"
       ],
       "blocks": [
         "MAM-638"
-      ]
-    },
-    {
-      "id": "MAM-635",
-      "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas",
-      "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
-        "MAM-818",
-        "MAM-633",
-        "MAM-634",
-        "MAM-627"
       ],
-      "blocks": [
-        "MAM-636"
-      ]
+      "parent": null
     },
     {
-      "id": "MAM-634",
+      "identifier": "MAM-634",
       "title": "BASIS-020 — Generar propuestas de entrenamiento y ciclos con validación y versiones",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-634/basis-020-generar-propuestas-de-entrenamiento-y-ciclos-con-validacion",
+      "blockedBy": [
         "MAM-633"
       ],
       "blocks": [
         "MAM-636",
         "MAM-635"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-633",
+      "identifier": "MAM-633",
       "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-633/basis-019-crear-contexto-y-herramientas-de-ia-sobre-servicios",
+      "blockedBy": [
         "MAM-810",
         "MAM-815",
         "MAM-625",
@@ -394,44 +407,28 @@
         "MAM-636",
         "MAM-635",
         "MAM-634"
-      ]
-    },
-    {
-      "id": "MAM-632",
-      "title": "BASIS-018 — Implementar registro offline y sincronización idempotente",
-      "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
-        "MAM-631",
-        "MAM-623",
-        "MAM-628",
-        "MAM-616"
       ],
-      "blocks": [
-        "MAM-638"
-      ]
+      "parent": null
     },
     {
-      "id": "MAM-631",
+      "identifier": "MAM-631",
       "title": "BASIS-017 — Habilitar PWA instalable y recursos disponibles sin conexión",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-631/basis-017-habilitar-pwa-instalable-y-recursos-disponibles-sin-conexion",
+      "blockedBy": [
         "MAM-627"
       ],
       "blocks": [
         "MAM-632"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-630",
+      "identifier": "MAM-630",
       "title": "BASIS-016 — Construir progreso, recuperación y ajustes del perfil",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-630/basis-016-construir-progreso-recuperacion-y-ajustes-del-perfil",
+      "blockedBy": [
         "MAM-620",
         "MAM-624",
         "MAM-625",
@@ -439,44 +436,44 @@
       ],
       "blocks": [
         "MAM-638"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-629",
+      "identifier": "MAM-629",
       "title": "BASIS-015 — Construir calendario y editor de planes y ciclos",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-629/basis-015-construir-calendario-y-editor-de-planes-y-ciclos",
+      "blockedBy": [
         "MAM-622",
         "MAM-627"
       ],
       "blocks": [
         "MAM-638"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-628",
+      "identifier": "MAM-628",
       "title": "BASIS-014 — Construir Hoy y reproductor de sesión para registro rápido",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-628/basis-014-construir-hoy-y-reproductor-de-sesion-para-registro-rapido",
+      "blockedBy": [
         "MAM-623",
         "MAM-627"
       ],
       "blocks": [
         "MAM-638",
         "MAM-632"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-625",
+      "identifier": "MAM-625",
       "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-625/basis-011-implementar-metricas-de-progreso-adherencia-y-carga-con",
+      "blockedBy": [
         "MAM-619",
         "MAM-624",
         "MAM-623"
@@ -486,15 +483,15 @@
         "MAM-638",
         "MAM-633",
         "MAM-630"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-624",
+      "identifier": "MAM-624",
       "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-624/basis-010-registrar-recuperacion-bienestar-y-respuesta-al",
+      "blockedBy": [
         "MAM-620",
         "MAM-618"
       ],
@@ -503,15 +500,15 @@
         "MAM-633",
         "MAM-630",
         "MAM-625"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-623",
+      "identifier": "MAM-623",
       "title": "BASIS-009 — Separar prescripción, sesión ejecutada y registros por serie",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-623/basis-009-separar-prescripcion-sesion-ejecutada-y-registros-por-serie",
+      "blockedBy": [
         "MAM-619",
         "MAM-622",
         "MAM-621"
@@ -522,15 +519,15 @@
         "MAM-632",
         "MAM-628",
         "MAM-625"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-622",
+      "identifier": "MAM-622",
       "title": "BASIS-008 — Modelar objetivos, ciclos y calendario versionado de entrenamiento",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-622/basis-008-modelar-objetivos-ciclos-y-calendario-versionado-de",
+      "blockedBy": [
         "MAM-620",
         "MAM-618",
         "MAM-621"
@@ -539,30 +536,30 @@
         "MAM-633",
         "MAM-629",
         "MAM-623"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-621",
+      "identifier": "MAM-621",
       "title": "BASIS-007 — Ampliar catálogo de ejercicios y variantes para prescripción real",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-621/basis-007-ampliar-catalogo-de-ejercicios-y-variantes-para-prescripcion",
+      "blockedBy": [
         "MAM-617",
         "MAM-618"
       ],
       "blocks": [
         "MAM-623",
         "MAM-622"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-620",
+      "identifier": "MAM-620",
       "title": "BASIS-006 — Construir perfil, objetivos y configuración inicial del atleta",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-620/basis-006-construir-perfil-objetivos-y-configuracion-inicial-del",
+      "blockedBy": [
         "MAM-810",
         "MAM-616",
         "MAM-618"
@@ -571,138 +568,147 @@
         "MAM-630",
         "MAM-624",
         "MAM-622"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-617",
+      "identifier": "MAM-617",
       "title": "BASIS-004 — Proteger historial y endurecer integridad y datos de ejemplo",
       "status": "In Progress",
-      "parent": null,
-      "blocked_by": [
-        "MAM-821",
+      "url": "https://linear.app/mamutsystems/issue/MAM-617/basis-004-proteger-historial-y-endurecer-integridad-y-datos-de-ejemplo",
+      "blockedBy": [
         "MAM-616",
         "MAM-615"
       ],
       "blocks": [
         "MAM-637",
         "MAM-621"
-      ]
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-822",
-      "title": "ARCH-01 — Contratos y controles",
+      "identifier": "MAM-635",
+      "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas",
       "status": "In Progress",
-      "parent": "MAM-821",
-      "blocked_by": [],
-      "blocks": [
-        "MAM-823"
-      ]
-    },
-    {
-      "id": "MAM-823",
-      "title": "ARCH-02 — Primer flujo de entrenamiento",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-822"
+      "url": "https://linear.app/mamutsystems/issue/MAM-635/basis-021-construir-entrenador-ia-y-adaptacion-del-plan-con-tareas",
+      "blockedBy": [
+        "MAM-818",
+        "MAM-633",
+        "MAM-634",
+        "MAM-627"
       ],
       "blocks": [
-        "MAM-824"
-      ]
+        "MAM-636"
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-824",
-      "title": "ARCH-03 — Identidad, atleta y catálogo",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-823"
+      "identifier": "MAM-818",
+      "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-818/basis-033-cuotas-ia-y-libro-de-costo-con-reservas-atomicas",
+      "blockedBy": [
+        "MAM-633",
+        "MAM-817"
       ],
       "blocks": [
-        "MAM-825"
-      ]
+        "MAM-638",
+        "MAM-635"
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-825",
-      "title": "ARCH-04 — Planificación y versiones",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-824"
+      "identifier": "MAM-632",
+      "title": "BASIS-018 — Implementar registro offline y sincronización idempotente",
+      "status": "In Progress",
+      "url": "https://linear.app/mamutsystems/issue/MAM-632/basis-018-implementar-registro-offline-y-sincronizacion-idempotente",
+      "blockedBy": [
+        "MAM-631",
+        "MAM-623",
+        "MAM-628",
+        "MAM-616"
       ],
       "blocks": [
-        "MAM-826"
-      ]
+        "MAM-638"
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-826",
-      "title": "ARCH-05 — Métricas y multideporte",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-825"
+      "identifier": "MAM-616",
+      "title": "BASIS-002 — Vincular cuenta y atleta y cerrar acceso a datos privados",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-616/basis-002-vincular-cuenta-y-atleta-y-cerrar-acceso-a-datos-privados",
+      "blockedBy": [
+        "MAM-615"
       ],
       "blocks": [
-        "MAM-827"
-      ]
+        "MAM-810",
+        "MAM-637",
+        "MAM-633",
+        "MAM-632",
+        "MAM-620",
+        "MAM-617"
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-827",
-      "title": "ARCH-06 — Facturación",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-826"
+      "identifier": "MAM-619",
+      "title": "BASIS-003 — Corregir métricas de fuerza y separar RPE objetivo, real y estimado",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-619/basis-003-corregir-metricas-de-fuerza-y-separar-rpe-objetivo-real-y",
+      "blockedBy": [
+        "MAM-615",
+        "MAM-618"
       ],
       "blocks": [
-        "MAM-828"
-      ]
+        "MAM-625",
+        "MAM-623"
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-828",
-      "title": "ARCH-07 — Entrenador IA",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-827"
-      ],
+      "identifier": "MAM-615",
+      "title": "BASIS-001 — Restablecer arranque y entorno reproducible de Django",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-615/basis-001-restablecer-arranque-y-entorno-reproducible-de-django",
+      "blockedBy": [],
       "blocks": [
-        "MAM-829"
-      ]
+        "MAM-637",
+        "MAM-627",
+        "MAM-619",
+        "MAM-617",
+        "MAM-616"
+      ],
+      "parent": null
     },
     {
-      "id": "MAM-829",
-      "title": "ARCH-08 — Sincronización offline",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-828"
-      ],
+      "identifier": "MAM-618",
+      "title": "BASIS-005 — Definir contrato deportivo para uso multiusuario y diccionario de variables",
+      "status": "Done",
+      "url": "https://linear.app/mamutsystems/issue/MAM-618/basis-005-definir-contrato-deportivo-para-uso-multiusuario-y",
+      "blockedBy": [],
       "blocks": [
-        "MAM-830"
-      ]
-    },
-    {
-      "id": "MAM-830",
-      "title": "ARCH-09 — Integración y retiro del legado",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-829"
+        "MAM-811",
+        "MAM-626",
+        "MAM-624",
+        "MAM-622",
+        "MAM-621",
+        "MAM-620",
+        "MAM-619"
       ],
-      "blocks": [
-        "MAM-831"
-      ]
-    },
-    {
-      "id": "MAM-831",
-      "title": "ARCH-10 — Aceptación integral",
-      "status": "Backlog",
-      "parent": "MAM-821",
-      "blocked_by": [
-        "MAM-830"
-      ],
-      "blocks": []
+      "parent": null
     }
-  ]
+  ],
+  "dependencyRelationCount": 95,
+  "dag": {
+    "acyclic": true,
+    "nodes": 45,
+    "dependencyEdges": 95
+  },
+  "verification": {
+    "allTenArchitectureStagesDone": true,
+    "functionalTicketsWithoutEpicBlock": true,
+    "functionalTicketCount": 35,
+    "dependencyDagAcyclic": true
+  }
 }

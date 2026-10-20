@@ -1,6 +1,6 @@
 # Arquitectura y límites de operación
 
-Estado 2026-10-19: ARCH-01..08 integrados. ARCH-09 tiene un primer commit estructural en main/337f12d8d6b78d52c77c3e7e821ab2af1351cdc8, verificado con 224 pruebas PostgreSQL, pero fue reabierto: mover archivos no completaba la arquitectura. La remediación actual extrae las escrituras, políticas y autorizaciones restantes y activa `config/`. Sus fuentes todavía requieren verificación PostgreSQL e integración propias. ARCH-10 y la épica siguen abiertos.
+Estado actual 2026-10-20: ARCH-01..10 y la épica BASIS-ARCH/MAM-821 están Done. La remediación y presentación se integraron en `main/24484b7c8c5a4c0beb89ee1dc854c91581d7293a`; el [recibo de aceptación](architecture/ARCHITECTURE-ACCEPTANCE-2026-10-20.json) registra CI PostgreSQL 246/0 omisiones y la aceptación arquitectónica. Luna confirmó MAM-821 Done, relacionado y no bloqueante para los 31 tickets funcionales abiertos. MAM-617/626/627 siguen In Progress. La reapertura de ARCH-09 tras `337f12d` y sus límites originales se conservan en [el registro histórico de ejecución](ARCHITECTURE_EXECUTION.md) y [la remediación](architecture/ARCH-09-REMEDIATION-VERIFICATION.md).
 
 ## Estructura actual y contratos
 
@@ -29,11 +29,11 @@ Las colaboraciones entre módulos pasan por contratos públicos, también cuando
 
 `mypy-core.ini` comprueba núcleo y contratos sin plugin Django. `mypy-django.ini` añade todo basis, config, manage.py, las pruebas de regresión y las herramientas migradas, con plugins Django/DRF y sin exclusiones globales de errores. El inventario pendiente solo contiene el `seed.py` protegido del usuario y la herramienta independiente `scripts/backup_db.py`; no quedan fronteras silenciosas en el runtime. La compatibilidad parcial de las versiones de stubs se documenta en [ARCH-09-TYPING.md](architecture/ARCH-09-TYPING.md).
 
-Las secciones ARCH-03..08 al final describen entregas históricas y sus límites en aquel momento; sus rutas y cantidades no describen el candidato actual. Los recibos de cada etapa conservan su evidencia original. La remediación usa un recibo nuevo y no atribuye a sus fuentes las pruebas de un commit anterior.
+Las secciones ARCH-03..08 y el registro de presentación al final describen entregas históricas y sus límites en aquel momento; sus rutas, estados y cantidades no describen el candidato actual. Los recibos de cada etapa conservan su evidencia original. La remediación y su aceptación tienen recibos propios; no se atribuyen sus pruebas a candidatos posteriores.
 
 ## ADR-001 — Arquitectura hexagonal y tipado estricto (2026-10-19)
 
-**Decision aceptada, remediacion en curso.** Epica BASIS-ARCH/MAM-821. ARCH-01..08 integrados; ARCH-09/MAM-830 reabierto y ARCH-10/MAM-831 en aceptacion. La arquitectura se termina antes de retomar aceptacion funcional. ADR-002 reemplaza la conservacion inicial de tablas, etiquetas y migraciones: los modelos pertenecen a los adaptadores finales y el esquema se verifica desde cero en bases temporales.
+**Decisión aceptada e implementación arquitectónica aceptada.** Épica BASIS-ARCH/MAM-821, ARCH-09/MAM-830 y ARCH-10/MAM-831 Done, con evidencia enlazada arriba. La aceptación funcional continúa con sus dependencias propias. ADR-002 reemplaza la conservación inicial de tablas, etiquetas y migraciones: los modelos pertenecen a los adaptadores finales y el esquema se verifica desde cero en bases temporales.
 
 `basis/modules/<área>/{domain,application,adapters}` agrupa cada responsabilidad. `public.py` es la única entrada entre módulos y declara `__all__`; declara los contratos migrados. `basis/shared` contiene identificadores distintos y los protocolos Clock/UnitOfWork. `basis/bootstrap` conecta implementaciones por inyección explícita. Las capas dependen hacia dentro: adaptadores → aplicación → dominio; dominio no importa aplicación. Shared no importa módulos de negocio. Los contratos públicos solo exportan dominio/aplicación y nunca adaptadores.
 
@@ -67,7 +67,9 @@ Se fijan Python 3.13, Django 5.2.18, mypy 1.19.1, django-stubs/django-stubs-ext 
 
 ### Ejecución y evidencia
 
-ARCH-01 → ARCH-02 → ARCH-03 → ARCH-04 → ARCH-05 → ARCH-06 → ARCH-07 → ARCH-08 → ARCH-09 → ARCH-10; una rama/commit por entrega e integración verificada antes de la siguiente. Reversión por commits inversos, conservando esquema y contratos. No corregir funcionalidad silenciosamente. [Plan de ejecución](ARCHITECTURE_EXECUTION.md), [evidencia](architecture/ARCH-01-VERIFICATION.md) y [readback Linear](architecture/linear-readback.json). Los 35 tickets funcionales conservan identidad/historial: cuatro Done y 31 abiertos bloqueados por la épica. Código integrado no implica aceptación funcional completa.
+ARCH-01 → ARCH-02 → ARCH-03 → ARCH-04 → ARCH-05 → ARCH-06 → ARCH-07 → ARCH-08 → ARCH-09 → ARCH-10; etapas integradas y aceptadas. Reversión por commits inversos, conservando esquema y contratos. No corregir funcionalidad silenciosamente. [Plan y registros históricos](ARCHITECTURE_EXECUTION.md), [aceptación](architecture/ARCHITECTURE-ACCEPTANCE-2026-10-20.json) y [snapshot Linear](architecture/linear-readback.json). Los 35 tickets funcionales conservan identidad/historial: cuatro Done y 31 abiertos (30 In Progress y uno Backlog), sin bloqueo de arquitectura; sus dependencias funcionales permanecen. [ROADMAP.json](ROADMAP.json) concilia IDs y códigos de dependencias actuales y referencia el snapshot histórico anterior. Código integrado no implica aceptación funcional completa.
+
+La [revisión independiente actual](../.cache/independent-review-a5614455b6c040438616780d94269822/result.json) verifica mypy núcleo 113/Django 320, Ruff/djLint/Prettier, arquitectura y ocho contratos, 174 pruebas puras y 21 comprobaciones de navegador sobre runtime `d3ecd68ddced4c3d4bcc3de23c94be869ebdbf1847f7456d93b3fe251dc09533`. Es evidencia local del candidato, no CI de su futura integración. El [readback de integridad](HISTORY_INTEGRITY.md#readback-actual-tras-revisión-independiente-y-luna-2026-10-20) distingue esta revisión de los recibos PostgreSQL y fallos anteriores.
 
 ## Implementación existente y límites que deben conservarse
 
@@ -80,7 +82,7 @@ Una prescripción contiene bloques y series/intervalos objetivo; una ejecución 
 
 ## Interfaz y PWA
 
-Los estilos se modifican desde `assets/css/tokens.css`: paleta primitiva, superficies, texto, acento, foco, espaciado, tipografía, radios, sombra y movimiento. Las variables semánticas se mapean al tema Cotton UI; el modo oscuro usa el mismo contrato. Las composiciones Cotton están en `templates/cotton/`. HTMX actualiza el estado de trabajos IA; los formularios ordinarios también funcionan con navegación normal.
+Los estilos se modifican desde `basis/adapters/web/static/basis/css/tokens.css`: paleta primitiva, superficies, texto, acento, foco, espaciado, tipografía, radios, sombra y movimiento. Las variables semánticas se mapean al tema Cotton UI; el modo oscuro usa el mismo contrato. Las composiciones compartidas Cotton están en `basis/adapters/web/templates/cotton/basis/`; el contrato de navegación, tareas y estados se documenta en [UX_CONTRACT.md](UX_CONTRACT.md). HTMX actualiza el estado de trabajos IA; los formularios ordinarios también funcionan con navegación normal.
 
 El service worker precarga exclusivamente recursos públicos y una pantalla offline obtenida sin credenciales. Nunca guarda HTML autenticado ni respuestas de API. La versión de caché depende del contenido de los recursos. La primera instalación no recarga formularios; una actualización requiere una acción explícita y evita aplicarse con pendientes.
 
@@ -167,12 +169,12 @@ Canonical JSON, original IndexedDB body including created, owner scope, CSRF and
 Local candidate:105 pure tests, strict89/140 files, eight import contracts, AST/Ruff/Django/no migrations/static,218 SQLite tests (five PostgreSQL-only skips),23 independent parity cases/zero differences and31-file stable scope. PostgreSQL/main integration remains pending; [current handoff](HANDOFF_ARCH08_2026-10-19.md). Only after readback may ARCH-09 remove daily_trainning_app and reorganize the final persistence/apps/migrations according to ADR-002.
 
 
-## Presentation ownership and composition completion
+## Registro histórico: presentation ownership and composition completion
 
-The current local presentation candidate starts from main `717cc1b`. `basis/adapters/web` is a technical Django application without models: shared layouts/forms/notices, `cotton/basis` components and authored `static/basis` resources. Third-party static files retain `static/vendor`. Each business module owns its `adapters/web` routes, views/forms and `adapters/templates/<area>` screens. Training web handlers are split into planning, execution, strength, intervals, progress and trekking; athlete/training model packages export exactly one definition of each registered model.
+The following historical presentation candidate started from main `717cc1b`, before integration in `24484b7` and architecture acceptance. `basis/adapters/web` is a technical Django application without models: shared layouts/forms/notices, `cotton/basis` components and authored `static/basis` resources. Third-party static files retain `static/vendor`. Each business module owns its `adapters/web` routes, views/forms and `adapters/templates/<area>` screens. Training web handlers are split into planning, execution, strength, intervals, progress and trekking; athlete/training model packages export exactly one definition of each registered model.
 
 `bootstrap` constructs and injects services and adapters; it contains no HTTP handlers, ORM selections, JSON conversion or application command dispatch. AST enforcement covers factories, technical adapter core independence and nested web handlers. Export-v1 obtains 19 owner-selected sections through typed area export read ports; foreign ORM schemas do not leave their owning adapters. Historical workout persistence and typed commands reuse one pure reference decision, compatibility policy and metric calculation while retaining defensive validation and `update_fields` semantics.
 
 Password recovery uses explicit `accounts/auth` templates through confirmation and completion, avoiding admin template discovery. The service worker hashes relocated templates/components/static sources, renders a Prettier-formatted plain JavaScript source, and fails explicitly for a missing critical source or resource. The offline shell omits credentials and authenticated documents. Shared form/error/loading components and their parameters/states are documented in [COMPONENTS](COMPONENTS.md).
 
-See [movement map](architecture/PRESENTATION-MOVES.json), [implementation plan](architecture/PRESENTATION-PLAN.md) and [verification](architecture/PRESENTATION-VERIFICATION.md). This local candidate does not supersede published commit evidence until Git integration is verified; ARCH-09 and ARCH-10 remain open.
+See [movement map](architecture/PRESENTATION-MOVES.json), [implementation plan](architecture/PRESENTATION-PLAN.md) and [verification](architecture/PRESENTATION-VERIFICATION.md). At that historical capture, Git integration was still pending and ARCH-09/ARCH-10 remained open. Their later integration and acceptance are recorded in the current-state section above; these historical receipts keep their original attribution.
