@@ -13,6 +13,18 @@ from .application.administration import (
 from .application.billing import BillingProfile, BillingProfiles
 from .application.coach import AthleteCoachContext, AthleteCoachContexts
 from .application.enrollment import AthleteEnrollment
+from .application.personal_access import (
+    PersonalAccessDenied as PersonalAccessDenied,
+)
+from .application.personal_access import (
+    PersonalAuthorization as PersonalAuthorization,
+)
+from .application.personal_access import (
+    PersonalIdentities as PersonalIdentities,
+)
+from .application.personal_access import (
+    PersonalIdentity as PersonalIdentity,
+)
 from .application.presentation import (
     AthleteHistory,
     AthletePresentation,
@@ -50,6 +62,8 @@ from .domain.records import (
     require_legacy_link,
     require_unchanged_rm,
     valid_availability,
+    validate_measurement,
+    validate_observation_date,
     validate_sport,
     validate_wellness,
 )
@@ -121,6 +135,8 @@ __all__ = (
     "require_unchanged_rm",
     "valid_availability",
     "validate_sport",
+    "validate_measurement",
+    "validate_observation_date",
     "validate_wellness",
 )
 

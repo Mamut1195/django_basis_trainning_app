@@ -4,6 +4,7 @@ from typing import cast
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from basis.modules.athletes.adapters.models import (
     AthleteSettings,
@@ -37,9 +38,13 @@ class AthleteForm(forms.ModelForm[Athlete]):
             "ciudad": "Ciudad",
             "especialidad": "Especialidad",
             "edad": "Edad",
-            "peso": "Peso actual (kg)",
-            "objetivos": "Objetivos",
+            "peso": "Peso legado sin fecha (kg, opcional)",
+            "objetivos": "Objetivo personal (texto, gratuito)",
             "descripcion": "Sobre ti",
+        }
+        help_texts = {
+            "peso": "Dato sin fecha: sus cambios conservan el valor anterior. Usa Registrar peso para mediciones fechadas.",
+            "objetivos": "Describe tu objetivo personal. Los objetivos estructurados de un plan requieren acceso comercial; este texto es gratuito.",
         }
 
     def clean_edad(self) -> int | None:
@@ -86,6 +91,13 @@ class PreferencesForm(forms.ModelForm[AthleteSettings]):
 
 
 class SportProfileForm(forms.ModelForm[SportProfile]):
+    measured_on = forms.DateField(
+        label="Fecha de medición (AAAA-MM-DD)",
+        input_formats=["%Y-%m-%d"],
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+        required=False,
+    )
+
     class Meta:
         model = SportProfile
         exclude = ["owner"]
@@ -98,6 +110,16 @@ class SportProfileForm(forms.ModelForm[SportProfile]):
             "method": "Método",
         }
         widgets = {"measured_on": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"})}
+
+    def clean(self) -> dict[str, object]:
+        data = super().clean() or {}
+        sport = data.get("sport")
+        existing = SportProfile.objects.filter(owner_id=self.instance.owner_id, sport=sport)
+        if self.instance.pk is not None:
+            existing = existing.exclude(pk=self.instance.pk)
+        if sport and existing.exists():
+            self.add_error("sport", "Ya registraste esta disciplina. Edita la existente.")
+        return data
 
 
 class WellnessForm(forms.ModelForm[Wellness]):
@@ -123,11 +145,27 @@ class WellnessForm(forms.ModelForm[Wellness]):
 
 
 class MeasurementForm(forms.ModelForm[Measurement]):
+    unit = forms.ChoiceField(
+        label="Unidad canónica", choices=[("kg", "kg")], initial="kg", required=False
+    )
+    date = forms.DateField(
+        label="Fecha de medición (AAAA-MM-DD)",
+        input_formats=["%Y-%m-%d"],
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+        initial=timezone.localdate,
+    )
+
     class Meta:
         model = Measurement
-        exclude = ["owner"]
+        fields = ["date", "weight_kg", "notes"]
         labels = {"date": "Fecha", "weight_kg": "Peso medido (kg)", "notes": "Notas"}
-        widgets = {"date": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"})}
+        # Keep malformed input visible on the correction page. A number input
+        # sanitizes values such as "abc" to an empty control in the browser.
+        widgets = {"weight_kg": forms.TextInput(attrs={"inputmode": "decimal"})}
+        help_texts = {
+            "weight_kg": "Opcional en tu perfil. Para registrar una medición indica un peso mayor a cero en kg.",
+            "notes": "Cada envío añade una observación; no reemplaza mediciones anteriores.",
+        }
 
 
 class RMForm(forms.ModelForm[UserExerciseRM]):

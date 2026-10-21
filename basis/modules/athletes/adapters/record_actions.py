@@ -95,6 +95,8 @@ def save_observation(owner: int, row: SportProfile | Wellness | Measurement) -> 
             )
         )
     else:
+        if row.date is None:
+            raise ValidationError({"date": "Indica la fecha de la medición."})
         row.pk = service.record_measurement(
             RecordMeasurement(account, MeasurementData(row.date, row.weight_kg, row.notes))
         )

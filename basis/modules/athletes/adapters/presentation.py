@@ -40,6 +40,9 @@ class DjangoAthletePresentation:
             ),
             tuple(
                 MeasurementData(row.date, row.weight_kg, row.notes)
-                for row in Measurement.objects.filter(owner_id=owner).order_by("-date")[:14]
+                for row in Measurement.objects.filter(
+                    owner_id=owner, origin="measured", date__isnull=False
+                ).order_by("-date", "-pk")[:14]
+                if row.date is not None
             ),
         )

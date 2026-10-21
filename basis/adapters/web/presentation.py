@@ -4,7 +4,7 @@ from basis.bootstrap.presentation import athlete_reads, coach_reads, training_re
 from basis.modules.athletes.public import WellnessData
 from basis.modules.catalog.adapters.presentation import DjangoExerciseNames
 from basis.modules.coach.public import UsageSummary
-from basis.modules.training.public import PlanChoice
+from basis.modules.training.public import GoalSummary, PlanChoice
 from basis.shared.identifiers import AccountId, ExerciseId, GoalId
 
 
@@ -18,6 +18,10 @@ def current_plans(owner: int) -> tuple[PlanChoice, ...]:
 
 def goal_choices(owner: int) -> tuple[tuple[GoalId, str], ...]:
     return training_reads().goal_choices(AccountId(owner))
+
+
+def profile_goals(owner: int) -> tuple[GoalSummary, ...]:
+    return training_reads().goals(AccountId(owner))
 
 
 def latest_usage(owner: int) -> UsageSummary | None:

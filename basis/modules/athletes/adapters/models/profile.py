@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from basis.adapters.django.persistence import Owned, ValidatedModel
@@ -14,6 +15,7 @@ from basis.modules.athletes.public import (
     InvalidAthleteData,
     SportData,
     valid_availability,
+    validate_observation_date,
     validate_sport,
 )
 from basis.modules.training.public import (
@@ -144,5 +146,7 @@ class SportProfile(Owned):
                     self.method,
                 )
             )
+            if self.measured_on is not None:
+                validate_observation_date(self.measured_on, timezone.localdate())
         except InvalidAthleteData as error:
             raise ValidationError(str(error)) from error
