@@ -20,7 +20,11 @@ from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
 from basis.adapters.web.api import api_router
-from basis.modules.accounts.adapters.web.views import BasisLoginView, BasisPasswordResetView
+from basis.modules.accounts.adapters.web.views import (
+    BasisLoginView,
+    BasisPasswordResetConfirmView,
+    BasisPasswordResetView,
+)
 
 urlpatterns = [
     path("", include("basis.adapters.web.urls")),
@@ -35,7 +39,7 @@ urlpatterns = [
     ),
     path(
         "accounts/reset/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
+        BasisPasswordResetConfirmView.as_view(
             template_name="accounts/auth/password_reset_confirm.html"
         ),
         name="password_reset_confirm",

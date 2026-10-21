@@ -14,6 +14,14 @@ class AccountUnavailable(Exception):
     pass
 
 
+class RegistrationConflict(Exception):
+    pass
+
+
+class MailDeliveryUnavailable(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class Account:
     id: AccountId
