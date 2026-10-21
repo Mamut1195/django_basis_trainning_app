@@ -2,10 +2,13 @@
 
 Reconcile and accept the published architecture, then complete BASIS-004/MAM-617 data integrity and advance BASIS-012/MAM-626 with a reviewable UX contract.
 
-Estado final del lote: **MAM-617 Done**, confirmado por Luna después de PR #1 y
-su CI post-merge. Ver [cierre operativo y siguientes tareas](#cierre-operativo-del-lote).
-Los apartados anteriores a ese cierre conservan el contexto de sus capturas;
-las referencias a integración pendiente o 31 abiertos no son el estado actual.
+Estado actual al readback del 2026-10-21: **MAM-617, MAM-621 y MAM-637 Done**.
+El [cierre de catálogo y operaciones](#cierre-del-lote-mam-621-y-mam-637-2026-10-21)
+registra integración, fuente de Luna y bloqueos que siguen abiertos. MAM-621/MAM-637
+ya estaban Done antes de esa revisión; no se atribuye a Luna un cambio de estado.
+Los apartados del lote anterior, incluido su [cierre de integridad](#cierre-operativo-del-lote),
+conservan el contexto de sus capturas: las referencias a integración pendiente,
+31 o 30 abiertos y fallos intermedios son históricas, no el estado actual.
 
 # Context
 
@@ -126,6 +129,9 @@ permanece In Progress hasta la integración y su readback autorizado.
 
 ## Cierre operativo del lote
 
+Registro histórico del lote de integridad del 2026-10-20; sus conteos y siguientes
+tareas describen aquel momento. El estado posterior se registra por separado abajo.
+
 Fuente: transcript local proporcionado de Luna, modelo `opencode-go/gpt-6-luna`,
 agente `build`, sesión `ses_ea475a80dffeVXF8os2txyd0Cv`. No se consultaron
 Linear/Notion en esta conciliación. [MAM-617](https://linear.app/mamutsystems/issue/MAM-617)
@@ -153,6 +159,73 @@ conserva fuente y detalles. `ROADMAP.json` refleja el nuevo estado;
 `docs/architecture/linear-readback.json` permanece como snapshot anterior al
 cierre. El CI propio de esta conciliación se verificará y reportará después de
 su integración, sin prometer su resultado en estos documentos.
+
+## Cierre del lote MAM-621 y MAM-637 (2026-10-21)
+
+Conciliación documental a partir de los exports locales suministrados de Luna
+REAL, modelo `opencode-go/gpt-6-luna`, agente `build`, sesión
+`ses_ea3e2209dffehoFNLoBgWy77bW`:
+`luna-closure-mam621-mam637-20261021-0139.final-readbacks.json` y
+`luna-closure-mam621-mam637-20261021-0139.report.sanitized.md`, bajo Temp/opencode.
+Este ejecutor documental no accede a Linear/Notion ni ejecuta cambios de estado.
+
+**Ambos tickets ya estaban Done al llegar Luna.** Verificó los cuatro criterios
+de cada uno y conservó sus estados y `completedAt`; corrigió dos comentarios de
+preparación y dejó dos comentarios de cierre, con lectura posterior exacta.
+
+| Ticket | Estado conservado / completedAt | Corrección del comentario inicial | Comentario de cierre |
+| --- | --- | --- | --- |
+| MAM-621 | Done / `2026-10-21T00:53:58.059Z` | `058dc6d7-ae69-4f6f-b208-fdb36255aa78`, actualizado `2026-10-21T01:47:28.436Z` | `14757265-2b57-44e4-b382-07cbca44b6c9`, creado `2026-10-21T01:47:28.696Z` |
+| MAM-637 | Done / `2026-10-21T01:30:50.347Z` | `7c01152f-50a9-4dec-9ad3-d72cd3913570`, actualizado `2026-10-21T01:47:28.763Z` | `12f9062f-656f-4d04-b883-4098dca61bb8`, creado `2026-10-21T01:47:28.645Z` |
+
+Las ramas realmente integradas son `feature/mam-621-catalog` y
+`feature/mam-637-operations`. Los nombres `exec/*` de la preparación eran previstos,
+no ramas creadas; los comentarios corregidos conservan esa previsión histórica.
+
+### Integración y CI de código existentes
+
+- **Catálogo / PR #3:** commit `e733e2c54eeb00092af9efd7fc1b19271c4b4841`,
+  merge `158235c035dc442e008fe4e423442c8c955aba9b`;
+  [CI postmerge 39524085686](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39524085686)
+  SUCCESS en ese SHA: **276 PostgreSQL, 174 puras, mypy 113/323 y ocho contratos**.
+  [Matriz de catálogo y readback](CATALOG_VERIFICATION.md#readback-de-integración-y-cierre-2026-10-21).
+- **Operaciones / PR #4:** commit `55c10f2015ad88702a9ee8d9a1ffaf3d71648114`,
+  integración conjunta `6bd14ea1539ebd671075562854a81f3ab852a5ac`,
+  merge `5edf6bd515ed56289b76da3339c9acaa4a7d4680`;
+  [CI postmerge 39527756424](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39527756424)
+  SUCCESS en ese SHA exacto, jobs `postgres` y `operations`: **288 PostgreSQL sin
+  omisiones, 174 puras, mypy 113/330 y ocho contratos**. El
+  [artefacto 12314030203](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39527756424/artifacts/12314030203)
+  contiene once checks VERIFIED, incluido backup/restore de tablas/secuencias,
+  migrate repetido y rollback de datos. [Detalle operativo](OPERATIONS_VERIFICATION.md#readback-de-integración-y-cierre-2026-10-21).
+
+El APPROVE del flujo de implementación corresponde a revisión independiente de
+agentes, no a un review formal de GitHub. La API de reviews de PR #3 y PR #4
+devolvió **cero registros**; Luna no lo presentó como aprobación GitHub verificada.
+Esta conciliación revisa evidencia existente, no reejecuta las pruebas de código
+citadas. El CI propio del PR documental se comprobará y reportará por separado;
+los resultados anteriores no se atribuyen a un commit documental futuro.
+
+### Estado actual y siguiente cadena, sin iniciar otro lote
+
+Fuente completa de Luna, sin página siguiente: **46 = 18 Done, 27 In Progress,
+uno Backlog**; **35 funcionales = siete Done y 28 abiertos**; arquitectura **11 Done**.
+`ROADMAP.json.current_readback` registra esta lectura y preserva `postmerge_readback`
+de MAM-617 y los snapshots de arquitectura con sus estados/cantidades anteriores.
+
+- MAM-626/MAM-627 continúan In Progress: lector de pantalla **NOT RUN**, aceptación
+  del propietario **PENDING**.
+- MAM-622 sigue bloqueado por **MAM-620**, que depende de **MAM-810**. MAM-623 espera
+  **MAM-622**; cerrar MAM-621 no los desbloquea por completo.
+- MAM-638 sigue bloqueado por **MAM-625, MAM-628, MAM-629, MAM-630, MAM-632,
+  MAM-636, MAM-815, MAM-816, MAM-817, MAM-818 y MAM-820**: once pendientes;
+  MAM-636 está Backlog. MAM-637 Done satisface sólo una de sus dependencias.
+- Siguiente cadena High: **MAM-810 → MAM-620 → MAM-622 → MAM-623**. Es una
+  recomendación de orden, no un inicio de implementación o cambio de estados.
+
+Producción, proveedores LIVE y rollback entre releases con esquema incompatible
+siguen **NOT RUN**. La carga de referencia no demuestra capacidad de 1.000 usuarios;
+se conservan las mediciones anteriores con sus entornos y recibos propios.
 
 # Risks
 
