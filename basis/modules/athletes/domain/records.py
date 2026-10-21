@@ -72,6 +72,19 @@ class MeasurementData:
     notes: str
 
 
+def validate_measurement(data: MeasurementData, today: date) -> None:
+    if not data.weight_kg.is_finite() or not Decimal("0.01") <= data.weight_kg <= 500:
+        raise InvalidAthleteData(
+            "El peso medido debe estar entre 0,01 y 500 kg; cero no es ausencia."
+        )
+    validate_observation_date(data.date, today)
+
+
+def validate_observation_date(measured_on: date, today: date) -> None:
+    if measured_on > today:
+        raise InvalidAthleteData("Una medición realizada no puede tener fecha futura.")
+
+
 @dataclass(frozen=True)
 class MeasuredRMData:
     exercise: ExerciseId

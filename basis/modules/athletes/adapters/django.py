@@ -1,6 +1,7 @@
 """Owner-scoped persistence over typed athlete models."""
 
 from dataclasses import fields
+from decimal import Decimal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.db import models
@@ -27,6 +28,7 @@ from basis.shared.identifiers import (
 
 from ..domain.records import (
     AthleteUnavailable,
+    InvalidAthleteData,
     MeasuredRMData,
     MeasuredRMState,
     MeasurementData,
@@ -186,6 +188,21 @@ class DjangoAthleteRecords:
     def profile(self, owner: AccountId) -> ProfileData:
         return profile_data(self.athlete(owner))
 
+    def lock_profile(self, owner: AccountId) -> ProfileData:
+        row = Athlete.objects.select_for_update().filter(account_id=owner).first()
+        if row is None:
+            raise AthleteUnavailable
+        return profile_data(row)
+
+    def archive_profile_weight(self, owner: AccountId, weight: Decimal) -> None:
+        Measurement.objects.create(
+            owner_id=owner,
+            date=None,
+            weight_kg=weight,
+            origin="legacy_profile",
+            notes="Valor reemplazado del perfil; fecha de medición desconocida.",
+        )
+
     def save_profile(self, owner: AccountId, data: ProfileData) -> None:
         row = self.athlete(owner)
         assign(row, data)
@@ -236,6 +253,13 @@ class DjangoAthleteRecords:
     def save_sport(
         self, owner: AccountId, data: SportData, id: SportProfileId | None
     ) -> SportProfileId:
+        # Serialize duplicate checks with all sport writes for this account.
+        self.lock_profile(owner)
+        duplicates = SportProfile.objects.filter(owner_id=owner, sport=data.sport)
+        if id is not None:
+            duplicates = duplicates.exclude(pk=id)
+        if duplicates.exists():
+            raise InvalidAthleteData("Ya registraste esta disciplina. Edita la existente.")
         row = (
             SportProfile(owner_id=owner)
             if id is None

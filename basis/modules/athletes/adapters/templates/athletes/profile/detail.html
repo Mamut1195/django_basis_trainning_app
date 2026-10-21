@@ -2,20 +2,63 @@
 {% block content %}
   <c-basis.page-heading :title="athlete.nombre" subtitle="Tu contexto hace que el plan tenga sentido." />
   <div class="actions">
-    <c-ui.button href="{% url 'profile-edit' %}">
-      Editar perfil
-    </c-ui.button>
-    <c-ui.button href="{% url 'preferences-edit' %}">
-      Disponibilidad y equipo
-    </c-ui.button>
-    <c-ui.button href="{% url 'owned-new' 'sport' %}">
-      Añadir disciplina
+    {% if personal_access %}
+      <c-ui.button href="{% url 'profile-edit' %}">
+        Editar perfil
+      </c-ui.button>
+      <c-ui.button href="{% url 'preferences-edit' %}">
+        Disponibilidad y equipo
+      </c-ui.button>
+      <c-ui.button href="{% url 'owned-new' 'sport' %}">
+        Añadir disciplina
+      </c-ui.button>
+      <c-ui.button href="{% url 'profile-edit' %}">
+        Definir objetivo personal
+      </c-ui.button>
+      <c-ui.button href="{% url 'owned-new' 'measurement' %}">
+        Registrar peso
+      </c-ui.button>
+    {% endif %}
+    <c-ui.button href="{% url 'measurement-history' %}">
+      Historial de peso
     </c-ui.button>
     <c-ui.button href="{% url 'billing' %}">
       Suscripción
     </c-ui.button>
-    <a href="{% url 'rm-new' %}">Registrar 1RM medido</a><a href="{% url 'export' %}">Exportar datos</a>
+    {% if write_access %}
+      <a href="{% url 'owned-new' 'goal' %}">Configurar objetivo del plan</a>
+      <a href="{% url 'rm-new' %}">Registrar 1RM medido</a>
+    {% endif %}
+    <a href="{% url 'export' %}">Exportar datos</a>
   </div>
+  <c-basis.card title="Configuración inicial">
+    {% if personal_access %}
+      <p>
+        Tu perfil personal es gratuito: objetivo de texto, disponibilidad, disciplinas y mediciones no requieren suscripción.
+      </p>
+    {% else %}
+      <p>
+        Verifica tu correo con una cuenta activa para editar tu perfil personal gratuito. Tus datos propios y exportación siguen disponibles.
+      </p>
+      <a href="{% url 'resend-verification' %}">Verificar correo</a>
+    {% endif %}
+    {% if configuration_ready %}
+      <p>Objetivo y disponibilidad registrados. Ya tienes contexto inicial para planificar.</p>
+      {% if write_access %}
+        <a href="{% url 'plans' %}">Continuar al plan</a>
+      {% else %}
+        <p>
+          Crear objetivos estructurados, planes, entrenamientos y usar el entrenador IA requiere prueba o suscripción activa. Tu configuración personal y exportación siguen siendo gratuitas.
+        </p>
+        <a href="{% url 'plans' %}">Consultar planes existentes</a>
+      {% endif %}
+    {% else %}
+      <p>
+        Puedes completar tu configuración después. Registra un objetivo y tus días disponibles para planificar.
+      </p>
+    {% endif %}
+    <p>Edad, peso, umbrales y notas sensibles son opcionales. Un dato ausente no vale cero.</p>
+  </c-basis.card>
   <div class="grid">
     <c-basis.card title="Tu contexto">
       <dl class="metric-list">
@@ -26,15 +69,48 @@
           </dd>
         </div>
         <div>
-          <dt>Objetivos</dt>
+          <dt>Contexto libre de objetivos</dt>
           <dd>
-            {{ athlete.objetivos|default:'Sin definir' }}
+            {{ athlete.objetivos|default:'Sin notas' }}
           </dd>
         </div>
         <div>
           <dt>Disponibilidad</dt>
           <dd>
+            {{ available_days|join:', '|default:'Sin días registrados' }} ·
             {{ preferences.minutes_per_session }} min / sesión
+          </dd>
+        </div>
+        <div>
+          <dt>Restricciones declaradas</dt>
+          <dd>
+            {{ preferences.limitations|default:'Sin registrar' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Zona horaria declarada</dt>
+          <dd>
+            {{ preferences.timezone_name }}
+          </dd>
+        </div>
+        <div>
+          <dt>Última medición de peso</dt>
+          <dd>
+            {% if latest_measurement %}
+              {{ latest_measurement.weight_kg }} kg · {{ latest_measurement.date|date:'Y-m-d' }}
+            {% else %}
+              Sin medición fechada
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>Peso legado sin fecha</dt>
+          <dd>
+            {% if athlete.peso != None %}
+              {{ athlete.peso }} kg (no es una medición fechada)
+            {% else %}
+              Sin registrar
+            {% endif %}
           </dd>
         </div>
         <div>
@@ -50,8 +126,11 @@
         <div class="card-line">
           <h3>{{ sport.get_sport_display }}</h3>
           <p>{{ sport.get_experience_display }}</p>
+          {% if personal_access %}
+            <a href="{% url 'sport-edit' sport.pk %}">Editar {{ sport.get_sport_display }}</a>
+          {% endif %}
           {% if sport.threshold != None %}
-            <small>Umbral: {{ sport.threshold }} {{ sport.get_threshold_unit_display }} · {{ sport.measured_on }} · {{ sport.method }}</small>
+            <small>Umbral: {{ sport.threshold }} {{ sport.get_threshold_unit_display }} · {{ sport.measured_on|date:'Y-m-d' }} · {{ sport.method }}</small>
           {% else %}
             <small>Sin umbral medido</small>
           {% endif %}
@@ -59,6 +138,31 @@
       {% empty %}
         <p class="muted">Añade tu experiencia en cada disciplina.</p>
       {% endfor %}
+    </c-basis.card>
+    <c-basis.card title="Objetivos planificados">
+      <p>Las metas son intención; no son mediciones realizadas.</p>
+      {% for goal in goals %}
+        <div class="card-line">
+          <h3>{{ goal.title }}</h3>
+          <p>{{ goal.sport }} · {{ goal.priority }}</p>
+          <p>
+            Meta: {{ goal.target_value|default_if_none:'Sin dato' }} {{ goal.target_unit }} · Plazo: {{ goal.target_date|date:'Y-m-d'|default:'Sin fecha' }}
+          </p>
+          <p>
+            Línea base: {{ goal.baseline_value|default_if_none:'Sin dato' }} {{ goal.target_unit }} · {{ goal.baseline_date|date:'Y-m-d'|default:'Sin fecha' }}
+          </p>
+        </div>
+      {% empty %}
+        <p>Sin objetivo estructurado. Puedes añadirlo después.</p>
+      {% endfor %}
+    </c-basis.card>
+    <c-basis.card title="Tus datos y exportación">
+      <p>
+        Consulta el historial de peso y Progreso. Exportar datos descarga tu perfil, preferencias, disciplinas, mediciones, bienestar, objetivos, planes, sesiones y registros de entrenamiento de esta cuenta.
+      </p>
+      <p>
+        Pesos en kg; fechas de medición en AAAA-MM-DD. Las mediciones sin fecha son valores legados reemplazados, no observaciones fechadas. Las credenciales y tokens de acceso no se exportan.
+      </p>
     </c-basis.card>
   </div>
   <form method="post" action="{% url 'logout' %}" data-logout>

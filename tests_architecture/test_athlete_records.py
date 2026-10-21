@@ -58,6 +58,12 @@ class PermissiveAthleteRecords:
     def profile(self, owner: AccountId) -> ProfileData:
         raise NotImplementedError
 
+    def lock_profile(self, owner: AccountId) -> ProfileData:
+        raise NotImplementedError
+
+    def archive_profile_weight(self, owner: AccountId, weight: Decimal) -> None:
+        raise NotImplementedError
+
     def save_profile(self, owner: AccountId, data: ProfileData) -> None:
         self.writes.append("profile")
 

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.db.models import F
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from basis.adapters.web.framework import owner, write_required
+from basis.adapters.web.presentation import profile_goals
 from basis.modules.athletes.adapters.models import (
     Measurement,
     SportProfile,
@@ -20,6 +24,7 @@ from basis.modules.athletes.adapters.record_actions import (
     save_profile,
     save_rm,
 )
+from basis.modules.athletes.adapters.web.access import can_edit_personal, personal_required
 from basis.modules.athletes.adapters.web.forms import (
     AthleteForm,
     MeasurementForm,
@@ -32,29 +37,51 @@ from basis.modules.athletes.adapters.web.forms import (
 
 @login_required
 def profile(request: HttpRequest) -> HttpResponse:
+    athlete = get_object_or_404(User, account_id=owner(request).pk)
     preferences = preferences_row(owner(request).pk)
+    goals = profile_goals(owner(request).pk)
     return render(
         request,
         "athletes/profile/detail.html",
         {
             "preferences": preferences,
             "sports": SportProfile.objects.filter(owner=owner(request)),
+            "goals": goals,
+            "configuration_ready": bool(
+                (goals or (athlete.objetivos or "").strip()) and preferences.availability
+            ),
+            "personal_access": can_edit_personal(owner(request).pk),
+            "available_days": [
+                label
+                for day, label in enumerate(
+                    ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"), 1
+                )
+                if day in preferences.availability
+            ],
+            "latest_measurement": Measurement.objects.filter(
+                owner=owner(request), origin="measured"
+            )
+            .order_by("-date", "-pk")
+            .first(),
         },
     )
 
 
-@write_required
+@personal_required
 def profile_edit(request: HttpRequest) -> HttpResponse:
     form = AthleteForm(
         request.POST or None, instance=User.objects.get(account_id=owner(request).pk)
     )
     if request.method == "POST" and form.is_valid():
-        save_profile(owner(request).pk, form.save(commit=False))
-        return redirect("profile")
+        try:
+            save_profile(owner(request).pk, form.save(commit=False))
+            return redirect("profile")
+        except ValidationError as error:
+            form.add_error(None, error)
     return render(request, "shared/form.html", {"title": "Tu perfil", "form": form})
 
 
-@write_required
+@personal_required
 def preferences_edit(request: HttpRequest) -> HttpResponse:
     preferences = preferences_row(owner(request).pk)
     form = PreferencesForm(request.POST or None, instance=preferences)
@@ -84,8 +111,13 @@ def rm_new(request: HttpRequest) -> HttpResponse:
     )
 
 
-@write_required
 def owned_new(request: HttpRequest, resource: str) -> HttpResponse:
+    # Wellness stays under its existing commercial training policy.
+    guard = personal_required if resource in ("sport", "measurement") else write_required
+    return guard(_owned_new)(request, resource)
+
+
+def _owned_new(request: HttpRequest, resource: str) -> HttpResponse:
     mapping = {
         "sport": (SportProfile, SportProfileForm, "Experiencia y umbral"),
         "wellness": (Wellness, WellnessForm, "Cómo te sientes"),
@@ -103,10 +135,38 @@ def owned_new(request: HttpRequest, resource: str) -> HttpResponse:
     form = cls(request.POST or None, instance=instance)
     if request.method == "POST" and form.is_valid():
         instance = form.save(commit=False)
-        save_observation(owner(request).pk, instance)
-        return (
-            redirect("trip-detail", pk=instance.pk)
-            if resource == "trip"
-            else redirect("profile" if resource in ("goal", "sport") else "progress")
-        )
+        try:
+            save_observation(owner(request).pk, instance)
+            return redirect("profile" if resource in ("sport", "measurement") else "progress")
+        except ValidationError as error:
+            form.add_error(None, error)
     return render(request, "shared/form.html", {"title": title, "form": form})
+
+
+@personal_required
+def sport_edit(request: HttpRequest, pk: int) -> HttpResponse:
+    row = get_object_or_404(SportProfile, pk=pk, owner=owner(request))
+    form = SportProfileForm(request.POST or None, instance=row)
+    if request.method == "POST" and form.is_valid():
+        try:
+            save_observation(owner(request).pk, form.save(commit=False))
+            return redirect("profile")
+        except ValidationError as error:
+            form.add_error(None, error)
+    return render(request, "shared/form.html", {"title": "Editar disciplina", "form": form})
+
+
+@login_required
+def measurement_history(request: HttpRequest) -> HttpResponse:
+    get_object_or_404(User, account_id=owner(request).pk)
+    rows = Measurement.objects.filter(owner=owner(request)).order_by(
+        F("date").desc(nulls_last=True), "-pk"
+    )
+    return render(
+        request,
+        "athletes/profile/measurements.html",
+        {
+            "measurements": Paginator(rows, 20).get_page(request.GET.get("page")),
+            "personal_access": can_edit_personal(owner(request).pk),
+        },
+    )

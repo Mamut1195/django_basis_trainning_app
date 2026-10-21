@@ -43,6 +43,7 @@ from .application.planning import (
     ScheduleCreationContext,
     ScheduleSession,
 )
+from .application.presentation import GoalSummary as GoalSummary
 from .application.presentation import PlanChoice, TrainingPresentation
 from .application.progress import (
     AddStage,

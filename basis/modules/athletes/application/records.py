@@ -1,6 +1,7 @@
 """Owner-scoped profile and observation workflows."""
 
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Callable, Protocol
 
 from basis.shared.identifiers import (
@@ -44,6 +45,8 @@ class WriteAuthorization(Protocol):
 
 class AthleteRecords(Protocol):
     def profile(self, owner: AccountId) -> ProfileData: ...
+    def lock_profile(self, owner: AccountId) -> ProfileData: ...
+    def archive_profile_weight(self, owner: AccountId, weight: Decimal) -> None: ...
     def save_profile(self, owner: AccountId, data: ProfileData) -> None: ...
     def preferences(self, owner: AccountId) -> PreferencesData: ...
     def timezone_exists(self, name: str) -> bool: ...
@@ -125,8 +128,11 @@ class Athletes:
         records: AthleteRecords,
         authorization: WriteAuthorization,
         uow: Callable[[], UnitOfWork],
+        personal_authorization: WriteAuthorization | None = None,
     ) -> None:
         self.records, self.authorization, self.uow = records, authorization, uow
+        # A caller that has not adopted the new port retains the stricter old guard.
+        self.personal_authorization = personal_authorization or authorization
 
     def profile(self, owner: AccountId) -> ProfileData:
         return self.records.profile(owner)
@@ -139,14 +145,17 @@ class Athletes:
 
     def edit_profile(self, command: EditProfile) -> None:
         with self.uow() as work:
-            self.authorization.require(command.owner)
+            self.personal_authorization.require(command.owner)
             require_adult(command.data.edad)
+            previous = self.records.lock_profile(command.owner)
+            if previous.peso is not None and previous.peso != command.data.peso:
+                self.records.archive_profile_weight(command.owner, previous.peso)
             self.records.save_profile(command.owner, normalized_profile(command.data))
             work.commit()
 
     def edit_preferences(self, command: EditPreferences) -> None:
         with self.uow() as work:
-            self.authorization.require(command.owner)
+            self.personal_authorization.require(command.owner)
             validate_preferences(
                 command.data, self.records.timezone_exists(command.data.timezone_name)
             )
@@ -155,7 +164,7 @@ class Athletes:
 
     def record_sport(self, command: RecordSport) -> SportProfileId:
         with self.uow() as work:
-            self.authorization.require(command.owner)
+            self.personal_authorization.require(command.owner)
             validate_sport(command.data)
             result = self.records.save_sport(command.owner, command.data, command.id)
             work.commit()
@@ -171,7 +180,7 @@ class Athletes:
 
     def record_measurement(self, command: RecordMeasurement) -> MeasurementId:
         with self.uow() as work:
-            self.authorization.require(command.owner)
+            self.personal_authorization.require(command.owner)
             result = self.records.save_measurement(command.owner, command.data)
             work.commit()
             return result

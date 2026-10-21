@@ -1,0 +1,46 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading title="Historial de peso"
+                        subtitle="Mediciones realizadas en kg. Cada registro conserva su fecha; los valores legados no tienen fecha conocida." />
+  <div class="actions">
+    {% if personal_access %}
+      <c-ui.button href="{% url 'owned-new' 'measurement' %}">
+        Registrar peso
+      </c-ui.button>
+    {% endif %}
+    <c-ui.button href="{% url 'profile' %}">
+      Volver al perfil
+    </c-ui.button>
+    <c-ui.button href="{% url 'export' %}">
+      Exportar datos
+    </c-ui.button>
+  </div>
+  <c-basis.card title="Registros privados">
+    <p>
+      Para corregir una medición, añade otra con su fecha y explica la corrección en notas. No se reemplaza el historial. Un cero legado se conserva como tal, pero no es una medición corporal válida.
+    </p>
+    {% for measurement in measurements %}
+      <div class="card-line">
+        <h3>{{ measurement.weight_kg }} kg</h3>
+        <p>
+          {% if measurement.date %}
+            {{ measurement.date|date:'Y-m-d' }}
+          {% else %}
+            Fecha de medición desconocida
+          {% endif %}
+          · {{ measurement.get_origin_display }}
+        </p>
+        <p>{{ measurement.notes|default:'Sin notas' }}</p>
+      </div>
+    {% empty %}
+      <p>Sin mediciones registradas. El peso es opcional y puedes completarlo después.</p>
+    {% endfor %}
+    {% if measurements.has_previous %}
+      <a href="?page={{ measurements.previous_page_number }}">Anteriores</a>
+    {% endif %}
+    <p>Página {{ measurements.number }} de {{ measurements.paginator.num_pages }}</p>
+    {% if measurements.has_next %}
+      <a href="?page={{ measurements.next_page_number }}">Siguientes</a>
+    {% endif %}
+  </c-basis.card>
+{% endblock %}

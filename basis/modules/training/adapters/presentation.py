@@ -3,7 +3,7 @@
 from basis.modules.training.application.presentation import PlanSummary
 from basis.shared.identifiers import AccountId, GoalId, PlanId
 
-from ..application.presentation import PlanChoice
+from ..application.presentation import GoalSummary, PlanChoice
 from .models import Goal, TrainingPlan
 
 
@@ -16,6 +16,21 @@ class DjangoTrainingPresentation:
 
     def goal_choices(self, owner: AccountId) -> tuple[tuple[GoalId, str], ...]:
         return tuple((GoalId(row.pk), str(row)) for row in Goal.objects.filter(owner_id=owner))
+
+    def goals(self, owner: AccountId) -> tuple[GoalSummary, ...]:
+        return tuple(
+            GoalSummary(
+                row.title,
+                row.get_sport_display(),
+                row.get_priority_display(),
+                row.target_value,
+                row.target_unit,
+                row.target_date,
+                row.baseline_value,
+                row.baseline_date,
+            )
+            for row in Goal.objects.filter(owner_id=owner).order_by("pk")
+        )
 
 
 class DjangoPlanSummaries:
