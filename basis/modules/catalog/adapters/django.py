@@ -31,6 +31,7 @@ def exercise_data(row: Exercise) -> ExerciseData:
         row.equipo,
         row.variante,
         row.archivado,
+        ExerciseId(row.variante_de_id) if row.variante_de_id is not None else None,
     )
 
 
@@ -61,8 +62,8 @@ class DjangoCatalogRepository:
         for field in fields(data):
             name = field.name
             value = getattr(data, name)
-            if name == "classification":
-                name = "classification_id"
+            if name in ("classification", "variante_de"):
+                name += "_id"
             elif name == "musculos_principales":
                 value = list(value)
             setattr(row, name, value)
