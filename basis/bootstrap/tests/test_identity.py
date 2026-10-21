@@ -17,6 +17,7 @@ from basis.bootstrap.accounts import identity
 from basis.bootstrap.athletes import athletes
 from basis.bootstrap.catalog import catalog
 from basis.modules.accounts.adapters.django import DjangoVerification
+from basis.modules.accounts.adapters.models import EmailVerification
 from basis.modules.accounts.public import Account
 from basis.modules.athletes.adapters.models import (
     AthleteSettings,
@@ -49,6 +50,8 @@ def account(name: str = "owner", *, active: bool = True) -> int:
         password="Example-password-824!",
         is_active=active,
     )
+    if not active:
+        EmailVerification.objects.filter(account=row).update(state=EmailVerification.State.PENDING)
     Athlete.objects.create(
         account=row,
         nombre=name,

@@ -9,7 +9,7 @@ from django.db.migrations.recorder import MigrationRecorder
 from django.test import TestCase
 
 MODEL_OWNERS: dict[str, tuple[str, ...]] = {
-    "accounts": ("RateWindow",),
+    "accounts": ("RateWindow", "EmailVerification"),
     "athletes": (
         "User",
         "AthleteSettings",
@@ -40,7 +40,7 @@ MODEL_OWNERS: dict[str, tuple[str, ...]] = {
 
 class FinalInstallationTests(TestCase):
     def test_all_concrete_models_have_their_final_module_owner(self) -> None:
-        self.assertEqual(sum(map(len, MODEL_OWNERS.values())), 28)
+        self.assertEqual(sum(map(len, MODEL_OWNERS.values())), 29)
         self.assertFalse(apps.is_installed("daily_trainning_app"))
         self.assertFalse(apps.is_installed("training"))
         for area, expected in MODEL_OWNERS.items():

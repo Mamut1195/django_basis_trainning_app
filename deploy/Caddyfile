@@ -1,4 +1,7 @@
 # Run behind an explicitly provisioned TLS endpoint; this file activates nothing.
+# Caddy replaces untrusted incoming forwarding headers by default. If web is
+# reached through this proxy, opt in to its exact peer CIDR with
+# BASIS_TRUSTED_PROXY_CIDRS and restrict the web listener to that private network.
 {$BASIS_DOMAIN} {
     encode gzip
     reverse_proxy web:8000

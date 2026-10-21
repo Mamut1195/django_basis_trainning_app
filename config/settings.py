@@ -1,6 +1,7 @@
 """Environment-based configuration; production requires PostgreSQL and secrets."""
 
 import os
+from ipaddress import ip_network
 from pathlib import Path
 
 import dj_database_url
@@ -133,6 +134,16 @@ SECURE_SSL_REDIRECT = not DEBUG
 SECURE_REDIRECT_EXEMPT = [r"^health/$"]
 if os.getenv("TRUST_PROXY", "0") == "1":
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+BASIS_TRUSTED_PROXY_CIDRS = list(
+    filter(None, os.getenv("BASIS_TRUSTED_PROXY_CIDRS", "").split(","))
+)
+try:
+    for proxy_cidr in BASIS_TRUSTED_PROXY_CIDRS:
+        ip_network(proxy_cidr)
+except ValueError:
+    raise ImproperlyConfigured(
+        "BASIS_TRUSTED_PROXY_CIDRS must contain explicit IP networks"
+    ) from None
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
@@ -166,15 +177,25 @@ DEVELOPMENT_ACCESS = DEBUG and os.getenv("BASIS_DEVELOPMENT_ACCESS", "0") == "1"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "filters": {"safe_http": {"()": "basis.adapters.web.operational_logging.SafeHTTPFilter"}},
+    "filters": {
+        "safe_http": {"()": "basis.adapters.web.operational_logging.SafeHTTPFilter"},
+        "safe_account": {"()": "basis.modules.accounts.adapters.logging.SafeAccountMailFilter"},
+    },
     "handlers": {
         "console": {"class": "logging.StreamHandler"},
         "safe_http": {"class": "logging.StreamHandler", "filters": ["safe_http"]},
+        "safe_account": {"class": "logging.StreamHandler", "filters": ["safe_account"]},
     },
     "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
-        name: {"handlers": ["safe_http"], "level": "WARNING", "propagate": False}
-        for name in ("django.request", "django.security", "django.server")
-        if not DEBUG
+        **{
+            name: {"handlers": ["safe_http"], "level": "WARNING", "propagate": False}
+            for name in ("django.request", "django.security", "django.server")
+            if not DEBUG
+        },
+        **{
+            name: {"handlers": ["safe_account"], "level": "WARNING", "propagate": False}
+            for name in ("django.contrib.auth", "basis.accounts.mail")
+        },
     },
 }

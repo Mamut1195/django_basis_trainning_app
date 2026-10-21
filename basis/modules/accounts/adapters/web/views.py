@@ -1,14 +1,28 @@
 from __future__ import annotations
 
 from django.contrib import messages
-from django.contrib.auth.forms import PasswordResetForm
-from django.contrib.auth.views import LoginView, PasswordResetView
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import PasswordResetTokenGenerator, default_token_generator
+from django.contrib.auth.views import (
+    INTERNAL_RESET_SESSION_TOKEN,
+    LoginView,
+    PasswordResetConfirmView,
+    PasswordResetView,
+)
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 
 from basis.bootstrap.accounts import identity
-from basis.modules.accounts.adapters.recovery_actions import recover_password
+from basis.modules.accounts.adapters.recovery import BasisSetPasswordForm
+from basis.modules.accounts.adapters.recovery_actions import (
+    confirm_password_reset,
+    recover_password,
+)
+from basis.modules.accounts.adapters.web.client_address import client_address
 from basis.modules.accounts.adapters.web.forms import SignupForm
+from basis.modules.accounts.domain.identity import MailDeliveryUnavailable, RegistrationConflict
 from basis.modules.accounts.public import (
     AccountUnavailable,
     ConsumeAttempt,
@@ -20,7 +34,7 @@ from basis.modules.accounts.public import (
 
 def rate_allowed(request: HttpRequest, action: str, maximum: int = 10, minutes: int = 15) -> bool:
     return identity().allow_attempt(
-        ConsumeAttempt(action, request.META.get("REMOTE_ADDR", "unknown"), maximum, minutes)
+        ConsumeAttempt(action, client_address(request), maximum, minutes)
     )
 
 
@@ -55,25 +69,56 @@ class BasisPasswordResetView(PasswordResetView):
         return super().post(request, *args, **kwargs)
 
 
+class BasisPasswordResetConfirmView(PasswordResetConfirmView):
+    """Retain Django's token/session/CSRF flow; serialize the mutation authority."""
+
+    form_class = BasisSetPasswordForm
+    token_generator: PasswordResetTokenGenerator = default_token_generator
+
+    def form_valid(self, form: SetPasswordForm[User]) -> HttpResponse:
+        token = self.request.session.get(INTERNAL_RESET_SESSION_TOKEN)
+        outcome = confirm_password_reset(
+            form, token if isinstance(token, str) else None, self.token_generator
+        )
+        if outcome == "invalid":
+            self.validlink = False
+            self.request.session.pop(INTERNAL_RESET_SESSION_TOKEN, None)
+            return self.render_to_response(self.get_context_data())
+        if outcome == "invalid-password":
+            return self.form_invalid(form)
+        self.user = form.user
+        self.request.session.pop(INTERNAL_RESET_SESSION_TOKEN, None)
+        if self.post_reset_login:
+            auth_login(self.request, self.user, self.post_reset_login_backend)
+        return HttpResponseRedirect(self.get_success_url())
+
+
 def signup(request: HttpRequest) -> HttpResponse:
     if request.method == "POST" and not rate_allowed(request, "signup", maximum=5):
         return HttpResponse("Inténtalo más tarde.", status=429)
     form = SignupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         account = form.save(commit=False)
-        identity().register(
-            RegisterAccount(
-                email=form.cleaned_data["email"],
-                name=form.cleaned_data["name"],
-                encoded_password=account.password,
+        try:
+            identity().register(
+                RegisterAccount(
+                    email=form.cleaned_data["email"],
+                    name=form.cleaned_data["name"],
+                    encoded_password=account.password,
+                )
             )
-        )
+        except (RegistrationConflict, MailDeliveryUnavailable):
+            pass
         return render(
             request,
             "shared/notice.html",
             {
                 "title": "Revisa tu correo",
-                "text": "Te enviamos un enlace para verificar tu cuenta. Caduca en 24 horas.",
+                "text": (
+                    "Si corresponde, recibirás un enlace válido durante 24 horas. "
+                    "Si no llega, puedes volver a intentar el registro, verificar tu correo "
+                    "o recuperar el acceso desde el inicio de sesión."
+                ),
             },
         )
     return render(
@@ -127,13 +172,19 @@ def resend_verification(request: HttpRequest) -> HttpResponse:
     if request.method == "POST" and form.is_valid():
         if not rate_allowed(request, "resend-verification", maximum=5):
             return HttpResponse("Inténtalo más tarde.", status=429)
-        identity().resend(form.cleaned_data["email"])
+        try:
+            identity().resend(form.cleaned_data["email"])
+        except MailDeliveryUnavailable:
+            pass
         return render(
             request,
             "shared/notice.html",
             {
                 "title": "Revisa tu correo",
-                "text": "Si existe una cuenta pendiente, recibirás un enlace de verificación.",
+                "text": (
+                    "Si existe una cuenta pendiente, recibirás un enlace de verificación. "
+                    "Si no llega, inténtalo más tarde o recupera el acceso desde el inicio de sesión."
+                ),
             },
         )
     return render(request, "shared/form.html", {"title": "Verificar mi correo", "form": form})
