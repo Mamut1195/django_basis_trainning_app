@@ -166,6 +166,15 @@ DEVELOPMENT_ACCESS = DEBUG and os.getenv("BASIS_DEVELOPMENT_ACCESS", "0") == "1"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "filters": {"safe_http": {"()": "basis.adapters.web.operational_logging.SafeHTTPFilter"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+        "safe_http": {"class": "logging.StreamHandler", "filters": ["safe_http"]},
+    },
     "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        name: {"handlers": ["safe_http"], "level": "WARNING", "propagate": False}
+        for name in ("django.request", "django.security", "django.server")
+        if not DEBUG
+    },
 }
