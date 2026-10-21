@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from basis.shared.identifiers import ClassificationId
+from basis.shared.identifiers import ClassificationId, ExerciseId
 
 
 class CatalogDenied(Exception):
@@ -26,6 +26,7 @@ class ExerciseData:
     equipo: str
     variante: str
     archivado: bool
+    variante_de: ExerciseId | None = None
 
 
 def catalog_allowed(authenticated: bool, staff: bool, read_only: bool) -> bool:
