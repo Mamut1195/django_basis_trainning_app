@@ -1,6 +1,6 @@
 {
   "project": "P-MAM-12",
-  "verified_at": "2026-10-20",
+  "verified_at": "2026-10-21",
   "rule": "Done requires complete acceptance, verification and a committed integration in main.",
   "issues": [
     {
@@ -104,13 +104,14 @@
       "code": "BASIS-007",
       "id": "MAM-621",
       "title": "BASIS-007 — Ampliar catálogo de ejercicios y variantes para prescripción real",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-621/basis-007-ampliar-catalogo-de-ejercicios-y-variantes-para-prescripcion",
       "deps": [
         "MAM-617",
         "MAM-618"
       ],
-      "complete": false,
+      "complete": true,
+      "completed_at": "2026-10-21T00:53:58.059Z",
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-004",
@@ -416,14 +417,15 @@
       "code": "BASIS-023",
       "id": "MAM-637",
       "title": "BASIS-023 — Preparar despliegue sencillo, PostgreSQL, backups y CI",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-637/basis-023-preparar-despliegue-sencillo-postgresql-backups-y-ci",
       "deps": [
         "MAM-617",
         "MAM-616",
         "MAM-615"
       ],
-      "complete": false,
+      "complete": true,
+      "completed_at": "2026-10-21T01:30:50.347Z",
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-004",
@@ -665,10 +667,138 @@
   ],
   "nodes": 35,
   "edges": 86,
-  "done": 5,
-  "open": 30,
-  "in_progress": 29,
+  "done": 7,
+  "open": 28,
+  "in_progress": 27,
   "backlog": 1,
+  "current_readback": {
+    "source_kind": "Local reconciliation of supplied Luna final readbacks; no Linear/Notion access by this documentation executor.",
+    "source": {
+      "model": "opencode-go/gpt-6-luna",
+      "agent": "build",
+      "session": "ses_ea3e2209dffehoFNLoBgWy77bW",
+      "date": "2026-10-21",
+      "readbacks": "luna-closure-mam621-mam637-20261021-0139.final-readbacks.json",
+      "readbacks_sha256": "8d3dfb5df9f56acded93ab8ec3238a1490f010a899f6ebe7bafb750b4b7ffdac",
+      "report": "luna-closure-mam621-mam637-20261021-0139.report.sanitized.md",
+      "report_sha256": "d1385e2a57459370c186f4b59b895abfe2d4f3dfe3e322a9e42a4ac2be04ef11",
+      "location": "Supplied local exports under Temp/opencode; not tracked repository artifacts."
+    },
+    "status_attribution": "Both issues were already Done when Luna arrived; Luna verified criteria and preserved status/completedAt, updating four comments only.",
+    "comment_readbacks_exact": true,
+    "closures": [
+      {
+        "id": "MAM-621",
+        "status": "Done",
+        "completed_at": "2026-10-21T00:53:58.059Z",
+        "state_changed_by_luna": false,
+        "branch": "feature/mam-621-catalog",
+        "preparation_comment_id": "058dc6d7-ae69-4f6f-b208-fdb36255aa78",
+        "preparation_comment_updated_at": "2026-10-21T01:47:28.436Z",
+        "closure_comment_id": "14757265-2b57-44e4-b382-07cbca44b6c9",
+        "closure_comment_created_at": "2026-10-21T01:47:28.696Z",
+        "criteria_verified": 4,
+        "code_integration": {
+          "pr": "https://github.com/Mamut1195/django_basis_trainning_app/pull/3",
+          "commit": "e733e2c54eeb00092af9efd7fc1b19271c4b4841",
+          "merge_sha": "158235c035dc442e008fe4e423442c8c955aba9b",
+          "ci_run": 39524085686,
+          "ci_sha": "158235c035dc442e008fe4e423442c8c955aba9b",
+          "ci_conclusion": "success"
+        }
+      },
+      {
+        "id": "MAM-637",
+        "status": "Done",
+        "completed_at": "2026-10-21T01:30:50.347Z",
+        "state_changed_by_luna": false,
+        "branch": "feature/mam-637-operations",
+        "preparation_comment_id": "7c01152f-50a9-4dec-9ad3-d72cd3913570",
+        "preparation_comment_updated_at": "2026-10-21T01:47:28.763Z",
+        "closure_comment_id": "12f9062f-656f-4d04-b883-4098dca61bb8",
+        "closure_comment_created_at": "2026-10-21T01:47:28.645Z",
+        "criteria_verified": 4,
+        "code_integration": {
+          "pr": "https://github.com/Mamut1195/django_basis_trainning_app/pull/4",
+          "commit": "55c10f2015ad88702a9ee8d9a1ffaf3d71648114",
+          "combined_commit": "6bd14ea1539ebd671075562854a81f3ab852a5ac",
+          "merge_sha": "5edf6bd515ed56289b76da3339c9acaa4a7d4680",
+          "ci_run": 39527756424,
+          "ci_sha": "5edf6bd515ed56289b76da3339c9acaa4a7d4680",
+          "ci_conclusion": "success",
+          "operations_artifact_id": 12314030203,
+          "candidate_manifest_sha256": "2952ed477f977faa6f9c44806bc81c2f273b31690536fa70cdf1023df7b180d8"
+        }
+      }
+    ],
+    "counts": {
+      "functional": {
+        "total": 35,
+        "done": 7,
+        "in_progress": 27,
+        "backlog": 1,
+        "open": 28
+      },
+      "architecture": {
+        "total": 11,
+        "done": 11
+      },
+      "project": {
+        "total": 46,
+        "done": 18,
+        "in_progress": 27,
+        "backlog": 1,
+        "open": 28
+      }
+    },
+    "project_has_next_page": false,
+    "github_submitted_reviews": {
+      "PR3": 0,
+      "PR4": 0
+    },
+    "approval_scope": "Independent agent APPROVE from the implementation workflow is not a submitted GitHub review; Luna verified existing criteria/CI without rerunning application tests.",
+    "remaining_blockers": {
+      "MAM-622": [
+        "MAM-620"
+      ],
+      "MAM-623": [
+        "MAM-622"
+      ],
+      "MAM-638": [
+        "MAM-625",
+        "MAM-628",
+        "MAM-629",
+        "MAM-630",
+        "MAM-632",
+        "MAM-636",
+        "MAM-815",
+        "MAM-816",
+        "MAM-817",
+        "MAM-818",
+        "MAM-820"
+      ]
+    },
+    "next_chain": [
+      "MAM-810",
+      "MAM-620",
+      "MAM-622",
+      "MAM-623"
+    ],
+    "next_chain_priority": "High",
+    "next_batch_started": false,
+    "ux": {
+      "MAM-626": "In Progress",
+      "MAM-627": "In Progress",
+      "screen_reader": "NOT RUN",
+      "owner_acceptance": "PENDING"
+    },
+    "verification_documents": [
+      "docs/CATALOG_VERIFICATION.md",
+      "docs/OPERATIONS_VERIFICATION.md",
+      "docs/DEVELOPMENT_2026-10-20.md#cierre-del-lote-mam-621-y-mam-637-2026-10-21"
+    ],
+    "previous_readback": "postmerge_readback below is the preserved historical MAM-617 closure from 2026-10-20, including its then-current counts and next_unblocked list."
+  },
   "postmerge_readback": {
     "source_kind": "Local readback of the supplied Luna transcript; no new Linear/Notion access by this documentation executor.",
     "source": {

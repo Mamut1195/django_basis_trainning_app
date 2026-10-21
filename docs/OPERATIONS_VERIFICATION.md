@@ -5,8 +5,10 @@
 Instalación de referencia descartable: Django 5.2.18, Python 3.13.7 y PostgreSQL
 18.4. Se comprueba arranque, controles deploy, conservación de perfiles, versiones
 de planes, sesiones, series y referencias RM, recuperación y carga representativa.
-Los cuatro criterios comunicados por Luna guían esta entrega; la aceptación viva
-y el cierre del ticket corresponden al orquestador. Este documento no los declara.
+Los cuatro criterios comunicados por Luna guiaron la entrega local. Estado actual:
+**MAM-637 Done**, con integración y readback separados en
+[el cierre postmerge](#readback-de-integración-y-cierre-2026-10-21). Los registros
+locales y sus límites conservan la atribución a sus propios candidatos.
 
 La evidencia local pertenece al candidato exacto (base Git más SHA-256 de todos
 sus archivos versionados/nuevos no ignorados). Un cambio posterior invalida esa
@@ -179,8 +181,8 @@ no prueba saturación ni una capacidad de usuarios concurrentes productivos.
 CI mantiene los checks existentes y añade construcción/arranque de la imagen,
 deploy check estricto y un job operativo con clientes PG 18 y servidor PG 18.4. El JSON
 operativo se publica como artefacto; no se suben dumps ni logs. El resultado
-hosted del candidato sólo existe tras publicar y ejecutar CI; esta entrega local
-no lo presume.
+hosted sólo se acredita después de ejecutar CI sobre su SHA exacto. La preparación
+local no lo presumía; el resultado de PR #4 se registra en el readback siguiente.
 
 El job operativo corre en `ubuntu-24.04`, compatible con la distribución cold-cache
 de Python 3.13.7 de `actions/setup-python@v7`; no ejecuta esa acción dentro de Debian.
@@ -193,3 +195,50 @@ el verificador retorna FAILED y un JSON con etapa/tipo de error, sin traceback n
 entorno sensible. La regresión Linux de Gunicorn envía peticiones reales normales,
 malformadas, con excepción y con timeout; comprueba estados/eventos y ausencia
 de sentinels de ruta/query/excepción en los logs.
+
+## Readback de integración y cierre (2026-10-21)
+
+Rama real `feature/mam-637-operations`, commit de entrega
+`55c10f2015ad88702a9ee8d9a1ffaf3d71648114`, integración de catálogo
+`6bd14ea1539ebd671075562854a81f3ab852a5ac`; [PR #4](https://github.com/Mamut1195/django_basis_trainning_app/pull/4)
+MERGED, merge `5edf6bd515ed56289b76da3339c9acaa4a7d4680`. El
+[CI de código postmerge 39527756424](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39527756424)
+es SUCCESS en ese SHA, jobs
+[operations](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39527756424/job/118986296703) y
+[postgres](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39527756424/job/118986297018).
+Logs: **288 PostgreSQL sin omisiones, 174 puras, mypy 113/330 y ocho contratos**;
+build/arranque/deploy y regresión Gunicorn 200/400/500/500 sin sentinels sensibles.
+
+El [artefacto operativo 12314030203](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39527756424/artifacts/12314030203)
+contiene `status=VERIFIED`, once checks VERIFIED,
+`candidate.base_commit=5edf6bd515ed56289b76da3339c9acaa4a7d4680`,
+`candidate_unchanged=true` y manifiesto
+`2952ed477f977faa6f9c44806bc81c2f273b31690536fa70cdf1023df7b180d8`.
+Python 3.13.7, Django 5.2.18, cliente PostgreSQL 18.6 de PGDG y servidor 18.4.
+Verifica todas las tablas/secuencias, migración repetida y rollback de datos por
+switchover: **10 perfiles, 20 planes, 120 sesiones, 360 series y 10 RM**;
+backup **0,851 s**, restore **1,017 s**, limpieza VERIFIED.
+
+Medición hosted del cierre de código PR #4, servidor WSGI threaded de referencia:
+
+| Peticiones / HTTP 200 | Clientes | Rutas | Tiempo | Throughput | p50 | p95 | Máximo |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 160 / 160 | 4 | 8 | 3,318 s | 48,23 req/s | 67,26 ms | 112,47 ms | 194,76 ms |
+
+Esta medición no sustituye los recibos locales anteriores y sus entornos propios,
+ni demuestra capacidad de Gunicorn en producción o de 1.000 usuarios. Producción,
+restauración productiva y rollback entre releases con esquema incompatible siguen
+**NOT RUN**; el rollback de datos bajo el mismo esquema sí está VERIFIED.
+
+Luna `opencode-go/gpt-6-luna`, sesión `ses_ea3e2209dffehoFNLoBgWy77bW`, verificó
+los cuatro criterios y **conservó el Done ya existente**, con
+`completedAt=2026-10-21T01:30:50.347Z`. Corrigió el comentario de preparación
+`7c01152f-50a9-4dec-9ad3-d72cd3913570` y dejó el comentario de cierre
+`12f9062f-656f-4d04-b883-4098dca61bb8` a `2026-10-21T01:47:28.645Z`, con readback exacto.
+No cambió el estado ni reejecutó tests de aplicación. El APPROVE independiente de
+agentes no es un review de GitHub: el API de PR #4 devuelve cero reviews.
+
+[Fuente y conteos conciliados](DEVELOPMENT_2026-10-20.md#cierre-del-lote-mam-621-y-mam-637-2026-10-21).
+MAM-638 conserva once bloqueantes pendientes, incluido MAM-636 Backlog; cerrar
+MAM-637 satisface sólo una dependencia. El CI del PR documental tiene identidad
+propia y se comprobará por separado, sin atribuirle anticipadamente estos resultados.

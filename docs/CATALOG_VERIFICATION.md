@@ -2,10 +2,14 @@
 
 ## Alcance y fuentes
 
-Candidato local en `feature/mam-621-catalog`, base
+Estado actual: **MAM-621 Done**, integrado por PR #3; ver el
+[readback de integración y cierre](#readback-de-integración-y-cierre-2026-10-21).
+Los siguientes registros locales conservan sus propios candidatos y resultados.
+
+Captura de implementación local en `feature/mam-621-catalog`, base
 `fc3da6319024f3b49eb89cff0d9d42271747b655`. Implementación y evidencia en el
-worktree run-owned `basis-mam621-20261020`. Este documento no acredita integración
-en main ni cierre del ticket.
+worktree run-owned `basis-mam621-20261020`. Esa captura local, por sí sola, no
+acreditaba integración en main ni cierre del ticket; el readback posterior es separado.
 
 Criterios contrastados con el informe sanitizado de Luna
 `luna-bridge-mam637-mam621-20261020-2322.report.sanitized.md`, sección MAM-621,
@@ -195,5 +199,34 @@ Para reproducir en este entorno Windows, desde el worktree, con el Python existe
 
 El runner es evidencia run-owned, no un nuevo script operativo del producto.
 Levanta y detiene su propio cluster PostgreSQL con puerto dinámico y no descarga
-toolchains. Review, integración/CI remoto y readback de cierre corresponden al
-orquestador después de esta entrega local.
+toolchains. En aquella entrega local, review, integración/CI remoto y readback de
+cierre correspondían todavía al orquestador; el resultado posterior se registra abajo.
+
+## Readback de integración y cierre (2026-10-21)
+
+Rama real `feature/mam-621-catalog`, commit
+`e733e2c54eeb00092af9efd7fc1b19271c4b4841`, [PR #3](https://github.com/Mamut1195/django_basis_trainning_app/pull/3)
+MERGED, merge `158235c035dc442e008fe4e423442c8c955aba9b`. El
+[CI postmerge 39524085686](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39524085686)
+es SUCCESS en ese SHA: **276 PostgreSQL, 174 puras, mypy 113 core/323 Django y ocho
+contratos de imports**. Las pruebas locales anteriores, incluido RED de la carrera,
+conservan sus hashes, entornos y resultados; no se reinterpretan como otro candidato.
+
+La entrega conjunta posterior de operaciones conserva catálogo: merge PR #4
+`5edf6bd515ed56289b76da3339c9acaa4a7d4680`, con
+[CI 39527756424](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39527756424)
+SUCCESS: **288 PostgreSQL, 174 puras, mypy 113/330 y ocho contratos**. Es evidencia
+del árbol conjunto, distinta del gate local y del CI de PR #3.
+
+Según los exports de Luna `opencode-go/gpt-6-luna`, sesión
+`ses_ea3e2209dffehoFNLoBgWy77bW`, **MAM-621 ya estaba Done** al consultar;
+`completedAt=2026-10-21T00:53:58.059Z` se conservó. Verificó los cuatro criterios
+de la matriz, corrigió la rama prevista en el comentario
+`058dc6d7-ae69-4f6f-b208-fdb36255aa78` y registró el cierre
+`14757265-2b57-44e4-b382-07cbca44b6c9` a `2026-10-21T01:47:28.696Z`, con readback exacto.
+No cambió el estado ni reejecutó tests de aplicación. El APPROVE independiente de
+agentes no es un review de GitHub: el API de PR #3 devuelve cero reviews.
+
+[Fuente y conteos conciliados](DEVELOPMENT_2026-10-20.md#cierre-del-lote-mam-621-y-mam-637-2026-10-21).
+MAM-622 sigue bloqueado por MAM-620 y MAM-623 por MAM-622; el cierre del catálogo
+no inicia el siguiente lote. El CI propio del cambio documental se reporta aparte.
