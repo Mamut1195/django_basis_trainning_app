@@ -206,6 +206,19 @@ class PlanningRevisionProcessTests(PlanningFixture, TransactionTestCase):
         first = self.spec("sync", "sync")
         payload = session_snapshot(self.executed)
         payload.update(id=str(uuid4()), planned=self.future.pk, revision=0)
+        # Initialize from this prescription, not a snapshot/IDs of a different
+        # execution. MAM623 freezes the intention shared by both entry paths.
+        payload["blocks"] = [
+            {
+                "sport": block.sport,
+                "title": block.title,
+                "target": block.target,
+                "actual": {},
+                "sets": [],
+                "intervals": [],
+            }
+            for block in self.future.blocks.all()
+        ]
         body = cast(dict[str, object], first["body"])
         body["session"] = payload
         a, b = self.run_pair(first, self.spec("start"))

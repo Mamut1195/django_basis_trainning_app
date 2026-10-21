@@ -60,9 +60,8 @@ class PlanningUpgradeTests(TransactionTestCase):
             )
             before = (plan.pk, scheduled.pk, execution.pk, block.pk)
         finally:
-            MigrationExecutor(connection).migrate(
-                [("basis_training", "0002_planning_version_history")]
-            )
+            upgrade = MigrationExecutor(connection)
+            upgrade.migrate(upgrade.loader.graph.leaf_nodes())
         from basis.modules.training.adapters.models import (
             Block,
             PlannedSession,

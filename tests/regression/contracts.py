@@ -22,6 +22,7 @@ def required(value: T | None) -> T:
 
 class BlockDocument(TypedDict, total=False):
     id: int
+    source: int | None
     order: int
     sport: str
     title: str
@@ -59,6 +60,7 @@ class SessionDocument(TypedDict, total=False):
     duration_protocol: str
     reported_rpe: Decimal | str | float | int | None
     planned_id: int | None
+    planned: int | None
     notes: str
     blocks: list[BlockDocument]
 

@@ -110,6 +110,14 @@ class Session(Owned):
 
 
 class Block(ValidatedModel):
+    source = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="execution_copies",
+        editable=False,
+    )
     planned = models.ForeignKey(
         PlannedSession, on_delete=models.PROTECT, null=True, blank=True, related_name="blocks"
     )
@@ -139,6 +147,13 @@ class Block(ValidatedModel):
         if bool(self.planned_id) == bool(self.session_id):
             raise ValidationError("Un bloque pertenece a prescripción o ejecución.")
         require_mutable_prescription(self)
+        source, session = self.source, self.session
+        if source is not None and (
+            session is None
+            or source.planned_id != session.planned_id
+            or source.session_id is not None
+        ):
+            raise ValidationError("Origen de bloque incompatible con esta ejecución.")
         self.target = validate_metrics(self.sport, self.target)
         self.actual = validate_metrics(self.sport, self.actual)
         if self.planned_id:
@@ -156,6 +171,47 @@ class Block(ValidatedModel):
 
 
 class StrengthSet(ValidatedModel):
+    source = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="execution_copies",
+        editable=False,
+    )
+    actual_exercise = models.ForeignKey(
+        "basis_catalog.Exercise",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="performed_sets",
+    )
+    actual_load_type = models.CharField(
+        max_length=12,
+        null=True,
+        blank=True,
+        choices=[
+            ("external", "Carga externa"),
+            ("bodyweight", "Peso corporal"),
+            ("assisted", "Asistida"),
+        ],
+    )
+    actual_kind = models.CharField(
+        max_length=12,
+        null=True,
+        blank=True,
+        choices=[("warmup", "Calentamiento"), ("work", "Trabajo"), ("failed", "Fallida")],
+    )
+    actual_tempo = models.CharField(max_length=30, null=True, blank=True)
+    actual_range_of_motion = models.CharField(max_length=80, null=True, blank=True)
+    actual_side = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        choices=[("both", "Bilateral"), ("left", "Izquierda"), ("right", "Derecha")],
+    )
+    actual_group = models.CharField(max_length=80, null=True, blank=True)
+    adaptation_reason = models.CharField(max_length=1000, blank=True)
     block = models.ForeignKey(Block, on_delete=models.PROTECT, related_name="sets")
     exercise = models.ForeignKey("basis_catalog.Exercise", on_delete=models.PROTECT)
     order = models.PositiveIntegerField(default=1)
@@ -239,6 +295,34 @@ class StrengthSet(ValidatedModel):
         ordering = ["order", "pk"]
 
     def clean(self) -> None:
+        from ...domain.execution_updates import validate_adaptation
+        from ..manual_repository import strength_data
+
+        try:
+            validate_adaptation(strength_data(self))
+        except InvalidExecution as error:
+            raise ValidationError(str(error)) from error
+        source = self.source
+        if source is not None and (
+            source.block_id != self.block.source_id or not self.block.session_id
+        ):
+            raise ValidationError("Origen de serie incompatible con este bloque.")
+        if self.block.planned_id and (
+            self.adaptation_reason
+            or any(
+                getattr(self, name) is not None
+                for name in (
+                    "actual_exercise_id",
+                    "actual_load_type",
+                    "actual_kind",
+                    "actual_tempo",
+                    "actual_range_of_motion",
+                    "actual_side",
+                    "actual_group",
+                )
+            )
+        ):
+            raise ValidationError("Una prescripción no contiene adaptaciones realizadas.")
         try:
             validate_repetition_prescription(
                 self.target_reps,
@@ -291,16 +375,30 @@ class StrengthSet(ValidatedModel):
 
     @property
     def external_volume_kg(self) -> Decimal | None:
-        return external_volume(self.load_type, self.actual_kg, self.actual_reps)
+        return external_volume(
+            self.actual_load_type or self.load_type, self.actual_kg, self.actual_reps
+        )
 
     @property
     def estimated_1rm(self) -> Decimal | None:
         return estimated_1rm(
-            self.load_type, self.kind, self.actual_kg, self.actual_reps, self.actual_rpe
+            self.actual_load_type or self.load_type,
+            self.actual_kind or self.kind,
+            self.actual_kg,
+            self.actual_reps,
+            self.actual_rpe,
         )
 
 
 class Interval(ValidatedModel):
+    source = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="execution_copies",
+        editable=False,
+    )
     block = models.ForeignKey(Block, on_delete=models.PROTECT, related_name="intervals")
     order = models.PositiveIntegerField(default=1)
     repetitions = models.PositiveIntegerField(
@@ -330,6 +428,11 @@ class Interval(ValidatedModel):
 
     def clean(self) -> None:
         require_mutable_prescription(self.block)
+        source = self.source
+        if source is not None and (
+            source.block_id != self.block.source_id or not self.block.session_id
+        ):
+            raise ValidationError("Origen de intervalo incompatible con este bloque.")
         try:
             validate_component_sport(self.block.sport, strength=False)
         except InvalidExecution as error:

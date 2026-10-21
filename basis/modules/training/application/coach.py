@@ -31,6 +31,9 @@ class CoachRecentSession:
     duration_protocol: str
     rpe: Decimal | None
     sports: tuple[str, ...]
+    id: str | None = None
+    status: str | None = None
+    planned: int | None = None
 
 
 @dataclass(frozen=True)

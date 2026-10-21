@@ -56,6 +56,8 @@ from .application.progress import (
     ReadTrip,
 )
 from .domain.execution import (
+    AdaptationField,
+    AdaptationPresence,
     BlockData,
     DurationProtocol,
     ExecutionConflict,
@@ -154,6 +156,8 @@ from .domain.trekking import (
 )
 
 __all__ = (
+    "AdaptationField",
+    "AdaptationPresence",
     "ChangeScheduledSession",
     "RestorePlan",
     "ScheduleStatus",

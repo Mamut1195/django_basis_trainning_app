@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Callable, Protocol
 
 from basis.shared.identifiers import (
@@ -18,9 +18,18 @@ from basis.shared.identifiers import (
 )
 from basis.shared.ports import UnitOfWork
 
-from ..domain.execution import IntervalData, Metric, StrengthData, Unavailable
+from ..domain.execution import (
+    AdaptationField,
+    IntervalData,
+    InvalidExecution,
+    Metric,
+    StrengthData,
+    Unavailable,
+)
+from ..domain.execution_updates import reconcile_adaptation
 from ..domain.manual import (
     EmptyPrescription,
+    ManualInvalid,
     ManualSessionData,
     ParentRef,
     ParentState,
@@ -95,6 +104,7 @@ class SaveStrength:
     revision: Revision
     data: StrengthData
     row: StrengthSetId | None = None
+    provided_adaptation: frozenset[AdaptationField] | None = None
 
 
 @dataclass(frozen=True)
@@ -228,15 +238,33 @@ class ManualTraining:
 
     def save_strength(self, command: SaveStrength) -> StrengthSetId:
         with self.uow() as work:
+            data = command.data
             block, parent = self._locked_block(command.owner, command.block, command.revision)
             if command.row is not None:
                 current = self.repository.strength(command.row)
                 if current is None or current.block != block.id:
                     raise Unavailable("Serie no disponible.")
+                if data.id not in (None, command.row) or data.source not in (
+                    None,
+                    current.data.source,
+                ):
+                    raise Unavailable("Serie no disponible.")
+                data = replace(data, id=current.data.id, source=current.data.source)
+                try:
+                    data = reconcile_adaptation(current.data, data, command.provided_adaptation)
+                except InvalidExecution as error:
+                    raise ManualInvalid(str(error)) from error
                 if parent.from_prescription:
-                    require_strength_prescription(current.data, command.data)
-                require_versioned_edit(parent, current.data != command.data)
-            validate_strength(block.sport, parent, command.data)
+                    require_strength_prescription(current.data, data)
+                require_versioned_edit(parent, current.data != data)
+            elif data.id is not None or data.source is not None:
+                raise Unavailable("Serie no disponible.")
+            else:
+                try:
+                    data = reconcile_adaptation(None, data, command.provided_adaptation)
+                except InvalidExecution as error:
+                    raise ManualInvalid(str(error)) from error
+            validate_strength(block.sport, parent, data)
             if command.data.rm_reference is not None:
                 reference = self.references.get(MeasuredRMId(command.data.rm_reference))
                 validate_strength_reference(
@@ -249,7 +277,7 @@ class ManualTraining:
                 )
             result = self.repository.save_strength(
                 block.id,
-                command.data,
+                data,
                 command.row,
                 self.repository.strength_count(block.id) + 1 if command.row is None else None,
             )
@@ -258,18 +286,27 @@ class ManualTraining:
 
     def save_interval(self, command: SaveInterval) -> IntervalId:
         with self.uow() as work:
+            data = command.data
             block, parent = self._locked_block(command.owner, command.block, command.revision)
             if command.row is not None:
                 current = self.repository.interval(command.row)
                 if current is None or current.block != block.id:
                     raise Unavailable("Intervalo no disponible.")
+                if data.id not in (None, command.row) or data.source not in (
+                    None,
+                    current.data.source,
+                ):
+                    raise Unavailable("Intervalo no disponible.")
+                data = replace(data, id=current.data.id, source=current.data.source)
                 if parent.from_prescription:
-                    require_interval_prescription(current.data, command.data)
-                require_versioned_edit(parent, current.data != command.data)
-            validate_interval(block.sport, parent, command.data)
+                    require_interval_prescription(current.data, data)
+                require_versioned_edit(parent, current.data != data)
+            elif data.id is not None or data.source is not None:
+                raise Unavailable("Intervalo no disponible.")
+            validate_interval(block.sport, parent, data)
             result = self.repository.save_interval(
                 block.id,
-                command.data,
+                data,
                 command.row,
                 self.repository.interval_count(block.id) + 1 if command.row is None else None,
             )

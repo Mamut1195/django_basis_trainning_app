@@ -35,7 +35,12 @@ def save_validated(row: models.Model) -> None:
 
 def model_values(row: models.Model, names: tuple[str, ...]) -> dict[str, object]:
     return {
-        name: getattr(row, name + "_id" if name in ("exercise", "rm_reference") else name)
+        name: getattr(
+            row,
+            name + "_id"
+            if name in ("exercise", "actual_exercise", "rm_reference", "source")
+            else name,
+        )
         for name in names
     }
 
@@ -43,6 +48,7 @@ def model_values(row: models.Model, names: tuple[str, ...]) -> dict[str, object]
 def block_state(row: Block) -> BlockData:
     return BlockData(
         id=int(row.pk),
+        source=row.source_id,
         order=row.order,
         sport=row.sport,
         title=row.title,
@@ -109,14 +115,19 @@ class DjangoSessionRepository:
             PlannedSessionId(int(row.pk)),
             owner,
             row.title,
-            tuple(block_state(b) for b in row.blocks.all()),
+            tuple(block_state(b) for b in row.blocks.prefetch_related("sets", "intervals")),
         )
 
     def active(self, owner: AccountId, planned: PlannedSessionId) -> SessionState | None:
         from .locking import intent_executions
 
         prescription = PlannedSession.objects.get(owner_id=owner, pk=planned)
-        row = intent_executions(prescription).filter(status="in_progress").first()
+        row = (
+            intent_executions(prescription)
+            .filter(status="in_progress")
+            .prefetch_related("blocks__sets", "blocks__intervals")
+            .first()
+        )
         return session_state(row) if row is not None else None
 
     def get(
@@ -136,7 +147,7 @@ class DjangoSessionRepository:
             if query.filter(pk=session).exists():
                 lock_execution(session, query.db)
             query = query.select_for_update()
-        row = query.filter(pk=session).first()
+        row = query.filter(pk=session).prefetch_related("blocks__sets", "blocks__intervals").first()
         return session_state(row) if row is not None else None
 
     def check_plan(self, owner: AccountId, planned: PlannedSessionId) -> None:
@@ -148,9 +159,16 @@ class DjangoSessionRepository:
 
     def save(self, state: SessionState) -> SessionState:
         self.lock_owner(state.owner)
-        row = Session.objects.filter(pk=state.id).first()
+        row = (
+            Session.objects.filter(pk=state.id)
+            .prefetch_related("blocks__sets", "blocks__intervals")
+            .first()
+        )
         if row is None:
             row = Session(id=state.id, owner_id=state.owner)
+        elif row.owner_id != state.owner:
+            raise Unavailable("La sesión no está disponible.")
+        existing_blocks = {b.pk: b for b in row.blocks.all()} if not row._state.adding else {}
         row.title = state.title
         row.date = state.date
         row.planned_id = state.planned
@@ -161,37 +179,90 @@ class DjangoSessionRepository:
         row.notes = state.notes
         row.revision = int(state.revision)
         save_validated(row)
-        for old in row.blocks.all():
-            old.sets.all().delete()
-            old.intervals.all().delete()
-        row.blocks.all().delete()
         if not 1 <= len(state.blocks) <= 30:
             raise InvalidExecution("Una sesión necesita entre 1 y 30 bloques.")
         for order, block in enumerate(state.blocks, 1):
-            created = Block.objects.create(
-                session=row,
-                order=order,
-                sport=block.sport,
-                title=block.title,
-                target=encode_metrics(block.target),
-                actual=encode_metrics(block.actual),
-                notes=block.notes,
+            if block.id is not None and block.id not in existing_blocks:
+                raise InvalidExecution("Bloque no disponible en esta sesión.")
+            created = existing_blocks.get(block.id) if block.id is not None else None
+            if created is not None and block_state(created) == block:
+                continue
+            old_sets = {s.pk: s for s in created.sets.all()} if created is not None else {}
+            old_intervals = (
+                {i.pk: i for i in created.intervals.all()} if created is not None else {}
             )
+            if created is None:
+                created = Block(session=row)
+            if created._state.adding:
+                created.order = block.order if block.source is not None else order
+            created.sport, created.title = block.sport, block.title
+            created.source_id = block.source
+            created.target, created.actual = (
+                encode_metrics(block.target),
+                encode_metrics(block.actual),
+            )
+            created.notes = block.notes
+            created.save()
             for index, item in enumerate(block.sets, 1):
-                values = encode_strength(item)
-                values["exercise_id"] = values.pop("exercise")
-                values["rm_reference_id"] = values.pop("rm_reference")
-                StrengthSet.objects.create(block=created, order=index, **values)
+                if item.id is not None and item.id not in old_sets:
+                    raise InvalidExecution("Serie no disponible en este bloque.")
+                instance = old_sets.get(item.id) if item.id is not None else None
+                if (
+                    instance is not None
+                    and strength(
+                        model_values(instance, tuple(f.name for f in fields(StrengthData)))
+                    )
+                    == item
+                ):
+                    continue
+                if instance is None:
+                    instance = StrengthSet(block=created)
+                for key, value in strength_values(item).items():
+                    setattr(instance, key, value)
+                if instance._state.adding:
+                    instance.order = index
+                instance.save()
             for index, segment in enumerate(block.intervals, 1):
-                Interval.objects.create(
-                    block=created,
-                    order=index,
-                    repetitions=segment.repetitions,
-                    target=encode_metrics(segment.target),
-                    actual=encode_metrics(segment.actual),
-                    rest_seconds=segment.rest_seconds,
-                    actual_rest_seconds=segment.actual_rest_seconds,
-                    target_rpe=segment.target_rpe,
-                    actual_rpe=segment.actual_rpe,
+                if segment.id is not None and segment.id not in old_intervals:
+                    raise InvalidExecution("Intervalo no disponible en este bloque.")
+                interval_row = old_intervals.get(segment.id) if segment.id is not None else None
+                if (
+                    interval_row is not None
+                    and interval(
+                        model_values(interval_row, tuple(f.name for f in fields(IntervalData)))
+                    )
+                    == segment
+                ):
+                    continue
+                if interval_row is None:
+                    interval_row = Interval(block=created)
+                if interval_row._state.adding:
+                    interval_row.order = index
+                interval_row.source_id = segment.source
+                interval_row.repetitions = segment.repetitions
+                interval_row.target, interval_row.actual = (
+                    encode_metrics(segment.target),
+                    encode_metrics(segment.actual),
                 )
-        return session_state(row)
+                interval_row.rest_seconds, interval_row.actual_rest_seconds = (
+                    segment.rest_seconds,
+                    segment.actual_rest_seconds,
+                )
+                interval_row.target_rpe, interval_row.actual_rpe = (
+                    segment.target_rpe,
+                    segment.actual_rpe,
+                )
+                interval_row.save()
+        # Reload once with bounded prefetch; the old cache must not hide inserted rows.
+        stored = Session.objects.prefetch_related("blocks__sets", "blocks__intervals").get(
+            pk=row.pk
+        )
+        return session_state(stored)
+
+
+def strength_values(item: StrengthData) -> dict[str, object]:
+    values = encode_strength(item)
+    values.pop("id", None)
+    for name in ("exercise", "actual_exercise", "rm_reference", "source"):
+        values[name + "_id"] = values.pop(name)
+    return values

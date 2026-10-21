@@ -44,6 +44,9 @@ class DjangoTrainingCoachContexts:
                     s.duration_protocol,
                     s.reported_rpe,
                     tuple(sorted({b.sport for b in s.blocks.all()})),
+                    str(s.pk),
+                    s.status,
+                    s.planned_id,
                 )
                 for s in Session.objects.filter(
                     owner_id=owner, date__gte=today - timedelta(days=14)

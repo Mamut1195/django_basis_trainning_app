@@ -217,6 +217,14 @@ class StrengthSetForm(forms.ModelForm[StrengthSet]):
             "target_isometric_seconds": "Isometría objetivo (s)",
             "group": "Superserie / circuito",
             "rm_reference": "RM medido de referencia",
+            "actual_exercise": "Ejercicio realizado (adaptación opcional)",
+            "actual_load_type": "Tipo de carga realizado (adaptación)",
+            "actual_kind": "Tipo de serie realizada (adaptación / fallo)",
+            "actual_tempo": "Tempo realizado (adaptación)",
+            "actual_range_of_motion": "Rango de movimiento realizado (adaptación)",
+            "actual_side": "Lado realizado (adaptación)",
+            "actual_group": "Grupo realizado (adaptación)",
+            "adaptation_reason": "Motivo de adaptación (obligatorio si cambias la ejecución)",
         }
 
     def __init__(
@@ -242,6 +250,9 @@ class StrengthSetForm(forms.ModelForm[StrengthSet]):
                 "isometric_seconds",
             ):
                 self.fields.pop(key)
+            for key in tuple(self.fields):
+                if key.startswith("actual_") or key == "adaptation_reason":
+                    self.fields.pop(key)
 
 
 class IntervalForm(forms.ModelForm[Interval]):

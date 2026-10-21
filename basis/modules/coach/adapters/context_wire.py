@@ -151,6 +151,9 @@ def encode_context(context: CoachContext) -> dict[str, object]:
         },
         "recent_sessions": [
             {
+                "id": s.id,
+                "status": s.status,
+                "planned": s.planned,
                 "date": s.date.isoformat(),
                 "duration_seconds": s.duration_seconds,
                 "duration_protocol": s.duration_protocol,
@@ -165,7 +168,7 @@ def encode_context(context: CoachContext) -> dict[str, object]:
     if context.variables is not None:
         data["variables"] = {s.sport: dict(s.variables) for s in context.variables}
     data["missing_data_policy"] = (
-        "null significa desconocido, nunca cero; no hay datos de sensores ni GPS"
+        "null significa desconocido, nunca cero; completed significa registro cerrado, no cumplimiento completo de objetivos; no hay datos de sensores ni GPS"
     )
     if context.base_plan:
         b = context.base_plan
@@ -249,6 +252,9 @@ def decode_context(value: object) -> CoachContext:
             text(s["duration_protocol"]),
             decimal(s["rpe"]),
             tuple(text(x) for x in rows(s["sports"])),
+            text(s["id"]) if s.get("id") is not None else None,
+            text(s["status"]) if s.get("status") is not None else None,
+            optional_int(s.get("planned")),
         )
         for s in (mapping(raw) for raw in rows(d["recent_sessions"]))
     )

@@ -124,13 +124,17 @@ def save_prescription(parent: PlannedSession, data: tuple[BlockData, ...]) -> No
         for order, strength in enumerate(block.sets, 1):
             values = {
                 field.name + "_id"
-                if field.name in ("exercise", "rm_reference")
+                if field.name in ("exercise", "actual_exercise", "rm_reference")
                 else field.name: getattr(strength, field.name)
                 for field in fields(StrengthData)
+                if field.name not in ("id", "source")
             }
             StrengthSet.objects.create(block=row, order=order, **values)
         for order, interval in enumerate(block.intervals, 1):
-            Interval.objects.create(block=row, order=order, **encode_interval(interval))
+            values = encode_interval(interval)
+            values.pop("id", None)
+            values.pop("source", None)
+            Interval.objects.create(block=row, order=order, **values)
 
 
 class DjangoPlanRepository:

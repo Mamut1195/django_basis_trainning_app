@@ -7,7 +7,6 @@ from unittest.mock import patch
 from uuid import UUID, uuid4
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -31,6 +30,7 @@ from basis.modules.training.public import (
     Change,
     ExecutionConflict,
     FinishSession,
+    InvalidExecution,
     Metric,
     MetricName,
     ReadSession,
@@ -163,7 +163,7 @@ class DjangoExecutionTests(RepositoryContract, TestCase):
     def test_invalid_child_rolls_back_revision_and_all_children(self) -> None:
         stored = self.persist()
         bad = replace(stored.blocks[0], sport="not-a-sport")
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidExecution):
             self.service.record(
                 RecordSession(self.owner, stored.id, stored.revision, SessionChanges((bad,)))
             )

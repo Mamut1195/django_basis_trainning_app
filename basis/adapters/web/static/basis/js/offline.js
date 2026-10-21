@@ -89,13 +89,54 @@
       account: scope,
       session,
       updated: Date.now(),
+      local_version: crypto.randomUUID(),
     });
   }
-  async function queueSession(session) {
-    const rows = (await all("outbox")).filter((row) => row.session.id === session.id);
-    const revision = rows.length
-      ? Math.max(...rows.map((row) => row.session.revision)) + 1
-      : session.revision;
+  const queueOrder = (a, b) =>
+    a.session.revision - b.session.revision ||
+    a.created - b.created ||
+    a.mutation_id.localeCompare(b.mutation_id);
+  const localVersion = (record) => record.local_version || String(record.updated);
+  // Read/decide/write in one transaction: another tab or a response cannot race
+  // a correction into deleting an operation that has already begun sending.
+  async function changeQueue(sessionId, change) {
+    const db = await database();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["sessions", "outbox", "archive"], "readwrite");
+      const stores = Object.fromEntries(
+        ["sessions", "outbox", "archive"].map((name) => [name, transaction.objectStore(name)]),
+      );
+      let result, failure;
+      const request = stores.outbox.getAll();
+      request.onsuccess = () => {
+        const rows = request.result
+          .filter((row) => row.account === scope && row.session.id === sessionId)
+          .sort(queueOrder);
+        const record = stores.sessions.get(scope + ":" + sessionId);
+        record.onsuccess = () => {
+          try {
+            result = change(stores, rows, record.result);
+          } catch (error) {
+            failure = error;
+            transaction.abort();
+          }
+        };
+      };
+      transaction.oncomplete = () => resolve(result);
+      transaction.onerror = () => reject(failure || transaction.error);
+      transaction.onabort = () => reject(failure || transaction.error);
+    });
+  }
+  function replaceUnsent(stores, rows, session, revision, record) {
+    if (rows.length) {
+      stores.archive.put({
+        key: scope + ":" + crypto.randomUUID(),
+        account: scope,
+        reason: "Corrección deliberada de un borrador local o una validación rechazada",
+        operations: rows,
+      });
+      for (const row of rows) stores.outbox.delete(row.mutation_id);
+    }
     const snapshot = structuredClone(session);
     snapshot.revision = revision;
     const mutation = {
@@ -103,25 +144,88 @@
       account: scope,
       session: snapshot,
       created: Date.now(),
+      delivery: "unsent",
     };
-    // One transaction prevents a draft being shown as saved without its outbox entry.
-    const db = await database();
-    await new Promise((resolve, reject) => {
-      const transaction = db.transaction(["sessions", "outbox"], "readwrite");
-      transaction.objectStore("outbox").put(mutation);
-      transaction.objectStore("sessions").put({
-        key: scope + ":" + session.id,
-        account: scope,
-        session: snapshot,
-        updated: Date.now(),
-      });
-      transaction.oncomplete = resolve;
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
+    stores.outbox.put(mutation);
+    stores.sessions.put({
+      ...record,
+      key: scope + ":" + session.id,
+      account: scope,
+      session: snapshot,
+      updated: Date.now(),
+      local_version: mutation.mutation_id,
+    });
+  }
+  async function queueSession(session, baseRecord, completionOnly = false) {
+    await changeQueue(session.id, (stores, rows, record) => {
+      if (completionOnly) {
+        // Closing observes only status, not the measurements in old page HTML.
+        // Select the current draft INSIDE this read/decide/write transaction:
+        // a concurrent save either precedes this read or sees our new version.
+        const current = record?.session || rows.at(-1)?.session || session;
+        if (current.status === "completed") return;
+        session = structuredClone(current);
+        session.status = "completed";
+      } else if (!baseRecord || !record || localVersion(record) !== localVersion(baseRecord))
+        throw new Error(
+          "La copia local cambió en otra pantalla. Tus campos siguen abiertos; revisa la sesión antes de guardar.",
+        );
+      // Legacy entries without delivery are ambiguous, NOT known-unsent. Only a
+      // confirmed validation rejection or our own never-sent suffix is replaceable.
+      let start = rows.length;
+      while (start > 0 && ["unsent", "rejected_validation"].includes(rows[start - 1].delivery))
+        start--;
+      const suffix = rows.slice(start);
+      const revision = suffix.length
+        ? suffix[0].session.revision
+        : rows.length
+          ? rows.at(-1).session.revision + 1
+          : baseRecord && record?.acknowledged_version === localVersion(baseRecord)
+            ? record.session.revision
+            : session.revision;
+      replaceUnsent(stores, suffix, session, revision, record);
     });
     status("Guardado en este dispositivo. Pendiente de sincronización.");
     await renderSessions();
-    if (navigator.onLine) await sync();
+    // Do not hold the editor's submit promise across a network operation: a user
+    // can reopen and deliberately correct the local snapshot while it is in flight.
+    if (navigator.onLine) void sync();
+  }
+  async function repairRejected(sessionId) {
+    return changeQueue(sessionId, (stores, rows, record) => {
+      if (
+        rows.length < 2 ||
+        rows[0].delivery !== "rejected_validation" ||
+        !rows.slice(1).every((row) => row.delivery === "unsent")
+      )
+        return false;
+      // The user already submitted this correction while the preceding request
+      // was in flight. Its 400 is now definitive; that revision was not consumed.
+      replaceUnsent(stores, rows, rows.at(-1).session, rows[0].session.revision, record);
+      return true;
+    });
+  }
+  const validationMessage = (item) =>
+    "Registro sin sincronizar: " +
+    item.validation_error +
+    " Abre la sesión, corrige los campos y guarda de nuevo.";
+  async function acknowledge(item, session) {
+    await changeQueue(item.session.id, (stores, rows, record) => {
+      if (!rows.some((row) => row.mutation_id === item.mutation_id)) return;
+      stores.outbox.delete(item.mutation_id);
+      if (rows.length === 1) {
+        const version = record ? localVersion(record) : item.mutation_id;
+        stores.sessions.put({
+          ...record,
+          key: scope + ":" + session.id,
+          account: scope,
+          session,
+          updated: Date.now(),
+          local_version: version,
+          acknowledged_version: version,
+        });
+      }
+    });
   }
   function showConflict(item, current) {
     conflict = { item, current };
@@ -140,15 +244,26 @@
     syncing = true;
     try {
       const token = await csrf();
-      const rows = (await all("outbox")).sort(
-        (a, b) =>
-          a.session.id.localeCompare(b.session.id) ||
-          a.session.revision - b.session.revision ||
-          a.created - b.created,
-      );
       const blocked = new Set();
-      for (const item of rows) {
-        if (blocked.has(item.session.id)) continue;
+      while (navigator.onLine) {
+        const next = (await all("outbox"))
+          .filter((row) => !blocked.has(row.session.id))
+          .sort((a, b) => a.session.id.localeCompare(b.session.id) || queueOrder(a, b))[0];
+        if (!next) break;
+        if (next.delivery === "rejected_validation") {
+          if (await repairRejected(next.session.id)) continue;
+          status(validationMessage(next));
+          blocked.add(next.session.id);
+          continue;
+        }
+        const item = await changeQueue(next.session.id, (stores, rows) => {
+          const current = rows.find((row) => row.mutation_id === next.mutation_id);
+          if (!current) return null; // Superseded before claim; reread the queue.
+          current.delivery = "attempted";
+          stores.outbox.put(current);
+          return current;
+        });
+        if (!item) continue;
         let response;
         try {
           response = await fetch("/api/sync/", {
@@ -156,7 +271,12 @@
             credentials: "same-origin",
             cache: "no-store",
             headers: { "Content-Type": "application/json", "X-CSRFToken": token },
-            body: JSON.stringify(item),
+            body: JSON.stringify({
+              mutation_id: item.mutation_id,
+              account: item.account,
+              session: item.session,
+              created: item.created,
+            }),
           });
         } catch (_) {
           status("Sin conexión. Los pendientes siguen guardados.");
@@ -168,6 +288,27 @@
           showConflict(item, result.current);
           status("Hay un conflicto pendiente de revisión.");
           continue;
+        }
+        if (
+          response.status === 400 &&
+          response.headers.get("Content-Type")?.includes("application/json")
+        ) {
+          const result = await response.json();
+          if (
+            Array.isArray(result.detail) &&
+            result.detail.every((text) => typeof text === "string") &&
+            result.detail.length
+          ) {
+            item.delivery = "rejected_validation";
+            item.validation_error = result.detail.join(" ");
+            await changeQueue(item.session.id, (stores, rows) => {
+              if (rows.some((row) => row.mutation_id === item.mutation_id)) stores.outbox.put(item);
+            });
+            if (await repairRejected(item.session.id)) continue;
+            status(validationMessage(item));
+            blocked.add(item.session.id);
+            continue;
+          }
         }
         if (!response.ok || !response.headers.get("Content-Type")?.includes("application/json")) {
           status(
@@ -181,9 +322,7 @@
         const result = await response.json();
         if (!result.session || result.session.id !== item.session.id)
           throw new Error("Respuesta de sincronización inválida; se conserva el pendiente.");
-        await write("outbox", item.mutation_id, true);
-        const remaining = (await all("outbox")).filter((row) => row.session.id === item.session.id);
-        if (!remaining.length) await storeSession(result.session);
+        await acknowledge(item, result.session);
       }
       if (!(await pending())) status("Todos los registros están sincronizados.");
       await renderSessions();
@@ -195,7 +334,9 @@
   }
   async function sync() {
     if (navigator.locks) return navigator.locks.request("basis-sync-" + scope, syncUnlocked);
-    return syncUnlocked();
+    status(
+      "Este navegador no permite coordinar el envío entre pantallas. Los registros locales se conservan para exportar.",
+    );
   }
   function element(tag, text, attributes = {}) {
     const node = document.createElement(tag);
@@ -219,7 +360,17 @@
         ),
       );
       const button = element("button", "Abrir sesión", { type: "button" });
-      button.addEventListener("click", () => openEditor(record));
+      button.addEventListener("click", () =>
+        openEditor(record).catch((error) =>
+          status(error.message || "No se pudo abrir la copia local. Los registros se conservan."),
+        ),
+      );
+      const rejected = queued.find(
+        (item) => item.session.id === record.session.id && item.delivery === "rejected_validation",
+      );
+      if (rejected) text.append(element("p", validationMessage(rejected), { role: "alert" }));
+      const count = queued.filter((item) => item.session.id === record.session.id).length;
+      if (count) text.append(element("small", `${count} envío(s) pendiente(s)`));
       row.append(text, button);
       container.append(row);
     }
@@ -253,13 +404,21 @@
     form.append(wrapper);
   }
   async function openEditor(record) {
+    // A list row may predate a save/close in another tab. Review must open the
+    // actual record, not just attach a fresh version to that stale row's data.
+    const current = (await all("sessions")).find((row) => row.key === record.key);
+    if (!current)
+      throw new Error("La copia local ya no está disponible. Revisa las sesiones guardadas.");
+    record = current;
     const container = document.querySelector("#offline-editor-content");
     const section = document.querySelector("#offline-editor");
     if (!container) return;
     section.hidden = false;
     container.replaceChildren();
     const snapshot = structuredClone(record.session);
-    const completed = snapshot.status === "completed";
+    const completed =
+      snapshot.status === "completed" &&
+      !(await all("outbox")).some((item) => item.session.id === snapshot.id);
     container.append(element("h2", snapshot.title));
     const form = element("form", null, { class: "stack" });
     const fields = element("div", null, { class: "form-fields" });
@@ -343,6 +502,58 @@
         ])
           numberInput(setFields, label, row[key], ["blocks", index, "sets", n, key], step, max);
         fieldset.append(setFields);
+        const adaptation = element("details");
+        adaptation.append(
+          element("summary", "Adaptación real opcional · conserva la prescripción"),
+        );
+        const adaptationFields = element("div", null, { class: "form-fields" });
+        numberInput(
+          adaptationFields,
+          "Ejercicio real (ID de catálogo, opcional)",
+          row.actual_exercise,
+          ["blocks", index, "sets", n, "actual_exercise"],
+          "1",
+          2147483647,
+        );
+        for (const [key, label, options] of [
+          ["actual_load_type", "Carga realizada", ["external", "bodyweight", "assisted"]],
+          ["actual_kind", "Serie realizada", ["warmup", "work", "failed"]],
+          ["actual_side", "Lado realizado", ["both", "left", "right"]],
+        ]) {
+          const id = "offline-" + ["blocks", index, "sets", n, key].join("-");
+          const wrapper = element("div", null);
+          wrapper.append(element("label", label, { for: id }));
+          const select = element("select", null, {
+            id,
+            "data-path": JSON.stringify(["blocks", index, "sets", n, key]),
+          });
+          for (const value of ["", ...options]) {
+            const option = element("option", value || "Sin adaptación", { value });
+            option.selected = (row[key] ?? "") === value;
+            select.append(option);
+          }
+          wrapper.append(select);
+          adaptationFields.append(wrapper);
+        }
+        for (const [key, label, max] of [
+          ["actual_tempo", "Tempo realizado", 30],
+          ["actual_range_of_motion", "Rango de movimiento realizado", 80],
+          ["actual_group", "Grupo realizado", 80],
+          ["adaptation_reason", "Motivo de adaptación", 1000],
+        ]) {
+          const wrapper = element("label", label);
+          wrapper.append(
+            element("input", null, {
+              type: "text",
+              value: row[key] ?? "",
+              maxlength: String(max),
+              "data-path": JSON.stringify(["blocks", index, "sets", n, key]),
+            }),
+          );
+          adaptationFields.append(wrapper);
+        }
+        adaptation.append(adaptationFields);
+        fieldset.append(adaptation);
       }
       for (let n = 0; n < block.intervals.length; n++) {
         const interval = block.intervals[n];
@@ -407,15 +618,24 @@
         const key = path.at(-1);
         const value = input.value;
         if (path.includes("actual") && value === "") delete target[key];
-        else target[key] = value === "" ? null : input.dataset.number ? Number(value) : value;
+        else
+          target[key] =
+            value === ""
+              ? key === "adaptation_reason"
+                ? ""
+                : null
+              : input.dataset.number
+                ? Number(value)
+                : value;
       }
       if (event.submitter?.value === "complete") updated.status = "completed";
       try {
-        await queueSession(updated);
+        await queueSession(updated, record);
         section.hidden = true;
       } catch (error) {
         status(
-          "No se pudo guardar en este dispositivo. Mantén esta pantalla abierta y exporta tus datos.",
+          error.message ||
+            "No se pudo guardar en este dispositivo. Mantén esta pantalla abierta y exporta tus datos.",
         );
       }
     });
@@ -445,38 +665,53 @@
     }
     if (event.target.closest("[data-sync-now]")) await sync();
     if (event.target.closest("[data-export-local]")) await exportLocal();
-    if (event.target.closest("[data-complete-session]")) {
+    const complete = event.target.closest("[data-complete-session]");
+    if (complete) {
       const node = document.querySelector("#session-snapshot");
       if (!node) return;
-      const session = JSON.parse(node.textContent);
-      session.status = "completed";
-      await queueSession(session);
-      if (!(await pending())) location.reload();
+      complete.disabled = true;
+      try {
+        await queueSession(JSON.parse(node.textContent), null, true);
+        if (!(await pending())) location.reload();
+      } catch (error) {
+        status(error.message || "No se pudo cerrar el registro. La copia local se conserva.");
+      } finally {
+        complete.disabled = false;
+      }
     }
     const decision = event.target.closest("[data-conflict]")?.dataset.conflict;
     if (decision && conflict) {
       document.querySelector("#sync-conflict").close();
       if (decision === "close") return;
+      if (!navigator.locks) return;
       const { item, current } = conflict;
-      const rows = (await all("outbox")).filter((row) => row.session.id === item.session.id);
-      const latest =
-        (await all("sessions")).find((row) => row.session.id === item.session.id)?.session ||
-        item.session;
-      await write("archive", {
-        key: scope + ":" + crypto.randomUUID(),
-        account: scope,
-        local: latest,
-        remote: current,
-        operations: rows,
-      });
-      for (const row of rows) await write("outbox", row.mutation_id, true);
-      if (decision === "server") await storeSession(current);
-      else {
-        latest.revision = current.revision;
-        await queueSession(latest);
-      }
+      await navigator.locks.request("basis-sync-" + scope, () =>
+        changeQueue(item.session.id, (stores, rows, record) => {
+          // A previous sync may have already resolved this exact dialog.
+          if (!rows.some((row) => row.mutation_id === item.mutation_id)) return;
+          const latest = record?.session || item.session;
+          stores.archive.put({
+            key: scope + ":" + crypto.randomUUID(),
+            account: scope,
+            local: latest,
+            remote: current,
+            operations: rows,
+          });
+          for (const row of rows) stores.outbox.delete(row.mutation_id);
+          if (decision === "server")
+            stores.sessions.put({
+              key: scope + ":" + current.id,
+              account: scope,
+              session: current,
+              updated: Date.now(),
+              local_version: crypto.randomUUID(),
+            });
+          else replaceUnsent(stores, [], latest, current.revision, record);
+        }),
+      );
       conflict = null;
       await renderSessions();
+      if (navigator.onLine) void sync();
     }
   });
   document.addEventListener("submit", async (event) => {

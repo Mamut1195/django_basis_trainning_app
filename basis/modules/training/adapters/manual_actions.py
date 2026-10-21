@@ -1,6 +1,6 @@
 """Form input conversion and framework error translation for manual cases."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import TypeVar, cast
 from uuid import UUID
 
@@ -26,7 +26,7 @@ from ..application.manual import (
     SaveInterval,
     SaveStrength,
 )
-from ..domain.execution import DurationProtocol, Unavailable
+from ..domain.execution import AdaptationField, DurationProtocol, Unavailable
 from ..domain.manual import (
     FormPolicy,
     ManualConflict,
@@ -127,13 +127,24 @@ def save_metrics(owner: int, block: Block, revision: object, data: dict[str, obj
     translated(owner, lambda: manual_training().save_metrics(command))
 
 
-def save_strength(owner: int, row: StrengthSet, revision: object, *, creating: bool) -> None:
+def save_strength(
+    owner: int,
+    row: StrengthSet,
+    revision: object,
+    *,
+    creating: bool,
+    provided_fields: Iterable[str] | None = None,
+) -> None:
+    present = None if provided_fields is None else frozenset(provided_fields)
     command = SaveStrength(
         AccountId(owner),
         BlockId(row.block_id),
         expected_revision(revision),
         strength_data(row),
         None if creating else StrengthSetId(row.pk),
+        None
+        if present is None
+        else frozenset(field for field in AdaptationField if field.value in present),
     )
     translated(owner, lambda: manual_training().save_strength(command))
 
