@@ -15,6 +15,7 @@ from basis.modules.training.public import (
     CreatePlan,
     InvalidPlanning,
     PlanDefinition,
+    PlanningConflict,
     PlanningUnavailable,
     RescheduleSession,
     RevisePlan,
@@ -45,12 +46,16 @@ def build_proposal(
         raise ValidationError(str(error)) from error
 
 
-def revise(owner: int, plan: int) -> TrainingPlan:
+def revise(owner: int, plan: int, reason: str = "") -> TrainingPlan:
     try:
-        result = planning().revise(RevisePlan(AccountId(owner), PlanId(plan)))
+        result = planning().revise(RevisePlan(AccountId(owner), PlanId(plan), reason))
         return TrainingPlan.objects.get(pk=result.id)
     except PlanningUnavailable as error:
         raise TrainingPlan.DoesNotExist from error
+    except PlanningConflict:
+        from basis.adapters.web.framework import Conflict
+
+        raise Conflict(None) from None
     except InvalidPlanning as error:
         raise ValidationError(str(error)) from error
 
@@ -102,11 +107,25 @@ def save_scheduled(owner: int, row: PlannedSession) -> int:
         raise ValidationError(str(error)) from error
 
 
-def reschedule(owner: int, session: int, date: date, revision: int) -> None:
+def reschedule(
+    owner: int, session: int, date: date, revision: int, reason: str = "", cycle: int | None = None
+) -> int:
     try:
-        planning().reschedule(
-            RescheduleSession(AccountId(owner), PlannedSessionId(session), date, Revision(revision))
+        result = planning().reschedule(
+            RescheduleSession(
+                AccountId(owner),
+                PlannedSessionId(session),
+                date,
+                Revision(revision),
+                reason,
+                CycleId(cycle) if cycle else None,
+            )
         )
+        return result.id
+    except PlanningConflict:
+        from basis.adapters.web.framework import Conflict
+
+        raise Conflict(None) from None
     except InvalidPlanning as error:
         raise ValidationError(str(error)) from error
 

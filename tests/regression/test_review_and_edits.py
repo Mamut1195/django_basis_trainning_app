@@ -96,7 +96,7 @@ class ReviewAndEditTests(TestCase):
         item = start_session(self.owner, required(plan.sessions.first()))
         item.status = "completed"
         item.save()
-        new = revise_plan(self.owner, plan)
+        new = revise_plan(self.owner, plan, "Revisar prescripción")
         self.assertEqual(new.sessions.count(), 0)
         report = progress_report(self.owner)
         self.assertEqual((report["scheduled_past"], report["completed_scheduled"]), (1, 1))

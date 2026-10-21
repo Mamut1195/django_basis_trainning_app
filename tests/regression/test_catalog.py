@@ -262,7 +262,7 @@ class CatalogTests(TestCase):
         historical = start_session(self.owner, first)
         historical.status = "completed"
         historical.save(update_fields=["status"])
-        revised = revise_plan(self.owner, original)
+        revised = revise_plan(self.owner, original, "Sustituir variante de equipo")
         self.assertEqual(revised.previous_id, original.pk)
         self.assertEqual(revised.lineage, original.lineage)
         self.assertEqual(revised.version, original.version + 1)
@@ -272,7 +272,7 @@ class CatalogTests(TestCase):
             block__planned__date=required(new_row.block.planned).date,
         )
         payload = {
-            "revision": 1,
+            "revision": required(new_row.block.planned).revision,
             "exercise": self.variant.pk,
             "kind": "work",
             "load_type": "external",

@@ -80,6 +80,7 @@ class MemoryPlans:
         self.rows: dict[PlanId, PlanSnapshot] = {}
         self.goal_owners: dict[GoalId, AccountId] = {GoalId(1): OWNER}
         self.schedules: dict[PlannedSessionId, ScheduledState] = {}
+        self.changes: dict[PlanId, tuple[str, str, date, PlanId | None]] = {}
 
     def goal_owner(self, goal: GoalId) -> AccountId | None:
         return self.goal_owners.get(goal)
@@ -104,16 +105,33 @@ class MemoryPlans:
         schedules: list[ScheduledDefinition] = []
         for item in data.sessions:
             sid = PlannedSessionId(len(self.schedules) + 1)
-            item = replace(item, source_id=sid)
+            item = replace(
+                item,
+                source_id=sid,
+                origin_id=(item.origin_id or item.source_id) if previous else None,
+            )
             cycle = next(c for c in data.cycles if c.key == item.cycle_key)
             self.schedules[sid] = ScheduledState(sid, owner, id, Revision(1), item, cycle, False)
             schedules.append(item)
         if previous:
             self.rows[previous.id] = replace(self.rows[previous.id], has_successor=True)
+            for key, scheduled in self.schedules.items():
+                if scheduled.plan == previous.id:
+                    self.schedules[key] = replace(scheduled, has_successor=True)
         self.rows[id] = PlanSnapshot(
             header, replace(data, sessions=tuple(schedules)), frozenset(), False
         )
         return header
+
+    def annotate_change(
+        self,
+        plan: PlanHeader,
+        reason: str,
+        kind: str,
+        day: date,
+        restored_from: PlanId | None = None,
+    ) -> None:
+        self.changes[plan.id] = reason, kind, day, restored_from
 
     def save_goal(self, owner: AccountId, data: GoalData) -> GoalId:
         raise NotImplementedError
@@ -192,7 +210,7 @@ class Clock:
         return TODAY
 
     def now(self) -> datetime:
-        return datetime(2026, 10, 19, tzinfo=timezone.utc)
+        return datetime(2026, 10, 19, 17, tzinfo=timezone.utc)
 
 
 class Authorization:
@@ -220,7 +238,13 @@ class PlanningTests(PlanningContract, TestCase):
     def test_stale_executed_and_foreign_rescheduling_never_changes_revision(self) -> None:
         plan = self.service.create(CreatePlan(self.owner, self.definition))
         current = self.repository.calendar(self.owner, TODAY, TODAY)[0]
-        command = RescheduleSession(self.owner, current.id, TODAY + timedelta(days=1), Revision(0))
+        command = RescheduleSession(
+            self.owner,
+            current.id,
+            TODAY + timedelta(days=1),
+            Revision(0),
+            "Cambio de disponibilidad",
+        )
         with self.assertRaises(InvalidPlanning):
             self.service.reschedule(command)
         self.mark_executed(current.id)
@@ -234,6 +258,39 @@ class PlanningTests(PlanningContract, TestCase):
         self.authorization.allowed = False
         with self.assertRaises(PermissionError):
             self.service.revise(RevisePlan(self.owner, PlanId(999)))
+
+    def test_move_requires_reason_and_creates_a_linked_version_not_an_overwrite(self) -> None:
+        original = self.service.create(CreatePlan(self.owner, self.definition))
+        current = next(
+            s for s in self.repository.schedules.values() if s.definition.title == "future"
+        )
+        with self.assertRaises(InvalidPlanning):
+            self.service.reschedule(
+                RescheduleSession(self.owner, current.id, TODAY, current.revision)
+            )
+        changed = self.service.reschedule(
+            RescheduleSession(self.owner, current.id, TODAY, current.revision, "Cambio concreto")
+        )
+        self.assertEqual(self.repository.rows[changed.plan].header.previous, original.id)
+        self.assertEqual(self.repository.schedules[current.id].definition, current.definition)
+        self.assertEqual(changed.definition.origin_id, current.id)
+        self.assertEqual(self.repository.changes[changed.plan][:2], ("Cambio concreto", "move"))
+
+    def test_restore_appends_version_and_rejects_a_foreign_lineage(self) -> None:
+        from basis.modules.training.public import RestorePlan
+
+        original = self.service.create(CreatePlan(self.owner, self.definition))
+        revised = self.service.revise(RevisePlan(self.owner, original.id, "Revisar"))
+        restored = self.service.restore(
+            RestorePlan(self.owner, revised.id, original.id, "Restaurar intención")
+        )
+        self.assertEqual((restored.previous, restored.version), (revised.id, 3))
+        self.assertEqual(self.repository.changes[restored.id][3], original.id)
+        independent = self.service.create(CreatePlan(self.owner, self.definition))
+        with self.assertRaises(InvalidPlanning):
+            self.service.restore(
+                RestorePlan(self.owner, restored.id, independent.id, "Ajeno al linaje")
+            )
 
 
 class PlanningPolicyTests(TestCase):
@@ -348,7 +405,11 @@ class PlanningIndependentValidationTests(TestCase):
     def test_reschedule_policy_and_revision_precede_permissive_writer(self) -> None:
         current = next(iter(self.repository.schedules.values()))
         command = RescheduleSession(
-            OWNER, current.id, self.data.end_date + timedelta(days=1), current.revision
+            OWNER,
+            current.id,
+            self.data.end_date + timedelta(days=1),
+            current.revision,
+            "Fuera del micro",
         )
         with self.assertRaises(InvalidPlanning):
             self.service.reschedule(command)
@@ -360,8 +421,9 @@ class PlanningIndependentValidationTests(TestCase):
         with self.assertRaises(PermissionError):
             self.service.reschedule(replace(command, revision=Revision(0)))
         self.authorization.allowed = True
-        self.service.reschedule(replace(command, date=current.definition.date))
-        self.assertEqual(self.repository.writes, ["reschedule"])
+        changed = self.service.reschedule(replace(command, date=current.definition.date))
+        self.assertNotEqual(changed.id, current.id)
+        self.assertEqual(self.repository.schedules[current.id].definition, current.definition)
 
     def test_replaced_plan_rejects_cycle_and_schedule_before_permissive_writer(self) -> None:
         self.repository.cycle_read = replace(self.repository.cycle_read, has_successor=True)

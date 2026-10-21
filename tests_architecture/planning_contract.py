@@ -46,7 +46,7 @@ class PlanningContract:
         executed = before.definition.sessions[0].source_id
         assert executed is not None
         self.mark_executed(executed)
-        revised = self.service.revise(RevisePlan(self.owner, original.id))
+        revised = self.service.revise(RevisePlan(self.owner, original.id, "Revisión semanal"))
         after = self.repository.snapshot(self.owner, original.id, lock=False)
         current = self.repository.snapshot(self.owner, revised.id, lock=False)
         assert revised.previous == original.id and revised.lineage == original.lineage
@@ -70,6 +70,7 @@ class PlanningContract:
                     scheduled.id,
                     self.definition.end_date + timedelta(days=1),
                     scheduled.revision,
+                    "Cambio fuera del ciclo",
                 )
             )
         except InvalidPlanning:

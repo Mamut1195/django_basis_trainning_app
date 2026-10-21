@@ -117,7 +117,7 @@ class CycleForm(forms.ModelForm[Cycle]):
 class PlannedSessionForm(OwnerForm[PlannedSession]):
     class Meta:
         model = PlannedSession
-        exclude = ["owner", "revision"]
+        fields = ["plan", "cycle", "title", "date", "notes"]
         labels = {
             "title": "Nombre de sesión",
             "date": "Fecha",
@@ -305,7 +305,60 @@ class TrekStageForm(forms.ModelForm[TrekStage]):
 
 
 class RescheduleForm(forms.Form):
+    cycle = forms.ModelChoiceField(
+        label="Microciclo destino (opcional)", queryset=Cycle.objects.none(), required=False
+    )
     date = forms.DateField(
         label="Nueva fecha", widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"})
     )
     revision = forms.IntegerField(widget=forms.HiddenInput)
+    reason = forms.CharField(
+        label="Motivo del cambio", max_length=1000, widget=forms.Textarea(attrs={"rows": 3})
+    )
+
+    def __init__(
+        self,
+        data: Mapping[str, object] | None = None,
+        *,
+        plan: TrainingPlan,
+        initial: Mapping[str, object] | None = None,
+    ) -> None:
+        super().__init__(data=data, initial=dict(initial) if initial else None)
+        cast(forms.ModelChoiceField[Cycle], self.fields["cycle"]).queryset = plan.cycles.filter(
+            kind="micro"
+        )
+
+
+class PlanChangeForm(forms.Form):
+    reason = forms.CharField(
+        label="Motivo del cambio", max_length=1000, widget=forms.Textarea(attrs={"rows": 3})
+    )
+
+
+class ScheduledChangeForm(PlanChangeForm):
+    revision = forms.IntegerField(widget=forms.HiddenInput)
+    action = forms.ChoiceField(
+        label="Cambio",
+        choices=[
+            ("cancelled", "Cancelar"),
+            ("skipped", "Marcar omitida"),
+            ("replace", "Sustituir con otra prescripción"),
+        ],
+    )
+    replacement = forms.ModelChoiceField(
+        label="Prescripción de referencia", queryset=PlannedSession.objects.none(), required=False
+    )
+
+    def __init__(self, *args: object, owner: int, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+        self.fields["replacement"].queryset = PlannedSession.objects.filter(owner_id=owner)  # type: ignore[attr-defined]
+
+    def clean(self) -> dict[str, object]:
+        data = super().clean() or {}
+        if data.get("action") == "replace" and not data.get("replacement"):
+            self.add_error("replacement", "Elige la prescripción de referencia.")
+        if data.get("action") in {"cancelled", "skipped"} and data.get("replacement") is not None:
+            self.add_error(
+                "replacement", "Cancelar u omitir no admite una prescripción de sustitución."
+            )
+        return data

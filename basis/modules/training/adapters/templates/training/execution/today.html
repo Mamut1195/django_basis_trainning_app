@@ -23,10 +23,10 @@
         </div>
       </section>
       <c-basis.card title="Tu agenda de hoy">
-        {% for item in scheduled %}
+        {% for item, state in scheduled %}
           <div class="card-line row">
             <div>
-              <span class="pill">Programada</span>
+              <span class="pill">{{ state }}</span>
               <h3>{{ item.title }}</h3>
               <small>{{ item.plan.title }}</small>
             </div>

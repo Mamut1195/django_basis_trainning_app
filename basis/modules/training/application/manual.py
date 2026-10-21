@@ -29,6 +29,7 @@ from ..domain.manual import (
     require_interval_prescription,
     require_parent,
     require_strength_prescription,
+    require_versioned_edit,
     validate_heading,
     validate_interval,
     validate_session,
@@ -47,6 +48,7 @@ class BlockContext:
     id: BlockId
     parent: ParentRef
     sport: str
+    target: tuple[Metric, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -105,7 +107,9 @@ class SaveInterval:
 
 
 class ManualRepository(Protocol):
-    def parent(self, ref: ParentRef, *, lock: bool) -> ParentState | None: ...
+    def parent(
+        self, ref: ParentRef, *, lock: bool, owner: AccountId | None = None
+    ) -> ParentState | None: ...
     def block(self, id: BlockId) -> BlockContext | None: ...
     def strength(self, id: StrengthSetId) -> StrengthContext | None: ...
     def interval(self, id: IntervalId) -> IntervalContext | None: ...
@@ -173,7 +177,7 @@ class ManualTraining:
 
     def _lock(self, owner: AccountId, ref: ParentRef, expected: Revision) -> ParentState:
         self.authorization.require(owner)
-        current = self.repository.parent(ref, lock=True)
+        current = self.repository.parent(ref, lock=True, owner=owner)
         if current is None:
             raise Unavailable("La sesión no está disponible.")
         revision = next_revision(current, owner, expected)
@@ -186,6 +190,18 @@ class ManualTraining:
             raise Unavailable("Bloque no disponible.")
         self.inspect(owner, block.parent)
         return block
+
+    def _locked_block(
+        self, owner: AccountId, id: BlockId, expected: Revision
+    ) -> tuple[BlockContext, ParentState]:
+        # The pre-lock context locates the parent only; its targets/eligibility
+        # are not authority. Even a guessed next revision must use a fresh read.
+        locator = self._block(owner, id)
+        parent = self._lock(owner, locator.parent, expected)
+        block = self.repository.block(id)
+        if block is None or block.parent != locator.parent:
+            raise Unavailable("El bloque cambió. Recarga la sesión.")
+        return block, parent
 
     def add_block(self, command: AddBlock) -> BlockId:
         with self.uow() as work:
@@ -202,9 +218,9 @@ class ManualTraining:
 
     def save_metrics(self, command: SaveBlockMetrics) -> None:
         with self.uow() as work:
-            block = self._block(command.owner, command.block)
-            parent = self._lock(command.owner, block.parent, command.revision)
+            block, parent = self._locked_block(command.owner, command.block, command.revision)
             metrics = validate_sport_metrics(block.sport, command.metrics)
+            require_versioned_edit(parent, bool(block.target) and metrics != block.target)
             self.repository.save_metrics(
                 block.id, metrics, actual=not isinstance(parent.ref, PlannedParent)
             )
@@ -212,14 +228,14 @@ class ManualTraining:
 
     def save_strength(self, command: SaveStrength) -> StrengthSetId:
         with self.uow() as work:
-            block = self._block(command.owner, command.block)
-            parent = self._lock(command.owner, block.parent, command.revision)
+            block, parent = self._locked_block(command.owner, command.block, command.revision)
             if command.row is not None:
                 current = self.repository.strength(command.row)
                 if current is None or current.block != block.id:
                     raise Unavailable("Serie no disponible.")
                 if parent.from_prescription:
                     require_strength_prescription(current.data, command.data)
+                require_versioned_edit(parent, current.data != command.data)
             validate_strength(block.sport, parent, command.data)
             if command.data.rm_reference is not None:
                 reference = self.references.get(MeasuredRMId(command.data.rm_reference))
@@ -242,14 +258,14 @@ class ManualTraining:
 
     def save_interval(self, command: SaveInterval) -> IntervalId:
         with self.uow() as work:
-            block = self._block(command.owner, command.block)
-            parent = self._lock(command.owner, block.parent, command.revision)
+            block, parent = self._locked_block(command.owner, command.block, command.revision)
             if command.row is not None:
                 current = self.repository.interval(command.row)
                 if current is None or current.block != block.id:
                     raise Unavailable("Intervalo no disponible.")
                 if parent.from_prescription:
                     require_interval_prescription(current.data, command.data)
+                require_versioned_edit(parent, current.data != command.data)
             validate_interval(block.sport, parent, command.data)
             result = self.repository.save_interval(
                 block.id,

@@ -16,7 +16,7 @@ from ..domain.execution import IntervalData, Metric, StrengthData
 from ..domain.manual import ManualSessionData, ParentRef, ParentState, PlannedParent, SessionParent
 from .django import model_values
 from .models import Block, Interval, PlannedSession, Session, StrengthSet, TrainingPlan
-from .wire import encode_metrics, encode_strength, interval, strength
+from .wire import encode_metrics, encode_strength, interval, metrics, strength
 
 
 def strength_data(row: StrengthSet) -> StrengthData:
@@ -44,10 +44,18 @@ def block_parent(row: Block) -> ParentRef:
 
 
 class DjangoManualRepository:
-    def parent(self, ref: ParentRef, *, lock: bool) -> ParentState | None:
+    def parent(
+        self, ref: ParentRef, *, lock: bool, owner: AccountId | None = None
+    ) -> ParentState | None:
+        from .locking import intent_executions, lock_execution, lock_scheduled
+
         if isinstance(ref, SessionParent):
             sessions = Session.objects.all()
+            if owner is not None:
+                sessions = sessions.filter(owner_id=owner)
             if lock:
+                if sessions.filter(pk=ref.id).exists():
+                    lock_execution(ref.id, sessions.db)
                 sessions = sessions.select_for_update()
             session = sessions.filter(pk=ref.id).first()
             if session is None:
@@ -61,7 +69,11 @@ class DjangoManualRepository:
                 from_prescription=session.planned_id is not None,
             )
         planned_rows = PlannedSession.objects.all()
+        if owner is not None:
+            planned_rows = planned_rows.filter(owner_id=owner)
         if lock:
+            if planned_rows.filter(pk=ref.id).exists():
+                lock_scheduled(ref.id, planned_rows.db)
             planned_rows = planned_rows.select_for_update()
         planned = planned_rows.filter(pk=ref.id).first()
         if planned is None:
@@ -71,13 +83,15 @@ class DjangoManualRepository:
             AccountId(planned.owner_id),
             planned.date,
             Revision(planned.revision),
-            frozen=planned.executions.exists()
+            frozen=planned.status != "scheduled"
+            or intent_executions(planned).exists()
             or TrainingPlan.objects.filter(previous_id=planned.plan_id).exists(),
+            versioned_intent=planned.origin_id is not None and bool(planned.plan.change_reason),
         )
 
     def block(self, id: BlockId) -> BlockContext | None:
         row = Block.objects.select_related("session", "planned").filter(pk=id).first()
-        return BlockContext(id, block_parent(row), row.sport) if row else None
+        return BlockContext(id, block_parent(row), row.sport, metrics(row.target)) if row else None
 
     def strength(self, id: StrengthSetId) -> StrengthContext | None:
         row = StrengthSet.objects.filter(pk=id).first()
@@ -95,6 +109,9 @@ class DjangoManualRepository:
         )
 
     def create_session(self, id: SessionId, owner: AccountId, data: ManualSessionData) -> None:
+        from basis.adapters.django.account_locks import lock_account
+
+        lock_account(owner, Session.objects.db)
         Session.objects.create(
             id=id,
             owner_id=owner,

@@ -3,16 +3,28 @@
   <c-basis.page-heading :title="scheduled.title"
                         subtitle="{{ scheduled.date|date:'l, j M Y' }} · {{ scheduled.plan.title }}" />
   <div class="actions">
-    <form method="post" action="{% url 'scheduled-start' scheduled.pk %}">
-      {% csrf_token %}
-      <c-ui.button type="submit" variant="primary">
-        Empezar sesión
+    <span class="pill">{{ state }}</span>
+    {% if editable %}
+      <form method="post" action="{% url 'scheduled-start' scheduled.pk %}">
+        {% csrf_token %}
+        <c-ui.button type="submit" variant="primary">
+          Empezar sesión
+        </c-ui.button>
+      </form>
+      <c-ui.button href="{% url 'block-new' 'planned' scheduled.pk %}">
+        Añadir bloque
       </c-ui.button>
-    </form>
-    <c-ui.button href="{% url 'block-new' 'planned' scheduled.pk %}">
-      Añadir bloque
-    </c-ui.button>
-    <a href="{% url 'scheduled-reschedule' scheduled.pk %}">Reprogramar</a>
+      <a href="{% url 'scheduled-reschedule' scheduled.pk %}">Reprogramar</a>
+      <a href="{% url 'scheduled-change' scheduled.pk %}">Cancelar, omitir o sustituir</a>
+      <a href="{% url 'plan-revise' scheduled.plan_id %}">Crear versión para editar prescripción</a>
+    {% endif %}
+    {% for execution in executions %}
+      <a href="{% url 'session-detail' execution.pk %}">{{ execution.get_status_display }} · Consultar ejecución</a>
+    {% endfor %}
   </div>
-  {% include 'training/execution/_blocks.html' with editable=True %}
+  {% if scheduled.supersedes_id %}
+    <p>Motivo: {{ scheduled.plan.change_reason }}</p>
+    <a href="{% url 'scheduled-detail' scheduled.supersedes_id %}">Consultar prescripción original</a>
+  {% endif %}
+  {% include 'training/execution/_blocks.html' %}
 {% endblock %}

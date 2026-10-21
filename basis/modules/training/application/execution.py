@@ -1,7 +1,7 @@
 """Execution use cases; synchronization receipt policy stays in its adapter."""
 
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Callable, Protocol
 
@@ -73,7 +73,9 @@ class SessionRepository(Protocol):
 
     def prescription(self, owner: AccountId, planned: PlannedSessionId) -> Prescription: ...
     def active(self, owner: AccountId, planned: PlannedSessionId) -> SessionState | None: ...
-    def get(self, session: SessionId, *, lock: bool) -> SessionState | None: ...
+    def get(
+        self, session: SessionId, *, lock: bool, owner: AccountId | None = None
+    ) -> SessionState | None: ...
     def save(self, state: SessionState) -> SessionState: ...
     def check_plan(self, owner: AccountId, planned: PlannedSessionId) -> None: ...
 
@@ -94,15 +96,21 @@ class Training:
         authorization: WriteAuthorization,
         clock: Clock,
         ids: SessionIds,
+        local_date: Callable[[AccountId, datetime], date] | None = None,
     ) -> None:
         self.repository = repository
         self.uow = uow
         self.authorization = authorization
         self.clock = clock
         self.ids = ids
+        self.local_date = local_date
+
+    def today(self, owner: AccountId) -> date:
+        return self.local_date(owner, self.clock.now()) if self.local_date else self.clock.today()
 
     def start(self, command: StartSession) -> SessionState:
         with self.uow() as work:
+            self.repository.lock_owner(command.owner)
             self.authorization.require(command.owner)
             prescribed = self.repository.prescription(command.owner, command.planned)
             existing = self.repository.active(command.owner, command.planned)
@@ -110,13 +118,13 @@ class Training:
                 work.commit()
                 return existing
             result = self.repository.save(
-                start_execution(prescribed, self.ids.new(), self.clock.today())
+                start_execution(prescribed, self.ids.new(), self.today(command.owner))
             )
             work.commit()
             return result
 
     def read(self, command: ReadSession) -> SessionState:
-        current = self.repository.get(command.session, lock=False)
+        current = self.repository.get(command.session, lock=False, owner=command.owner)
         if current is None or current.owner != command.owner:
             raise Unavailable("La sesión no está disponible.")
         return current
@@ -132,20 +140,22 @@ class Training:
         with self.uow() as work:
             self.repository.lock_owner(command.owner)
             self.authorization.require(command.owner)
-            current = self.repository.get(command.session, lock=True)
+            current = self.repository.get(command.session, lock=True, owner=command.owner)
             if current is None:
                 if command.revision != 0:
                     raise InvalidExecution("Una sesión nueva empieza en revisión cero.")
-                current = SessionState(command.session, command.owner, self.clock.today())
+                current = SessionState(command.session, command.owner, self.today(command.owner))
                 revision = Revision(1)
             else:
                 revision = require_editable(current, command.owner, command.revision)
             changes = source()
+            if current.planned is not None and changes.planned not in (None, current.planned):
+                raise InvalidExecution("La ejecución conserva su prescripción original.")
             if not 1 <= len(changes.blocks) <= 30:
                 raise InvalidExecution("Una sesión necesita entre 1 y 30 bloques.")
             if any(len(b.sets) > 100 or len(b.intervals) > 100 for b in changes.blocks):
                 raise InvalidExecution("Demasiadas series o intervalos.")
-            if changes.planned is not None:
+            if changes.planned is not None and changes.planned != current.planned:
                 self.repository.check_plan(command.owner, changes.planned)
             candidate = replace(
                 current,

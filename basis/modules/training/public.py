@@ -34,10 +34,12 @@ from .application.manual import (
 )
 from .application.planning import (
     AddCycle,
+    ChangeScheduledSession,
     CreatePlan,
     CycleCreationContext,
     Planning,
     RescheduleSession,
+    RestorePlan,
     RevisePlan,
     SaveGoal,
     ScheduleCreationContext,
@@ -88,10 +90,12 @@ from .domain.planning import (
     InvalidPlanning,
     PlanDefinition,
     PlanHeader,
+    PlanningConflict,
     PlanningUnavailable,
     PlanSnapshot,
     ScheduledDefinition,
     ScheduledState,
+    ScheduleStatus,
     require_current_plan,
     require_plan_ownership,
     require_reschedulable,
@@ -150,6 +154,10 @@ from .domain.trekking import (
 )
 
 __all__ = (
+    "ChangeScheduledSession",
+    "RestorePlan",
+    "ScheduleStatus",
+    "PlanningConflict",
     "require_plan_ownership",
     "require_current_plan",
     "ManualSessionData",

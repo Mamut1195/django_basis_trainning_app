@@ -88,7 +88,11 @@ class DjangoCoachPlanning:
     def create(
         self, owner: AccountId, definition: PlanDefinition, previous: PlanId | None
     ) -> PlanId:
-        return self.planning.create(CreatePlan(owner, definition, previous)).id
+        return self.planning.create(
+            CreatePlan(
+                owner, definition, previous, "Aceptación explícita de propuesta" if previous else ""
+            )
+        ).id
 
     def has_successor(self, owner: AccountId, previous: PlanId) -> bool:
         return TrainingPlan.objects.filter(owner_id=owner, previous_id=previous).exists()

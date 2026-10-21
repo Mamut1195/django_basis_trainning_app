@@ -271,7 +271,7 @@ class CoachEdgeTests(TestCase):
         assert base is not None
         job = enqueue(self.owner, "plan", "Plan", uuid.uuid4(), base.pk)
         row = PlanProposal.objects.create(owner=self.owner, job=job, content=source, base_plan=base)
-        revise(self.owner.pk, base.pk)
+        revise(self.owner.pk, base.pk, "Revisión que sustituye la base de la propuesta")
         edited = copy.deepcopy(source)
         edited["title"] = "Must rollback"
         with self.assertRaises(ValidationError):

@@ -120,7 +120,7 @@ class DjangoPlanningTests(PlanningContract, TestCase):
             ),
         )
         original = self.service.create(CreatePlan(self.owner, data))
-        new = self.service.revise(RevisePlan(self.owner, original.id))
+        new = self.service.revise(RevisePlan(self.owner, original.id, "Revisar prescripción"))
         first = StrengthSet.objects.get(block__planned__plan_id=original.id)
         cloned = StrengthSet.objects.get(block__planned__plan_id=new.id)
         assert first.pk != cloned.pk
@@ -245,17 +245,34 @@ class DjangoPlanningTests(PlanningContract, TestCase):
         scheduled = PlannedSession.objects.get(plan=plan)
         path = f"/scheduled/{scheduled.pk}/reschedule/"
         response = self.client.post(
-            path, {"date": (day + timedelta(days=1)).isoformat(), "revision": 1}
+            path,
+            {
+                "date": (day + timedelta(days=1)).isoformat(),
+                "revision": 1,
+                "reason": "Disponibilidad",
+            },
         )
         assert response.status_code == 302
-        scheduled.refresh_from_db()
+        original_id = scheduled.pk
+        scheduled = PlannedSession.objects.get(
+            pk=int(response["Location"].rstrip("/").split("/")[-1])
+        )
         assert scheduled.revision == 2
-        response = self.client.post(path, {"date": day.isoformat(), "revision": 1})
-        assert response.status_code == 200
+        assert PlannedSession.objects.get(pk=original_id).date == day
+        path = f"/scheduled/{scheduled.pk}/reschedule/"
+        response = self.client.post(
+            path, {"date": day.isoformat(), "revision": 1, "reason": "Obsoleto"}
+        )
+        assert response.status_code == 409
         scheduled.refresh_from_db()
         assert scheduled.revision == 2 and scheduled.date == day + timedelta(days=1)
         response = self.client.post(
-            path, {"date": (day + timedelta(days=3)).isoformat(), "revision": 2}
+            path,
+            {
+                "date": (day + timedelta(days=3)).isoformat(),
+                "revision": 2,
+                "reason": "Fuera del ciclo",
+            },
         )
         assert response.status_code == 200
         scheduled.refresh_from_db()
