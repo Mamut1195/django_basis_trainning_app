@@ -5,6 +5,7 @@ x-app: &app
     DJANGO_DEBUG: "0"
     DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set a unique secret in the process environment}
     DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    DJANGO_HEALTH_HOST: ${DJANGO_HEALTH_HOST:-localhost}
     PUBLIC_URL: ${PUBLIC_URL:-https://localhost}
     TRUST_PROXY: ${TRUST_PROXY:-0}
     CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://localhost}
@@ -19,6 +20,7 @@ x-app: &app
     EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
     EMAIL_HOST: ${EMAIL_HOST:-localhost}
     EMAIL_PORT: ${EMAIL_PORT:-587}
+    EMAIL_USE_TLS: ${EMAIL_USE_TLS:-1}
     EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
     EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
     DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@localhost}
@@ -44,15 +46,20 @@ services:
     restart: unless-stopped
   web:
     <<: *app
-    ports: ["127.0.0.1:8000:8000"]
+    ports: ["127.0.0.1:${BASIS_HTTP_PORT:-8000}:8000"]
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)"]
+      test: ["CMD", "python", "scripts/healthcheck.py"]
       interval: 30s
       timeout: 10s
       retries: 3
   worker:
     <<: *app
     command: ["python", "manage.py", "process_ai_jobs"]
+  migrate:
+    <<: *app
+    profiles: ["operations"]
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    restart: "no"
 
 volumes:
   postgres_data:

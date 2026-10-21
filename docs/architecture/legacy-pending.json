@@ -1,7 +1,6 @@
 {
   "baseline_commit": "08dcd020ad9e7ae2809b4a2376c8ae4cddd6b36e",
   "files": [
-    "scripts/backup_db.py",
     "seed.py"
   ]
 }

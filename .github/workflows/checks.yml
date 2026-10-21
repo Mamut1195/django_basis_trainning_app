@@ -36,7 +36,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run format:check
       - run: djlint basis --check
-      - run: ruff format --check basis config tests tests_architecture scripts/architecture_check.py scripts/browser_smoke.py scripts/acceptance_browser.py scripts/ux_acceptance.py scripts/verify_environment.py
+      - run: ruff format --check basis config tests tests_architecture scripts/architecture_check.py scripts/browser_smoke.py scripts/acceptance_browser.py scripts/ux_acceptance.py scripts/verify_environment.py scripts/backup_db.py scripts/healthcheck.py scripts/verify_operations.py scripts/verify_gunicorn_logging.py deploy/gunicorn_config.py
       - run: ruff check .
       - run: python scripts/architecture_check.py
       - run: python -m unittest discover -s tests_architecture
@@ -47,3 +47,69 @@ jobs:
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py test tests.regression basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
       - run: python manage.py collectstatic --noinput
+      - name: Build and start the production image against disposable PostgreSQL
+        env:
+          DJANGO_DEBUG: "0"
+          DJANGO_ALLOWED_HOSTS: reference.example.test
+          DJANGO_HEALTH_HOST: reference.example.test
+          PUBLIC_URL: https://reference.example.test
+        run: |
+          export DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(64))')"
+          docker build -t basis:ci .
+          args=(--network host -e DATABASE_URL -e DJANGO_DEBUG -e DJANGO_SECRET_KEY -e DJANGO_ALLOWED_HOSTS -e DJANGO_HEALTH_HOST -e PUBLIC_URL)
+          docker run --rm basis:ci python -B scripts/verify_gunicorn_logging.py
+          docker run --rm "${args[@]}" basis:ci python manage.py check --deploy --fail-level WARNING
+          docker run --rm "${args[@]}" basis:ci python manage.py migrate --noinput
+          docker run -d --name basis-ci-web "${args[@]}" basis:ci
+          trap 'docker rm -f basis-ci-web' EXIT
+          for attempt in $(seq 1 30); do
+            if docker exec basis-ci-web python scripts/healthcheck.py; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+  operations:
+    # setup-python's 3.13.7 cold-cache distribution supports Ubuntu 24.04.
+    runs-on: ubuntu-24.04
+    services:
+      db:
+        image: postgres:18.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: basis_verify_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:test-only@127.0.0.1:5432/basis_verify_ci
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Require runner Git before checkout (prevent the REST fallback)
+        run: git --version
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Require a real Git checkout
+        run: test "$(git rev-parse --is-inside-work-tree)" = true && git rev-parse --verify HEAD
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13.7"
+          cache: pip
+      - name: Install PostgreSQL 18 clients from upstream PGDG
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          echo /usr/lib/postgresql/18/bin >> "$GITHUB_PATH"
+          /usr/lib/postgresql/18/bin/pg_dump --version
+      - run: pip install -r requirements.txt
+      - run: mkdir -p .cache
+      - run: python -B scripts/verify_operations.py --report .cache/operations.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: operations-verification
+          path: .cache/operations.json
+          if-no-files-found: error
