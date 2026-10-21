@@ -35,7 +35,11 @@ def set_edit(request: HttpRequest, pk: int) -> HttpResponse:
             form.fields[key].disabled = True
     if request.method == "POST" and form.is_valid():
         mutations.save_strength(
-            owner(request).pk, form.save(commit=False), request.POST.get("revision"), creating=False
+            owner(request).pk,
+            form.save(commit=False),
+            request.POST.get("revision"),
+            creating=False,
+            provided_fields=request.POST.keys(),
         )
         return block_redirect(block)
     return render(
@@ -54,7 +58,11 @@ def set_new(request: HttpRequest, pk: int) -> HttpResponse:
     form = StrengthSetForm(request.POST or None, block=block)
     if request.method == "POST" and form.is_valid():
         mutations.save_strength(
-            owner(request).pk, form.save(commit=False), request.POST.get("revision"), creating=True
+            owner(request).pk,
+            form.save(commit=False),
+            request.POST.get("revision"),
+            creating=True,
+            provided_fields=request.POST.keys(),
         )
         return block_redirect(block)
     return render(

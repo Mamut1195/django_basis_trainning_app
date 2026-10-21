@@ -1,12 +1,18 @@
 """Policies for incremental manual training, independent of offline limits."""
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
 from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
 
-from .execution import DurationProtocol, IntervalData, StrengthData, Unavailable
+from .execution import DurationProtocol, IntervalData, InvalidExecution, StrengthData, Unavailable
+from .execution_updates import (
+    STRENGTH_INTENT,
+    preserve_interval,
+    preserve_strength,
+    validate_adaptation,
+)
 from .planning import validate_prescribed_results
 from .sports import VARIABLES, validate_sport_metrics
 from .strength import validate_repetition_prescription
@@ -78,8 +84,7 @@ def form_policy(parent: ParentState) -> FormPolicy:
     if not parent.from_prescription:
         return FormPolicy((), ())
     return FormPolicy(
-        tuple(f.name for f in fields(StrengthData) if f.name.startswith("target_"))
-        + ("exercise", "rest_seconds", "rm_reference"),
+        STRENGTH_INTENT,
         ("repetitions", "rest_seconds", "target_rpe"),
     )
 
@@ -130,6 +135,10 @@ def decimal_range(
 
 
 def validate_strength(sport: str, parent: ParentState, data: StrengthData) -> None:
+    try:
+        validate_adaptation(data)
+    except InvalidExecution as error:
+        raise ManualInvalid(str(error)) from error
     validate_repetition_prescription(
         data.target_reps,
         data.target_reps_min,
@@ -155,10 +164,10 @@ def validate_strength(sport: str, parent: ParentState, data: StrengthData) -> No
         data.isometric_seconds,
         data.target_isometric_seconds,
     ):
-        if value is not None and not 0 <= value <= 2147483647:
+        if value is not None and (type(value) is not int or not 0 <= value <= 2147483647):
             raise ManualInvalid("Repeticiones o duración fuera de rango.")
     for value in (data.target_rir, data.actual_rir):
-        if value is not None and not 0 <= value <= 20:
+        if value is not None and (type(value) is not int or not 0 <= value <= 20):
             raise ManualInvalid("RIR fuera de rango.")
     for load in (data.target_kg, data.actual_kg):
         decimal_range(load, Decimal(0), Decimal("99999.99"), places=2)
@@ -169,6 +178,22 @@ def validate_strength(sport: str, parent: ParentState, data: StrengthData) -> No
     if len(data.tempo) > 30 or len(data.range_of_motion) > 80 or len(data.group) > 80:
         raise ManualInvalid("Texto de serie demasiado largo.")
     if isinstance(parent.ref, PlannedParent):
+        if (
+            any(
+                getattr(data, name) is not None
+                for name in (
+                    "actual_exercise",
+                    "actual_load_type",
+                    "actual_kind",
+                    "actual_tempo",
+                    "actual_range_of_motion",
+                    "actual_side",
+                    "actual_group",
+                )
+            )
+            or data.adaptation_reason
+        ):
+            raise ManualInvalid("Una prescripción no contiene adaptaciones realizadas.")
         validate_prescribed_results(
             any(
                 v is not None
@@ -185,10 +210,10 @@ def validate_strength(sport: str, parent: ParentState, data: StrengthData) -> No
 
 
 def require_strength_prescription(current: StrengthData, candidate: StrengthData) -> None:
-    names = {f.name for f in fields(StrengthData) if f.name.startswith("target_")}
-    names |= {"exercise", "rest_seconds", "rm_reference"}
-    if any(getattr(current, name) != getattr(candidate, name) for name in names):
-        raise ManualInvalid("La prescripción original no puede modificarse.")
+    try:
+        preserve_strength(current, candidate)
+    except InvalidExecution as error:
+        raise ManualInvalid(str(error)) from error
 
 
 def validate_interval(sport: str, parent: ParentState, data: IntervalData) -> None:
@@ -210,8 +235,7 @@ def validate_interval(sport: str, parent: ParentState, data: IntervalData) -> No
 
 
 def require_interval_prescription(current: IntervalData, candidate: IntervalData) -> None:
-    if any(
-        getattr(current, name) != getattr(candidate, name)
-        for name in ("repetitions", "rest_seconds", "target_rpe", "target")
-    ):
-        raise ManualInvalid("La prescripción original no puede modificarse.")
+    try:
+        preserve_interval(current, candidate)
+    except InvalidExecution as error:
+        raise ManualInvalid(str(error)) from error

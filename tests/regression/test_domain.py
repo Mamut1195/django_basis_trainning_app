@@ -213,6 +213,10 @@ class SyncTests(TestCase):
 
     def test_new_offline_session_uuid(self) -> None:
         payload = session_snapshot(self.session)
+        # A new execution owns new child identities, not another session's IDs.
+        for block in payload["blocks"]:
+            block.pop("id", None)
+            block.pop("source", None)
         payload["id"] = str(uuid.uuid4())
         payload["revision"] = 0
         result = sync_session(self.owner, uuid.uuid4(), payload)

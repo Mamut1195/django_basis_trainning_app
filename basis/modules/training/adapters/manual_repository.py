@@ -14,9 +14,9 @@ from basis.shared.identifiers import (
 from ..application.manual import BlockContext, IntervalContext, StrengthContext
 from ..domain.execution import IntervalData, Metric, StrengthData
 from ..domain.manual import ManualSessionData, ParentRef, ParentState, PlannedParent, SessionParent
-from .django import model_values
+from .django import model_values, strength_values
 from .models import Block, Interval, PlannedSession, Session, StrengthSet, TrainingPlan
-from .wire import encode_metrics, encode_strength, interval, metrics, strength
+from .wire import encode_metrics, interval, metrics, strength
 
 
 def strength_data(row: StrengthSet) -> StrengthData:
@@ -159,9 +159,7 @@ class DjangoManualRepository:
     def save_strength(
         self, block: BlockId, data: StrengthData, row: StrengthSetId | None, order: int | None
     ) -> StrengthSetId:
-        values = encode_strength(data)
-        values["exercise_id"] = values.pop("exercise")
-        values["rm_reference_id"] = values.pop("rm_reference")
+        values = strength_values(data)
         instance = (
             StrengthSet.objects.get(pk=row) if row is not None else StrengthSet(block_id=block)
         )

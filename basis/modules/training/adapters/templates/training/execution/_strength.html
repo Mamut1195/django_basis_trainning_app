@@ -17,6 +17,42 @@
             {{ set.exercise.nombre }}
             <br>
             <small>{{ set.get_kind_display }} · {{ set.get_side_display }}</small>
+            {% if set.source_id %}
+              <br>
+              <small>Prescripción original · serie {{ set.source_id }}</small>
+            {% endif %}
+            {% if set.adaptation_reason %}
+              <br>
+              <small>Adaptación: {{ set.adaptation_reason }}</small>
+              {% if set.actual_exercise_id %}
+                <br>
+                <small>Real: {{ set.actual_exercise.nombre }}</small>
+              {% endif %}
+              {% if set.actual_load_type %}
+                <br>
+                <small>{{ set.get_actual_load_type_display }}</small>
+              {% endif %}
+              {% if set.actual_kind %}
+                <br>
+                <small>{{ set.get_actual_kind_display }}</small>
+              {% endif %}
+              {% if set.actual_tempo %}
+                <br>
+                <small>Tempo real: {{ set.actual_tempo }}</small>
+              {% endif %}
+              {% if set.actual_group %}
+                <br>
+                <small>Grupo real: {{ set.actual_group }}</small>
+              {% endif %}
+              {% if set.actual_range_of_motion %}
+                <br>
+                <small>ROM real: {{ set.actual_range_of_motion }}</small>
+              {% endif %}
+              {% if set.actual_side %}
+                <br>
+                <small>Lado real: {{ set.get_actual_side_display }}</small>
+              {% endif %}
+            {% endif %}
           </td>
           <td>{{ set.target_reps|default_if_none:'—' }} × {{ set.target_kg|default_if_none:'—' }} kg</td>
           <td>{{ set.actual_reps|default_if_none:'—' }} × {{ set.actual_kg|default_if_none:'—' }} kg</td>

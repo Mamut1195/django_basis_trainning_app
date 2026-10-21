@@ -9,6 +9,7 @@ from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, Sess
 from basis.shared.ports import Clock, UnitOfWork
 
 from ..domain.execution import (
+    AdaptationPresence,
     BlockData,
     DurationProtocol,
     InvalidExecution,
@@ -19,6 +20,15 @@ from ..domain.execution import (
     require_editable,
     start_execution,
 )
+from ..domain.execution_updates import reconcile_blocks
+from ..domain.manual import (
+    ManualInvalid,
+    ParentState,
+    SessionParent,
+    validate_interval,
+    validate_strength,
+)
+from ..domain.sports import validate_sport_metrics
 
 
 @dataclass(frozen=True)
@@ -37,6 +47,7 @@ class SessionChanges:
     duration_protocol: Change[DurationProtocol] | None = None
     reported_rpe: Change[Decimal | None] | None = None
     notes: Change[str] | None = None
+    adaptation_presence: AdaptationPresence | None = None
 
 
 @dataclass(frozen=True)
@@ -141,15 +152,18 @@ class Training:
             self.repository.lock_owner(command.owner)
             self.authorization.require(command.owner)
             current = self.repository.get(command.session, lock=True, owner=command.owner)
+            creating = current is None
             if current is None:
                 if command.revision != 0:
                     raise InvalidExecution("Una sesión nueva empieza en revisión cero.")
-                current = SessionState(command.session, command.owner, self.today(command.owner))
+                current = SessionState(
+                    command.session, command.owner, self.today(command.owner), title="Entrenamiento"
+                )
                 revision = Revision(1)
             else:
                 revision = require_editable(current, command.owner, command.revision)
             changes = source()
-            if current.planned is not None and changes.planned not in (None, current.planned):
+            if not creating and changes.planned not in (None, current.planned):
                 raise InvalidExecution("La ejecución conserva su prescripción original.")
             if not 1 <= len(changes.blocks) <= 30:
                 raise InvalidExecution("Una sesión necesita entre 1 y 30 bloques.")
@@ -157,10 +171,26 @@ class Training:
                 raise InvalidExecution("Demasiadas series o intervalos.")
             if changes.planned is not None and changes.planned != current.planned:
                 self.repository.check_plan(command.owner, changes.planned)
+                prescribed = self.repository.prescription(command.owner, changes.planned)
+                # Both entry points initialize from server-owned intention. Client
+                # targets are compared with that source, never used as authority.
+                canonical = start_execution(prescribed, command.session, current.date)
+                current = replace(
+                    current,
+                    title=canonical.title,
+                    planned=canonical.planned,
+                    blocks=canonical.blocks,
+                )
+            resolved = reconcile_blocks(
+                current.blocks,
+                changes.blocks,
+                frozen=current.planned is not None,
+                adaptation_presence=changes.adaptation_presence,
+            )
             candidate = replace(
                 current,
                 revision=revision,
-                blocks=changes.blocks,
+                blocks=resolved,
                 title=changes.title.value if changes.title else current.title,
                 date=changes.date.value if changes.date else current.date,
                 status=changes.status.value if changes.status else current.status,
@@ -176,6 +206,19 @@ class Training:
                 else current.reported_rpe,
                 notes=changes.notes.value if changes.notes else current.notes,
             )
+            parent = ParentState(
+                SessionParent(candidate.id), candidate.owner, candidate.date, candidate.revision
+            )
+            try:
+                for block in candidate.blocks:
+                    validate_sport_metrics(block.sport, block.target)
+                    validate_sport_metrics(block.sport, block.actual)
+                    for strength in block.sets:
+                        validate_strength(block.sport, parent, strength)
+                    for interval in block.intervals:
+                        validate_interval(block.sport, parent, interval)
+            except (ManualInvalid, ValueError) as error:
+                raise InvalidExecution(str(error)) from error
             result = self.repository.save(candidate)
             work.commit()
             return result

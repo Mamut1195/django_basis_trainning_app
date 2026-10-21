@@ -202,8 +202,16 @@ def validate_prescription(blocks: tuple[BlockData, ...]) -> None:
                         row.actual_rir,
                         row.actual_rest_seconds,
                         row.isometric_seconds,
+                        row.actual_exercise,
+                        row.actual_load_type,
+                        row.actual_kind,
+                        row.actual_tempo,
+                        row.actual_range_of_motion,
+                        row.actual_side,
+                        row.actual_group,
                     )
                 )
+                or bool(row.adaptation_reason)
             )
         for interval in block.intervals:
             validate_prescribed_results(

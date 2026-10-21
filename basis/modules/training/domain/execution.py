@@ -13,6 +13,20 @@ class SessionStatus(StrEnum):
     COMPLETED = "completed"
 
 
+class AdaptationField(StrEnum):
+    EXERCISE = "actual_exercise"
+    LOAD_TYPE = "actual_load_type"
+    KIND = "actual_kind"
+    TEMPO = "actual_tempo"
+    RANGE_OF_MOTION = "actual_range_of_motion"
+    SIDE = "actual_side"
+    GROUP = "actual_group"
+    REASON = "adaptation_reason"
+
+
+type AdaptationPresence = tuple[tuple[frozenset[AdaptationField], ...], ...]
+
+
 class DurationProtocol(StrEnum):
     ELAPSED = "elapsed"
     MOVING = "moving"
@@ -81,6 +95,16 @@ class StrengthData:
     target_rpe: Decimal | None = None
     actual_rpe: Decimal | None = None
     rm_reference: int | None = None
+    id: int | None = None
+    source: int | None = None
+    actual_exercise: int | None = None
+    actual_load_type: str | None = None
+    actual_kind: str | None = None
+    actual_tempo: str | None = None
+    actual_range_of_motion: str | None = None
+    actual_side: str | None = None
+    actual_group: str | None = None
+    adaptation_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -92,6 +116,8 @@ class IntervalData:
     actual_rest_seconds: int | None = None
     target_rpe: Decimal | None = None
     actual_rpe: Decimal | None = None
+    id: int | None = None
+    source: int | None = None
 
 
 @dataclass(frozen=True)
@@ -105,6 +131,7 @@ class BlockData:
     notes: str = ""
     sets: tuple[StrengthData, ...] = ()
     intervals: tuple[IntervalData, ...] = ()
+    source: int | None = None
 
 
 @dataclass(frozen=True)
@@ -160,7 +187,16 @@ def start_execution(prescription: Prescription, session_id: SessionId, today: da
         date=today,
         title=prescription.title,
         planned=prescription.id,
-        blocks=tuple(replace(b, id=None) for b in prescription.blocks),
+        blocks=tuple(
+            replace(
+                b,
+                id=None,
+                source=b.id,
+                sets=tuple(replace(s, id=None, source=s.id) for s in b.sets),
+                intervals=tuple(replace(i, id=None, source=i.id) for i in b.intervals),
+            )
+            for b in prescription.blocks
+        ),
     )
 
 

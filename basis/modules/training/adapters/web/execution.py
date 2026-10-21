@@ -55,7 +55,9 @@ def session_new(request: HttpRequest) -> HttpResponse:
 @login_required
 def session_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
     session = get_object_or_404(
-        Session.objects.prefetch_related("blocks__sets__exercise", "blocks__intervals"),
+        Session.objects.prefetch_related(
+            "blocks__sets__exercise", "blocks__sets__actual_exercise", "blocks__intervals"
+        ),
         pk=pk,
         owner=owner(request),
     )

@@ -165,7 +165,11 @@ def main() -> None:
                 }
             )
             return
-        instant = datetime(2026, 10, 19, 17, tzinfo=timezone.utc)
+        instant = (
+            datetime.fromisoformat(str(spec["instant"]))
+            if spec.get("instant")
+            else datetime(2026, 10, 19, 17, tzinfo=timezone.utc)
+        )
         with (
             patch("django.utils.timezone.now", return_value=instant),
             patch.object(DjangoSessionRepository, "prescription", prescribed),
@@ -208,6 +212,10 @@ def main() -> None:
                 response = client.post(
                     f"/blocks/{spec['block']}/metrics/",
                     {"revision": spec["revision"], "duration_seconds": spec["duration"]},
+                )
+            elif action == "set":
+                response = client.post(
+                    f"/sets/{spec['row']}/edit/", cast(dict[str, object], spec["body"])
                 )
             else:
                 raise AssertionError("Unknown worker action")

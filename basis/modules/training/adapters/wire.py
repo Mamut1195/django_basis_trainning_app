@@ -2,7 +2,7 @@
 
 from dataclasses import fields
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Mapping, cast
 from uuid import UUID
 
@@ -13,6 +13,8 @@ from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, Sess
 
 from ..application.execution import Change, RecordSession, SessionChanges
 from ..domain.execution import (
+    AdaptationField,
+    AdaptationPresence,
     BlockData,
     DurationProtocol,
     IntervalData,
@@ -43,8 +45,13 @@ def text(value: object) -> str:
 
 
 def integer(value: object) -> int:
-    if isinstance(value, (str, int, float, Decimal)):
-        return int(value)
+    if not isinstance(value, bool) and isinstance(value, (str, int, float, Decimal)):
+        try:
+            number = Decimal(str(value))
+        except InvalidOperation:
+            raise ValidationError("Número entero inválido.") from None
+        if number.is_finite() and number == number.to_integral_value():
+            return int(number)
     raise ValidationError("Número entero inválido.")
 
 
@@ -53,7 +60,21 @@ def optional_integer(value: object) -> int | None:
 
 
 def optional_decimal(value: object) -> Decimal | None:
-    return None if value is None else Decimal(str(value))
+    if isinstance(value, bool):
+        raise ValidationError("Número decimal inválido.")
+    try:
+        return None if value is None else Decimal(str(value))
+    except InvalidOperation:
+        raise ValidationError("Número decimal inválido.") from None
+
+
+def block_identity(value: object) -> int | None:
+    if isinstance(value, str):
+        try:
+            Decimal(value)
+        except InvalidOperation:
+            return None  # Legacy client-local label, never a server identity.
+    return optional_integer(value)
 
 
 def day(value: object) -> date:
@@ -74,7 +95,13 @@ def metrics(value: object) -> tuple[Metric, ...]:
             raise ValidationError("Variables no admitidas: " + key) from None
         if isinstance(raw, bool):
             raise ValidationError({key: "Valor fuera de rango."})
-        result.append(Metric(name, text(raw) if key in TEXT_METRICS else Decimal(str(raw))))
+        if key in TEXT_METRICS:
+            metric_value: Decimal | str = text(raw)
+        else:
+            parsed = optional_decimal(raw)
+            assert parsed is not None
+            metric_value = parsed
+        result.append(Metric(name, metric_value))
     return tuple(result)
 
 
@@ -92,6 +119,8 @@ def encode_strength(row: StrengthData) -> dict[str, object]:
 
 def encode_interval(row: IntervalData) -> dict[str, object]:
     return {
+        "id": row.id,
+        "source": row.source,
         "repetitions": row.repetitions,
         "target": encode_metrics(row.target),
         "actual": encode_metrics(row.actual),
@@ -105,6 +134,7 @@ def encode_interval(row: IntervalData) -> dict[str, object]:
 def encode_block(block: BlockData) -> dict[str, object]:
     return {
         "id": block.id,
+        "source": block.source,
         "order": block.order,
         "sport": block.sport,
         "title": block.title,
@@ -177,7 +207,21 @@ def strength(value: object) -> StrengthData:
         target_rpe=optional_decimal(row.get("target_rpe")),
         actual_rpe=optional_decimal(row.get("actual_rpe")),
         rm_reference=optional_integer(row.get("rm_reference")),
+        id=optional_integer(row.get("id")),
+        source=optional_integer(row.get("source")),
+        actual_exercise=optional_integer(row.get("actual_exercise")),
+        actual_load_type=optional_text(row.get("actual_load_type")),
+        actual_kind=optional_text(row.get("actual_kind")),
+        actual_tempo=optional_text(row.get("actual_tempo")),
+        actual_range_of_motion=optional_text(row.get("actual_range_of_motion")),
+        actual_side=optional_text(row.get("actual_side")),
+        actual_group=optional_text(row.get("actual_group")),
+        adaptation_reason=text(row.get("adaptation_reason", "")),
     )
+
+
+def optional_text(value: object) -> str | None:
+    return None if value is None else text(value)
 
 
 def interval(value: object) -> IntervalData:
@@ -185,6 +229,8 @@ def interval(value: object) -> IntervalData:
     if set(row) - {f.name for f in fields(IntervalData)}:
         raise ValidationError("Variables de serie o intervalo inválidas.")
     return IntervalData(
+        id=optional_integer(row.get("id")),
+        source=optional_integer(row.get("source")),
         repetitions=integer(row.get("repetitions", 1)),
         target=metrics(row.get("target", {})),
         actual=metrics(row.get("actual", {})),
@@ -204,6 +250,7 @@ def blocks(value: object) -> tuple[BlockData, ...]:
         row = object_map(raw)
         if set(row) - {
             "id",
+            "source",
             "order",
             "sport",
             "title",
@@ -220,6 +267,10 @@ def blocks(value: object) -> tuple[BlockData, ...]:
             raise ValidationError("Demasiadas series o intervalos.")
         result.append(
             BlockData(
+                # Temporary string IDs from the original offline client carry no
+                # server identity. Integer IDs are authoritative and parent-scoped.
+                id=block_identity(row.get("id")),
+                source=optional_integer(row.get("source")),
                 sport=text(row.get("sport", "")),
                 title=text(row.get("title", "")),
                 target=metrics(row.get("target", {})),
@@ -235,6 +286,7 @@ def blocks(value: object) -> tuple[BlockData, ...]:
 def decode_record(owner: AccountId, payload: Mapping[str, object]) -> RecordSession:
     changes = SessionChanges(
         blocks=blocks(payload.get("blocks")),
+        adaptation_presence=adaptation_presence(payload.get("blocks")),
         title=Change(text(payload["title"])) if "title" in payload else None,
         date=Change(day(payload["date"])) if "date" in payload else None,
         status=Change(SessionStatus(text(payload["status"]))) if "status" in payload else None,
@@ -252,4 +304,14 @@ def decode_record(owner: AccountId, payload: Mapping[str, object]) -> RecordSess
     )
     return RecordSession(
         owner, SessionId(UUID(text(payload["id"]))), Revision(integer(payload["revision"])), changes
+    )
+
+
+def adaptation_presence(raw: object) -> AdaptationPresence:
+    return tuple(
+        tuple(
+            frozenset(field for field in AdaptationField if field.value in object_map(row))
+            for row in sequence(object_map(block).get("sets", []))
+        )
+        for block in sequence(raw)
     )
