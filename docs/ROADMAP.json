@@ -84,14 +84,15 @@
       "code": "BASIS-006",
       "id": "MAM-620",
       "title": "BASIS-006 — Construir perfil, objetivos y configuración inicial del atleta",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-620/basis-006-construir-perfil-objetivos-y-configuracion-inicial-del",
       "deps": [
         "MAM-810",
         "MAM-616",
         "MAM-618"
       ],
-      "complete": false,
+      "complete": true,
+      "completed_at": "2026-10-21T05:03:54.506Z",
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-025",
@@ -123,14 +124,15 @@
       "code": "BASIS-008",
       "id": "MAM-622",
       "title": "BASIS-008 — Modelar objetivos, ciclos y calendario versionado de entrenamiento",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-622/basis-008-modelar-objetivos-ciclos-y-calendario-versionado-de",
       "deps": [
         "MAM-620",
         "MAM-618",
         "MAM-621"
       ],
-      "complete": false,
+      "complete": true,
+      "completed_at": "2026-10-21T15:27:40.765Z",
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-006",
@@ -143,14 +145,15 @@
       "code": "BASIS-009",
       "id": "MAM-623",
       "title": "BASIS-009 — Separar prescripción, sesión ejecutada y registros por serie",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-623/basis-009-separar-prescripcion-sesion-ejecutada-y-registros-por-serie",
       "deps": [
         "MAM-619",
         "MAM-622",
         "MAM-621"
       ],
-      "complete": false,
+      "complete": true,
+      "completed_at": "2026-10-21T19:29:27.562Z",
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-003",
@@ -476,12 +479,13 @@
       "code": "BASIS-025",
       "id": "MAM-810",
       "title": "BASIS-025 — Registro, verificación, recuperación y acceso multiusuario",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-810/basis-025-registro-verificacion-recuperacion-y-acceso-multiusuario",
       "deps": [
         "MAM-616"
       ],
-      "complete": false,
+      "complete": true,
+      "completed_at": "2026-10-21T04:35:13.492Z",
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-002"
@@ -667,11 +671,173 @@
   ],
   "nodes": 35,
   "edges": 86,
-  "done": 7,
-  "open": 28,
-  "in_progress": 27,
+  "done": 11,
+  "open": 24,
+  "in_progress": 23,
   "backlog": 1,
   "current_readback": {
+    "source_kind": "Documentation-only reconciliation of supplied Luna native exports; no Linear/Notion operations or new ticket started by this executor.",
+    "source": {
+      "model": "opencode-go/gpt-6-luna",
+      "agent": "build",
+      "session": "ses_ea005619bffeFsGUiK767yO4cv",
+      "read_back_at": "2026-10-21T19:47:27.908Z",
+      "readbacks": "luna-mam623-close-20261021-1939/source-audit.sanitized.json",
+      "readbacks_sha256": "323d159b6d3b88eb1c3d0db5dc1d10fcad9457ae65e261e8d5f254a6c2e98ba3",
+      "report": "luna-mam623-close-20261021-1939/luna-mam623-close.report.sanitized.md",
+      "report_sha256": "345053297a17bcf443a371b9dcfd234004b69045e386da9c8274f09fc9aa60f1",
+      "location": "Supplied local sanitized exports under Temp/opencode; not tracked repository artifacts."
+    },
+    "status_attribution": "All four issues were already Done when Luna verified them; status/completedAt preserved, not new transitions by this bridge.",
+    "comment_readbacks_exact": true,
+    "closures": [
+      {
+        "id": "MAM-810",
+        "status": "Done",
+        "completed_at": "2026-10-21T04:35:13.492Z",
+        "state_changed_by_luna": false,
+        "verification_document": "docs/ACCOUNT_VERIFICATION.md",
+        "code_integration": {
+          "pr": "https://github.com/Mamut1195/django_basis_trainning_app/pull/6",
+          "merge_sha": "58cbb0ea2e7421a696629391cb8a5eebf2df76fe",
+          "ci_run": 39544853138,
+          "ci_sha": "58cbb0ea2e7421a696629391cb8a5eebf2df76fe",
+          "ci_conclusion": "success",
+          "postgres_tests": 318,
+          "pure_tests": 174,
+          "mypy_core": 113,
+          "mypy_django": 335,
+          "import_contracts": 8
+        }
+      },
+      {
+        "id": "MAM-620",
+        "status": "Done",
+        "completed_at": "2026-10-21T05:03:54.506Z",
+        "state_changed_by_luna": false,
+        "verification_document": "docs/PROFILE_VERIFICATION.md",
+        "code_integration": {
+          "pr": "https://github.com/Mamut1195/django_basis_trainning_app/pull/7",
+          "merge_sha": "25af153d5108d39c97bf5cda6fea58d6a6346f7b",
+          "ci_run": 39547452496,
+          "ci_sha": "25af153d5108d39c97bf5cda6fea58d6a6346f7b",
+          "ci_conclusion": "success",
+          "postgres_tests": 346,
+          "pure_tests": 176,
+          "mypy_core": 115,
+          "mypy_django": 340,
+          "import_contracts": 8,
+          "operations_artifact_id": 12322016375,
+          "operations_json_sha256": "7b66b7d53e6ed3d13cfdf533839fc50dd89a65dc501bedbc53156366ca302da0",
+          "operations_zip_sha256": "43605d796a55fac63a50d0f3b5add73e080b6ed7215c5c7486f22082240d85d8",
+          "ci_email_verification_rows": 10,
+          "ci_measurement_rows": 0,
+          "local_supplement_not_ci": "Three Measurement and twelve EmailVerification rows belong to separate local recovery evidence."
+        }
+      },
+      {
+        "id": "MAM-622",
+        "status": "Done",
+        "completed_at": "2026-10-21T15:27:40.765Z",
+        "state_changed_by_luna": false,
+        "verification_document": "docs/PLANNING_VERIFICATION.md",
+        "code_integration": {
+          "pr": "https://github.com/Mamut1195/django_basis_trainning_app/pull/8",
+          "merge_sha": "cccc448c4aeaffef8d7a9e60bbab0b174e24ce42",
+          "ci_run": 39624647162,
+          "ci_sha": "cccc448c4aeaffef8d7a9e60bbab0b174e24ce42",
+          "ci_conclusion": "success",
+          "postgres_tests": 390,
+          "pure_tests": 179,
+          "mypy_core": 115,
+          "mypy_django": 350,
+          "import_contracts": 8
+        }
+      },
+      {
+        "id": "MAM-623",
+        "status": "Done",
+        "completed_at": "2026-10-21T19:29:27.562Z",
+        "state_changed_by_luna": false,
+        "verification_document": "docs/EXECUTION_VERIFICATION.md",
+        "criteria_verified": 4,
+        "comment_id": "8e90525d-2e80-44db-a483-f5f93e0fe8d8",
+        "comment_updated_at": "2026-10-21T19:47:08.184Z",
+        "code_integration": {
+          "pr": "https://github.com/Mamut1195/django_basis_trainning_app/pull/9",
+          "commit": "dbae5dbc767d69d3d294478583d84144d7f452f8",
+          "merge_sha": "71751bd2ee10fa7dff9f2c7a9d4f9ccda7c6c2cd",
+          "ci_run": 39662083662,
+          "ci_sha": "71751bd2ee10fa7dff9f2c7a9d4f9ccda7c6c2cd",
+          "ci_conclusion": "success",
+          "postgres_tests": 429,
+          "pure_tests": 191,
+          "mypy_core": 118,
+          "mypy_django": 358,
+          "import_contracts": 8,
+          "operations_artifact_id": 12376055219,
+          "operations_json_sha256": "5255fb5c3c4171782ab1b81aa3460e557d5ce8abd083822167f322914fda8717",
+          "operations_zip_sha256": "9c12532fc51184fdbac72cba37c27b3539eaaa86f89835f5b52981d184c80c8c",
+          "ci_fixture": {
+            "profiles": 10,
+            "plans": 20,
+            "sessions": 120,
+            "strength_sets": 360,
+            "measured_rm": 10
+          },
+          "local_supplement_not_ci": "Adaptation-specific restore supplement and browser5probes/6receipts plus authored21cases/32receipts are separately attributed local evidence."
+        }
+      }
+    ],
+    "counts": {
+      "functional": { "total": 35, "done": 11, "in_progress": 23, "backlog": 1, "open": 24 },
+      "architecture": { "total": 11, "done": 11 },
+      "project": { "total": 46, "done": 22, "in_progress": 23, "backlog": 1, "open": 24 }
+    },
+    "project_has_next_page": false,
+    "project_include_archived": true,
+    "approval_scope": "Local independent APPROVEs are not formal GitHub reviews. Luna's denied PR9 reviews/comments/latestReviews query was not retried; a communicated zero count was not revalidated there.",
+    "remaining_blockers": {
+      "MAM-638": [
+        "MAM-625", "MAM-628", "MAM-629", "MAM-630", "MAM-632", "MAM-636",
+        "MAM-815", "MAM-816", "MAM-817", "MAM-818", "MAM-820"
+      ]
+    },
+    "completed_chain": ["MAM-810", "MAM-620", "MAM-622", "MAM-623"],
+    "eligible_high_not_started": [
+      {
+        "id": "MAM-811",
+        "priority": "High",
+        "status": "In Progress",
+        "satisfied_dependencies": ["MAM-618", "MAM-623"],
+        "scope": "Incompatible variables, missing data/ranges, prescription copy without invented results, frozen historical references."
+      },
+      {
+        "id": "MAM-816",
+        "priority": "High",
+        "status": "In Progress",
+        "satisfied_dependencies": ["MAM-810"],
+        "scope": "Local signature/replay/reordering and renew/cancel/nonpayment/refund; redirect never grants entitlement.",
+        "live_gate": "Configured Polar sandbox LIVE is acceptance/closure evidence, not an invented dependency preventing local implementation."
+      }
+    ],
+    "no_third_eligible_high": true,
+    "next_batch_started": false,
+    "ux": {
+      "MAM-626": "In Progress",
+      "MAM-627": "In Progress",
+      "screen_reader": "NOT RUN",
+      "owner_acceptance": "PENDING"
+    },
+    "provider_live_and_physical_devices": "NOT RUN; SMTP is not a gate for MAM810/MAM623; full-product operational/provider/human gates remain open.",
+    "verification_documents": [
+      "docs/ACCOUNT_VERIFICATION.md", "docs/PROFILE_VERIFICATION.md",
+      "docs/PLANNING_VERIFICATION.md", "docs/EXECUTION_VERIFICATION.md",
+      "docs/DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623"
+    ],
+    "previous_readbacks": "catalog_operations_readback and postmerge_readback preserve their historical source, states, counts and next chains; architecture snapshot unchanged."
+  },
+  "catalog_operations_readback": {
     "source_kind": "Local reconciliation of supplied Luna final readbacks; no Linear/Notion access by this documentation executor.",
     "source": {
       "model": "opencode-go/gpt-6-luna",
