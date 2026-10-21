@@ -12,6 +12,15 @@ from .models import Measurement, Wellness, WorkoutData
 
 
 class DjangoAthletePresentation:
+    def timezone(self, owner: AccountId) -> str | None:
+        from .models import AthleteSettings
+
+        return (
+            AthleteSettings.objects.filter(owner_id=owner)
+            .values_list("timezone_name", flat=True)
+            .first()
+        )
+
     def __init__(self, exercises: ExerciseNames) -> None:
         self.exercises = exercises
 

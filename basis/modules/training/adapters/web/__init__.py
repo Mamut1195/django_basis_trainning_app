@@ -22,7 +22,9 @@ from .planning import (
     plan_detail,
     plan_list,
     plan_new,
+    plan_restore,
     plan_revise,
+    scheduled_change,
     scheduled_detail,
     scheduled_new,
     scheduled_reschedule,
@@ -44,6 +46,8 @@ def owned_new(request: HttpRequest, resource: str) -> HttpResponse:
 
 
 __all__ = [
+    "plan_restore",
+    "scheduled_change",
     "today",
     "plan_list",
     "plan_new",

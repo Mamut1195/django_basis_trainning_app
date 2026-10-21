@@ -2,6 +2,7 @@
 
 import uuid
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -69,6 +70,19 @@ class TrainingPlan(Owned):
     end_date = models.DateField()
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    change_kind = models.CharField(max_length=20, blank=True)
+    change_reason = models.TextField(blank=True)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="planning_changes",
+    )
+    effective_on = models.DateField(null=True, blank=True)
+    restored_from = models.ForeignKey(
+        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="restorations"
+    )
 
     class Meta:
         constraints = [
@@ -82,6 +96,27 @@ class TrainingPlan(Owned):
         if not self.goal_id or not self.start_date or not self.end_date:
             return
         self.same_owner(self.goal, self.previous)
+        if (
+            self.pk
+            and TrainingPlan.objects.using(self._state.db).filter(previous_id=self.pk).exists()
+        ):
+            old = TrainingPlan.objects.using(self._state.db).get(pk=self.pk)
+            if any(
+                getattr(old, f.attname) != getattr(self, f.attname)
+                for f in self._meta.concrete_fields
+            ):
+                raise ValidationError("La versión histórica es inmutable.")
+        if self.change_kind and (
+            not self.change_reason.strip() or not self.changed_by_id or not self.effective_on
+        ):
+            raise ValidationError("El cambio necesita motivo, autor y fecha efectiva.")
+        if self.changed_by_id and self.changed_by_id != self.owner_id:
+            raise ValidationError("El autor debe ser el propietario del plan.")
+        restored_from = self.restored_from
+        if restored_from is not None and (
+            restored_from.owner_id != self.owner_id or restored_from.lineage != self.lineage
+        ):
+            raise ValidationError("La restauración debe usar una versión propia del mismo plan.")
         try:
             validate_dates(self.start_date, self.end_date)
         except InvalidPlanning as error:
@@ -120,6 +155,8 @@ class Cycle(ValidatedModel):
             or self.kind not in ("macro", "meso", "micro")
         ):
             return
+        if TrainingPlan.objects.using(self._state.db).filter(previous_id=self.plan_id).exists():
+            raise ValidationError("Crea otra versión para cambiar un ciclo histórico.")
 
         def definition(row: Cycle) -> CycleDefinition:
             return CycleDefinition(
@@ -152,14 +189,52 @@ class PlannedSession(Owned):
     date = models.DateField(db_index=True)
     notes = models.TextField(blank=True)
     revision = models.PositiveIntegerField(default=1)
+    origin = models.ForeignKey(
+        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="copies"
+    )
+    supersedes = models.ForeignKey(
+        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="replacements"
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=[("scheduled", "Programada"), ("skipped", "Omitida"), ("cancelled", "Cancelada")],
+        default="scheduled",
+    )
 
     class Meta:
         indexes = [models.Index(fields=["owner", "date"])]
+        constraints = [
+            models.UniqueConstraint(fields=["plan", "origin"], name="scheduled_plan_origin")
+        ]
 
     def clean(self) -> None:
         if not self.plan_id or not self.cycle_id or not self.date:
             return
         self.same_owner(self.plan)
+        if TrainingPlan.objects.using(self._state.db).filter(previous_id=self.plan_id).exists():
+            raise ValidationError("La prescripción histórica es inmutable.")
+        for source in (self.origin, self.supersedes):
+            if source and (
+                source.owner_id != self.owner_id
+                or source.plan.lineage != self.plan.lineage
+                or source.plan.version >= self.plan.version
+                or source.pk == self.pk
+            ):
+                raise ValidationError(
+                    "El origen debe ser una prescripción anterior del mismo plan y cuenta."
+                )
+        origin = self.origin
+        if origin is not None and origin.origin_id is not None:
+            raise ValidationError("El origen debe apuntar a la raíz de la intención.")
+        if self.pk:
+            old = PlannedSession.objects.using(self._state.db).get(pk=self.pk)
+            if (old.origin_id, old.supersedes_id) != (self.origin_id, self.supersedes_id):
+                raise ValidationError("La procedencia de la prescripción es inmutable.")
+            if self.executions.exists() and any(
+                getattr(old, field.attname) != getattr(self, field.attname)
+                for field in self._meta.concrete_fields
+            ):
+                raise ValidationError("La prescripción ejecutada es inmutable.")
         try:
             validate_schedule(
                 ScheduledDefinition(str(self.cycle_id), self.title, self.date),

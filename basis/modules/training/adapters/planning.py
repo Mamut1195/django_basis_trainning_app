@@ -1,15 +1,16 @@
 """Planning persistence over stable Django tables and validated model hooks."""
 
+from collections.abc import Callable
 from dataclasses import fields
-from datetime import date
+from datetime import date, datetime
 
+from basis.adapters.django.account_locks import lock_account
 from basis.modules.training.adapters.models import (
     Block,
     Cycle,
     Goal,
     Interval,
     PlannedSession,
-    Session,
     StrengthSet,
     TrainingPlan,
 )
@@ -40,8 +41,10 @@ from ..domain.planning import (
     PlanSnapshot,
     ScheduledDefinition,
     ScheduledState,
+    ScheduleStatus,
 )
 from .django import block_state, save_validated
+from .locking import intent_executions, lock_plan, lock_scheduled
 from .wire import encode_interval, encode_metrics
 
 
@@ -79,6 +82,8 @@ def scheduled_definition(row: PlannedSession) -> ScheduledDefinition:
         tuple(block_state(block) for block in row.blocks.all()),
         row.notes,
         PlannedSessionId(row.pk),
+        PlannedSessionId(row.origin_id) if row.origin_id else None,
+        ScheduleStatus(row.status),
     )
 
 
@@ -100,7 +105,8 @@ def scheduled_state(row: PlannedSession) -> ScheduledState:
         Revision(row.revision),
         scheduled_definition(row),
         cycle_definition(row.cycle),
-        row.executions.exists(),
+        intent_executions(row).exists(),
+        TrainingPlan.objects.filter(previous_id=row.plan_id).exists(),
     )
 
 
@@ -128,13 +134,18 @@ def save_prescription(parent: PlannedSession, data: tuple[BlockData, ...]) -> No
 
 
 class DjangoPlanRepository:
+    def __init__(self, local_date: Callable[[AccountId, datetime], date] | None = None) -> None:
+        self.local_date = local_date
+
     def goal_owner(self, goal: GoalId) -> AccountId | None:
         owner = Goal.objects.filter(pk=goal).values_list("owner_id", flat=True).first()
         return AccountId(owner) if owner is not None else None
 
     def snapshot(self, owner: AccountId, plan: PlanId, *, lock: bool) -> PlanSnapshot:
         query = TrainingPlan.objects.filter(owner_id=owner, pk=plan)
-        row = (query.select_for_update() if lock else query).first()
+        if lock and query.exists():
+            lock_plan(plan, query.db)
+        row = query.first()
         if row is None:
             raise PlanningUnavailable
         definition = PlanDefinition(
@@ -147,11 +158,7 @@ class DjangoPlanRepository:
             tuple(scheduled_definition(s) for s in row.sessions.all()),
         )
         executed = frozenset(
-            PlannedSessionId(id)
-            for id in Session.objects.filter(planned__plan_id=plan).values_list(
-                "planned_id", flat=True
-            )
-            if id is not None
+            PlannedSessionId(s.pk) for s in row.sessions.all() if intent_executions(s).exists()
         )
         return PlanSnapshot(
             plan_header(row),
@@ -164,6 +171,7 @@ class DjangoPlanRepository:
         self, owner: AccountId, data: PlanDefinition, previous: PlanHeader | None
     ) -> PlanHeader:
         # Resolve the owned goal before insertion, preserving legacy proposal error mapping.
+        lock_account(owner, TrainingPlan.objects.db)
         goal = Goal.objects.get(pk=data.goal, owner_id=owner)
         row = TrainingPlan(
             owner_id=owner,
@@ -194,6 +202,11 @@ class DjangoPlanRepository:
                         focus=cycle.focus,
                     )
         for scheduled in data.sessions:
+            source = None
+            if scheduled.source_id is not None:
+                source = PlannedSession.objects.get(
+                    pk=scheduled.source_id, owner_id=owner, plan__lineage=row.lineage
+                )
             item = PlannedSession.objects.create(
                 owner_id=owner,
                 plan=row,
@@ -201,17 +214,36 @@ class DjangoPlanRepository:
                 title=scheduled.title,
                 date=scheduled.date,
                 notes=scheduled.notes,
+                origin_id=(source.origin_id or source.pk) if source else None,
+                supersedes=source,
+                status=scheduled.status.value,
+                revision=source.revision + 1 if source else 1,
             )
             save_prescription(item, scheduled.blocks)
         return plan_header(row)
 
+    def annotate_change(
+        self,
+        plan: PlanHeader,
+        reason: str,
+        kind: str,
+        day: date,
+        restored_from: PlanId | None = None,
+    ) -> None:
+        row = TrainingPlan.objects.get(pk=plan.id, owner_id=plan.owner)
+        row.change_kind, row.change_reason = kind, reason
+        row.changed_by_id, row.effective_on, row.restored_from_id = plan.owner, day, restored_from
+        row.save()
+
     def save_goal(self, owner: AccountId, data: GoalData) -> GoalId:
+        lock_account(owner, Goal.objects.db)
         values = {field.name: getattr(data, field.name) for field in fields(GoalData)}
         row = Goal.objects.create(owner_id=owner, **values)
         return GoalId(row.pk)
 
     def cycle_context(self, command: AddCycle) -> CycleCreationContext:
         plan = TrainingPlan.objects.get(pk=command.plan, owner_id=command.owner)
+        lock_plan(plan.pk, plan._state.db or "default")
         parent = (
             Cycle.objects.get(pk=command.parent, plan__owner_id=command.owner)
             if command.parent is not None
@@ -227,6 +259,7 @@ class DjangoPlanRepository:
 
     def schedule_context(self, command: ScheduleSession) -> ScheduleCreationContext:
         plan = TrainingPlan.objects.get(pk=command.plan, owner_id=command.owner)
+        lock_plan(plan.pk, plan._state.db or "default")
         cycle = Cycle.objects.get(pk=command.cycle, plan__owner_id=command.owner)
         return ScheduleCreationContext(
             cycle_definition(cycle),
@@ -268,21 +301,18 @@ class DjangoPlanRepository:
 
     def scheduled(self, owner: AccountId, id: PlannedSessionId, *, lock: bool) -> ScheduledState:
         query = PlannedSession.objects.filter(pk=id, owner_id=owner)
-        row = (query.select_for_update() if lock else query).first()
+        if lock and query.exists():
+            lock_scheduled(id, query.db)
+        row = query.first()
         if row is None:
             raise PlanningUnavailable
         return scheduled_state(row)
 
-    def reschedule(self, current: ScheduledState, date: date) -> ScheduledState:
-        row = PlannedSession.objects.get(pk=current.id, owner_id=current.owner)
-        row.date, row.revision = date, int(current.revision) + 1
-        save_validated(row)
-        return scheduled_state(row)
-
     def calendar(self, owner: AccountId, start: date, end: date) -> tuple[ScheduledState, ...]:
+        from .calendar import effective_sessions
+
         return tuple(
             scheduled_state(row)
-            for row in PlannedSession.objects.filter(
-                owner_id=owner, date__gte=start, date__lte=end
-            ).order_by("date", "pk")
+            for row in effective_sessions(owner, self.local_date)
+            if start <= row.date <= end
         )

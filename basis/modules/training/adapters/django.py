@@ -3,7 +3,7 @@
 from dataclasses import fields
 from uuid import uuid4
 
-from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from basis.modules.training.adapters.models import (
@@ -84,12 +84,27 @@ class UUIDSessionIds:
 
 class DjangoSessionRepository:
     def lock_owner(self, owner: AccountId) -> None:
-        get_user_model().objects.select_for_update().get(pk=owner)
+        from basis.adapters.django.account_locks import lock_account
+
+        lock_account(owner, Session.objects.db)
 
     def prescription(self, owner: AccountId, planned: PlannedSessionId) -> Prescription:
-        row = PlannedSession.objects.select_for_update().filter(pk=planned, owner_id=owner).first()
+        from .locking import intent_executions, lock_scheduled
+        from .models import TrainingPlan
+
+        row = PlannedSession.objects.filter(pk=planned, owner_id=owner).first()
         if row is None:
             raise Unavailable("Prescripción no disponible.")
+        row = lock_scheduled(row.pk, row._state.db or "default")
+        if (
+            TrainingPlan.objects.filter(previous_id=row.plan_id).exists()
+            or row.status != "scheduled"
+        ):
+            raise ValidationError(
+                "La prescripción fue sustituida, cancelada u omitida. Consulta la versión actual."
+            )
+        if intent_executions(row).filter(status="completed").exists():
+            raise ValidationError("Esta intención ya se completó y se conserva como historial.")
         return Prescription(
             PlannedSessionId(int(row.pk)),
             owner,
@@ -98,23 +113,41 @@ class DjangoSessionRepository:
         )
 
     def active(self, owner: AccountId, planned: PlannedSessionId) -> SessionState | None:
-        row = Session.objects.filter(
-            owner_id=owner, planned_id=planned, status="in_progress"
-        ).first()
+        from .locking import intent_executions
+
+        prescription = PlannedSession.objects.get(owner_id=owner, pk=planned)
+        row = intent_executions(prescription).filter(status="in_progress").first()
         return session_state(row) if row is not None else None
 
-    def get(self, session: SessionId, *, lock: bool) -> SessionState | None:
+    def get(
+        self, session: SessionId, *, lock: bool, owner: AccountId | None = None
+    ) -> SessionState | None:
         query = Session.objects.all()
+        if owner is not None:
+            query = query.filter(owner_id=owner)
+            if (
+                not query.filter(pk=session).exists()
+                and Session.objects.filter(pk=session).exists()
+            ):
+                raise Unavailable("La sesión no está disponible.")
         if lock:
+            from .locking import lock_execution
+
+            if query.filter(pk=session).exists():
+                lock_execution(session, query.db)
             query = query.select_for_update()
         row = query.filter(pk=session).first()
         return session_state(row) if row is not None else None
 
     def check_plan(self, owner: AccountId, planned: PlannedSessionId) -> None:
-        if not PlannedSession.objects.filter(pk=planned, owner_id=owner).exists():
-            raise InvalidExecution("Prescripción no disponible.")
+        from .locking import intent_executions
+
+        self.prescription(owner, planned)
+        if intent_executions(PlannedSession.objects.get(pk=planned, owner_id=owner)).exists():
+            raise InvalidExecution("La intención ya tiene una ejecución. Continúa esa sesión.")
 
     def save(self, state: SessionState) -> SessionState:
+        self.lock_owner(state.owner)
         row = Session.objects.filter(pk=state.id).first()
         if row is None:
             row = Session(id=state.id, owner_id=state.owner)

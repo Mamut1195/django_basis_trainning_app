@@ -22,8 +22,8 @@ def start_session(owner: AbstractBaseUser, planned: PlannedSession) -> Session:
     return Session.objects.get(pk=state.id)
 
 
-def revise_plan(owner: AbstractBaseUser, plan: TrainingPlan) -> TrainingPlan:
-    return planning.revise(owner.pk, plan.pk)
+def revise_plan(owner: AbstractBaseUser, plan: TrainingPlan, reason: str = "") -> TrainingPlan:
+    return planning.revise(owner.pk, plan.pk, reason)
 
 
 def progress_report(owner: AbstractBaseUser) -> dict[str, object]:

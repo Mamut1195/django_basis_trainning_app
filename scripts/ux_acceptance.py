@@ -520,9 +520,11 @@ def browser(origin: str, output: Path, executable: str) -> dict[str, object]:
             tasks.append("keyboard_skip_theme_focus")
             page.goto(origin + pages["scheduled"] + "reschedule/")
             page.locator("input[name=date]").fill(str(data["rescheduled_date"]))
+            page.locator("textarea[name=reason]").fill("Cambio de disponibilidad de la fixture UX")
             submit(page)
-            assert page.url.endswith(pages["scheduled"])
-            page.goto(origin + pages["scheduled"] + "reschedule/")
+            assert "/scheduled/" in page.url and not page.url.endswith(pages["scheduled"])
+            assert page.get_by_role("link", name="Consultar prescripción original").count() == 1
+            page.goto(page.url + "reschedule/")
             assert page.locator("input[name=date]").input_value() == data["rescheduled_date"]
             tasks.append("reschedule_real_post_and_persisted_date")
             session_url = create_session(page, origin, "Sesión UX ficticia")

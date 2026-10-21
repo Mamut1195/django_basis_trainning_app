@@ -68,9 +68,12 @@ class MemoryRepository:
         self.failures: set[str] = set()
         self.locks: list[ParentRef] = []
 
-    def parent(self, ref: ParentRef, *, lock: bool) -> ParentState | None:
+    def parent(
+        self, ref: ParentRef, *, lock: bool, owner: AccountId | None = None
+    ) -> ParentState | None:
         if lock:
             self.locks.append(ref)
+        # Keep this port permissive to prove the application owner guard too.
         return self.state.parents.get(ref)
 
     def block(self, id: BlockId) -> BlockContext | None:
@@ -208,6 +211,28 @@ class PureManualTests(ManualContract, TestCase):
         )
         self.assertEqual(self.repository.locks, [SessionParent(id)])
         self.assertEqual(self.repository.state.metrics[self.first_block(id)][0].value, Decimal(0))
+
+    def test_anticipated_revision_does_not_authorize_a_prelock_target_context(self) -> None:
+        from unittest.mock import patch
+
+        ref = PlannedParent(PlannedSessionId(10))
+        block = BlockId(11)
+        first = (Metric(MetricName.DURATION_SECONDS, Decimal(1800)),)
+        self.repository.state.parents[ref] = ParentState(ref, self.owner, date.today(), Revision(2))
+        locator = BlockContext(block, ref, "running")
+        fresh = replace(locator, target=first)
+        with patch.object(self.repository, "block", side_effect=[locator, fresh]):
+            with self.assertRaises(ManualInvalid):
+                self.service.save_metrics(
+                    SaveBlockMetrics(
+                        self.owner,
+                        block,
+                        Revision(2),
+                        (Metric(MetricName.DURATION_SECONDS, Decimal(999)),),
+                    )
+                )
+        self.assertEqual(self.repository.state.parents[ref].revision, 2)
+        self.assertNotIn(block, self.repository.state.metrics)
 
     def test_completed_and_frozen_parents_rejected_with_permissive_repository(self) -> None:
         id = self.create()

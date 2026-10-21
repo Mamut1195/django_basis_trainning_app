@@ -1,10 +1,9 @@
 """Read projections and owner-scoped trekking persistence on stable tables."""
 
-from datetime import date
+from collections.abc import Callable
+from datetime import date, datetime
 
-from django.db.models.functions import TruncDate
-
-from basis.modules.training.adapters.models import PlannedSession, Session, TrekStage, TrekTrip
+from basis.modules.training.adapters.models import Session, TrekStage, TrekTrip
 from basis.shared.identifiers import AccountId, SessionId, TrekStageId, TrekTripId
 
 from ..application.progress import AddStage, CreateTrip
@@ -34,6 +33,9 @@ def progress_session(row: Session) -> ProgressSession:
 
 
 class DjangoProgressRepository:
+    def __init__(self, local_date: Callable[[AccountId, datetime], date] | None = None) -> None:
+        self.local_date = local_date
+
     def sessions(self, owner: AccountId) -> tuple[ProgressSession, ...]:
         rows = Session.objects.filter(owner_id=owner, status="completed").prefetch_related(
             "blocks__sets", "blocks__intervals"
@@ -41,20 +43,18 @@ class DjangoProgressRepository:
         return tuple(progress_session(s) for s in rows)
 
     def scheduled(self, owner: AccountId, today: date) -> tuple[ScheduledProgress, ...]:
-        # Database date conversion preserves Django's current timezone and historical
-        # __date semantics rather than truncating UTC timestamps in the domain.
-        rows = (
-            PlannedSession.objects.filter(owner_id=owner, date__lte=today)
-            .annotate(replacement_date=TruncDate("plan__next_version__created_at"))
-            .prefetch_related("executions")
-        )
+        from .calendar import effective_sessions
+        from .locking import intent_executions
+
+        rows = effective_sessions(owner, self.local_date)
         return tuple(
             ScheduledProgress(
                 s.date,
-                any(e.status == "completed" for e in s.executions.all()),
-                s.replacement_date,
+                intent_executions(s).filter(status="completed").exists(),
+                None,
             )
             for s in rows
+            if s.date <= today and s.status != "cancelled"
         )
 
     def stages(self, owner: AccountId, trip: TrekTripId) -> tuple[ProgressSession, ...]:

@@ -167,7 +167,7 @@ class TrainingContractTests(TestCase):
             self.assertFalse(self.scheduled["Natación técnica"].executions.exists())
             self.assertEqual(partial.status, "in_progress")
             self.assertIsNone(partial.load)
-            new = revise_plan(self.owner, self.plan)
+            new = revise_plan(self.owner, self.plan, review["reason"])
             self.assertEqual(
                 (new.lineage, new.version, new.previous_id), (self.plan.lineage, 2, self.plan.pk)
             )
@@ -183,11 +183,16 @@ class TrainingContractTests(TestCase):
             self.client.force_login(self.owner)
             response = self.client.post(
                 reverse("scheduled-reschedule", args=[moved.pk]),
-                {"date": review["to"], "revision": moved.revision},
+                {"date": review["to"], "revision": moved.revision, "reason": review["reason"]},
             )
             self.assertEqual(response.status_code, 302)
-            moved.refresh_from_db()
-            self.assertEqual((moved.date.isoformat(), moved.revision), (review["to"], 2))
+            original_moved = moved
+            moved = PlannedSession.objects.get(
+                pk=int(response["Location"].rstrip("/").split("/")[-1])
+            )
+            self.assertEqual(original_moved.date.isoformat(), review["from"])
+            self.assertEqual((moved.date.isoformat(), moved.revision), (review["to"], 3))
+            new = moved.plan
             self.assert_report(self.week["expected"]["after_reschedule"])
             with self.assertRaises(ValidationError):
                 revise_plan(self.owner, self.plan)

@@ -69,21 +69,21 @@ class ExportOwnershipTests(TestCase):
         planned = PlannedSession.objects.create(
             owner=owner, plan=plan, cycle=cycles[-1], title="Scheduled", date=day
         )
-        session = Session.objects.create(owner=owner, planned=planned, title="Execution", date=day)
         planned_strength = Block.objects.create(planned=planned, sport="strength", title="Strength")
+        planned_running = Block.objects.create(planned=planned, sport="running", title="Running")
+        prescribed_set = StrengthSet.objects.create(block=planned_strength, exercise=exercise)
+        prescribed_interval = Interval.objects.create(block=planned_running)
+        session = Session.objects.create(owner=owner, planned=planned, title="Execution", date=day)
         executed_strength = Block.objects.create(
             session=session, sport="strength", title="Strength"
         )
-        planned_running = Block.objects.create(planned=planned, sport="running", title="Running")
         executed_running = Block.objects.create(session=session, sport="running", title="Running")
         hiking = Block.objects.create(session=session, sport="hiking", title="Hiking")
         sets = [
-            StrengthSet.objects.create(block=block, exercise=exercise)
-            for block in (planned_strength, executed_strength)
+            prescribed_set,
+            StrengthSet.objects.create(block=executed_strength, exercise=exercise),
         ]
-        intervals = [
-            Interval.objects.create(block=block) for block in (planned_running, executed_running)
-        ]
+        intervals = [prescribed_interval, Interval.objects.create(block=executed_running)]
         trip = TrekTrip.objects.create(owner=owner, title="Trekking")
         stage = TrekStage.objects.create(trip=trip, session=session, order=1)
         period = UsagePeriod.objects.create(owner=owner, key="export-test")

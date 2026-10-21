@@ -65,8 +65,12 @@ class FakeRepository:
             None,
         )
 
-    def get(self, session: SessionId, *, lock: bool) -> SessionState | None:
+    def get(
+        self, session: SessionId, *, lock: bool, owner: AccountId | None = None
+    ) -> SessionState | None:
         self.events.append("lock-session" if lock else "read")
+        # Deliberately permissive: core ownership guards must still work when a
+        # port accepts but does not implement the optional SQL scoping hint.
         return self.rows.get(session)
 
     def save(self, state: SessionState) -> SessionState:
@@ -139,6 +143,7 @@ class ExecutionTests(TestCase):
 
     def test_start_copies_prescription_without_actuals_or_invented_measurements(self) -> None:
         started = self.start()
+        self.assertEqual(self.repository.events[:2], ["lock-account", "lock-planned"])
         self.assertEqual(started.id, SID)
         self.assertEqual(started.date, TODAY)
         self.assertEqual(started.blocks[0].target, BLOCK.target)

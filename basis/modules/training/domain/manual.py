@@ -34,6 +34,7 @@ class ParentState:
     completed: bool = False
     frozen: bool = False
     from_prescription: bool = False
+    versioned_intent: bool = False
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,13 @@ class ManualSessionData:
 
 class ManualInvalid(Exception):
     pass
+
+
+def require_versioned_edit(parent: ParentState, changed: bool) -> None:
+    if isinstance(parent.ref, PlannedParent) and changed and not parent.versioned_intent:
+        raise ManualInvalid(
+            "Crea una nueva versión del plan con motivo antes de cambiar la prescripción original."
+        )
 
 
 class ManualConflict(Exception):

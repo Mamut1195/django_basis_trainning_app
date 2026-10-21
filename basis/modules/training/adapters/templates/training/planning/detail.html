@@ -10,12 +10,9 @@
       <c-ui.button href="{% url 'scheduled-new' %}">
         Programar sesión
       </c-ui.button>
-      <form method="post" action="{% url 'plan-revise' plan.pk %}">
-        {% csrf_token %}
-        <c-ui.button type="submit">
-          Crear nueva versión
-        </c-ui.button>
-      </form>
+      <c-ui.button href="{% url 'plan-revise' plan.pk %}">
+        Crear nueva versión
+      </c-ui.button>
     {% endif %}
     {% if plan.previous %}
       <a href="{% url 'plan-detail' plan.previous_id %}">Versión anterior</a>
@@ -23,10 +20,10 @@
   </div>
   <div class="split">
     <c-basis.card title="Calendario">
-      {% for item in scheduled %}
+      {% for item, state in scheduled %}
         <div class="card-line row">
           <div>
-            <small>{{ item.date|date:'l, j M' }}</small>
+            <small>{{ item.date|date:'l, j M' }} · {{ state }}</small>
             <h3>
               <a href="{% url 'scheduled-detail' item.pk %}">{{ item.title }}</a>
             </h3>
@@ -54,4 +51,31 @@
       {% endfor %}
     </c-basis.card>
   </div>
+  <c-basis.card title="Versiones y motivos">
+    {% for version in versions %}
+      <div class="card-line">
+        <a href="{% url 'plan-detail' version.pk %}">Versión {{ version.version }}</a>
+        <p>{{ version.change_reason|default:'Sin motivo histórico registrado' }}</p>
+        {% if version.changed_by %}
+          <small>{{ version.created_at }} · {{ version.changed_by }}</small>
+        {% endif %}
+        <a href="?compare={{ version.pk }}">Comparar con v{{ version.version }}</a>
+        {% if editable and version.pk != plan.pk %}
+          <a href="{% url 'plan-restore' plan.pk version.pk %}">Restaurar v{{ version.version }} como nueva versión</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </c-basis.card>
+  {% if comparison %}
+    <c-basis.card title="Intención de la versión elegida">
+      <h3>Versión {{ comparison.version }}</h3>
+      <p>{{ comparison.change_reason|default:'Sin motivo histórico registrado' }}</p>
+      {% for item in comparison_sessions %}
+        <div class="card-line">
+          <a href="{% url 'scheduled-detail' item.pk %}">{{ item.title }}</a>
+          <small>{{ item.date|date:'j M Y' }} · {{ item.get_status_display }}</small>
+        </div>
+      {% endfor %}
+    </c-basis.card>
+  {% endif %}
 {% endblock %}

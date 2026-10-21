@@ -114,7 +114,7 @@ class DomainTests(TestCase):
         execution = start_session(self.owner, scheduled)
         self.assertEqual(required(execution.blocks.first()).target, {"duration_seconds": "1800"})
         self.assertEqual(required(execution.blocks.first()).actual, {})
-        new = revise_plan(self.owner, plan)
+        new = revise_plan(self.owner, plan, "Revisión por disponibilidad")
         execution.refresh_from_db()
         self.assertEqual(required(execution.planned).plan_id, plan.pk)
         self.assertEqual(new.version, 2)

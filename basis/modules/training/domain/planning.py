@@ -31,6 +31,16 @@ class CycleKind(StrEnum):
     MICRO = "micro"
 
 
+class ScheduleStatus(StrEnum):
+    SCHEDULED = "scheduled"
+    SKIPPED = "skipped"
+    CANCELLED = "cancelled"
+
+
+class PlanningConflict(InvalidPlanning):
+    """The intent/version changed; refresh before retrying."""
+
+
 @dataclass(frozen=True)
 class GoalData:
     title: str
@@ -63,6 +73,8 @@ class ScheduledDefinition:
     blocks: tuple[BlockData, ...] = ()
     notes: str = ""
     source_id: PlannedSessionId | None = None
+    origin_id: PlannedSessionId | None = None
+    status: ScheduleStatus = ScheduleStatus.SCHEDULED
 
 
 @dataclass(frozen=True)
@@ -102,6 +114,7 @@ class ScheduledState:
     definition: ScheduledDefinition
     cycle: CycleDefinition
     has_executions: bool
+    has_successor: bool = False
 
 
 def require_plan_ownership(
@@ -200,7 +213,7 @@ def validate_prescription(blocks: tuple[BlockData, ...]) -> None:
             )
 
 
-def validate_definition(data: PlanDefinition) -> None:
+def validate_definition(data: PlanDefinition, *, allow_drafts: bool = False) -> None:
     validate_dates(data.start_date, data.end_date)
     cycles: dict[str, CycleDefinition] = {}
     for kind in CycleKind:
@@ -218,18 +231,32 @@ def validate_definition(data: PlanDefinition) -> None:
                 cycles.get(cycle.parent) if cycle.parent is not None else None,
             )
             cycles[cycle.key] = cycle
+    intents: set[PlannedSessionId] = set()
     for session in data.sessions:
+        root = session.origin_id or session.source_id
+        if root is not None:
+            if root in intents:
+                raise InvalidPlanning("La versión no puede duplicar una intención programada.")
+            intents.add(root)
         if session.cycle_key not in cycles:
             raise InvalidPlanning(
                 "Propuesta incompleta, objetivo ajeno o estructura inv\u00e1lida."
             )
         validate_schedule(session, cycles[session.cycle_key])
-        validate_prescription(session.blocks)
+        if session.blocks or not allow_drafts:
+            validate_prescription(session.blocks)
 
 
 def require_current_plan(has_successor: bool) -> None:
     if has_successor:
-        raise InvalidPlanning("Ya existe una versi\u00f3n posterior.")
+        raise PlanningConflict("Ya existe una versión posterior. Recarga el plan.")
+
+
+def require_reason(reason: str) -> str:
+    value = reason.strip()
+    if not value or len(value) > 1000:
+        raise InvalidPlanning("Indica un motivo de entre 1 y 1000 caracteres.")
+    return value
 
 
 def revision_definition(current: PlanSnapshot, today: date) -> PlanDefinition:
@@ -237,7 +264,7 @@ def revision_definition(current: PlanSnapshot, today: date) -> PlanDefinition:
     return replace(
         current.definition,
         sessions=tuple(
-            replace(session, source_id=None)
+            session
             for session in current.definition.sessions
             if session.date >= today and session.source_id not in current.executed
         ),
@@ -245,7 +272,8 @@ def revision_definition(current: PlanSnapshot, today: date) -> PlanDefinition:
 
 
 def require_reschedulable(current: ScheduledState, expected: Revision) -> None:
+    require_current_plan(current.has_successor)
     if current.has_executions or current.revision != expected:
-        raise InvalidPlanning(
+        raise PlanningConflict(
             "La sesi\u00f3n cambi\u00f3 o ya tiene ejecuciones. Crea otra versi\u00f3n del plan."
         )

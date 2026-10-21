@@ -1,7 +1,7 @@
 """Progress reads and owner-scoped trekking writes through explicit ports."""
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from typing import Callable, Protocol
 
 from basis.shared.identifiers import AccountId, TrekStageId, TrekTripId
@@ -58,6 +58,7 @@ class Progress:
         authorization: WriteAuthorization,
         uow: Callable[[], UnitOfWork],
         clock: Clock,
+        local_date: Callable[[AccountId, datetime], date] | None = None,
     ) -> None:
         self.repository, self.authorization, self.uow, self.clock = (
             repository,
@@ -65,9 +66,14 @@ class Progress:
             uow,
             clock,
         )
+        self.local_date = local_date
 
     def read(self, command: ReadProgress) -> ProgressReport:
-        today = self.clock.today()
+        today = (
+            self.local_date(command.owner, self.clock.now())
+            if self.local_date
+            else self.clock.today()
+        )
         return report(
             self.repository.sessions(command.owner),
             self.repository.scheduled(command.owner, today),

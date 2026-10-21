@@ -10,10 +10,12 @@ urlpatterns = [
     path("plans/new/", training.plan_new, name="plan-new"),
     path("plans/<int:pk>/", training.plan_detail, name="plan-detail"),
     path("plans/<int:pk>/revise/", training.plan_revise, name="plan-revise"),
+    path("plans/<int:pk>/restore/<int:target>/", training.plan_restore, name="plan-restore"),
     path("plans/<int:pk>/cycles/new/", training.cycle_new, name="cycle-new"),
     path("scheduled/new/", training.scheduled_new, name="scheduled-new"),
     path("scheduled/<int:pk>/", training.scheduled_detail, name="scheduled-detail"),
     path("scheduled/<int:pk>/start/", training.scheduled_start, name="scheduled-start"),
+    path("scheduled/<int:pk>/change/", training.scheduled_change, name="scheduled-change"),
     path(
         "scheduled/<int:pk>/reschedule/", training.scheduled_reschedule, name="scheduled-reschedule"
     ),

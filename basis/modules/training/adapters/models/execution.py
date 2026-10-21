@@ -41,6 +41,21 @@ from .planning import PlannedSession
 _rm_references: RMReferences | None = None
 
 
+def require_mutable_prescription(block: "Block") -> None:
+    if block.planned_id:
+        from .planning import TrainingPlan
+
+        planned = block.planned
+        assert planned is not None
+        if (
+            planned.executions.exists()
+            or TrainingPlan.objects.using(planned._state.db)
+            .filter(previous_id=planned.plan_id)
+            .exists()
+        ):
+            raise ValidationError("La prescripción histórica es inmutable. Crea otra versión.")
+
+
 def configure_rm_references(references: RMReferences) -> None:
     global _rm_references
     _rm_references = references
@@ -123,6 +138,7 @@ class Block(ValidatedModel):
     def clean(self) -> None:
         if bool(self.planned_id) == bool(self.session_id):
             raise ValidationError("Un bloque pertenece a prescripción o ejecución.")
+        require_mutable_prescription(self)
         self.target = validate_metrics(self.sport, self.target)
         self.actual = validate_metrics(self.sport, self.actual)
         if self.planned_id:
@@ -237,6 +253,7 @@ class StrengthSet(ValidatedModel):
             validate_component_sport(self.block.sport, strength=True)
         except InvalidExecution as error:
             raise ValidationError(str(error)) from error
+        require_mutable_prescription(self.block)
         has_results = any(
             value is not None
             for value in (
@@ -312,6 +329,7 @@ class Interval(ValidatedModel):
         ordering = ["order", "pk"]
 
     def clean(self) -> None:
+        require_mutable_prescription(self.block)
         try:
             validate_component_sport(self.block.sport, strength=False)
         except InvalidExecution as error:
