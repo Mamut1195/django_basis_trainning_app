@@ -49,5 +49,6 @@ class ExerciseSerializer(serializers.ModelSerializer[Exercise]):
             "musculos_principales",
             "equipo",
             "variante",
+            "variante_de",
             "archivado",
         ]
