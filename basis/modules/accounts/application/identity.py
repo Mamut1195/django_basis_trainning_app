@@ -9,7 +9,13 @@ from basis.modules.billing.public import BillingEnrollment
 from basis.shared.identifiers import AccountId, AthleteId
 from basis.shared.ports import Clock, UnitOfWork
 
-from ..domain.identity import Account, RateState, VerificationClaim, consume_attempt
+from ..domain.identity import (
+    Account,
+    RateState,
+    RegistrationConflict,
+    VerificationClaim,
+    consume_attempt,
+)
 
 
 @dataclass(frozen=True)
@@ -83,6 +89,8 @@ class Identity:
     def register(self, command: RegisterAccount) -> Account:
         # Form validation/hashing stays in Django. Mail failure must roll back all rows.
         with self.uow() as work:
+            if self.email_in_use(command.email):
+                raise RegistrationConflict
             account = self.accounts.create_inactive(command)
             self.athletes.enroll(account.id, account.name, account.email, self.clock.today())
             self.billing.enroll(account.id)
