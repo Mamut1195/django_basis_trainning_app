@@ -4,8 +4,7 @@
 
 Base de implementación: `c8b9ae8ab4cb53290d9445aa23ebf2060ab57fd3`. Criterios literales:
 export saneado de Luna `luna-auth-plan-20261021-0241/luna-auth-plan.sources.sanitized.md`,
-sección MAM-620, líneas 123–139. Esta entrega local no cierra el ticket ni su
-dependencia MAM-810. El usuario eligió explícitamente **Perfil gratuito**:
+sección MAM-620, líneas 123–139. Las capturas locales de implementación siguientes conservan su contexto anterior a integración; el [readback final](#readback-de-integracion-y-cierre-2026-10-21) registra MAM-620 y su dependencia810 Done. El usuario eligió explícitamente **Perfil gratuito**:
 perfil, objetivo personal de texto, disponibilidad, disciplinas y mediciones de
 peso requieren cuenta activa, perfil vinculado y correo verificado, sin suscripción.
 La misma autorización se aplica en HTTP y casos de uso. La lectura/exportación
@@ -126,8 +125,14 @@ estructuradas/planes, calendario, prescripción e IA mantienen sus guardias y
 cuotas actuales. Crear/activar una prueba, checkout o cambiar billing no forma
 parte del onboarding gratuito. La UI separa CTA gratuitos de acciones comerciales.
 
-No se tocan `test_identity.py`, `test_installation.py`, accounts/config, CI,
+Registro histórico de la implementación aislada: no se tocaron `test_identity.py`, `test_installation.py`, accounts/config, CI,
 README ni ROADMAP. La integración con el estado `EmailVerification` del candidato
 MAM-810 debe volver a comprobar actividad/verificación y el vínculo persistido;
 la prueba aislada sobre esta base no acredita esa composición futura. El ticket
-620 sigue pendiente de MAM-810 Done, revisión e integración/readback.
+620 seguía pendiente de MAM-810 Done, revisión e integración/readback en aquella captura. Ese pendiente quedó resuelto por el readback siguiente; no se reescriben sus fallos ni recibos.
+
+## Readback de integracion y cierre 2026-10-21
+
+**MAM-620 ya estaba Done cuando Luna lo verificó**, `completedAt=2026-10-21T05:03:54.506Z`; se conservó, sin transición nueva. [PR #7](https://github.com/Mamut1195/django_basis_trainning_app/pull/7), merge `25af153d5108d39c97bf5cda6fea58d6a6346f7b`; [CI postmerge 39547452496](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39547452496) SUCCESS:346PG/176puras, mypy115/340 y ocho contratos. La composición integrada con810 mantiene perfil/objetivo de texto/preferencias/disciplinas/peso gratuitos bajo autorización personal; consulta/exportación propias conservan su política autenticada. RM, entrenamiento, Goal estructurado, planes e IA siguen comerciales.
+
+Procedencia del [artefacto12322016375](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39547452496/artifacts/12322016375): **miembro `operations.json` SHA256 `7b66b7d53e6ed3d13cfdf533839fc50dd89a65dc501bedbc53156366ca302da0`**, no el ZIP; **ZIP SHA256 `43605d796a55fac63a50d0f3b5add73e080b6ed7215c5c7486f22082240d85d8`**. El fixture CI tiene10EmailVerification y0Measurement, no estados individuales verificables. Las3mediciones y12verificaciones de la restauración local son evidencia suplementaria separada, no conteos de CI. Los564hashes del candidato integrado y160/160HTTP200 constan en el readback de Luna, no como una ejecución local nueva de esta conciliación. SMTP/proveedores LIVE, producción y dispositivos físicos siguen NOT RUN. Fuente y cadena posterior: [diario de cierre](DEVELOPMENT_2026-10-21.md#procedencia-y-limites-de-la-evidencia).

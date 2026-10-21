@@ -69,7 +69,7 @@ Migración aditiva `basis_training.0003_execution_identity`, después de0002: so
 
 Las lecturas de snapshots precargan bloques/series/intervalos de forma acotada; las pantallas precargan ejercicios originales/reales. Se valida revisión y propietario antes de convertir el cuerpo tardío; errores de un hijo o del receipt revierten toda la mutación. El perfil personal gratuito y las guardas comerciales/CSRF permanecen sin cambios.
 
-## Evidencia de la entrega
+## Evidencia de la entrega (captura anterior a integracion)
 
 El inventario final congelado vive en `.cache/MAM623_CANDIDATE.json`; el nuevo gate compuesto se documenta en `.cache/MAM623_FINAL_CANDIDATE_REPORT.md`, con manifests antes/después, comandos, logs y recursos propios por run. `.cache/MAM623_IMPLEMENTATION_REPORT.md`, los reportes backend/fidelity y `.cache/MAM623_CLIENT_REVISION_REPORT.md` se conservan como snapshots de sus fases, incluidos los fallos. No se atribuyen390PG/179puras de PR8 ni otros PASS previos a esta ejecución final.
 
@@ -88,3 +88,13 @@ Separadamente, el runner versionado fue inspeccionado y reejecutado: **21/21 esc
 El backend tiene **APPROVE independiente** sobre el congeladofe9; el cotejo completo verifica584archivos iguales y solo los dos cambios cliente (`offline.js` y runner), incluidos390Python ajenos al runner intactos. Los429PG/191puras/118+358mypy/8contratos del gate anterior siguen siendo evidencia histórica de ese árbol, no ejecuciones nuevas del revisor cliente. Inventario:29modelos de negocio,35registrados totales,39tablas,35secuencias y30migraciones; upgrade29→30 verificado por el revisor backend.
 
 La adición documental genera un binding de entrega nuevo en `.cache/MAM623_RELEASE_BINDING_SOL.json`; `.cache/MAM623_CANDIDATE.json` permanece como manifiesto históricofe9. Los dictámenes son revisiones locales, no reviews formales de GitHub. Integración y CI alojado del SHA exacto se verifican después; no se acredita SMTP/IA/pagosLIVE, dispositivos físicos ni lectura humana de otros hitos, y esta nota no cierra623.
+
+## Readback de integracion y cierre 2026-10-21
+
+**MAM-623 ya estaba Done** en el primer readback de Luna, `completedAt=2026-10-21T19:29:27.562Z`, conservado sin nueva transición. Los cuatro criterios quedaron VERIFIED. Luna actualizó el comentario existente `8e90525d-2e80-44db-a483-f5f93e0fe8d8` a `2026-10-21T19:47:08.184Z` y cotejó exactamente el cuerpo de retorno. El inventario final de las19:47:27.908UTC conserva46tickets,22Done/23InProgress/1Backlog. Los pendientes de integración/revisión de las capturas anteriores ya fueron resueltos; sus FAIL y manifests siguen históricos.
+
+[PR #9](https://github.com/Mamut1195/django_basis_trainning_app/pull/9) MERGED: commit `dbae5dbc767d69d3d294478583d84144d7f452f8`, merge `71751bd2ee10fa7dff9f2c7a9d4f9ccda7c6c2cd`. [CI postmerge 39662083662](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39662083662) SUCCESS en ese SHA:429PG/191puras, mypy118/358 y ocho contratos, más Docker/Gunicorn/logging/health. Las5sondas/6receipts y el runner21/21/32receipts anteriores siguen siendo pruebas locales; Luna no repitió navegador ni los contó como CI.
+
+[Artefacto12376055219](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39662083662/artifacts/12376055219): JSON SHA256 `5255fb5c3c4171782ab1b81aa3460e557d5ce8abd083822167f322914fda8717`, ZIP `9c12532fc51184fdbac72cba37c27b3539eaaa86f89835f5b52981d184c80c8c`;586hashes de fuente y586GitblobIDs cotejados al merge. CI restaura39tablas/35secuencias,30migraciones y160/160HTTP200; su fixture10perfiles/20planes/120sesiones/360series/10RM **no incluye el suplemento local específico de adaptación**. Inventario29modelos de negocio/35registrados totales; no son35modelos de negocio.
+
+Las aprobaciones independientes son locales, no reviews formales de GitHub. La consulta de reviews/comentarios/latestReviews de PR9 fue denegada a Luna y no se reintentó; el dato comunicado de cero reviews no se presenta como revalidado en ese puente. [Fuentes del cierre y límites](DEVELOPMENT_2026-10-21.md#procedencia-y-limites-de-la-evidencia). SMTP/provider LIVE, producción, dispositivos físicos y los gates humanos626/627 no se certifican con este cierre.

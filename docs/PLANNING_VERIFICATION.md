@@ -29,7 +29,7 @@ Las filas anteriores a la migración no reciben vínculos inferidos por título,
 
 La fecha de Hoy, inicio, revisión/restauración y corte del informe se obtiene de la zona IANA del atleta mediante `AthletePresentation.timezone`, contrato público de solo lectura. No consulta datos privados de athletes desde training ni crea preferencias al leer. Zona ausente utiliza la configuración del producto. No se convierte una disponibilidad parcial o ausente en una prohibición global ni se interpretan limitaciones libres como diagnóstico. Cambios entre microciclos deben escoger un destino del mismo plan y pasar contención temporal.
 
-## Correcciones de revisión R1/R2/R3
+## Correcciones de revisión R1/R2/R3 (registro histórico)
 
 La revisión independiente del candidato authored `836380…` fue **BLOCK**: el contrato de lock anterior omitía la cuenta y las FK al COMMIT, y las ocho carreras iniciales no cubrían ese cruce. Sus reportes/logs se conservan como historia, no como aceptación del candidato corregido.
 
@@ -51,4 +51,10 @@ La fuente de resultados de esta corrección es `.cache/MAM622_REVISION_REPORT.md
 
 Cobertura requerida: dominio puro; creación y consulta completa; motivos y snapshots; estados; restauración con resultados/partial; privacidad/pago/CSRF; upgrade real desde las 28 migraciones anteriores; carreras PostgreSQL con conexiones distintas y espera real de bloqueo; fallback SQLite; Chromium a 390/1440; backup/restore con filas que usan las nuevas relaciones. Proveedores externos, dispositivos físicos y SMTP LIVE no forman parte de esta ejecución local.
 
-Esta documentación no marca 622 Done ni acredita integración. El cierre requiere revisión, release/CI y readback autorizado, incluida la dependencia formal 620.
+En esa captura, esta documentación no marcaba622 Done ni acreditaba integración; requería revisión, release/CI y readback autorizado, incluida la dependencia620. Se conservan ese contexto y los fallos anteriores.
+
+## Readback de integracion y cierre 2026-10-21
+
+**MAM-622 Done**, `completedAt=2026-10-21T15:27:40.765Z`, ya existente y conservado por Luna; dependencias620/618/621 Done. [PR #8](https://github.com/Mamut1195/django_basis_trainning_app/pull/8), merge `cccc448c4aeaffef8d7a9e60bbab0b174e24ce42`; [CI postmerge 39624647162](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39624647162) SUCCESS:390PG/179puras, mypy115/350 y ocho contratos. Esta es evidencia de código integrado en ese SHA, no una repetición local ni evidencia reasignada a un commit documental posterior.
+
+El contrato canónico anterior sigue vigente: IDs/origin/supersedes/source protegidos, intención y resultados separados, None distinto de0 y locks hasta COMMIT exterior.623 lo preservó al integrarse después en PR #9 y también está Done. Los pendientes623 mencionados en el registro de revisión eran futuros en esa captura, no el estado actual. [Cierre de cadena y límites](DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623); no se amplía el alcance a UX humana, dispositivos o LIVE.

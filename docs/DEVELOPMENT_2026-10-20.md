@@ -2,7 +2,7 @@
 
 Reconcile and accept the published architecture, then complete BASIS-004/MAM-617 data integrity and advance BASIS-012/MAM-626 with a reviewable UX contract.
 
-Estado actual al readback del 2026-10-21: **MAM-617, MAM-621 y MAM-637 Done**.
+Estado actual al readback del 2026-10-21 19:47:27.908 UTC: **MAM-617/621/637 y la cadena MAM-810/620/622/623 Done**. El [cierre de cadena del 2026-10-21](DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623) registra los cuatro PR y el inventario actual **46 = 22 Done,23 In Progress,1 Backlog**. Este diario conserva las capturas de sus lotes anteriores.
 El [cierre de catálogo y operaciones](#cierre-del-lote-mam-621-y-mam-637-2026-10-21)
 registra integración, fuente de Luna y bloqueos que siguen abiertos. MAM-621/MAM-637
 ya estaban Done antes de esa revisión; no se atribuye a Luna un cambio de estado.
@@ -206,7 +206,7 @@ Esta conciliación revisa evidencia existente, no reejecuta las pruebas de códi
 citadas. El CI propio del PR documental se comprobará y reportará por separado;
 los resultados anteriores no se atribuyen a un commit documental futuro.
 
-### Estado actual y siguiente cadena, sin iniciar otro lote
+### Snapshot de estado de aquel lote, sin iniciar otro lote
 
 Fuente completa de Luna, sin página siguiente: **46 = 18 Done, 27 In Progress,
 uno Backlog**; **35 funcionales = siete Done y 28 abiertos**; arquitectura **11 Done**.

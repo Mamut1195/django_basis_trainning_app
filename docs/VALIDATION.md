@@ -2,6 +2,8 @@
 
 La tabla siguiente registra la validación de la implementación inicial, antes de su integración. La ejecución posterior se documenta en [la primera tanda](IMPLEMENTATION_WAVE_01.md), con sus comprobaciones y límites propios. No se activaron despliegues, pagos ni llamadas reales al modelo. El estado no equivale a una versión publicada ni al cierre de todos los criterios del roadmap.
 
+**Aclaración actual,2026-10-21:** la cadena810/620/622/623 está Done con integración y CI, según el [readback de cierre](DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623). SMTP LIVE/proveedor continúa NOT RUN, pero **no es gate de MAM-810 ni de MAM-623**; el transporte SMTP local de810 es evidencia separada. La tabla y la continuación siguientes son históricas. Esto no retira los pendientes de correo operativo, Polar/IA LIVE, despliegue, dispositivos o aceptación humana del producto completo.
+
 ## Integración GitHub y CI verificadas
 
 La primera tanda se integró en `main` mediante el commit

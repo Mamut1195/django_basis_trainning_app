@@ -7,7 +7,7 @@ caducable, recuperación sin enumeración, límites de intentos, perfil privado,
 aislamiento entre dos cuentas y no vincular perfiles heredados por coincidencias
 no verificadas. Exige pruebas de verificación, recuperación, expiración y CSRF.
 SMTP real se documenta separadamente y **no es gate de aceptación de MAM-810**.
-La aceptación técnica local no equivale a integración en main ni cierre del ticket.
+La aceptación técnica local por sí sola no equivale a integración ni cierre. **Readback actual: MAM-810 Done**, `completedAt=2026-10-21T04:35:13.492Z`, conservado por Luna. Se integró en [PR #6](https://github.com/Mamut1195/django_basis_trainning_app/pull/6), merge `58cbb0ea2e7421a696629391cb8a5eebf2df76fe`; [CI postmerge 39544853138](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/39544853138) SUCCESS:318PG/174puras, mypy113/335 y ocho contratos. El [cierre de cadena](DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623) distingue esta evidencia integrada de los registros locales siguientes y no atribuye una nueva transición a Luna.
 
 ## Ciclo de vida
 
@@ -136,10 +136,10 @@ preparación explícita del fixture pendiente en
 `basis/bootstrap/tests/test_identity.py` y el inventario de modelos de cuentas en
 `basis/bootstrap/tests/test_installation.py`. El usuario decidió onboarding
 personal gratuito en MAM-620 para cuenta activa/vinculada/verificada; ese carril
-debe validarse conjuntamente con `EmailVerification` al integrar. MAM-810 no
+se integró posteriormente en PR #7 con `EmailVerification`, según el [readback de perfil](PROFILE_VERIFICATION.md#readback-de-integracion-y-cierre-2026-10-21). MAM-810 no
 modifica sus guardas ni los permisos comerciales de entrenamiento/IA.
 
-Los recibos frescos, versiones, comandos, fallos históricos, resultados de navegador
+Registro del ejecutor original, anterior a integración (sus resultados no se reasignan al cierre): los recibos frescos, versiones, comandos, fallos históricos, resultados de navegador
 y binding de fuentes/config/tests están en `.cache/MAM810_IMPLEMENTATION_REPORT.md`
 del worktree de esta entrega. Los números de CI anteriores no son evidencia del
 candidato nuevo. Sin commit/push/PR ni integración realizada por este ejecutor.
