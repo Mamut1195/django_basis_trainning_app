@@ -104,10 +104,12 @@ class SportProfileForm(forms.ModelForm[SportProfile]):
         labels = {
             "sport": "Disciplina",
             "experience": "Experiencia",
-            "threshold": "Umbral medido (opcional)",
+            "threshold": "Umbral declarado (opcional)",
             "threshold_unit": "Unidad",
             "measured_on": "Fecha de medición",
             "method": "Método",
+            "threshold_kind": "Tipo de referencia (medido o estimado)",
+            "threshold_source": "Fuente de la referencia",
         }
         widgets = {"measured_on": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"})}
 

@@ -111,8 +111,10 @@ def scheduled_state(row: PlannedSession) -> ScheduledState:
 
 
 def save_prescription(parent: PlannedSession, data: tuple[BlockData, ...]) -> None:
+    from .thresholds import encode_snapshot
+
     for index, block in enumerate(data, 1):
-        row = Block.objects.create(
+        row = Block(
             planned=parent,
             order=index,
             sport=block.sport,
@@ -120,7 +122,16 @@ def save_prescription(parent: PlannedSession, data: tuple[BlockData, ...]) -> No
             target=encode_metrics(block.target),
             actual=encode_metrics(block.actual),
             notes=block.notes,
+            threshold_snapshot=encode_snapshot(block.threshold_snapshot),
         )
+        if parent.supersedes_id and block.id is not None:
+            original = Block.objects.get(pk=block.id, planned__owner_id=parent.owner_id)
+            if original.threshold_snapshot != row.threshold_snapshot:
+                from django.core.exceptions import ValidationError
+
+                raise ValidationError("La copia conserva la referencia histórica.")
+            setattr(row, "_threshold_from_copy", True)
+        row.save()
         for order, strength in enumerate(block.sets, 1):
             values = {
                 field.name + "_id"

@@ -7,6 +7,8 @@ from enum import StrEnum
 
 from basis.shared.identifiers import AccountId, PlannedSessionId, Revision, SessionId
 
+from .thresholds import ThresholdSnapshot
+
 
 class SessionStatus(StrEnum):
     IN_PROGRESS = "in_progress"
@@ -132,6 +134,7 @@ class BlockData:
     sets: tuple[StrengthData, ...] = ()
     intervals: tuple[IntervalData, ...] = ()
     source: int | None = None
+    threshold_snapshot: ThresholdSnapshot | None = None
 
 
 @dataclass(frozen=True)

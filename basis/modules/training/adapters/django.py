@@ -46,9 +46,12 @@ def model_values(row: models.Model, names: tuple[str, ...]) -> dict[str, object]
 
 
 def block_state(row: Block) -> BlockData:
+    from .thresholds import decode_snapshot
+
     return BlockData(
         id=int(row.pk),
         source=row.source_id,
+        threshold_snapshot=decode_snapshot(row.threshold_snapshot),
         order=row.order,
         sport=row.sport,
         title=row.title,
@@ -197,6 +200,9 @@ class DjangoSessionRepository:
                 created.order = block.order if block.source is not None else order
             created.sport, created.title = block.sport, block.title
             created.source_id = block.source
+            from .thresholds import encode_snapshot
+
+            created.threshold_snapshot = encode_snapshot(block.threshold_snapshot)
             created.target, created.actual = (
                 encode_metrics(block.target),
                 encode_metrics(block.actual),

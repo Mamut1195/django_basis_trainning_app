@@ -204,6 +204,13 @@ def reconcile_blocks(
         raise InvalidExecution("Presencia de adaptación incompatible con las filas.")
     result = []
     for block_index, (old, block) in enumerate(identities(previous, incoming, frozen=frozen)):
+        if old is None and block.threshold_snapshot is not None:
+            raise InvalidExecution("La referencia solo puede asignarse por el servidor.")
+        if old is not None:
+            if block.threshold_snapshot not in (None, old.threshold_snapshot):
+                raise InvalidExecution("La referencia histórica del umbral es inmutable.")
+            # Legacy codecs omit the field. Absence must never refresh or erase it.
+            block = replace(block, threshold_snapshot=old.threshold_snapshot)
         if (
             old is not None
             and frozen

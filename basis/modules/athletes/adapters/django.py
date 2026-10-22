@@ -156,7 +156,14 @@ def preferences_data(row: AthleteSettings) -> PreferencesData:
 
 def sport_data(row: SportProfile) -> SportData:
     return SportData(
-        row.sport, row.experience, row.threshold, row.threshold_unit, row.measured_on, row.method
+        row.sport,
+        row.experience,
+        row.threshold,
+        row.threshold_unit,
+        row.measured_on,
+        row.method,
+        row.threshold_kind,
+        row.threshold_source,
     )
 
 

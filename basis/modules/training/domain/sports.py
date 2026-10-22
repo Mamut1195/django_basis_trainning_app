@@ -125,7 +125,11 @@ def validate_sport_metrics(sport: str, data: tuple[Metric, ...]) -> tuple[Metric
         n(MetricName.MOVING_SECONDS),
         n(MetricName.PAUSE_SECONDS),
     )
-    if duration is not None and moving is not None and moving + (pause or 0) > duration:
+    if (
+        duration is not None
+        and (moving is not None or pause is not None)
+        and (moving or 0) + (pause or 0) > duration
+    ):
         raise InvalidSportMetrics("Movimiento y pausas no pueden superar el tiempo transcurrido.")
     altitude = n(MetricName.MAX_ALTITUDE_M)
     if altitude is not None:
