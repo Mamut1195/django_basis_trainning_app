@@ -24,11 +24,15 @@ def billing(requester: Requester | None = None) -> Billing:
             ),
             settings.POLAR_PRODUCT_ID,
             settings.PUBLIC_URL,
+            settings.POLAR_SANDBOX,
+            settings.POLAR_ORGANIZATION_ID,
         ),
         DjangoUnitOfWork,
         DjangoClock(),
         settings.POLAR_PRODUCT_ID,
         settings.DEVELOPMENT_ACCESS,
+        f"{settings.POLAR_SANDBOX}|{settings.POLAR_ORGANIZATION_ID}|{settings.PUBLIC_URL}",
+        settings.POLAR_ORGANIZATION_ID,
     )
 
 

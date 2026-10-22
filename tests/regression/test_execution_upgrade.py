@@ -13,8 +13,10 @@ class ExecutionUpgradeTests(TransactionTestCase):
         executor.migrate([("basis_training", "0002_planning_version_history")])
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT COUNT(*) FROM django_migrations")
-                self.assertEqual(cursor.fetchone()[0], 29)
+                cursor.execute(
+                    "SELECT COUNT(*) FROM django_migrations WHERE app = 'basis_training'"
+                )
+                self.assertEqual(cursor.fetchone()[0], 2)
             apps = executor.loader.project_state(
                 [("basis_training", "0002_planning_version_history")]
             ).apps

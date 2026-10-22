@@ -13,7 +13,7 @@ from django.utils import timezone
 from basis.shared.identifiers import AccountId
 
 from ..domain.records import BillingState, ProviderUnavailable, reconcile_state
-from .polar import PolarGateway, request, safe_provider_url
+from .polar import REQUEST_TIMEOUT, PolarGateway, request, safe_provider_url
 
 
 class FakeRequester:
@@ -32,8 +32,11 @@ class PolarContracts(SimpleTestCase):
     def setUp(self) -> None:
         self.public_id = UUID("12345678-1234-1234-1234-123456789012")
 
-    def test_checkout_payload_is_server_owned_and_default_expiry_is_thirty_minutes(self) -> None:
-        requester = FakeRequester({"url": "https://sandbox.polar.sh/checkout"})
+    def test_checkout_payload_is_server_owned_and_uses_provider_expiry(self) -> None:
+        expires = timezone.now() + timedelta(minutes=30)
+        requester = FakeRequester(
+            {"url": "https://sandbox.polar.sh/checkout", "expires_at": expires.isoformat()}
+        )
         gateway = PolarGateway(requester, "approved", "https://basis.test")
         before = timezone.now()
         link = gateway.checkout(self.public_id, "athlete@example.test", False)
@@ -48,6 +51,8 @@ class PolarContracts(SimpleTestCase):
                         "external_customer_id": str(self.public_id),
                         "customer_email": "athlete@example.test",
                         "allow_trial": False,
+                        "allow_discount_codes": False,
+                        "metadata": {},
                         "success_url": "https://basis.test/billing/?checkout=returned",
                         "return_url": "https://basis.test/billing/",
                     },
@@ -56,13 +61,13 @@ class PolarContracts(SimpleTestCase):
         )
         self.assertIsNotNone(link.expires_at)
         assert link.expires_at is not None
-        self.assertGreaterEqual(link.expires_at, before + timedelta(minutes=30))
-        self.assertLessEqual(link.expires_at, timezone.now() + timedelta(minutes=30))
+        self.assertLess(link.expires_at, before + timedelta(minutes=31))
 
     def test_invalid_expiry_remains_absent_and_portal_payload_is_exact(self) -> None:
         requester = FakeRequester({"url": "https://polar.sh/x", "expires_at": "invalid"})
         gateway = PolarGateway(requester, "approved", "https://basis.test")
-        self.assertIsNone(gateway.checkout(self.public_id, "a@test", True).expires_at)
+        with self.assertRaises(ProviderUnavailable):
+            gateway.checkout(self.public_id, "a@test", True)
         requester.response = {"customer_portal_url": "https://polar.sh/portal"}
         self.assertEqual(gateway.portal(self.public_id), "https://polar.sh/portal")
         self.assertEqual(
@@ -87,12 +92,22 @@ class PolarContracts(SimpleTestCase):
 
     def test_numeric_strings_are_not_accepted_as_price_or_trial_counts(self) -> None:
         requester = FakeRequester(
-            {"prices": [{"price_amount": "500"}], "trial_interval_count": "7"}
+            {
+                "id": "approved",
+                "organization_id": "org",
+                "prices": [{"price_amount": "500"}],
+                "trial_interval_count": "7",
+            }
         )
-        gateway = PolarGateway(requester, "approved", "https://basis.test")
+        gateway = PolarGateway(requester, "approved", "https://basis.test", organization_id="org")
         self.assertIsNone(gateway.product().prices[0].amount_cents)
         self.assertIsNone(gateway.product().trial_days)
-        requester.response = {"prices": [{"price_amount": 500.0}], "trial_interval_count": 7}
+        requester.response = {
+            "id": "approved",
+            "organization_id": "org",
+            "prices": [{"price_amount": 500.0}],
+            "trial_interval_count": 7,
+        }
         self.assertEqual(gateway.product().prices[0].amount_cents, Decimal(500))
         self.assertEqual(gateway.product().trial_days, Decimal(7))
 
@@ -101,6 +116,7 @@ class PolarContracts(SimpleTestCase):
         requester = FakeRequester(
             {
                 "id": "customer",
+                "organization_id": "org",
                 "external_id": str(self.public_id),
                 "active_subscriptions": [
                     {
@@ -108,6 +124,7 @@ class PolarContracts(SimpleTestCase):
                         "product_id": "approved",
                         "status": "active",
                         "current_period_end": end,
+                        "current_period_start": "2026-10-01T00:00:00Z",
                         "trial_start": "first-trial",
                         "cancel_at_period_end": True,
                     },
@@ -116,11 +133,12 @@ class PolarContracts(SimpleTestCase):
                         "product_id": "approved",
                         "status": "active",
                         "current_period_end": "2026-10-31T23:00:00+00:00",
+                        "current_period_start": "2026-10-01T00:00:00Z",
                     },
                 ],
             }
         )
-        gateway = PolarGateway(requester, "approved", "https://basis.test")
+        gateway = PolarGateway(requester, "approved", "https://basis.test", organization_id="org")
         subscription = gateway.customer(self.public_id).subscriptions[0]
         self.assertEqual(subscription.period_end_key, end)
         self.assertTrue(subscription.trial_started)
@@ -132,7 +150,7 @@ class PolarContracts(SimpleTestCase):
             "approved",
             timezone.now(),
         )
-        self.assertEqual(selected.subscription_id, "subscription")
+        self.assertEqual(selected.subscription_id, "later-instant")
         self.assertEqual(
             requester.calls[0][1], "customers/external/" + str(self.public_id) + "/state"
         )
@@ -141,6 +159,7 @@ class PolarContracts(SimpleTestCase):
         requester = FakeRequester(
             {
                 "id": "customer",
+                "organization_id": "org",
                 "external_id": str(self.public_id),
                 "active_subscriptions": [
                     {
@@ -151,13 +170,13 @@ class PolarContracts(SimpleTestCase):
                     {
                         "product_id": "approved",
                         "status": "active",
-                        "current_period_end": "2026-11-01",
+                        "current_period_end": "2026-11-01T00:00:00Z",
                         "trial_end": "2026-02-30T00:00:00+00:00",
                     },
                 ],
             }
         )
-        gateway = PolarGateway(requester, "approved", "https://basis.test")
+        gateway = PolarGateway(requester, "approved", "https://basis.test", organization_id="org")
         current = BillingState(AccountId(1))
         result = reconcile_state(
             current,
@@ -166,9 +185,10 @@ class PolarContracts(SimpleTestCase):
             "approved",
             timezone.now(),
         )
-        self.assertEqual(result.status, "active")
+        self.assertEqual(result.status, "inactive")
         requester.response = {
             "id": "customer",
+            "organization_id": "org",
             "external_id": str(self.public_id),
             "active_subscriptions": [
                 {
@@ -178,7 +198,7 @@ class PolarContracts(SimpleTestCase):
                 }
             ],
         }
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ProviderUnavailable):
             reconcile_state(
                 current,
                 gateway.customer(self.public_id),
@@ -212,7 +232,7 @@ class PolarContracts(SimpleTestCase):
                     product_id="approved",
                     sandbox=True,
                 )
-        factory.assert_called_once_with(timeout=20)
+        factory.assert_called_once_with(timeout=REQUEST_TIMEOUT, follow_redirects=False)
         self.assertEqual(len(seen), 1)
         self.assertEqual(str(seen[0].url), "https://sandbox-api.polar.sh/v1/products/approved")
         self.assertNotIn("private-provider-response", str(caught.exception))

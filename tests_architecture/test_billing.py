@@ -81,6 +81,11 @@ class Memory:
         if owner in self.rows:
             self.rows[owner] = replace(self.rows[owner], needs_reconciliation=True)
 
+    def owner_for_customer(self, customer_id: str) -> AccountId | None:
+        return next(
+            (owner for owner, state in self.rows.items() if state.customer_id == customer_id), None
+        )
+
     def received(self, event: WebhookEvent) -> bool:
         self.receipts.setdefault(event.id, False)
         return self.receipts[event.id]
@@ -105,10 +110,17 @@ class Gateway:
 
     def product(self) -> Product:
         return Product(
-            False, "month", (Price(False, Decimal(500), "usd", "exclusive"),), "day", Decimal(7)
+            False,
+            "month",
+            (Price(False, Decimal(500), "usd", "exclusive", id="price"),),
+            "day",
+            Decimal(7),
+            1,
         )
 
-    def checkout(self, public_id: UUID, email: str, allow_trial: bool) -> CheckoutLink:
+    def checkout(
+        self, public_id: UUID, email: str, allow_trial: bool, attempt: UUID | None = None
+    ) -> CheckoutLink:
         self.calls += 1
         return CheckoutLink("https://polar.sh/checkout", NOW + timedelta(minutes=30))
 
@@ -213,7 +225,7 @@ class MemoryBillingTests(BillingContract, TestCase):
             "product",
             NOW,
         )
-        self.assertEqual(result.subscription_id, "sub")
+        self.assertEqual(result.subscription_id, "earlier")
         self.assertTrue(result.trial_used)
         inactive = reconcile_state(
             result, CustomerState("customer", str(PUBLIC), ()), str(PUBLIC), "product", NOW
@@ -237,14 +249,20 @@ class MemoryBillingTests(BillingContract, TestCase):
 
     def test_invalid_dates_raise_only_for_selected_relevant_subscription(self) -> None:
         selected = subscription()
-        ignored = replace(selected, id="older", period_end_key="a", invalid_period_start=True)
+        ignored = replace(
+            selected,
+            id="older",
+            product_id="foreign",
+            period_end_key="a",
+            invalid_period_start=True,
+        )
         state = BillingState(OWNER)
         customer = CustomerState("customer", str(PUBLIC), (ignored, selected))
         self.assertEqual(
             reconcile_state(state, customer, str(PUBLIC), "product", NOW).subscription_id, "sub"
         )
         invalid = replace(selected, invalid_period_end=True)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ProviderUnavailable):
             reconcile_state(
                 state, replace(customer, subscriptions=(invalid,)), str(PUBLIC), "product", NOW
             )
@@ -254,7 +272,7 @@ class MemoryBillingTests(BillingContract, TestCase):
             reconcile_state(
                 state, replace(customer, subscriptions=(trial,)), str(PUBLIC), "product", NOW
             ).period_end,
-            NOW,
+            None,
         )
 
     def test_webhook_failure_preserves_pending_receipt_and_retry_completes(self) -> None:

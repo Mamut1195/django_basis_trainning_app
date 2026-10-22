@@ -32,13 +32,20 @@ from .factories import account
 
 
 class ProductFixture(TypedDict):
+    id: str
+    organization_id: str
+    recurring_interval_count: int
     recurring_interval: str
     trial_interval: str
     trial_interval_count: int
     prices: list[dict[str, object]]
 
 
-@override_settings(POLAR_PRODUCT_ID="basis-monthly", POLAR_ACCESS_TOKEN="test-not-a-credential")
+@override_settings(
+    POLAR_PRODUCT_ID="basis-monthly",
+    POLAR_ACCESS_TOKEN="test-not-a-credential",
+    POLAR_ORGANIZATION_ID="org-test",
+)
 class BillingTests(TestCase):
     @patch("basis.modules.billing.adapters.actions.polar_request")
     def test_first_seen_paid_subscription_remembers_its_trial(self, request: MagicMock) -> None:
@@ -64,6 +71,7 @@ class BillingTests(TestCase):
         row.update(changes)
         return {
             "id": "customer-athlete",
+            "organization_id": "org-test",
             "external_id": str(self.user.athlete.public_id),
             "active_subscriptions": [row] if status else [],
         }
@@ -104,16 +112,34 @@ class BillingTests(TestCase):
         billing.status = "inactive"
         billing.save()
         product: ProductFixture = {
+            "id": "basis-monthly",
+            "organization_id": "org-test",
+            "recurring_interval_count": 1,
             "recurring_interval": "month",
             "trial_interval": "day",
             "trial_interval_count": 7,
-            "prices": [{"price_amount": 500, "price_currency": "usd", "tax_behavior": "exclusive"}],
+            "prices": [
+                {
+                    "id": "price",
+                    "amount_type": "fixed",
+                    "price_amount": 500,
+                    "price_currency": "usd",
+                    "tax_behavior": "exclusive",
+                }
+            ],
         }
-        request.side_effect = [product, {"url": "https://sandbox.polar.sh/checkout/test"}]
+        request.side_effect = [
+            product,
+            {
+                "url": "https://sandbox.polar.sh/checkout/test",
+                "expires_at": (timezone.now() + timedelta(minutes=30)).isoformat(),
+            },
+            product,
+        ]
         self.assertTrue(checkout(self.user).startswith("https://sandbox.polar.sh/"))
         self.assertTrue(checkout(self.user).startswith("https://sandbox.polar.sh/"))
-        self.assertEqual(request.call_count, 2)
-        payload = request.call_args.kwargs["json"]
+        self.assertEqual(request.call_count, 3)
+        payload = request.call_args_list[1].kwargs["json"]
         self.assertEqual(payload["products"], ["basis-monthly"])
         self.assertTrue(payload["allow_trial"])
         product["prices"][0]["price_amount"] = 600
@@ -143,6 +169,7 @@ class BillingTests(TestCase):
         body = json.dumps(
             {
                 "type": "customer.state_changed",
+                "api_version": "2026-10",
                 "data": {"external_id": str(self.user.athlete.public_id)},
             }
         )
@@ -157,13 +184,19 @@ class BillingTests(TestCase):
                 HTTP_WEBHOOK_ID=event_id,
                 HTTP_WEBHOOK_TIMESTAMP=str(int(now.timestamp())),
                 HTTP_WEBHOOK_SIGNATURE=signature,
+                HTTP_WEBHOOK_API_VERSION="2026-10",
             )
 
-        self.assertEqual(send("evt-1").status_code, 200)
+        from basis.modules.billing.adapters.recovery import process_pending
+
+        self.assertEqual(send("evt-1").status_code, 202)
+        self.assertEqual(request.call_count, 0)
+        process_pending()
         self.assertEqual(send("evt-1").status_code, 200)
         self.assertEqual(request.call_count, 1)
         request.return_value = self.state(None)
-        self.assertEqual(send("older-delivery").status_code, 200)
+        self.assertEqual(send("older-delivery").status_code, 202)
+        process_pending()
         self.user.billing.refresh_from_db()
         self.assertFalse(self.user.billing.entitled)
         self.assertEqual(WebhookReceipt.objects.count(), 2)
