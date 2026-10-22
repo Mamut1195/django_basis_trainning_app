@@ -26,7 +26,11 @@ def billing_page(request: HttpRequest) -> HttpResponse:
         {
             "billing": account,
             "usage": presentation.latest_usage(owner(request).pk),
-            "payments_configured": bool(settings.POLAR_ACCESS_TOKEN and settings.POLAR_PRODUCT_ID),
+            "payments_configured": bool(
+                settings.POLAR_ACCESS_TOKEN
+                and settings.POLAR_PRODUCT_ID
+                and settings.POLAR_ORGANIZATION_ID
+            ),
         },
     )
 
@@ -54,9 +58,15 @@ def polar_webhook(request: HttpRequest) -> HttpResponse:
     if not settings.POLAR_WEBHOOK_SECRET:
         return JsonResponse({"detail": "Webhook no configurado"}, status=503)
     try:
-        event = decode_event(settings.POLAR_WEBHOOK_SECRET, request.body, request.headers)
+        event = decode_event(
+            settings.POLAR_WEBHOOK_SECRET,
+            request.body,
+            request.headers,
+            secret_format=settings.POLAR_WEBHOOK_SECRET_FORMAT,
+            expected_version=settings.POLAR_WEBHOOK_API_VERSION,
+        )
     except InvalidWebhook:
         return JsonResponse({"detail": "Firma o evento inv\u00e1lido"}, status=400)
-    result = webhooks(polar.polar_request).process(event)
+    result = webhooks(polar.polar_request).enqueue(event)
     status, payload = encode_result(result)
     return JsonResponse(payload, status=status)

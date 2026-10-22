@@ -169,6 +169,9 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 256 * 1024
 POLAR_ACCESS_TOKEN = os.getenv("POLAR_ACCESS_TOKEN", "")
 POLAR_WEBHOOK_SECRET = os.getenv("POLAR_WEBHOOK_SECRET", "")
 POLAR_PRODUCT_ID = os.getenv("POLAR_PRODUCT_ID", "")
+POLAR_ORGANIZATION_ID = os.getenv("POLAR_ORGANIZATION_ID", "")
+POLAR_WEBHOOK_SECRET_FORMAT = os.getenv("POLAR_WEBHOOK_SECRET_FORMAT", "standard")
+POLAR_WEBHOOK_API_VERSION = os.getenv("POLAR_WEBHOOK_API_VERSION", "2026-10")
 POLAR_SANDBOX = os.getenv("POLAR_SANDBOX", "1") == "1"
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-flash")
@@ -188,6 +191,9 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
+        # Provider request URLs can contain customer IDs. No payment request logs.
+        "httpx": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "httpcore": {"handlers": ["console"], "level": "WARNING", "propagate": False},
         **{
             name: {"handlers": ["safe_http"], "level": "WARNING", "propagate": False}
             for name in ("django.request", "django.security", "django.server")

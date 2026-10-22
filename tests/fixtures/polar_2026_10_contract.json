@@ -1,0 +1,15 @@
+{
+  "source": "https://polar.sh/docs/openapi/2026-10.openapi.json",
+  "api_version": "2026-10",
+  "projection": "Request properties used by BASIS, not a replacement for the complete OpenAPI schema",
+  "checkout": {
+    "required": ["products"],
+    "types": {"products": "array", "external_customer_id": "string", "customer_email": "string", "success_url": "string", "return_url": "string", "allow_trial": "boolean", "allow_discount_codes": "boolean", "metadata": "object"}
+  },
+  "portal": {
+    "required": ["external_customer_id"],
+    "types": {"external_customer_id": "string", "return_url": "string"}
+  },
+  "refund": {"customer_link": "customer_id", "has_nested_customer": false},
+  "product": {"recurring_interval": "month", "recurring_interval_count": 1, "price_amount": 500, "price_currency": "usd", "tax_behavior": "exclusive", "trial_interval": "day", "trial_interval_count": 7}
+}

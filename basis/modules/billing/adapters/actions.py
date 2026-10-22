@@ -47,7 +47,10 @@ def checkout(owner: AbstractUser) -> str:
 
 
 def portal(owner: AbstractUser) -> str:
-    return billing(polar_request).portal(OwnerBilling(AccountId(owner.pk)))
+    try:
+        return billing(polar_request).portal(OwnerBilling(AccountId(owner.pk)))
+    except VerificationRequired as exc:
+        raise ValidationError(str(exc)) from None
 
 
 def reconcile(owner: AbstractUser) -> BillingAccount:

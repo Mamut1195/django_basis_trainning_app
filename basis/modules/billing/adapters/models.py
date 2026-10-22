@@ -21,6 +21,9 @@ class BillingAccount(models.Model):
     needs_reconciliation = models.BooleanField(default=False)
     checkout_url = models.TextField(blank=True)
     checkout_expires_at = models.DateTimeField(null=True, blank=True)
+    checkout_context = models.CharField(max_length=64, blank=True)
+    checkout_attempt = models.UUIDField(null=True, blank=True)
+    checkout_created_at = models.DateTimeField(null=True, blank=True)
 
     @property
     def entitled(self) -> bool:
@@ -43,3 +46,8 @@ class WebhookReceipt(models.Model):
     received_at = models.DateTimeField(auto_now_add=True)
     processed_at = models.DateTimeField(null=True, blank=True)
     customer_external_id = models.UUIDField(null=True)
+    provider_customer_id = models.CharField(max_length=100, blank=True)
+    organization_id = models.CharField(max_length=100, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    retry_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    error_code = models.CharField(max_length=32, blank=True)

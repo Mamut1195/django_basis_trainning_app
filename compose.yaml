@@ -13,6 +13,9 @@ x-app: &app
     DATABASE_URL: postgresql://basis:${POSTGRES_PASSWORD:?Set the database password}@db:5432/basis
     POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
     POLAR_PRODUCT_ID: ${POLAR_PRODUCT_ID:-}
+    POLAR_ORGANIZATION_ID: ${POLAR_ORGANIZATION_ID:-}
+    POLAR_WEBHOOK_SECRET_FORMAT: ${POLAR_WEBHOOK_SECRET_FORMAT:-standard}
+    POLAR_WEBHOOK_API_VERSION: ${POLAR_WEBHOOK_API_VERSION:-2026-10}
     POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
     POLAR_SANDBOX: ${POLAR_SANDBOX:-1}
     AI_ENABLED: ${AI_ENABLED:-0}
@@ -56,6 +59,9 @@ services:
   worker:
     <<: *app
     command: ["python", "manage.py", "process_ai_jobs"]
+  billing-worker:
+    <<: *app
+    command: ["python", "manage.py", "reconcile_billing", "--all", "--watch"]
   migrate:
     <<: *app
     profiles: ["operations"]

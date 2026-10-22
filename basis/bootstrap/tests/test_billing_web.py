@@ -21,6 +21,7 @@ from basis.modules.billing.adapters.models import BillingAccount, WebhookReceipt
 
 @override_settings(
     POLAR_PRODUCT_ID="approved",
+    POLAR_ORGANIZATION_ID="org-test",
     POLAR_ACCESS_TOKEN="not-a-credential",
     POLAR_WEBHOOK_SECRET="whsec_" + base64.b64encode(b"basis-test-signature-only").decode(),
 )
@@ -45,7 +46,7 @@ class BillingWebContracts(TestCase):
             if kind == "customer.state_changed"
             else {"customer": {"external_id": external}}
         )
-        body = json.dumps({"type": kind, "data": data})
+        body = json.dumps({"api_version": "2026-10", "type": kind, "data": data})
         now = timezone.now()
         signature = Webhook(settings.POLAR_WEBHOOK_SECRET).sign(event_id, now, body)
         return self.client.post(
@@ -55,6 +56,7 @@ class BillingWebContracts(TestCase):
             HTTP_WEBHOOK_ID=event_id,
             HTTP_WEBHOOK_TIMESTAMP=str(int(now.timestamp())),
             HTTP_WEBHOOK_SIGNATURE=signature,
+            HTTP_WEBHOOK_API_VERSION="2026-10",
         ).status_code
 
     def test_provider_failure_commits_pending_and_receipt_retry_then_replay_is_safe(self) -> None:
@@ -62,7 +64,10 @@ class BillingWebContracts(TestCase):
             "basis.modules.billing.adapters.actions.polar_request",
             side_effect=ProviderUnavailable("Unavailable"),
         ) as provider:
-            self.assertEqual(self.send("retry", str(self.profile.public_id)), 503)
+            from basis.modules.billing.adapters.recovery import process_pending
+
+            self.assertEqual(self.send("retry", str(self.profile.public_id)), 202)
+            process_pending()
         self.assertEqual(provider.call_count, 1)
         self.billing.refresh_from_db()
         self.assertTrue(self.billing.needs_reconciliation)
@@ -71,10 +76,12 @@ class BillingWebContracts(TestCase):
             "basis.modules.billing.adapters.actions.polar_request",
             return_value={
                 "id": "customer",
+                "organization_id": "org-test",
                 "external_id": str(self.profile.public_id),
                 "active_subscriptions": [],
             },
         ) as provider:
+            process_pending(retry_exhausted=True)
             self.assertEqual(self.send("retry", str(self.profile.public_id)), 200)
             self.assertEqual(self.send("retry", str(self.profile.public_id)), 200)
         self.assertEqual(provider.call_count, 1)
@@ -87,7 +94,7 @@ class BillingWebContracts(TestCase):
     def test_signed_unlinked_and_invalid_ids_are_422_with_unprocessed_receipt(self) -> None:
         with patch("basis.modules.billing.adapters.actions.polar_request") as provider:
             for event_id, external in (("missing", str(uuid4())), ("invalid", "invalid")):
-                self.assertEqual(self.send(event_id, external), 422)
+                self.assertEqual(self.send(event_id, external), 202)
                 self.assertIsNone(WebhookReceipt.objects.get(event_id=event_id).processed_at)
         provider.assert_not_called()
 
@@ -134,9 +141,9 @@ class BillingWebContracts(TestCase):
         with patch(
             "basis.modules.billing.adapters.actions.polar_request",
             return_value={
-                "customer_portal_url": "https://polar.sh/portal",
+                "customer_portal_url": "https://sandbox.polar.sh/portal",
             },
         ):
             response = self.client.post("/billing/portal/")
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["Location"], "https://polar.sh/portal")
+        self.assertEqual(response.headers["Location"], "https://sandbox.polar.sh/portal")
