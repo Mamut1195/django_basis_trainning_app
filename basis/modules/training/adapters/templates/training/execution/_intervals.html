@@ -5,7 +5,8 @@
     {% endif %}
     <h3>Intervalo {{ forloop.counter }} · {{ interval.repetitions }} repeticiones</h3>
     <p class="muted">
-      Descanso objetivo: {{ interval.rest_seconds|default_if_none:'—' }} s · RPE real: {{ interval.actual_rpe|default_if_none:'—' }}
+      Descanso objetivo: {{ interval.rest_seconds|default_if_none:'—' }} s · RPE objetivo: {{ interval.target_rpe|default_if_none:'—' }}
+      · Descanso real: {{ interval.actual_rest_seconds|default_if_none:'—' }} s · RPE real: {{ interval.actual_rpe|default_if_none:'—' }}
     </p>
     <details>
       <summary>Variables del intervalo</summary>

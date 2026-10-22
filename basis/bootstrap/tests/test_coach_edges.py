@@ -119,6 +119,8 @@ class CoachEdgeTests(TestCase):
             threshold_unit="bpm",
             measured_on=timezone.localdate(),
             method="test",
+            threshold_kind="measured",
+            threshold_source="Synthetic test fixture",
         )
         Goal.objects.create(
             owner=self.owner,

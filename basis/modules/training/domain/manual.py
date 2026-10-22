@@ -219,10 +219,10 @@ def require_strength_prescription(current: StrengthData, candidate: StrengthData
 def validate_interval(sport: str, parent: ParentState, data: IntervalData) -> None:
     if sport == "strength":
         raise ManualInvalid("Usa series para fuerza.")
-    if not 1 <= data.repetitions <= 1000:
+    if type(data.repetitions) is not int or not 1 <= data.repetitions <= 1000:
         raise ManualInvalid("Repeticiones fuera de rango.")
     for value in (data.rest_seconds, data.actual_rest_seconds):
-        if value is not None and not 0 <= value <= 2147483647:
+        if value is not None and (type(value) is not int or not 0 <= value <= 2147483647):
             raise ManualInvalid("Descanso fuera de rango.")
     decimal_range(data.target_rpe, Decimal(0), Decimal(10))
     decimal_range(data.actual_rpe, Decimal(0), Decimal(10))

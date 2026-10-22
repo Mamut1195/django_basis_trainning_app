@@ -92,6 +92,8 @@ def encode_context(context: CoachContext) -> dict[str, object]:
                 "threshold_unit": s.threshold_unit,
                 "measured_on": s.measured_on,
                 "method": s.method,
+                "threshold_kind": s.threshold_kind,
+                "threshold_source": s.threshold_source,
             }
             for s in a.sports
         ],
@@ -228,6 +230,8 @@ def decode_context(value: object) -> CoachContext:
             text(s["threshold_unit"]),
             optional_day(s["measured_on"]),
             text(s["method"]),
+            text(s.get("threshold_kind", "")),
+            text(s.get("threshold_source", "")),
         )
         for s in (mapping(raw) for raw in rows(d["sport_profiles"]))
     )

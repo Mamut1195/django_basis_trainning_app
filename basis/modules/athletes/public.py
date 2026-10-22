@@ -42,6 +42,8 @@ from .application.records import (
     RecordWorkout,
 )
 from .application.references import RMChoices, RMReference, RMReferences
+from .application.references import SportThreshold as SportThreshold
+from .application.references import SportThresholds as SportThresholds
 from .application.workouts import (
     calculate_workout,
     decide_workout_reference,

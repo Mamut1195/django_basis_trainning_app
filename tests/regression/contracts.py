@@ -31,6 +31,7 @@ class BlockDocument(TypedDict, total=False):
     actual: dict[str, object]
     sets: list[dict[str, object]]
     intervals: list[dict[str, object]]
+    threshold_snapshot: dict[str, object] | None
 
 
 class ScheduledDocument(TypedDict, total=False):

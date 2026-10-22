@@ -130,6 +130,7 @@ class Block(ValidatedModel):
     target = models.JSONField(default=dict, blank=True)
     actual = models.JSONField(default=dict, blank=True)
     notes = models.TextField(blank=True)
+    threshold_snapshot = models.JSONField(null=True, blank=True, editable=False)
 
     class Meta:
         ordering = ["order", "pk"]
@@ -156,11 +157,46 @@ class Block(ValidatedModel):
             raise ValidationError("Origen de bloque incompatible con esta ejecución.")
         self.target = validate_metrics(self.sport, self.target)
         self.actual = validate_metrics(self.sport, self.actual)
+        self.clean_threshold_snapshot()
         if self.planned_id:
             try:
                 validate_prescribed_results(bool(self.actual), block_level=True)
             except InvalidPlanning as error:
                 raise ValidationError(str(error)) from error
+
+    def clean_threshold_snapshot(self) -> None:
+        from ..thresholds import capture, decode_snapshot, encode_snapshot
+
+        previous = type(self).objects.using(self._state.db).filter(pk=self.pk).first()
+        if previous is not None:
+            if previous.threshold_snapshot != self.threshold_snapshot or (
+                self.threshold_snapshot is not None and previous.sport != self.sport
+            ):
+                raise ValidationError("La referencia histórica del umbral es inmutable.")
+            return
+        if self.source_id:
+            source = self.source
+            assert source is not None
+            if self.threshold_snapshot != source.threshold_snapshot:
+                raise ValidationError("La ejecución conserva la referencia prescrita.")
+        elif self.planned_id and not getattr(self, "_threshold_from_copy", False):
+            planned = self.planned
+            assert planned is not None
+            if self.threshold_snapshot is not None:
+                raise ValidationError("La referencia solo puede asignarse por el servidor.")
+            self.threshold_snapshot = encode_snapshot(
+                capture(
+                    AccountId(self.owner_id),
+                    self.sport,
+                    planned.date,
+                    using=self._state.db or "default",
+                )
+            )
+        elif self.session_id and self.threshold_snapshot is not None:
+            raise ValidationError("Una referencia prescrita requiere un bloque de origen.")
+        snapshot = decode_snapshot(self.threshold_snapshot)
+        if snapshot is not None and snapshot.sport != self.sport:
+            raise ValidationError("Referencia incompatible con la disciplina.")
 
     @property
     def owner_id(self) -> int:

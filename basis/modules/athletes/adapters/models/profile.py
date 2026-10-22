@@ -128,6 +128,12 @@ class SportProfile(Owned):
     )
     measured_on = models.DateField(null=True, blank=True)
     method = models.CharField(max_length=150, blank=True)
+    threshold_kind = models.CharField(
+        max_length=10,
+        blank=True,
+        choices=[("measured", "Medido"), ("estimated", "Estimado")],
+    )
+    threshold_source = models.CharField(max_length=250, blank=True)
 
     class Meta:
         constraints = [
@@ -144,9 +150,24 @@ class SportProfile(Owned):
                     self.threshold_unit,
                     self.measured_on,
                     self.method,
+                    self.threshold_kind,
+                    self.threshold_source,
                 )
             )
             if self.measured_on is not None:
                 validate_observation_date(self.measured_on, timezone.localdate())
+            if self.threshold is not None:
+                previous = type(self).objects.using(self._state.db).filter(pk=self.pk).first()
+                names = ("sport", "threshold", "threshold_unit", "measured_on", "method")
+                changed = previous is None or any(
+                    getattr(previous, name) != getattr(self, name) for name in names
+                )
+                documented = previous is not None and (
+                    previous.threshold_kind or previous.threshold_source
+                )
+                if (changed or documented) and (
+                    not self.threshold_kind or not self.threshold_source.strip()
+                ):
+                    raise InvalidAthleteData("Un umbral nuevo requiere tipo y fuente declarados.")
         except InvalidAthleteData as error:
             raise ValidationError(str(error)) from error

@@ -46,6 +46,8 @@ class SportData:
     threshold_unit: str
     measured_on: date | None
     method: str
+    threshold_kind: str = ""
+    threshold_source: str = ""
 
 
 @dataclass(frozen=True)
@@ -109,8 +111,16 @@ def require_adult(age: int | None) -> None:
 
 
 def validate_sport(data: SportData) -> None:
+    if data.sport not in {"strength", "cardio", "running", "cycling", "swimming", "hiking"}:
+        raise InvalidAthleteData("Disciplina inválida.")
     if data.threshold is not None and (
-        not data.threshold_unit or not data.measured_on or not data.method
+        not isinstance(data.threshold, Decimal)
+        or not data.threshold.is_finite()
+        or not Decimal("0.01") <= data.threshold <= Decimal("999999.99")
+    ):
+        raise InvalidAthleteData("Umbral fuera del rango decimal declarado.")
+    if data.threshold is not None and (
+        not data.threshold_unit or not data.measured_on or not data.method.strip()
     ):
         raise InvalidAthleteData("Un umbral requiere unidad, fecha y método.")
     allowed = {
@@ -123,6 +133,17 @@ def validate_sport(data: SportData) -> None:
     }
     if data.threshold_unit and data.threshold_unit not in allowed.get(data.sport, set()):
         raise InvalidAthleteData("Unidad de umbral incompatible con la disciplina.")
+    if data.threshold_kind not in {"", "measured", "estimated"}:
+        raise InvalidAthleteData("Indica si el umbral es medido o estimado.")
+    if data.threshold is None and any(
+        (
+            data.threshold_unit,
+            data.measured_on,
+            data.threshold_kind,
+            data.threshold_source,
+        )
+    ):
+        raise InvalidAthleteData("Los metadatos de umbral requieren un valor; ausencia no es cero.")
 
 
 def validate_wellness(data: WellnessData) -> None:

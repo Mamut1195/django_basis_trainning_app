@@ -18,6 +18,18 @@
         {% endif %}
       </div>
       {% include 'training/execution/_metrics.html' %}
+      {% if block.sport != 'strength' %}
+        <p class="muted">
+          {% if block.threshold_snapshot %}
+            Referencia de umbral congelada: {{ block.threshold_snapshot.value }} {{ block.threshold_snapshot.unit }}
+            · {{ block.threshold_snapshot.measured_on }} · Método: {{ block.threshold_snapshot.method }}
+            · Tipo: {{ block.threshold_snapshot.kind|default:'Sin documentar' }}
+            · Fuente: {{ block.threshold_snapshot.source|default:'Sin documentar' }}
+          {% else %}
+            Referencia de umbral: sin registrar. No se infiere desde el perfil actual.
+          {% endif %}
+        </p>
+      {% endif %}
       {% if block.sport == 'strength' %}
         {% include 'training/execution/_strength.html' %}
       {% else %}

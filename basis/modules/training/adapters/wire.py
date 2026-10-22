@@ -132,9 +132,12 @@ def encode_interval(row: IntervalData) -> dict[str, object]:
 
 
 def encode_block(block: BlockData) -> dict[str, object]:
+    from .thresholds import encode_snapshot
+
     return {
         "id": block.id,
         "source": block.source,
+        "threshold_snapshot": encode_snapshot(block.threshold_snapshot),
         "order": block.order,
         "sport": block.sport,
         "title": block.title,
@@ -242,6 +245,8 @@ def interval(value: object) -> IntervalData:
 
 
 def blocks(value: object) -> tuple[BlockData, ...]:
+    from .thresholds import decode_snapshot
+
     rows = sequence(value)
     if not 1 <= len(rows) <= 30:
         raise ValidationError("Una sesión necesita entre 1 y 30 bloques.")
@@ -251,6 +256,7 @@ def blocks(value: object) -> tuple[BlockData, ...]:
         if set(row) - {
             "id",
             "source",
+            "threshold_snapshot",
             "order",
             "sport",
             "title",
@@ -271,6 +277,7 @@ def blocks(value: object) -> tuple[BlockData, ...]:
                 # server identity. Integer IDs are authoritative and parent-scoped.
                 id=block_identity(row.get("id")),
                 source=optional_integer(row.get("source")),
+                threshold_snapshot=decode_snapshot(row.get("threshold_snapshot")),
                 sport=text(row.get("sport", "")),
                 title=text(row.get("title", "")),
                 target=metrics(row.get("target", {})),
