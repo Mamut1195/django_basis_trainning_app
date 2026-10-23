@@ -44,6 +44,13 @@
           <p>
             <span class="pill">{{ billing.status_label }}</span>
           </p>
+          {% if billing.status == 'active' or billing.status == 'trialing' %}
+            {% if billing.period_start %}
+              <p>
+                Inicio del período: <strong>{{ billing.period_start|date:'j M Y H:i' }}</strong>
+              </p>
+            {% endif %}
+          {% endif %}
           {% if billing.period_end %}
             <p>
               {% if billing.status == 'trialing' %}
