@@ -157,10 +157,12 @@ como defectos pendientes; no se debilitaron contratos ni configuraciones de tipo
 - Navegador físico/real, LIVE, dispositivos y proveedores: **NOT RUN**. El cliente
   HTTP de Django verifica HTML y persistencia, no interacción de navegador real.
 - AUTH vigente: revisor externo independiente **NOT RUN (HTTP 401)**;
-  **revisión independiente: BT2 PENDIENTE**, incluida la revisión de UI/etiquetas.
+  **revisión independiente: BT2 = APROBABLE** (sin cambios requeridos), incluida la
+  revisión de UI/etiquetas; **BT3 QA = PASS** sobre cd5c7e8.
   No se reclama aprobación, aceptación ni se traslada la revisión de MAM-811.
 - Renovación de los once gates y binding del candidato con este documento:
-  **PENDIENTE del coordinador**. CI sobre el SHA publicado: **PENDIENTE en el PR**;
-  los resultados locales anteriores no sustituyen ese CI.
+  **PENDIENTE del coordinador**. CI sobre el SHA publicado cd5c7e8: **verde**
+  (postgres y operations pass, verificado con `gh pr checks 16`); los resultados
+  locales anteriores no sustituyen ese CI.
 - Esta entrega no hace commit, push, merge/integración, cambios de tracker ni cierre.
   El estado descrito es evidencia de implementación, no publicación ni Done.
