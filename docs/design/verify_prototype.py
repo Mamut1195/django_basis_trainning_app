@@ -16,7 +16,164 @@ import sys
 import traceback
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, TypedDict
 from urllib.parse import unquote, urlparse
+
+if TYPE_CHECKING:
+    from playwright.sync_api import Page, Route
+
+
+class Arguments(argparse.Namespace):
+    output: Path
+    browser_executable: str | None
+
+
+class StaticChecks(TypedDict):
+    logo_exact_bytes: bool
+    local_assets: list[str]
+    dark_tokens_only: bool
+    component_colors_tokens_only: bool
+    no_network_or_storage_apis: bool
+
+
+class TextRecord(TypedDict):
+    element: str
+    text: str
+    color: str
+    background: list[float]
+    ratio: float
+    threshold: float
+    size: float
+    weight: int
+
+
+class TargetRecord(TypedDict):
+    element: str
+    name: str
+    width: float
+    height: float
+
+
+class BorderRecord(TypedDict):
+    element: str
+    side: str
+    color: str
+    style: str
+    width: float
+    background: list[float]
+    adjacentBackground: list[float]
+    backgroundRatio: float
+    adjacentRatio: float
+    threshold: float
+
+
+class Issue(TypedDict, total=False):
+    kind: str
+    element: str
+    error: str
+    text: str
+    color: str
+    background: list[float]
+    ratio: float
+    threshold: float
+    size: float
+    weight: int
+    name: str
+    width: float
+    height: float
+    side: str
+    style: str
+    adjacentBackground: list[float]
+    backgroundRatio: float
+    adjacentRatio: float
+    viewport: float
+
+
+class AuditResult(TypedDict):
+    problems: list[Issue]
+    reviews: list[Issue]
+    text: list[TextRecord]
+    targets: list[TargetRecord]
+    controlBorders: list[BorderRecord]
+    controlCount: int
+
+
+class FocusRect(TypedDict):
+    x: float
+    y: float
+    width: float
+    height: float
+
+
+class FocusRecord(TypedDict, total=False):
+    body: bool
+    element: str
+    controlIndex: int
+    nativeDate: bool
+    outline: str
+    style: str
+    width: float
+    offset: float
+    focusVisible: bool
+    focusWithin: bool
+    rect: FocusRect
+    background: list[float]
+    ratio: float
+    ok: bool
+    error: str
+
+
+class SelfTestResult(TypedDict):
+    status: str
+    negative_kinds: list[str]
+    gradient_review: bool
+    black_white_ratio: float
+    gray_white_ratio: float
+    invisible_focus_rejected: bool
+    alpha_oracle: list[float]
+    keyboard_negative_focus: list[FocusRecord]
+    faint_control_border_rejected: AuditResult
+    native_date_traversal: list[FocusRecord]
+    native_date_trap_rejected: list[FocusRecord]
+    native_date_nonconsecutive_repeat_rejected: list[FocusRecord]
+
+
+class AuditEntry(AuditResult, total=False):
+    width: int
+    theme: str
+    route: str
+    state: str
+    tokens: dict[str, str]
+    keyboard: list[FocusRecord]
+    status: str
+
+
+class Report(TypedDict, total=False):
+    schema: int
+    status: str
+    scope: str
+    started_at: str
+    tools: dict[str, str]
+    human_approval: str
+    screen_reader: str
+    physical_device: str
+    limitations: list[str]
+    source_before: dict[str, str]
+    source_after: dict[str, str]
+    static: StaticChecks
+    network_attempts: list[str]
+    javascript_errors: list[str]
+    auditor_self_tests: SelfTestResult
+    flows: list[str]
+    keyboard_activation: list[str]
+    audits: list[AuditEntry]
+    screenshots: list[str]
+    browser_closed: bool
+    artifacts: dict[str, str]
+    error: str
+    traceback: str
+    finished_at: str
+
 
 ROOT = Path(__file__).resolve().parents[2]
 PROTOTYPE = ROOT / "docs/design/prototipo"
@@ -167,7 +324,7 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def static_checks() -> dict[str, object]:
+def static_checks() -> StaticChecks:
     html = (PROTOTYPE / "index.html").read_text(encoding="utf-8")
     css = (PROTOTYPE / "styles.css").read_text(encoding="utf-8")
     js = (PROTOTYPE / "app.js").read_text(encoding="utf-8")
@@ -226,37 +383,39 @@ def static_checks() -> dict[str, object]:
     }
 
 
-def settle(page) -> None:
+def settle(page: Page) -> None:
     page.evaluate("() => document.fonts.ready")
     page.evaluate(
         "() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))"
     )
 
 
-def keyboard_audit(page, expected: int, records: list[dict] | None = None) -> list[dict]:
+def keyboard_audit(
+    page: Page, expected: int, records: list[FocusRecord] | None = None
+) -> list[FocusRecord]:
     page.evaluate("""() => {
       document.body.setAttribute('tabindex','-1'); document.body.focus();
       document.body.removeAttribute('tabindex');
     }""")
     if records is None:
         records = []
-    expected_order = page.evaluate("() => window.__ux.controls.map(window.__ux.id)")
+    expected_order: list[str] = page.evaluate("() => window.__ux.controls.map(window.__ux.id)")
     require(len(expected_order) == expected, "Keyboard control count changed")
     # Chromium exposes day/month/year (and potentially a picker) on one DOM node.
     # Only consecutive native-date stops may repeat, with a strict per-node cap.
     max_date_stops = 4
-    date_count = page.evaluate(
+    date_count: int = page.evaluate(
         "() => window.__ux.controls.filter(el => el.matches('input[type=\"date\"]')).length"
     )
     step_limit = expected + date_count * (max_date_stops - 1) + 4
-    seen = set()
-    unique = []
-    previous = None
+    seen: set[int] = set()
+    unique: list[FocusRecord] = []
+    previous: int | None = None
     consecutive = 0
     completed = False
     for _ in range(step_limit):
         page.keyboard.press("Tab")
-        item = page.evaluate(FOCUS)
+        item: FocusRecord = page.evaluate(FOCUS)
         records.append(item)  # Preserve every raw stop, including failures and body wrap.
         if item.get("body"):
             if seen or expected == 0:
@@ -289,7 +448,7 @@ def keyboard_audit(page, expected: int, records: list[dict] | None = None) -> li
     return records
 
 
-def self_test(page) -> dict[str, object]:
+def self_test(page: Page) -> SelfTestResult:
     page.set_content("""<!doctype html><html><head><style>
       body { background:#fff; color:#000; }
       button { width:60px; height:45px; background:#fff; color:#777; }
@@ -299,7 +458,7 @@ def self_test(page) -> dict[str, object]:
       </style></head><body><p>Black on white</p><button>Bad contrast</button>
       <input /><p class="paint">Needs review</p><div hidden><button>Hidden</button></div>
       </body></html>""")
-    audit = page.evaluate(AUDITOR)
+    audit: AuditResult = page.evaluate(AUDITOR)
     kinds = {item["kind"] for item in audit["problems"]}
     require(
         {"text-contrast", "missing-label", "small-target"}.issubset(kinds),
@@ -314,14 +473,14 @@ def self_test(page) -> dict[str, object]:
         "Do not round 4.478 up to a passing 4.5",
     )
     page.keyboard.press("Tab")
-    focus = page.evaluate(FOCUS)
+    focus: FocusRecord = page.evaluate(FOCUS)
     require(not focus["ok"] and focus["ratio"] == 1, "Auditor missed invisible focus")
-    alpha = page.evaluate("""() => window.__ux.over([0,0,0,0.5],[255,255,255,1])""")
+    alpha: list[float] = page.evaluate("""() => window.__ux.over([0,0,0,0.5],[255,255,255,1])""")
     require(alpha == [127.5, 127.5, 127.5, 1], "sRGB alpha composition oracle")
     require(audit["controlCount"] == 2, "Hidden controls must not enter keyboard count")
 
-    def rejected_keyboard(expected: int, message: str) -> list[dict]:
-        records = []
+    def rejected_keyboard(expected: int, message: str) -> list[FocusRecord]:
+        records: list[FocusRecord] = []
         try:
             keyboard_audit(page, expected, records)
         except AssertionError as error:
@@ -338,7 +497,7 @@ def self_test(page) -> dict[str, object]:
         border:1px solid #cbd5e1; }
       </style></head><body><label for="faint-border">Faint border</label>
       <input id="faint-border" /></body></html>""")
-    faint_border = page.evaluate(AUDITOR)
+    faint_border: AuditResult = page.evaluate(AUDITOR)
     require(
         faint_border["controlCount"] == 1
         and len(faint_border["controlBorders"]) == 4
@@ -366,7 +525,7 @@ def self_test(page) -> dict[str, object]:
       </style></head><body><button id="before-date">Before date</button>
       <label for="fixture-date">Date</label><input id="fixture-date" type="date" value="2026-10-23" />
       <button id="after-date">After date</button></body></html>""")
-    date_audit = page.evaluate(AUDITOR)
+    date_audit: AuditResult = page.evaluate(AUDITOR)
     require(
         not date_audit["problems"] and not date_audit["reviews"],
         "Native date fixture must satisfy unchanged DOM thresholds",
@@ -408,8 +567,8 @@ def self_test(page) -> dict[str, object]:
     }
 
 
-def navigate(page, target: str) -> None:
-    current = page.evaluate("() => location.hash")
+def navigate(page: Page, target: str) -> None:
+    current: str = page.evaluate("() => location.hash")
     if current == f"#{target}":
         return
     if target == "entrenamiento":
@@ -421,12 +580,12 @@ def navigate(page, target: str) -> None:
     settle(page)
 
 
-def functional_flows(page) -> list[str]:
-    checks = []
+def functional_flows(page: Page) -> list[str]:
+    checks: list[str] = []
     page.locator("#state").select_option("normal")
     navigate(page, "hoy")
     require(
-        page.locator("nav a").all_text_contents()
+        bool(page.locator("nav a").all_text_contents())
         and page.locator('[aria-current="page"]').count() == 1,
         "Stable navigation/current page",
     )
@@ -523,21 +682,23 @@ def functional_flows(page) -> list[str]:
     return checks
 
 
-def run_browser(args, report: dict) -> None:
+def run_browser(args: Arguments, report: Report) -> None:
     from playwright.sync_api import sync_playwright
 
-    network = report["network_attempts"] = []
-    errors = report["javascript_errors"] = []
+    network: list[str] = []
+    report["network_attempts"] = network
+    errors: list[str] = []
+    report["javascript_errors"] = errors
     allowed = {path.resolve() for path in SOURCE_PATHS if path.is_relative_to(PROTOTYPE)}
     with sync_playwright() as playwright:
-        options = {"headless": True}
+        executable_path: str | None = None
         if args.browser_executable:
             executable = Path(args.browser_executable).resolve(strict=True)
-            options["executable_path"] = str(executable)
+            executable_path = str(executable)
             report["tools"]["browser_executable_sha256"] = hashlib.sha256(
                 executable.read_bytes()
             ).hexdigest()
-        browser = playwright.chromium.launch(**options)
+        browser = playwright.chromium.launch(headless=True, executable_path=executable_path)
         report["tools"]["chromium"] = browser.version
         try:
             context = browser.new_context(
@@ -546,7 +707,7 @@ def run_browser(args, report: dict) -> None:
                 service_workers="block",
             )
 
-            def guard(request_route):
+            def guard(request_route: Route) -> None:
                 url = request_route.request.url
                 parsed = urlparse(url)
                 if parsed.scheme == "file":
@@ -613,7 +774,7 @@ def run_browser(args, report: dict) -> None:
                     if page.locator("html").get_attribute("data-theme") != theme:
                         page.locator("#theme").click()
                     settle(page)
-                    tokens = page.evaluate("""() => {
+                    tokens: dict[str, str] = page.evaluate("""() => {
                       const s=getComputedStyle(document.documentElement);
                       return Object.fromEntries(['--app-bg','--surface','--text','--muted','--accent',
                         '--border','--control-border','--primitive-slate-500','--primitive-slate-400',
@@ -633,14 +794,19 @@ def run_browser(args, report: dict) -> None:
                         for state in STATES:
                             page.locator("#state").select_option(state)
                             settle(page)
-                            audit = page.evaluate(AUDITOR)
-                            entry = {
+                            audit: AuditResult = page.evaluate(AUDITOR)
+                            entry: AuditEntry = {
                                 "width": width,
                                 "theme": theme,
                                 "route": target,
                                 "state": state,
                                 "tokens": tokens,
-                                **audit,
+                                "problems": audit["problems"],
+                                "reviews": audit["reviews"],
+                                "text": audit["text"],
+                                "targets": audit["targets"],
+                                "controlBorders": audit["controlBorders"],
+                                "controlCount": audit["controlCount"],
                             }
                             report["audits"].append(entry)
                             # Keep diagnostics even if keyboard/contrast fails.
@@ -686,12 +852,12 @@ def main() -> int:
     parser.add_argument(
         "--browser-executable", help="Existing Chromium executable; never downloaded"
     )
-    args = parser.parse_args()
+    args = parser.parse_args(namespace=Arguments())
     args.output = args.output.resolve()
     if args.output.exists():
         parser.error("--output must not exist; do not overwrite evidence")
     args.output.mkdir(parents=True)
-    report = {
+    report: Report = {
         "schema": 1,
         "status": "FAIL",
         "scope": "STATIC_PROTOTYPE_BOUNDED_UX_SCREENING",
