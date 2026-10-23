@@ -334,14 +334,19 @@ def token_mutation(page: Page, selector: str) -> dict[str, object]:
             "Canonical brand background did not change body paint",
             diagnostic,
         )
-        assert before["buttonFont"] != after["buttonFont"] and after["buttonFont"] == "monospace", (
-            "Kit button canonical font-family did not change to monospace",
-            diagnostic,
-        )
-        assert before["buttonSize"] != after["buttonSize"] and after["buttonSize"] == "19px", (
-            "Kit button canonical font-size did not change to 19px",
-            diagnostic,
-        )
+        # Like inputs, kit buttons are asserted only on pages that render one
+        # (/coach/ hides its submit button while the AI provider is disabled).
+        if before["buttonFont"] is not None:
+            assert (
+                before["buttonFont"] != after["buttonFont"] and after["buttonFont"] == "monospace"
+            ), (
+                "Kit button canonical font-family did not change to monospace",
+                diagnostic,
+            )
+            assert before["buttonSize"] != after["buttonSize"] and after["buttonSize"] == "19px", (
+                "Kit button canonical font-size did not change to 19px",
+                diagnostic,
+            )
         if before["inputRadius"] is not None:
             assert after["inputRadius"] == "18px", (
                 "Input canonical radius did not resolve to 18px",
