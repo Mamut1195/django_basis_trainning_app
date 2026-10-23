@@ -122,7 +122,7 @@ class EnduranceTests(TestCase):
                     if spec.kind == "integer":
                         with self.assertRaises(ValidationError):
                             validate_metrics(sport, {name: "1.5"})
-        self.assertEqual(count, 55)
+        self.assertEqual(count, 56)
 
     def test_incompatible_discipline_variable_and_pause_without_movement(self) -> None:
         for sport, values in (

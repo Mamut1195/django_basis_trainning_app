@@ -165,10 +165,14 @@ class MetricsForm(forms.Form):
             if spec.kind == "text":
                 field: forms.Field = forms.CharField(label=label, required=False, max_length=500)
             elif spec.kind == "choice":
+                choice_labels = {"indoor": "Interior", "outdoor": "Exterior"}
                 field = forms.ChoiceField(
                     label=label,
                     required=False,
-                    choices=[("", "Sin registrar"), *[(v, v) for v in spec.choices]],
+                    choices=[
+                        ("", "Sin registrar"),
+                        *[(v, choice_labels.get(v, v)) for v in spec.choices],
+                    ],
                 )
             else:
                 cls = forms.IntegerField if spec.kind == "integer" else forms.DecimalField
