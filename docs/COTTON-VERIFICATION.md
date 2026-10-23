@@ -6,7 +6,7 @@
 - Snapshot: `c1f486008483f1cbb478983a40ced1fa3cb7f4c6a7ecd479634266784220102f`.
 - Base: `de24ce7ef686c0b990342537d7a47a6fec5274a6`.
 - Rama: `ticket/MAM-627-cotton-ui`.
-- Contrato UX autorizado: MAM626 PR15 `c9bc2351a25e4f6f1038cdecba837e3d5bf89e83`.
+- Contrato UX autorizado: MAM-626 PR #15, **ronda 2 (R2)**, head `cdcbac5f1e305f2609710422aeae4e1215a4d604` (sustituye la ronda 1, `c9bc2351a25e4f6f1038cdecba837e3d5bf89e83`).
 - Riesgo congelado 2; MATH OFF; METHOD NONE. Sin cambio deportivo ni de dependencias.
 
 Esta página describe las fuentes y el protocolo, **no certifica el candidato**.
@@ -110,14 +110,26 @@ La ejecución conserva implementación round 1, fix round 0 y review round 0. El
 
 Hallazgos diagnosticados sin modificar el kit ni debilitar ratios: el auditor antiguo interpretaba OKLCH como canales RGB; el auditor Cotton normaliza colores con el motor del navegador y rechaza los no soportados/fuera de gamut. Los avisos del catálogo tienen mapeo sRGB semántico en tokens. El controlador instalado del diálogo no asigna role=dialog; la composición de accesibilidad del catálogo añade ese rol al contenedor interno y conserva apertura/trap/Escape del kit. Se distingue tipografía heredada de controles frente a las utilidades del kit.
 
-**BLOQUEO DE ACEPTACIÓN: browser FAILED.** El último intento antes de los gates finales falló en la regresión de transiciones finitas encadenadas del auditor: `ended=1`, `opacity=0.5`, `transform=matrix(1,0,0,1,0,0)`, `active=1`. No se omite esa regresión ni se afirma PASS. Las seis capturas y el avance por CSRF y tres swaps de candidatos anteriores son evidencia histórica, no validación integral de estas fuentes. Los resultados finales, comandos y CI del SHA publicado se registran en el PR draft; esta página no los anticipa.
+**Aceptación de navegador (ronda 2, resultados reales).** La corrida completa de `scripts.cotton_acceptance` (Chromium headless shell 1243, navegador 153.0.8010.12, solo Windows local) pasó por todas las etapas: `status=VERIFIED`, `stage=browser_complete`, sin errores JavaScript ni peticiones externas bloqueadas, fuentes antes/después iguales. Evidencia local: `basis-runs/MAM627-r2-acceptance-3` (y repetición `MAM627-r2-acceptance-4`); no son artefactos de CI.
 
-| Criterio | Archivo o comprobación | Estado antes del readback final |
+Causas de los fallos previos, todas del auditor y no de la UI (diagnosticadas y corregidas en commits separados, sin relajar ratios ni omitir pruebas):
+
+1. Asentamiento de animaciones: `SETTLE` salía tras 2 fotogramas quietos y cortaba las transiciones encadenadas de la fixture (`ended=1, opacity=0.5, active=1`; reproducido 3/3 por BT3). Ahora exige `quietFrames<4` (`settle_quiet_frames: 4`). La cadena infinita sigue rechazada por el plazo global de 1500 ms.
+2. Medición de padding de tarjeta en `/coach/`: una tarjeta sin título rellena la propia tarjeta; el auditor medía el último hijo (0px). Ahora usa la caja realmente rellenada y sigue exigiendo que el padding cambie con `--space-1`.
+3. Botón del kit en `/coach/`: esa página no renderiza botón mientras el proveedor IA está deshabilitado. Las aserciones de botón se aplican solo donde hay un botón (igual que las de input); catálogo, `/`, `/plans/` y `/progress/` sí lo verifican.
+
+| Criterio | Archivo o comprobación | Estado |
 | --- | --- | --- |
-| Catálogo e inventario sin copiar primitivas | COMPONENTS.md, component_catalog.py, test_components.py | Fuentes completas; gate Django por confirmar |
-| Propagación de marca/tipografía/espaciado/radios a pantallas | cotton_acceptance.py, token_mutation | NOT RUN integral del candidato final |
-| Temas y contraste del catálogo | cotton_acceptance.py, matriz seis combinaciones | FAILED gate global; candidatos anteriores no acreditan el final |
-| Móvil/tablet/escritorio y teclado | cotton_acceptance.py | NOT RUN integral del candidato final |
-| Swaps HTMX/Alpine y caché pública PWA | cotton_acceptance.py | NOT RUN integral del candidato final |
+| Catálogo e inventario sin copiar primitivas | COMPONENTS.md, component_catalog.py, test_components.py | VERIFIED (Django); ver gates en el PR |
+| Propagación de marca/tipografía/espaciado/radios a pantallas | cotton_acceptance.py, token_mutation en catálogo, `/`, `/plans/`, `/progress/`, `/coach/`, `/profile/` | VERIFIED (Chromium headless shell) |
+| Temas y contraste del catálogo | matriz 390/768/1440 × claro/oscuro: 0 hallazgos de contraste, objetivos y foco; 60 paradas de teclado por combinación | VERIFIED (screening DOM, no WCAG) |
+| Teclado, diálogo (apertura, trap, Escape, retorno de foco) | cotton_acceptance.py | VERIFIED |
+| Diálogo: Alpine no sobrescribe `role="dialog"` ni `aria-label="Cerrar"` | comprobación nueva abierto y tras Escape | VERIFIED (menor a) |
+| Swaps HTMX/Alpine, CSRF real (403, 403, 200) y guardia de origen | cotton_acceptance.py | VERIFIED |
+| Service worker y caché pública PWA, API/navegación privada sin caché | cotton_acceptance.py | VERIFIED |
+
+**El CI de GitHub NO ejecuta `cotton_acceptance`.** El workflow `checks.yml` (jobs `postgres` y `operations`) no tiene job de Chromium: un CI verde no cubre esta aceptación de navegador. Se ejecuta a mano con:
+`python -B -m scripts.cotton_acceptance --output <directorio-nuevo> --browser-executable <chrome-headless-shell>`.
+Solo se probó en Chromium headless shell; otros navegadores: DESCONOCIDO. No se añade job Chromium por ahora.
 
 **revision independiente: BT2 — PENDIENTE**. Revisor externo NOT RUN por instrucción BT0; no se solicitan ni usan claves. Aprobación humana PENDING; lector de pantalla, dispositivos físicos y servicios LIVE NOT RUN. El draft no autoriza integración ni cierre. No hay cambios de dominio, modelos, migraciones o versiones de dependencias. El checker de arquitectura permanece protegido e intacto.
