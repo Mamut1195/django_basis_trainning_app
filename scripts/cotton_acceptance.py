@@ -73,7 +73,9 @@ if UX_AUDIT.count(_LEGACY_RGB) != 1:
 AUDIT = UX_AUDIT.replace(_LEGACY_RGB, COLOR_NORMALIZER)
 
 # One overall deadline, never renewed by a chained transition. Keep the existing
-# 1000ms finite-effect limit and require two consecutive animation-free RAFs.
+# 1000ms finite-effect limit and require four consecutive animation-free RAFs.
+# A chained transition can start two RAFs after the previous one ends; two
+# quiet frames cut such a chain off early (MAM-627 R2 reproduction).
 # Observe again after every batch: Alpine may start its next transition later.
 SETTLE = r"""async () => {
   const deadline=performance.now()+1500;
@@ -83,7 +85,7 @@ SETTLE = r"""async () => {
       (async () => {
         await document.fonts.ready;
         let quietFrames=0;
-        while(!expired && quietFrames<2) {
+        while(!expired && quietFrames<4) {
           await new Promise(requestAnimationFrame);
           if(expired)return;
           if(performance.now()>=deadline)throw Error('Unsettled animation');
@@ -528,7 +530,7 @@ def measurement_regressions(page: Page) -> dict[str, object]:
         "endless_finite_chain_deadline_rejected": True,
         "settle_overall_deadline_ms": 1500,
         "settle_max_effect_duration_ms": 1000,
-        "settle_quiet_frames": 2,
+        "settle_quiet_frames": 4,
     }
 
 
