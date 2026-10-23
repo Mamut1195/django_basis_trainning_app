@@ -89,3 +89,7 @@ Estado al entregar fuentes: **automatización NOT RUN; revisión independiente P
 ## Evidencia posterior a la entrega inicial
 
 El coordinador ejecutó los cinco recorridos, los siete estados y las 140 combinaciones: preparación **VERIFIED**, con cuatro capturas y pruebas negativas del auditor. Véase [VERIFICATION.md](VERIFICATION.md) para comandos, hashes, alcance y limitaciones. Esto actualiza el NOT RUN histórico anterior, no constituye aceptación humana ni sincronización de servidor. Aprobación del propietario **PENDING**; lector de pantalla y dispositivo físico **NOT RUN**. Esta evidencia es anterior a R2 y no acredita los cambios actuales.
+
+## Readback R2 posterior a la asignación inicial
+
+Las menciones NOT RUN de la sección R2 anterior describen su entrega inicial de fuentes. El coordinador ya ejecutó el auditor ampliado: **224 auditorías VERIFIED**, ocho grupos de comprobaciones funcionales (incluidos descanso con reloj virtual y bienvenida/registro), diez PNG nuevos y 0 fallos detectados. Hoy y su único Comenzar caben sobre la barra a 390×844 sin scroll; Plan abre el formulario de fecha solo al expandir Reprogramar. Comprobados errores corregibles del alta ficticia, password redactado/borrado, ausencia de cuenta/correo/servidor y reset al recargar. Resultados, hashes, comandos y límites actuales en [VERIFICATION.md](VERIFICATION.md), sección R2. La evidencia R1 se conserva como historia. **revision independiente: BT2 PENDIENTE; revisor externo, aprobación humana, lector de pantalla y dispositivo físico NOT RUN.**
