@@ -119,6 +119,10 @@ class FocusRecord(TypedDict, total=False):
     rect: FocusRect
     background: list[float]
     ratio: float
+    geometryOK: bool
+    navTop: float
+    scrollMarginTop: float
+    scrollMarginBottom: float
     ok: bool
     error: str
 
@@ -136,6 +140,10 @@ class SelfTestResult(TypedDict):
     native_date_traversal: list[FocusRecord]
     native_date_trap_rejected: list[FocusRecord]
     native_date_nonconsecutive_repeat_rejected: list[FocusRecord]
+    large_text_rejected: bool
+    small_label_rejected: bool
+    disclosure_controls_checked: bool
+    occluded_focus_rejected: list[FocusRecord]
 
 
 class AuditEntry(AuditResult, total=False):
@@ -143,9 +151,31 @@ class AuditEntry(AuditResult, total=False):
     theme: str
     route: str
     state: str
+    disclosure: str
     tokens: dict[str, str]
     keyboard: list[FocusRecord]
     status: str
+
+
+class TimerMetrics(TypedDict):
+    created: int
+    cleared: int
+    active: int
+    trainingSubmits: int
+
+
+class SessionGeometry(TypedDict):
+    scrollY: float
+    navTop: float
+    sessionTop: float
+    sessionBottom: float
+    ctaTop: float
+    ctaBottom: float
+    ctaWidth: float
+    contentWidth: float
+    primaryCount: int
+    toolsClosed: bool
+    navVisible: bool
 
 
 class Report(TypedDict, total=False):
@@ -155,8 +185,10 @@ class Report(TypedDict, total=False):
     started_at: str
     tools: dict[str, str]
     human_approval: str
+    independent_review: str
     screen_reader: str
     physical_device: str
+    external_validation: str
     limitations: list[str]
     source_before: dict[str, str]
     source_after: dict[str, str]
@@ -165,8 +197,12 @@ class Report(TypedDict, total=False):
     javascript_errors: list[str]
     auditor_self_tests: SelfTestResult
     flows: list[str]
+    session_geometry: dict[str, SessionGeometry]
+    rest_timer: list[TimerMetrics]
+    onboarding_input_audit: AuditResult
     keyboard_activation: list[str]
     audits: list[AuditEntry]
+    audit_counts: dict[str, int]
     screenshots: list[str]
     browser_closed: bool
     artifacts: dict[str, str]
@@ -189,8 +225,16 @@ SOURCE_PATHS = [
     Path(__file__).resolve(),
     CANONICAL_LOGO,
 ]
-ROUTES = ("hoy", "entrenamiento", "plan", "progreso", "entrenador")
+ROUTES = ("hoy", "entrenamiento", "plan", "progreso", "entrenador", "bienvenida", "registro")
 STATES = ("normal", "empty", "loading", "error", "offline", "pending", "conflict")
+SCREENSHOTS = {
+    *(f"hoy-{width}-{theme}.png" for width in (390, 1440) for theme in ("light", "dark")),
+    *(
+        f"{route}-390-{theme}.png"
+        for route in ("plan", "onboarding", "registro")
+        for theme in ("light", "dark")
+    ),
+}
 
 # Executed on the real DOM, not a palette-only surrogate. No remote dependencies.
 # Backgrounds and alpha are composited in sRGB, then WCAG relative luminance uses
@@ -236,7 +280,7 @@ AUDITOR = r"""() => {
       const s = getComputedStyle(el), bg = background(el);
       const fg = over(rgba(s.color), bg), measured = ratio(fg,bg);
       const size = parseFloat(s.fontSize), weight = parseInt(s.fontWeight,10);
-      const threshold = size >= 24 || (size >= 18.6666667 && weight >= 700) ? 3 : 4.5;
+      const threshold = 4.5; // R2: all text sizes, never the large-text exception.
       const item = {element:id(el), text:content.slice(0,100), color:s.color,
         background:bg, ratio:measured, threshold, size, weight};
       text.push(item);
@@ -271,7 +315,12 @@ AUDITOR = r"""() => {
     if (![...range.getClientRects()].some(r => r.width > 0 && r.bottom > 0 && r.right > 0)) continue;
     checkText(el, node.textContent.trim());
   }
-  const controls = [...document.querySelectorAll('a[href],button,input,select,textarea,[tabindex="0"]')]
+  for (const label of document.querySelectorAll('label')) {
+    if (visible(label) && parseFloat(getComputedStyle(label).fontSize) < 14) {
+      problems.push({kind:'small-label',element:id(label),size:parseFloat(getComputedStyle(label).fontSize),threshold:14});
+    }
+  }
+  const controls = [...document.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex="0"]')]
     .filter(el => !el.disabled && (visible(el) || el.classList.contains('skip')));
   for (const el of controls) {
     const rect = el.getBoundingClientRect();
@@ -281,13 +330,15 @@ AUDITOR = r"""() => {
     targets.push(item);
     if (!name) problems.push({kind:'missing-label',...item});
     if (rect.width < 44 || rect.height < 44) problems.push({kind:'small-target',...item});
-    if (el.matches('input,textarea') && el.value) checkText(el,el.value);
+    if (el.matches('input,textarea') && el.value) {
+      // Never put even a fictional password in input-value evidence.
+      checkText(el,el.matches('input[type="password"]') ? '[REDACTED PASSWORD]' : el.value);
+    }
     if (el.matches('select')) checkText(el,el.selectedOptions[0]?.textContent || '');
     if (el.matches('input,select') && visible(el)) checkControlBorder(el);
   }
   if (document.documentElement.scrollWidth > innerWidth + 1) problems.push({kind:'horizontal-overflow',
     width:document.documentElement.scrollWidth,viewport:innerWidth});
-  // Helpers are private to this page/run; enable exact same focus computation.
   window.__ux = {visible,id,background,ratio,rgba,over,controls};
   return {problems,reviews,text,targets,controlBorders,controlCount:controls.length};
 }"""
@@ -296,20 +347,51 @@ FOCUS = r"""() => {
   const el=document.activeElement, u=window.__ux;
   if (!el || el === document.body) return {body:true};
   const s=getComputedStyle(el), r=el.getBoundingClientRect();
+  const nav=document.querySelector('nav'), shell=nav?.closest('.sidebar');
+  const fixedMobile=nav && shell && getComputedStyle(shell).position === 'fixed' &&
+    shell.getBoundingClientRect().width >= innerWidth - 1;
+  const navTop=fixedMobile ? shell.getBoundingClientRect().top : innerHeight;
+  const limit=fixedMobile && !el.closest('nav') ? navTop : innerHeight;
+  const marginTop=parseFloat(s.scrollMarginTop), marginBottom=parseFloat(s.scrollMarginBottom);
+  // Inspect the native Tab scroll result; never repair it with scrollIntoView.
+  const geometryOK=r.left >= 6 && r.top >= 6 && r.right <= innerWidth - 6 &&
+    r.bottom <= limit - 6 && (!fixedMobile || el.closest('nav') ||
+      (marginTop >= 6 && marginBottom >= 6));
   const item={element:u.id(el), controlIndex:u.controls.indexOf(el),
     nativeDate:el.matches('input[type="date"]'), outline:s.outlineColor, style:s.outlineStyle,
     width:parseFloat(s.outlineWidth), offset:parseFloat(s.outlineOffset),
     focusVisible:el.matches(':focus-visible'), focusWithin:el.matches(':focus-within'),
-    rect:{x:r.x,y:r.y,width:r.width,height:r.height}};
+    rect:{x:r.x,y:r.y,width:r.width,height:r.height}, geometryOK:Boolean(geometryOK),
+    navTop, scrollMarginTop:marginTop, scrollMarginBottom:marginBottom};
   try {
     const bg=u.background(el.parentElement), fg=u.over(u.rgba(s.outlineColor),bg);
     item.background=bg; item.ratio=u.ratio(fg,bg);
     item.ok=(item.focusVisible || (item.nativeDate && item.focusWithin)) &&
       item.width >= 3 && item.offset >= 3 && item.style === 'solid' &&
-      u.rgba(s.outlineColor)[3] === 1 && item.ratio >= 3;
+      u.rgba(s.outlineColor)[3] === 1 && item.ratio >= 3 && item.geometryOK;
   } catch(error) { item.ok=false; item.error=String(error); }
   return item;
 }"""
+
+# Test instrumentation only, never shipped to the prototype. Counts real timers
+# and submit events so duplicate intervals and automatic submits cannot hide.
+TIMER_OBSERVER = r"""(() => {
+  const active=new Set();
+  window.__restAudit={created:0,cleared:0,active:0,trainingSubmits:0};
+  const originalSet=window.setInterval.bind(window), originalClear=window.clearInterval.bind(window);
+  window.setInterval=(handler, delay, ...args) => {
+    const handle=originalSet(handler,delay,...args);
+    active.add(handle); window.__restAudit.created++; window.__restAudit.active=active.size;
+    return handle;
+  };
+  window.clearInterval=handle => {
+    if (active.delete(handle)) window.__restAudit.cleared++;
+    window.__restAudit.active=active.size; return originalClear(handle);
+  };
+  document.addEventListener('submit',event => {
+    if (event.target.id === 'training-form') window.__restAudit.trainingSubmits++;
+  },true);
+})();"""
 
 
 def fingerprint() -> dict[str, str]:
@@ -357,7 +439,6 @@ def static_checks() -> StaticChecks:
         "No service worker, beacon or cookies",
     )
     require("@import" not in css and "url(" not in css, "No external CSS resources")
-    # The only dark selector must be a variable-only root block.
     dark_blocks = re.findall(r':root\[data-theme="dark"\]\s*\{([^}]+)\}', css)
     require(len(dark_blocks) == 1, "Exactly one dark token block")
     for declaration in dark_blocks[0].split(";"):
@@ -367,7 +448,6 @@ def static_checks() -> StaticChecks:
                 "Dark theme contains a component style",
             )
     require(css.count('[data-theme="dark"]') == 1, "No per-component dark rules")
-    # No color literals in component rules, including media queries.
     component_css = css[css.index("* {") :]
     require(
         not re.search(r"#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(", component_css),
@@ -401,8 +481,6 @@ def keyboard_audit(
         records = []
     expected_order: list[str] = page.evaluate("() => window.__ux.controls.map(window.__ux.id)")
     require(len(expected_order) == expected, "Keyboard control count changed")
-    # Chromium exposes day/month/year (and potentially a picker) on one DOM node.
-    # Only consecutive native-date stops may repeat, with a strict per-node cap.
     max_date_stops = 4
     date_count: int = page.evaluate(
         "() => window.__ux.controls.filter(el => el.matches('input[type=\"date\"]')).length"
@@ -416,13 +494,13 @@ def keyboard_audit(
     for _ in range(step_limit):
         page.keyboard.press("Tab")
         item: FocusRecord = page.evaluate(FOCUS)
-        records.append(item)  # Preserve every raw stop, including failures and body wrap.
+        records.append(item)
         if item.get("body"):
             if seen or expected == 0:
                 completed = True
                 break
             continue
-        require(item["ok"], "Keyboard focus missing/low contrast; see audit")
+        require(item["ok"], "Keyboard focus missing/low contrast/occluded; see audit")
         index = item["controlIndex"]
         require(0 <= index < expected, "Tab reached an unexpected DOM control")
         if index == previous:
@@ -442,7 +520,6 @@ def keyboard_audit(
         and [item["element"] for item in unique] == expected_order,
         "Tab order differs from DOM order",
     )
-    # Reverse navigation is bounded to the observed stops, including date subfields.
     for _ in range(len(records)):
         page.keyboard.press("Shift+Tab")
     return records
@@ -537,7 +614,6 @@ def self_test(page: Page) -> SelfTestResult:
         [item["element"] for item in date_records if not item.get("body")][-1] == "#after-date",
         "Native date traversal did not reach its successor",
     )
-    # A date focus trap must not be mistaken for an unlimited sequence of subfields.
     page.locator("#fixture-date").evaluate("""el => {
       el.onkeydown = event => { if (event.key === 'Tab') event.preventDefault(); };
     }""")
@@ -551,6 +627,40 @@ def self_test(page: Page) -> SelfTestResult:
       };
     }""")
     date_loop = rejected_keyboard(3, "Nonconsecutive repeated keyboard control")
+    page.set_content("""<!doctype html><html><head><style>
+      body { color:#000; background:#fff; }
+      h1 { color:#777; font-size:32px; }
+      label { font-size:13px; }
+      summary { min-height:44px; }
+      input { width:100px; height:48px; border:1px solid #000; background:#fff; }
+      </style></head><body><h1>Large low contrast</h1><label for="tiny">Tiny label</label>
+      <details><summary>Open native disclosure</summary><input id="tiny" /></details>
+      </body></html>""")
+    closed: AuditResult = page.evaluate(AUDITOR)
+    require(closed["controlCount"] == 1, "Closed details must expose summary only")
+    require(
+        any(
+            item["kind"] == "text-contrast" and item["threshold"] == 4.5
+            for item in closed["problems"]
+        ),
+        "Large text must still meet R2 4.5:1",
+    )
+    require(any(item["kind"] == "small-label" for item in closed["problems"]), "Missed <14px label")
+    page.locator("summary").focus()
+    page.keyboard.press("Space")
+    opened: AuditResult = page.evaluate(AUDITOR)
+    require(opened["controlCount"] == 2, "Expanded disclosure must include its input")
+    page.set_content("""<!doctype html><html><head><style>
+      body { background:#fff; color:#000; }
+      button { position:fixed; bottom:8px; left:8px; height:48px; width:100px;
+        background:#fff; color:#000; scroll-margin:16px; }
+      button:focus-visible { outline:3px solid #000; outline-offset:3px; }
+      .sidebar { position:fixed; bottom:0; left:0; width:100%; height:80px; background:#fff; }
+      </style></head><body><button>Covered control</button>
+      <aside class="sidebar"><nav aria-label="Fixture"></nav></aside></body></html>""")
+    page.evaluate(AUDITOR)
+    occluded = rejected_keyboard(1, "Keyboard focus missing/low contrast/occluded")
+    require(not occluded[-1]["geometryOK"], "Fixed-nav occlusion must fail geometry")
     return {
         "status": "PASS",
         "negative_kinds": sorted(kinds),
@@ -564,7 +674,29 @@ def self_test(page: Page) -> SelfTestResult:
         "native_date_traversal": date_records,
         "native_date_trap_rejected": date_trap,
         "native_date_nonconsecutive_repeat_rejected": date_loop,
+        "large_text_rejected": True,
+        "small_label_rejected": True,
+        "disclosure_controls_checked": True,
+        "occluded_focus_rejected": occluded,
     }
+
+
+def toggle_tools(page: Page, opened: bool) -> None:
+    if page.locator("#demo-tools").evaluate("el => el.open") != opened:
+        page.locator("#demo-tools > summary").focus()
+        page.keyboard.press("Space")
+    require(
+        page.locator("#demo-tools").evaluate("el => el.open") == opened,
+        "Native tools toggle failed",
+    )
+
+
+def set_state(page: Page, state: str) -> None:
+    toggle_tools(page, True)
+    page.locator("#state").select_option(state)
+    toggle_tools(page, False)
+    settle(page)
+    require(page.locator("#state").is_hidden(), "Collapsed tools leaked state selector")
 
 
 def navigate(page: Page, target: str) -> None:
@@ -573,16 +705,95 @@ def navigate(page: Page, target: str) -> None:
         return
     if target == "entrenamiento":
         navigate(page, "hoy")
-        page.get_by_role("link", name="Comenzar demo", exact=True).click()
+        page.get_by_role("link", name="Comenzar", exact=True).click()
+    elif target == "bienvenida":
+        toggle_tools(page, True)
+        page.locator("#onboarding-link").click()
+    elif target == "registro":
+        navigate(page, "bienvenida")
+        page.locator("#open-registration").click()
     else:
         page.locator(f'nav a[href="#{target}"]').click()
     page.wait_for_function("target => location.hash === '#' + target", arg=target)
     settle(page)
+    if target == "bienvenida":
+        toggle_tools(page, False)
 
 
-def functional_flows(page: Page) -> list[str]:
+def expand_disclosures(page: Page) -> None:
+    # Native activation rather than setting .open or ignoring newly exposed fields.
+    for disclosure in page.locator("details").all():
+        if not disclosure.evaluate("el => el.open"):
+            summary = disclosure.locator(":scope > summary")
+            summary.focus()
+            page.keyboard.press("Space")
+        require(disclosure.evaluate("el => el.open"), "Disclosure did not expand from keyboard")
+    settle(page)
+
+
+def session_geometry(page: Page) -> SessionGeometry:
+    require(page.viewport_size == {"width": 390, "height": 844}, "R2 geometry requires 390x844")
+    require(
+        not page.locator("#demo-tools").evaluate("el => el.open"), "Hoy tools must start closed"
+    )
+    # Navigation already scrolled to the native top; do not scroll to fit the CTA.
+    result: SessionGeometry = page.evaluate("""() => {
+      const session=document.querySelector('#today-session'), cta=document.querySelector('#start-training');
+      const r=session.getBoundingClientRect(), b=cta.getBoundingClientRect(), s=getComputedStyle(session);
+      const nav=document.querySelector('nav'), shell=nav.closest('.sidebar');
+      const n=shell.getBoundingClientRect();
+      const visible=el => {
+        const r=el.getBoundingClientRect();
+        return el.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}) &&
+          r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth &&
+          r.top >= 0 && r.bottom <= innerHeight;
+      };
+      return {scrollY,navTop:n.top,sessionTop:r.top,sessionBottom:r.bottom,
+        ctaTop:b.top,ctaBottom:b.bottom,ctaWidth:b.width,
+        contentWidth:r.width-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight)-
+          parseFloat(s.borderLeftWidth)-parseFloat(s.borderRightWidth),
+        primaryCount:document.querySelectorAll('#view .primary').length,
+        toolsClosed:!document.querySelector('#demo-tools').open,
+        navVisible:getComputedStyle(shell).position === 'fixed' && nav.querySelectorAll('a').length === 4 &&
+          [...nav.querySelectorAll('a')].every(link => visible(link) &&
+            link.textContent.trim().length > 1 && link.querySelector('[aria-hidden="true"]') &&
+            visible(link.querySelector('[aria-hidden="true"]')))};
+    }""")
+    require(
+        result["scrollY"] == 0
+        and result["sessionTop"] >= 0
+        and result["sessionBottom"] <= result["navTop"] - 6
+        and result["ctaTop"] >= result["sessionTop"]
+        and result["ctaBottom"] <= result["navTop"] - 6,
+        "Hoy session/Comenzar must fit above fixed nav without scrolling at 390x844",
+    )
+    require(abs(result["ctaWidth"] - result["contentWidth"]) <= 1, "Comenzar must be full width")
+    require(
+        result["primaryCount"] == 1 and result["toolsClosed"],
+        "Hoy must have one primary and compact tools",
+    )
+    require(result["navVisible"], "All four nav links need visible icon and text at 390px")
+    return result
+
+
+def timer_metrics(page: Page, report: Report) -> TimerMetrics:
+    result: TimerMetrics = page.evaluate("() => ({...window.__restAudit})")
+    report.setdefault("rest_timer", []).append(result)
+    require(result["active"] <= 1, "Duplicate live rest intervals")
+    return result
+
+
+def remaining_rest(page: Page) -> int:
+    match = re.search(r"(\d+) s restantes", page.locator("#rest-timer").inner_text())
+    require(match is not None, "Expected an active illustrative rest countdown")
+    if match is None:
+        raise AssertionError("Missing rest countdown")
+    return int(match.group(1))
+
+
+def functional_flows(page: Page, report: Report) -> list[str]:
     checks: list[str] = []
-    page.locator("#state").select_option("normal")
+    set_state(page, "normal")
     navigate(page, "hoy")
     require(
         bool(page.locator("nav a").all_text_contents())
@@ -590,13 +801,60 @@ def functional_flows(page: Page) -> list[str]:
         "Stable navigation/current page",
     )
     navigate(page, "entrenamiento")
-    require(page.locator("fieldset").count() == 3, "Three independent prescribed/actual sets")
+    table = page.get_by_role("table", name="Registro rápido · Datos ficticios")
+    require(
+        table.get_attribute("id") == "sets-table", "Rapid editor must be a semantic named table"
+    )
+    require(table.locator("tr[data-set]").count() == 3, "Three independent prescribed/actual rows")
+    require(table.locator('th[scope="col"]').count() == 5, "Rapid table column headers missing")
     for n in range(1, 4):
-        require(page.locator(f"#reps-{n}").input_value() == "", "Targets must not prefill actuals")
+        row = table.locator(f'tr[data-set="{n}"]')
+        require(row.locator('th[scope="row"]').inner_text() == str(n), "Series row header missing")
+        for key in ("load", "reps", "rpe", "rir"):
+            require(
+                page.locator(f"#{key}-{n}").input_value() == "", "Targets must not prefill actuals"
+            )
+        details = page.locator("details.set-details").nth(n - 1)
+        require(details.locator("input").is_hidden(), "Optional RIR must start collapsed")
+        details.locator("summary").click()
+        require(
+            "Prescrito A: 8 rep · 40 kg · RPE 7 / 10 · RIR 3." in details.inner_text(),
+            "Each series needs explicit prescription distinct from actuals",
+        )
+        require(
+            "Anterior ficticio" in row.locator("xpath=following-sibling::tr[1]").inner_text()
+            and "No son valores realizados hoy"
+            in row.locator("xpath=following-sibling::tr[1]").inner_text(),
+            "Previous values must be fictitious, not actual input defaults",
+        )
+        button = page.locator(f"#check-{n}")
+        box = button.bounding_box()
+        require(
+            box is not None and box["width"] >= 48 and box["height"] >= 48,
+            "Set check must be >=48px square",
+        )
+        require(
+            button.get_attribute("aria-pressed") == "false" and button.inner_text() == "Pendiente",
+            "Pending state needs text and aria-pressed",
+        )
+    # Missing and out-of-range data in each required column must block marking.
+    for key in ("load", "reps", "rpe"):
+        for field, value in (("load", "0"), ("reps", "7"), ("rpe", "7.5")):
+            page.locator(f"#{field}-1").fill(value)
+        for invalid in ("", "-1", {"load": "500.5", "reps": "101", "rpe": "10.5"}[key]):
+            page.locator(f"#{key}-1").fill(invalid)
+            page.locator("#check-1").click()
+            require(
+                page.locator("#check-1").get_attribute("aria-pressed") == "false",
+                "Missing/invalid real data marked completed",
+            )
+            require(timer_metrics(page, report)["active"] == 0, "Invalid series started rest")
+        page.locator(f"#{key}-1").fill({"load": "0", "reps": "7", "rpe": "7.5"}[key])
+    for n in range(1, 4):
         page.locator(f"#reps-{n}").fill(str(8 - n))
         page.locator(f"#load-{n}").fill("0" if n == 1 else "37.5")
-        page.locator(f"#rpe-{n}").fill("7.5")
-        page.locator(f"#rir-{n}").fill("2")
+        page.locator(f"#rpe-{n}").fill(str(7 + n / 2))
+        page.locator(f"#rir-{n}").fill(str(n))
     page.locator("#minutes").fill("0")
     page.locator("#save-training").click()
     summary = page.locator("#record-summary").inner_text()
@@ -605,16 +863,112 @@ def functional_flows(page: Page) -> list[str]:
         "Measured zero and absence must remain distinct",
     )
     require("no enviado" in summary.lower(), "Memory-only save must not claim server success")
+    for n in range(1, 4):
+        load = "0" if n == 1 else "37.5"
+        rpe = f"{7 + n / 2:g}"
+        require(
+            f"Serie {n} · Pendiente: {8 - n} rep · {load} kg · RPE {rpe} · RIR {n}" in summary,
+            "Per-set reps/load/RPE/RIR observations lost or coupled",
+        )
     checks.append(
-        "inicio -> entrenamiento: per-set data, targets separate, zero != null, memory-only save"
+        "inicio -> entrenamiento: semantic three-row table, explicit targets/previous != empty actuals, independent reps/load/RPE/RIR, zero != null, memory-only save"
+    )
+    before = timer_metrics(page, report)
+    page.locator("#check-1").click()
+    require(
+        page.locator("#check-1").get_attribute("aria-pressed") == "true"
+        and "Realizada" in page.locator("#check-1").inner_text(),
+        "Completed needs distinct text and aria-pressed",
+    )
+    for key in ("load", "reps", "rpe", "rir"):
+        require(page.locator(f"#{key}-1").is_disabled(), "Completed row must lock all actuals")
+    require(89 <= remaining_rest(page) <= 90, "Mark must start automatic 90s illustrative rest")
+    first = timer_metrics(page, report)
+    require(
+        first["active"] == 1 and first["created"] == before["created"] + 1,
+        "Rest interval not created exactly once",
+    )
+    page.clock.fast_forward(10000)
+    require(79 <= remaining_rest(page) <= 80, "Countdown did not use elapsed clock time")
+    navigate(page, "plan")
+    navigate(page, "entrenamiento")
+    require(77 <= remaining_rest(page) <= 80, "Navigation restarted/lost rest deadline")
+    require(
+        page.locator("#check-1").get_attribute("aria-pressed") == "true",
+        "Navigation lost checked row",
+    )
+    page.locator("#check-2").click()
+    second = timer_metrics(page, report)
+    require(
+        second["active"] == 1 and second["created"] == first["created"],
+        "Second mark duplicated the running interval",
+    )
+    require(
+        89 <= remaining_rest(page) <= 90, "Second mark should restart the illustrative deadline"
+    )
+    page.clock.fast_forward(90000)
+    require(
+        "Sin descanso activo" in page.locator("#rest-timer").inner_text(),
+        "Rest did not finish after virtual 90s",
+    )
+    ended = timer_metrics(page, report)
+    require(
+        ended["active"] == 0 and ended["trainingSubmits"] == before["trainingSubmits"],
+        "Rest completion auto-submitted or leaked interval",
+    )
+    require(
+        page.locator("#check-1").get_attribute("aria-pressed") == "true"
+        and page.locator("#check-2").get_attribute("aria-pressed") == "true"
+        and page.locator("#check-3").get_attribute("aria-pressed") == "false",
+        "Rest completion must not auto-mark/unmark series",
+    )
+    page.locator("#check-2").click()
+    for key in ("load", "reps", "rpe", "rir"):
+        require(page.locator(f"#{key}-2").is_enabled(), "Explicit unmark must enable editing")
+    page.locator("#check-3").click()
+    require(89 <= remaining_rest(page) <= 90, "New mark must restart rest after expiry")
+    page.locator("#skip-rest").click()
+    skipped = timer_metrics(page, report)
+    require(
+        skipped["active"] == 0 and skipped["trainingSubmits"] == before["trainingSubmits"],
+        "Skip rest leaked interval or submitted",
+    )
+    require(
+        "Sin descanso activo" in page.locator("#rest-timer").inner_text()
+        and page.locator("#skip-rest").is_disabled(),
+        "Skip must visibly end rest",
+    )
+    require(
+        page.locator("#check-2").get_attribute("aria-pressed") == "false",
+        "Skip marked another series",
+    )
+    checks.append(
+        "rapid checks: >=48px, missing/invalid kg/reps/RPE rejected; valid rows lock, explicit unmark unlocks; automatic 90s via Playwright clock, one interval, navigation retention, expiry/skip never submit or mark another set"
     )
     navigate(page, "plan")
+    require(page.locator("#week-strip li").count() == 7, "Plan needs seven-day strip")
+    require(page.locator("#new-date").is_hidden(), "Reschedule form must start hidden")
+    page.locator("#show-reschedule").click()
+    page.locator("#new-date").fill("2026-10-25")
+    page.locator("#cancel-reschedule").click()
+    require(
+        page.locator("[data-plan-date]").inner_text() == "2026-10-23"
+        and page.locator("#new-date").is_hidden(),
+        "Cancel changed date or left form open",
+    )
+    page.locator("#show-reschedule").click()
+    require(
+        page.locator("#new-date").input_value() == "2026-10-23",
+        "Cancel did not discard pending date",
+    )
     page.locator("#new-date").fill("2026-10-24")
     page.locator("#reschedule").click()
     require(page.locator("[data-plan-date]").inner_text() == "2026-10-24", "Reschedule in memory")
     navigate(page, "hoy")
     require(page.locator("[data-plan-date]").inner_text() == "2026-10-24", "Date visible from Hoy")
-    checks.append("reprogramacion: explicit submit, same date in Plan and Hoy")
+    checks.append(
+        "reprogramacion: hidden until native disclosure, cancel discards, explicit submit propagates future date to Hoy"
+    )
     navigate(page, "progreso")
     require(
         "Sin datos" in page.locator("#view").inner_text()
@@ -649,26 +1003,40 @@ def functional_flows(page: Page) -> list[str]:
         "propuesta IA: preview/reject leave plan untouched; explicit acceptance updates only future demo"
     )
     for state in ("offline", "pending", "conflict", "error", "loading", "empty"):
-        page.locator("#state").select_option(state)
+        set_state(page, state)
         require(bool(page.locator("#announcement").inner_text()), "State must be announced")
-        require(page.locator("#state-panel h2").count() == 1, "State must be visibly explained")
+        require(
+            page.locator("#state-panel h2").count() == 1
+            and page.locator("#state-panel").is_visible(),
+            "State must remain visibly explained outside collapsed tools",
+        )
         if state in ("conflict", "error"):
             require(
-                page.locator("#save-training").is_disabled(),
+                page.locator("#save-training").is_disabled()
+                and page.locator("#check-2").is_disabled(),
                 "Conflict/error must block editing action",
             )
         if state in ("empty", "loading"):
             require(page.locator("#view").is_hidden(), "Empty/loading must not expose results")
-    page.locator("#state").select_option("normal")
+    set_state(page, "normal")
     navigate(page, "entrenador")
     page.locator("#reset-proposal").click()
+    require(
+        "Fuerza A" in page.locator("[data-plan-name]").inner_text(),
+        "Reset did not restore original plan",
+    )
     checks.append(
-        "states: live announcements, no auto-success, conflict/error block writes, loading/empty hide results"
+        "states: live announcements and visible notices with tools closed; no auto-success; conflict/error block writes; loading/empty hide results; proposal reset restores A"
     )
     page.reload()
     settle(page)
     navigate(page, "entrenamiento")
     require(page.locator("#load-1").input_value() == "", "Reload unexpectedly persisted actuals")
+    require(
+        page.locator("#check-1").get_attribute("aria-pressed") == "false"
+        and "Sin descanso activo" in page.locator("#rest-timer").inner_text(),
+        "Reload persisted check/rest",
+    )
     navigate(page, "plan")
     require(
         page.locator("[data-plan-date]").inner_text() == "2026-10-23",
@@ -678,8 +1046,174 @@ def functional_flows(page: Page) -> list[str]:
         "Fuerza A" in page.locator("[data-plan-name]").inner_text(),
         "Reload unexpectedly persisted proposal",
     )
-    checks.append("reload: actuals/date/proposal reset; no persistent demo state")
+    checks.append("reload: actuals/date/proposal/check/rest reset; no persistent demo state")
     return checks
+
+
+def onboarding_flows(page: Page, report: Report) -> list[str]:
+    navigate(page, "bienvenida")
+    require(
+        "ficticia" in page.locator("#view").inner_text().lower(),
+        "Welcome must identify fictitious demo",
+    )
+    navigate(page, "registro")
+    form = page.locator("#signup-form")
+    for selector in ("#signup-name", "#signup-email", "#signup-password", "#signup-adult"):
+        require(
+            page.locator(selector).evaluate("el => el.required && el.labels.length > 0"),
+            "Onboarding fields must have native labels and required validation",
+        )
+    page.locator("#signup-submit").click()
+    require(
+        not form.evaluate("el => el.checkValidity()")
+        and page.locator("#signup-result").is_hidden(),
+        "Empty signup must not succeed",
+    )
+    page.locator("#signup-name").fill("Atleta Ficticia")
+    page.locator("#signup-email").fill("not-an-email")
+    page.locator("#signup-password").fill("short")
+    page.locator("#signup-adult").select_option("adult")
+    page.locator("#signup-submit").click()
+    require(
+        page.locator("#signup-email").evaluate("el => el.validity.typeMismatch")
+        and page.locator("#signup-result").is_hidden(),
+        "Bad email must fail client validation",
+    )
+    page.locator("#signup-email").fill("atleta@example.test")
+    page.locator("#signup-submit").click()
+    require(
+        page.locator("#signup-password").evaluate("el => el.validity.tooShort")
+        and page.locator("#signup-result").is_hidden(),
+        "Password shorter than eight must fail",
+    )
+    # Deliberately fictional; never interpolated into any assertion, log or screenshot.
+    password = "Fictional-demo-42"
+    page.locator("#signup-password").fill(password)
+    page.locator("#signup-adult").select_option("")
+    page.locator("#signup-submit").click()
+    require(
+        page.locator("#signup-adult").evaluate("el => el.validity.valueMissing")
+        and page.locator("#signup-result").is_hidden(),
+        "Adult selection required",
+    )
+    page.locator("#signup-adult").select_option("adult")
+    require(
+        form.evaluate("el => el.checkValidity()"), "Fictional valid signup did not validate locally"
+    )
+    input_audit: AuditResult = page.evaluate(AUDITOR)
+    report["onboarding_input_audit"] = input_audit
+    require(password not in json.dumps(input_audit), "Password leaked into auditor evidence")
+    require(
+        any(
+            item["element"] == "#signup-password" and item["text"] == "[REDACTED PASSWORD]"
+            for item in input_audit["text"]
+        ),
+        "Password foreground/background must still be screened with redacted sample",
+    )
+    require(
+        not input_audit["problems"] and not input_audit["reviews"],
+        "Populated registration DOM audit failed",
+    )
+    page.locator("#signup-submit").click()
+    result = page.locator("#signup-result").inner_text()
+    require(
+        "NO se ha creado una cuenta" in result
+        and "NO se ha enviado correo" in result
+        and "NO hay sincronización con servidor" in result,
+        "Registration result must deny account/email/server success",
+    )
+    require(
+        page.locator("#signup-password").input_value() == "",
+        "Password must be cleared after local validation",
+    )
+    require(password not in page.locator("body").inner_text(), "Password echoed in visible result")
+    require(
+        page.evaluate(
+            "() => Object.keys(demo).every(k => !/password|email|credential|signup.name/i.test(k)) && !JSON.stringify(demo).includes('atleta@example.test')"
+        ),
+        "Registration credentials persisted in demo model",
+    )
+    require(
+        page.evaluate(
+            "() => !JSON.stringify(demo).includes(document.querySelector('#signup-password').defaultValue) || document.querySelector('#signup-password').defaultValue === ''"
+        ),
+        "Unexpected password default",
+    )
+    require(
+        not page.evaluate(
+            "secret => JSON.stringify(demo).includes(secret) || document.documentElement.outerHTML.includes(secret)",
+            password,
+        ),
+        "Password persisted in model/markup",
+    )
+    navigate(page, "hoy")
+    navigate(page, "registro")
+    require(page.locator("#signup-result").is_visible(), "Local demo outcome lost before reload")
+    page.reload()
+    settle(page)
+    require(
+        page.locator("#signup-result").is_hidden() and page.locator("#signup-form").is_visible(),
+        "Reload must reset registration outcome",
+    )
+    for selector in ("#signup-name", "#signup-email", "#signup-password", "#signup-adult"):
+        require(
+            page.locator(selector).input_value() == "", "Reload must not retain registration input"
+        )
+    return [
+        "bienvenida -> registro: labelled required client validation rejects empty/bad email/short password/missing adult; fictional valid data yields NO account/email/server outcome, password redacted in computed audit then cleared/not echoed/persisted; reload resets"
+    ]
+
+
+def record_audit(
+    page: Page,
+    report: Report,
+    width: int,
+    theme: str,
+    target: str,
+    state: str,
+    disclosure: str,
+    tokens: dict[str, str],
+) -> None:
+    audit: AuditResult = page.evaluate(AUDITOR)
+    entry: AuditEntry = {
+        "width": width,
+        "theme": theme,
+        "route": target,
+        "state": state,
+        "disclosure": disclosure,
+        "tokens": tokens,
+        "problems": audit["problems"],
+        "reviews": audit["reviews"],
+        "text": audit["text"],
+        "targets": audit["targets"],
+        "controlBorders": audit["controlBorders"],
+        "controlCount": audit["controlCount"],
+        "keyboard": [],
+    }
+    report["audits"].append(entry)
+    try:
+        keyboard_audit(page, audit["controlCount"], entry["keyboard"])
+    except AssertionError as error:
+        entry["problems"].append({"kind": "keyboard", "error": str(error)})
+    entry["status"] = "PASS" if not entry["problems"] and not entry["reviews"] else "FAIL"
+
+
+def capture(page: Page, args: Arguments, report: Report, name: str) -> None:
+    require(name in SCREENSHOTS, "Unexpected capture name")
+    require(
+        not page.locator("#demo-tools").evaluate("el => el.open"),
+        "Capture must have tools collapsed",
+    )
+    require(
+        page.locator('input[type="password"]').evaluate_all(
+            "els => els.every(el => el.value === '')"
+        ),
+        "Never capture sample passwords",
+    )
+    page.evaluate("() => { document.activeElement.blur(); window.scrollTo(0,0); }")
+    settle(page)
+    page.screenshot(path=str(args.output / name), full_page=True)
+    report.setdefault("screenshots", []).append(name)
 
 
 def run_browser(args: Arguments, report: Report) -> None:
@@ -702,7 +1236,7 @@ def run_browser(args: Arguments, report: Report) -> None:
         report["tools"]["chromium"] = browser.version
         try:
             context = browser.new_context(
-                viewport={"width": 390, "height": 900},
+                viewport={"width": 390, "height": 844},
                 reduced_motion="reduce",
                 service_workers="block",
             )
@@ -733,6 +1267,10 @@ def run_browser(args: Arguments, report: Report) -> None:
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.set_default_timeout(10000)
             report["auditor_self_tests"] = self_test(page)
+            # Install the real Playwright clock before observing app intervals.
+            # It runs normally; only fast_forward advances the 90-second examples.
+            page.clock.install()
+            page.add_init_script(TIMER_OBSERVER)
             page.goto((PROTOTYPE / "index.html").as_uri(), wait_until="load")
             settle(page)
             require(page.evaluate("() => location.protocol") == "file:", "Not a file:// session")
@@ -741,8 +1279,8 @@ def run_browser(args: Arguments, report: Report) -> None:
                 == list(STATES),
                 "State selector differs from frozen acceptance",
             )
-            report["flows"] = functional_flows(page)
-            # Verify actual keyboard activation, not only programmatic focus.
+            report["flows"] = functional_flows(page, report)
+            report["flows"].extend(onboarding_flows(page, report))
             page.reload()
             page.keyboard.press("Tab")
             require(
@@ -765,11 +1303,16 @@ def run_browser(args: Arguments, report: Report) -> None:
                 page.locator("html").get_attribute("data-theme") == "light",
                 "Keyboard reverse theme failed",
             )
-            report["keyboard_activation"] = ["skip: Tab+Enter", "theme: Enter+Space"]
-            page.reload()  # remove skip hash before navigation matrix
+            report["keyboard_activation"] = [
+                "skip: Tab+Enter",
+                "theme: Enter+Space",
+                "native disclosures: summary+Space/click",
+            ]
+            page.reload()
             report["audits"] = []
+            report["session_geometry"] = {}
             for width in (390, 1440):
-                page.set_viewport_size({"width": width, "height": 900})
+                page.set_viewport_size({"width": width, "height": 844 if width == 390 else 900})
                 for theme in ("light", "dark"):
                     if page.locator("html").get_attribute("data-theme") != theme:
                         page.locator("#theme").click()
@@ -789,47 +1332,61 @@ def run_browser(args: Arguments, report: Report) -> None:
                         tokens["--primitive-blue-800"].lower() == "#0300cc", "Brand hover changed"
                     )
                     for target in ROUTES:
-                        page.locator("#state").select_option("normal")
+                        set_state(page, "normal")
                         navigate(page, target)
                         for state in STATES:
-                            page.locator("#state").select_option(state)
-                            settle(page)
-                            audit: AuditResult = page.evaluate(AUDITOR)
-                            entry: AuditEntry = {
-                                "width": width,
-                                "theme": theme,
-                                "route": target,
-                                "state": state,
-                                "tokens": tokens,
-                                "problems": audit["problems"],
-                                "reviews": audit["reviews"],
-                                "text": audit["text"],
-                                "targets": audit["targets"],
-                                "controlBorders": audit["controlBorders"],
-                                "controlCount": audit["controlCount"],
-                            }
-                            report["audits"].append(entry)
-                            # Keep diagnostics even if keyboard/contrast fails.
-                            entry["keyboard"] = []
-                            try:
-                                keyboard_audit(page, audit["controlCount"], entry["keyboard"])
-                            except AssertionError as error:
-                                entry["problems"].append({"kind": "keyboard", "error": str(error)})
-                            entry["status"] = (
-                                "PASS" if not entry["problems"] and not entry["reviews"] else "FAIL"
+                            set_state(page, state)
+                            # Fresh route renders restore every route-local disclosure closed.
+                            require(
+                                page.locator("details[open]").count() == 0,
+                                "Baseline disclosures must be collapsed",
                             )
-                            if target == "hoy" and state == "normal":
-                                page.locator("#state").focus()
-                                page.evaluate("() => window.scrollTo(0,0)")
-                                name = f"hoy-{width}-{theme}.png"
-                                page.screenshot(path=str(args.output / name), full_page=True)
-                                report.setdefault("screenshots", []).append(name)
-            require(len(report["audits"]) == 140, "Incomplete route/state/width/theme matrix")
+                            if target == "hoy" and state == "normal" and width == 390:
+                                # Native navigation sets scroll to zero; state-tool toggles may scroll.
+                                # Re-enter Hoy via another nav destination, not a forced fit scroll.
+                                navigate(page, "plan")
+                                navigate(page, "hoy")
+                                report["session_geometry"][theme] = session_geometry(page)
+                            if state == "normal":
+                                name: str | None = None
+                                if target == "hoy":
+                                    name = f"hoy-{width}-{theme}.png"
+                                elif width == 390 and target in ("plan", "bienvenida", "registro"):
+                                    label = "onboarding" if target == "bienvenida" else target
+                                    name = f"{label}-390-{theme}.png"
+                                if name is not None:
+                                    capture(page, args, report, name)
+                            record_audit(
+                                page, report, width, theme, target, state, "collapsed", tokens
+                            )
+                        set_state(page, "normal")
+                        expand_disclosures(page)
+                        record_audit(
+                            page, report, width, theme, target, "normal", "expanded", tokens
+                        )
+                        toggle_tools(page, False)
+                        # Navigate away to discard local expanded disclosures before next route.
+                        navigate(page, "plan" if target == "hoy" else "hoy")
+            baseline = sum(item["disclosure"] == "collapsed" for item in report["audits"])
+            expanded = sum(item["disclosure"] == "expanded" for item in report["audits"])
+            report["audit_counts"] = {
+                "baseline": baseline,
+                "expanded": expanded,
+                "total": len(report["audits"]),
+            }
+            require(
+                baseline == 196 and expanded == 28 and len(report["audits"]) >= 224,
+                "Incomplete seven-route baseline/expanded matrix",
+            )
+            require(
+                set(report.get("screenshots", [])) == SCREENSHOTS
+                and len(report["screenshots"]) == 10,
+                "Missing ten required named screenshots",
+            )
             require(
                 all(item["status"] == "PASS" for item in report["audits"]),
                 "DOM/keyboard audit has failures or unsupported paint requiring review",
             )
-            require(len(report["screenshots"]) == 4, "Missing four required screenshots")
             require(not errors, "JavaScript errors occurred")
             require(not network, "Unexpected resource/network attempt")
             require(
@@ -858,21 +1415,27 @@ def main() -> int:
         parser.error("--output must not exist; do not overwrite evidence")
     args.output.mkdir(parents=True)
     report: Report = {
-        "schema": 1,
+        "schema": 2,
         "status": "FAIL",
-        "scope": "STATIC_PROTOTYPE_BOUNDED_UX_SCREENING",
+        "scope": "STATIC_PROTOTYPE_BOUNDED_UX_SCREENING_R2",
         "started_at": datetime.now(UTC).isoformat(),
         "tools": {"python": platform.python_version()},
         "human_approval": "PENDING",
+        "independent_review": "BT2 PENDING",
         "screen_reader": "NOT RUN",
         "physical_device": "NOT RUN",
+        "external_validation": "NOT RUN",
         "limitations": [
-            "Solid-color DOM text and native controls only; no SVG/pseudo/placeholder pixel audit.",
+            "Solid-color DOM text >=4.5:1 for every size; no SVG/pseudo/placeholder pixel audit.",
             "Input/select borders: solid, >=3:1 against control and parent backgrounds; not a pixel audit.",
-            "Focus: solid 3px outline, 3px gap, >=3:1 against parent background; not pixel-area certification.",
-            "Tab traversal and DOM order are checked; screen-reader behavior and occlusion require human review.",
-            "Four Hoy screenshots only; all 140 route/state/theme/width combinations have bounded DOM audits.",
+            "Focus: opaque solid 3px outline, 3px gap, >=3:1; native Tab geometry requires 6px room and non-nav controls above fixed mobile nav, not pixel-area certification.",
+            "Tab/Shift+Tab DOM traversal, native date bounded stops, native disclosures and mobile scroll-margin screened; other occluders and assistive technology require independent human review.",
+            "196 collapsed route/state/theme/width audits plus 28 expanded route/theme/width audits (224 minimum); ten named baseline PNGs are not exhaustive visual approval.",
+            "Mobile viewport 390x844, desktop 1440x900; simulated Chromium is not a physical device or screen reader.",
+            "Automatic illustrative 90s rest uses Playwright virtual time, no real-time/device timer certification.",
+            "Only fictional registration credentials: local client validation, redacted password input audit, no sample password captures, no account/email/server acceptance.",
             "In-memory fictitious UI only; no backend, persistence, sport validity or actual offline-sync acceptance.",
+            "BT2 independent review pending; external/human/screen-reader/device validation not run by this auditor.",
         ],
     }
     try:

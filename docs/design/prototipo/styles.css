@@ -85,6 +85,9 @@
 * {
   box-sizing: border-box;
 }
+html {
+  scroll-padding-block: var(--space-4);
+}
 body {
   margin: 0;
   background: var(--app-bg);
@@ -119,6 +122,17 @@ small {
 }
 a {
   color: var(--accent);
+  min-height: var(--control-height);
+  display: inline-flex;
+  align-items: center;
+}
+a,
+button,
+input,
+select,
+summary,
+[tabindex] {
+  scroll-margin-block: var(--space-4);
 }
 button,
 input,
