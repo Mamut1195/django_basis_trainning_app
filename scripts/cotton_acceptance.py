@@ -148,11 +148,14 @@ PAINTS = (
 
 TOKEN_STATE = """selector => {
   const card=document.querySelector(selector), s=getComputedStyle(card);
+  // Titled cards pad an inner body (last child); untitled cards pad the card itself.
+  const pad=e=>getComputedStyle(e).padding;
+  const cardPadding=[card,card.lastElementChild].filter(Boolean).map(pad).find(v=>v!=='0px')||pad(card);
   const input=document.querySelector('input:not([type=hidden])');
   const button=document.querySelector('.focus-ring');
   const body=getComputedStyle(document.body);
   return {font:body.fontFamily,bodySize:body.fontSize,
-    radius:s.borderTopLeftRadius,padding:getComputedStyle(card.lastElementChild||card).padding,
+    radius:s.borderTopLeftRadius,padding:cardPadding,
     background:body.backgroundColor,
     inputRadius:input?getComputedStyle(input).borderTopLeftRadius:null,
     inputFont:input?getComputedStyle(input).fontFamily:null,
