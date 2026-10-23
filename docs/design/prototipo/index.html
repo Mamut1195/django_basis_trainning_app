@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>BASIS · Tu entrenamiento, con intención</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Saltar al contenido</a>
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="assets/logo.svg" alt="BASIS" width="79" height="50" /><span
+          >TRAINING<br /><small>Diseño de experiencia</small></span
+        >
+      </div>
+      <p class="sidebar-note">Entrena con intención.<br />Registra lo que ocurre.</p>
+      <nav aria-label="Principal">
+        <a href="#hoy" data-nav="hoy"><span aria-hidden="true">01</span> Hoy</a>
+        <a href="#plan" data-nav="plan"><span aria-hidden="true">02</span> Plan</a>
+        <a href="#progreso" data-nav="progreso"><span aria-hidden="true">03</span> Progreso</a>
+        <a href="#entrenador" data-nav="entrenador"
+          ><span aria-hidden="true">04</span> Entrenador</a
+        >
+      </nav>
+      <p class="sidebar-foot">BASIS / LAB DE DISEÑO<br />Prototipo local · v01</p>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <p>ESPACIO PERSONAL <span class="muted">/ Demo ficticia</span></p>
+        <button id="theme" type="button" aria-pressed="false">Tema oscuro</button>
+      </header>
+      <div class="demo-warning">
+        <strong>Solo una demostración.</strong> Todos los datos son ficticios. Cambios solo en
+        memoria: se pierden al recargar o cerrar. No hay cuenta, red ni sincronización.
+      </div>
+      <div class="demo-tools">
+        <label for="state">Explorar estado</label>
+        <select id="state">
+          <option value="normal">Normal</option>
+          <option value="empty">Vacío</option>
+          <option value="loading">Cargando</option>
+          <option value="error">Error</option>
+          <option value="offline">Sin conexión</option>
+          <option value="pending">Sincronización pendiente</option>
+          <option value="conflict">Conflicto</option>
+        </select>
+        <span class="muted">Estado ilustrativo, no detecta la red.</span>
+      </div>
+      <p id="announcement" class="announcement" role="status" aria-live="polite" aria-atomic="true">
+        Demo lista. Ningún dato se enviará.
+      </p>
+      <main id="main" tabindex="-1">
+        <div class="page-heading">
+          <p class="eyebrow" id="eyebrow">TU DÍA, PASO A PASO</p>
+          <h1 id="page-title">Hoy</h1>
+          <p id="page-description" class="muted"></p>
+        </div>
+        <div id="state-panel"></div>
+        <div id="view"></div>
+      </main>
+      <footer>
+        Datos ficticios · Sin GPS, wearables ni proveedor IA · No es consejo deportivo
+        personalizado.
+      </footer>
+    </div>
+    <noscript>Este boceto requiere JavaScript local para navegar. No se envían datos.</noscript>
+  </body>
+</html>
