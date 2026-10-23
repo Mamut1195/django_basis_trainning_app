@@ -39,8 +39,7 @@ ni JavaScript offline.
   Architecture anterior falló por el script fuera de strict scope; la adición literal
   a `files` corrige el registro, sin alterar el checker.
 - Resultado posterior del navegador sobre de69d53: **VERIFIED** local (ver «Resultado real del
-  navegador»). Los demás gates locales del candidato final siguen **NOT RUN** hasta
-  validación del coordinador; el CI remoto está verde (ver «Revisión y CI»).
+  navegador»). Los gates locales del catch-up 46f2a81 se registran en «Catch-up con main»; el CI remoto está verde (ver «Revisión y CI»).
   Los errores reproducidos sobre el candidato anterior no son una ejecución ni una
   certificación del candidato entregado aquí. Tampoco se heredan resultados de MAM-816.
 
@@ -150,9 +149,11 @@ evidencia del candidato exacto cuando el launcher los selle y el coordinador val
 
 ## Gates y límites pendientes
 
-Siguen **NOT RUN** para el candidato final (local; `browser` ya figura arriba): `django-suite`, `pure-tests`, `check`,
-`migration-drift`, `ruff`, `ruff-format`, `djlint`, `mypy-core`, `mypy-django`,
-`mypy-browser`, `architecture`, `imports`. Se usan únicamente los comandos,
+Tras el catch-up 46f2a81 se ejecutaron localmente (ver «Catch-up con main»): `ruff`, `ruff-format`,
+`djlint`, `mypy-core`, `mypy-django`, `architecture`, `imports`, `check`, `migration-drift`,
+`pure-tests`, la suite Django sobre SQLite y `browser`. Siguen **NOT RUN** localmente:
+`format:check` (sin Node modules), `mypy-browser`, la suite Django sobre PostgreSQL, `collectstatic` e imagen
+de producción (los cubre el CI remoto). Se usan únicamente los comandos,
 entornos, timeouts y ejecutables del snapshot congelado. La inspección del script y la
 validación del coordinador preceden a su ejecución; se requiere revisión strong del
 candidato exacto y revisión UI. Esta entrega no implica aceptación, integración,
@@ -163,6 +164,39 @@ Polar LIVE/sandbox ni CI remoto. Los skips SQLite no cuentan como prueba de conc
 Las referencias/cobertura previa no sustituyen resultados propios por SHA. La PR debe
 registrar por separado VERIFIED/FAILED/NOT RUN con sus registros sellados y los límites
 restantes; no se cambia esta documentación para fingir una ejecución que no ocurrió.
+
+## Catch-up con main (merge 46f2a81, 2026-10-23)
+
+- Operación: `git merge origin/main` (merge, sin rebase ni force-push) sobre `7d62d44`;
+  `origin/main` = `df06f30` (incluye #13 MAM-816 Polar, #14 MAM-812 running, #16 MAM-813
+  cycling). Resultado: merge `46f2a81`, **sin conflictos**; solo entraron cambios de main
+  (15 archivos: docs, tests, plantillas de métricas, `sports.py`, `training_tags.py`).
+  Los archivos de MAM-817 no se tocaron por el merge.
+- Gates locales sobre `46f2a81` (BT1, Windows, `.venv-win`, SQLite; 2026-10-23):
+  - `ruff format --check` (lista del CI): **VERIFIED** (381 archivos).
+  - `ruff check .`: **VERIFIED**.
+  - `scripts/architecture_check.py`: **VERIFIED**.
+  - `mypy-core.ini`: **VERIFIED** (122 archivos). `mypy-django.ini`: **VERIFIED** (372 archivos).
+  - `lint-imports`: **VERIFIED** (8 contratos, 0 rotos).
+  - `djlint basis --check`: **VERIFIED** (0 archivos a cambiar).
+  - `manage.py check`: **VERIFIED**. `makemigrations --check --dry-run`: **VERIFIED** (sin cambios).
+  - `unittest discover -s tests_architecture`: **VERIFIED** 203 pruebas OK sobre una extracción
+    limpia con LF (`git archive`). En el worktree de Windows el mismo comando da 9 FAIL de
+    `test_scoped_running_text_files_use_lf` (MAM-812) porque `core.autocrlf=true` deja CRLF en
+    disco mientras el índice es LF; es un artefacto del checkout, no de este merge.
+  - Suite Django del CI (`tests.regression`, `bootstrap`, `billing` persistence/polar, `metrics`,
+    `sync wire`) con `config.test_settings` sobre **SQLite**: **VERIFIED** 485 pruebas, OK, 63
+    omitidas. SQLite no certifica PostgreSQL ni carreras: la corrida PostgreSQL queda al CI remoto.
+  - `npm run format:check`: **NOT RUN** (no hay `node_modules` en el worktree).
+  - `collectstatic` y build de imagen de producción: **NOT RUN** localmente.
+- Navegador tras el catch-up: `scripts/mam817_browser.py` **VERIFIED** (run2), 12/12
+  comprobaciones, 16 s, 0 errores JavaScript, 0 respuestas externas, `source_unchanged`
+  verdadero, mismo Edge 155.0.4283.62 y SHA-256 `c2451a01…c975b6`. Evidencia externa:
+  `basis-runs/MAM817-BT1-browser/run2-20261023-1140/`. Es ejecución de BT1, no sellada por
+  el launcher del coordinador.
+- Siguen **NOT RUN**: revisor externo `mamut-reviewer` (HTTP 401), Polar LIVE/sandbox para
+  MAM-817, dispositivos físicos, lector de pantalla/accesibilidad humana. La revisión de
+  BT2/BT3 del head posterior al catch-up queda pendiente.
 
 ## Revisión y CI (de69d53)
 
