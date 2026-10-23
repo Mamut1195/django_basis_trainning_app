@@ -1,28 +1,37 @@
 {% load training_tags %}
-{% if block.target %}
-  <details>
-    <summary>Ver prescripción</summary>
+{% with target_rows=block|metric_rows:'target' actual_rows=block|metric_rows %}
+  {% if target_rows %}
+    <details>
+      <summary>Objetivo / prescripción</summary>
+      <dl class="metric-list">
+        {% for metric in target_rows %}
+          <div>
+            <dt>{{ metric.label }}</dt>
+            <dd>
+              {{ metric.value|default_if_none:'—' }} {{ metric.unit }}
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+    </details>
+  {% endif %}
+  {% if actual_rows %}
+    <p class="muted">Resultado real · registro manual</p>
     <dl class="metric-list">
-      {% for metric in block|metric_rows:'target' %}
+      {% for metric in actual_rows %}
         <div>
           <dt>{{ metric.label }}</dt>
           <dd>
-            {{ metric.value }} {{ metric.unit }}
+            {{ metric.value|default_if_none:'—' }} {{ metric.unit }}
           </dd>
         </div>
       {% endfor %}
     </dl>
-  </details>
-{% endif %}
-{% if block.actual %}
-  <dl class="metric-list">
-    {% for metric in block|metric_rows %}
-      <div>
-        <dt>{{ metric.label }}</dt>
-        <dd>
-          {{ metric.value }} {{ metric.unit }}
-        </dd>
-      </div>
-    {% endfor %}
-  </dl>
-{% endif %}
+  {% endif %}
+  {% if block.sport == 'running' or block.block.sport == 'running' %}
+    <p class="muted">
+      Ritmo derivado de duración transcurrida y distancia del mismo objetivo o resultado manual,
+      en s/km. Las pausas se registran por separado y no se restan. — significa sin datos suficientes.
+    </p>
+  {% endif %}
+{% endwith %}
