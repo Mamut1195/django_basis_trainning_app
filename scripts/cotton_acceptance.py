@@ -195,6 +195,8 @@ DIALOG_STATE = r"""() => {
     inner_role_dialog:panel?.getAttribute('role')==='dialog',
     root_role_dialog:document.querySelector('#catalog-dialog')?.getAttribute('role')==='dialog',
     aria_modal:panel?.getAttribute('aria-modal')==='true',
+    close_label_cerrar:document.querySelector('[x-bind="closeButton"]')
+      ?.getAttribute('aria-label')==='Cerrar',
     focus_in_panel:!!panel&&panel.contains(document.activeElement),
     focus_on_trigger:!!trigger&&trigger===document.activeElement
   };
@@ -711,6 +713,11 @@ def browser(origin: str, output: Path, executable: str) -> dict[str, object]:
             assert opened_state["overlay_visible"] is True, opened_state
             assert opened_state["panel_visible"] is True, opened_state
             assert opened_state["aria_modal"] is True, opened_state
+            # Minor (a): Alpine must not overwrite the composed role/aria-label
+            # on the open dialog (app.js sets them on DOMContentLoaded, Alpine binds
+            # :aria-modal/:aria-labelledby on the same panel).
+            assert opened_state["inner_role_dialog"] is True, opened_state
+            assert opened_state["close_label_cerrar"] is True, opened_state
             dialog = page.get_by_role("dialog")
             dialog.wait_for()
             assert dialog.count() == 1
@@ -729,6 +736,8 @@ def browser(origin: str, output: Path, executable: str) -> dict[str, object]:
             assert escaped_state["kit_show"] is False, escaped_state
             assert escaped_state["overlay_visible"] is False, escaped_state
             assert escaped_state["focus_on_trigger"] is True, escaped_state
+            assert escaped_state["inner_role_dialog"] is True, escaped_state
+            assert escaped_state["close_label_cerrar"] is True, escaped_state
             mark_stage(result, output, "primary_pages_login")
             login(page, origin, "owner@browser.test", os.environ["BASIS_E2E_PASSWORD"])
             for path in ("/", "/plans/", "/progress/", "/coach/", "/profile/"):
