@@ -7,24 +7,28 @@ const demo = {
   plan: "Fuerza A · 3 series × 8 repeticiones",
   accepted: false,
   rejected: false,
-  sets: [
-    { reps: null, load: null, rpe: null, rir: null },
-    { reps: null, load: null, rpe: null, rir: null },
-    { reps: null, load: null, rpe: null, rir: null },
-  ],
+  sets: Array.from({ length: 3 }, () => ({
+    reps: null,
+    load: null,
+    rpe: null,
+    rir: null,
+    checked: false,
+  })),
   cardio: { minutes: null, distance: null },
+  restDeadline: null,
+  signupComplete: false,
 };
 const routes = {
-  hoy: ["Hoy", "TU DÍA, PASO A PASO", "Viernes 23 de octubre de 2026 · Semana ficticia 04"],
+  hoy: ["Hoy", "TU DÍA, PASO A PASO", "Viernes 23 de octubre de 2026 · Fecha ficticia"],
   entrenamiento: [
     "Tu sesión",
     "REGISTRAR, NO ADIVINAR",
-    "Fuerza A + cardio suave · Ejemplo ficticio, no una recomendación",
+    "Sesión A ficticia · Independiente del futuro plan B",
   ],
   plan: [
     "Tu plan",
     "LA INTENCIÓN ANTES DE LA ACCIÓN",
-    "Semana ficticia 04 · Versión de demostración",
+    "19–25 de octubre de 2026 · Semana ficticia",
   ],
   progreso: [
     "Tu progreso",
@@ -34,7 +38,17 @@ const routes = {
   entrenador: [
     "Entrenador",
     "TÚ TOMAS LA DECISIÓN",
-    "Propuesta escrita para este boceto · Sin modelo ni proveedor IA",
+    "Propuesta editorial ficticia · Sin proveedor IA",
+  ],
+  bienvenida: [
+    "Bienvenida a BASIS",
+    "ENTRENA CON INTENCIÓN",
+    "Un recorrido de diseño, no un servicio activo",
+  ],
+  registro: [
+    "Registro de demostración",
+    "PRUEBA SIN CREAR UNA CUENTA",
+    "Usa solo datos inventados y una contraseña ficticia",
   ],
 };
 const stateMessages = {
@@ -86,26 +100,29 @@ const buttonLink = (href, text, primary = false) =>
   `<a class="button${primary ? " primary" : ""}" href="#${href}">${text}</a>`;
 
 function today() {
-  return `<div class="hero"><div><p class="eyebrow">CONSTANCIA, NO PERFECCIÓN</p><h2>Un registro honesto.<br />Una sesión a la vez.</h2><p>Tu plan orienta. Lo realizado cuenta su propia historia.</p></div><div><p class="hero-number">04 <small>/ semana</small></p><p>Base de fuerza · Ficticia</p></div></div>
-    <div class="grid"><article class="card"><div class="card-top"><h2>Tu siguiente sesión</h2><span class="badge">Programada · Demo</span></div><p class="eyebrow">FUERZA + CARDIO</p><h3>${escapeHTML(demo.plan)}</h3><p class="muted">Fecha del plan: <strong data-plan-date>${demo.date}</strong></p><div class="session-line"><p><strong>01 / Sentadilla</strong></p><p class="muted">Prescrito: 3 × 8 rep · 40 kg · RPE 7 · RIR 3</p></div><div class="session-line"><p><strong>02 / Cardio suave</strong></p><p class="muted">Duración estimada: 20 min. Los datos medidos aún no existen.</p></div><div class="actions">${buttonLink("entrenamiento", "Comenzar demo", true)}${buttonLink("plan", "Reprogramar")}</div></article><div class="stack"><article class="card"><p class="eyebrow">TU CRITERIO PRIMERO</p><h2>El plan puede esperar.</h2><p class="muted">Revisa una propuesta sin cambiar nada. Solo una aceptación explícita modifica el plan ficticio.</p>${buttonLink("entrenador", "Revisar propuesta IA")}</article><article class="card"><h2>Un dato ausente no es cero</h2><p class="muted">Registramos lo observado. No inventamos frecuencia cardíaca, potencia ni distancia.</p>${buttonLink("progreso", "Explorar progreso")}</article></div></div>`;
+  return `<section class="card" id="today-session" aria-labelledby="session-title"><p class="eyebrow">SESIÓN DE HOY · FICTICIA</p><h2 id="session-title">Fuerza A + cardio suave</h2><p><strong>Sentadilla</strong> · Prescrito: 3 × 8 rep · 40 kg · RPE 7 · RIR 3</p><p><strong>Cardio</strong> · Estimado: 20 min suaves. Medido: Sin datos.</p><p class="muted">El registro A no cambia al aceptar un plan futuro B.</p><a id="start-training" class="button primary" href="#entrenamiento">Comenzar</a></section><section class="weekly-summary" aria-label="Resumen semanal ficticio"><h2>Tu semana · Ficticia</h2><p>2 sesiones completadas de 3 previstas · Historial fijo de ejemplo.</p><p class="muted">Próximo plan: <strong data-plan-name>${escapeHTML(demo.plan)}</strong> · <span data-plan-date>${demo.date}</span>. No cambia la fecha ficticia de hoy.</p></section>`;
 }
-function numberField(id, label, value, max, step = "1") {
-  return `<div class="field"><label for="${id}">${label}</label><input id="${id}" name="${id}" type="number" min="0" max="${max}" step="${step}" value="${value === null ? "" : escapeHTML(value)}" /></div>`;
+function numberField(id, label, value, max, step = "1", compact = false) {
+  return `<div class="field"><label${compact ? ' class="sr-only"' : ""} for="${id}">${label}</label><input id="${id}" name="${id}" type="number" inputmode="decimal" min="0" max="${max}" step="${step}" value="${value === null ? "" : escapeHTML(value)}" /></div>`;
 }
 function training() {
   const sets = demo.sets
     .map((set, index) => {
       const n = index + 1;
-      return `<fieldset><legend>Sentadilla · Serie ${n}</legend><div class="prescription"><p><strong>Prescrito</strong></p><p>8 rep · 40 kg · RPE 7 / 10 · RIR 3</p></div><div class="actual"><h3>Realizado · Serie ${n}</h3><div class="fields">${numberField(`reps-${n}`, "Repeticiones", set.reps, 100)}${numberField(`load-${n}`, "Carga externa (kg)", set.load, 500, "0.5")}${numberField(`rpe-${n}`, "RPE real (0–10)", set.rpe, 10, "0.5")}${numberField(`rir-${n}`, "RIR real (0–10)", set.rir, 10)}</div></div></fieldset>`;
+      return `<tr data-set="${n}"><th scope="row">${n}</th><td>${numberField(`load-${n}`, `Carga real serie ${n} (kg)`, set.load, 500, "0.5", true)}</td><td>${numberField(`reps-${n}`, `Repeticiones reales serie ${n}`, set.reps, 100, "1", true)}</td><td>${numberField(`rpe-${n}`, `RPE real serie ${n} (0–10)`, set.rpe, 10, "0.5", true)}</td><td><button class="set-check" id="check-${n}" type="button" aria-pressed="${set.checked}" aria-label="${set.checked ? "Desmarcar" : "Marcar"} serie ${n}">${set.checked ? "✓ Realizada" : "Pendiente"}</button></td></tr><tr><td colspan="5"><p class="previous">Anterior ficticio · Serie ${n}: 40 kg · 8 rep · RPE 7. No son valores realizados hoy.</p><details class="set-details"><summary>Serie ${n}: prescripción y RIR opcional</summary><p>Prescrito A: 8 rep · 40 kg · RPE 7 / 10 · RIR 3.</p>${numberField(`rir-${n}`, `RIR real serie ${n} (0–10, opcional)`, set.rir, 10)}</details></td></tr>`;
     })
     .join("");
-  return `<article class="card"><div class="card-top"><h2>01 / Fuerza por series</h2><span class="badge">Datos ficticios</span></div><p class="muted" id="set-help">Campos opcionales. Vacío = Sin datos; 0 = cero observado. RPE y RIR se registran por separado, sin conversión ni relleno automático.</p><form id="training-form" aria-describedby="set-help">${sets}<h2>02 / Cardio</h2><div class="prescription"><p><strong>Estimado / prescrito</strong>: 20 min suaves. Distancia estimada: Sin datos.</p></div><h3>Medido / realizado</h3><div class="fields">${numberField("minutes", "Duración medida (min)", demo.cardio.minutes, 600, "0.1")}${numberField("distance", "Distancia medida (km)", demo.cardio.distance, 200, "0.01")}</div><p class="muted">FC, potencia y cadencia: Sin datos. No hay sensores conectados.</p><div class="actions"><button class="primary" id="save-training" type="submit">Conservar en memoria demo</button>${buttonLink("hoy", "Volver a Hoy")}</div></form></article><article class="card" id="record-summary"><h2>Registro en memoria · No enviado</h2>${demo.sets.map((set, index) => `<p>Serie ${index + 1}: ${observed(set.reps, " rep")} · ${observed(set.load, " kg")} · RPE ${observed(set.rpe)} · RIR ${observed(set.rir)}</p>`).join("")}<p>Cardio medido: ${observed(demo.cardio.minutes, " min")} · ${observed(demo.cardio.distance, " km")}</p><p class="muted">Recargar o cerrar borra este registro.</p></article>`;
+  return `<article class="card training-card"><h2>01 / Sentadilla · Sesión A</h2><p class="muted" id="set-help">Realizado: campos vacíos = Sin datos; 0 = cero observado. Para marcar, completa kg, reps y RPE. RIR es opcional e independiente. Desmarca explícitamente para corregir una serie.</p><form id="training-form" aria-describedby="set-help"><table id="sets-table"><caption>Registro rápido · Datos ficticios</caption><thead><tr><th scope="col">Serie</th><th scope="col">kg</th><th scope="col">Reps</th><th scope="col">RPE</th><th scope="col">Check</th></tr></thead><tbody>${sets}</tbody></table><section class="rest" aria-label="Descanso ilustrativo"><h3>Descanso demo · 90 s ilustrativos</h3><p id="rest-timer" aria-live="off"></p><p class="muted">No es una recomendación. No marca series ni envía el registro al terminar.</p><button id="skip-rest" type="button">Omitir descanso</button></section><h2>02 / Cardio</h2><p class="prescription"><strong>Estimado / prescrito:</strong> 20 min suaves. Distancia estimada: Sin datos.</p><h3>Medido / realizado</h3><div class="fields">${numberField("minutes", "Duración medida (min)", demo.cardio.minutes, 600, "0.1")}${numberField("distance", "Distancia medida (km)", demo.cardio.distance, 200, "0.01")}</div><p class="muted">FC, potencia y cadencia: Sin datos. No hay sensores conectados.</p><div class="actions"><button class="primary" id="save-training" type="submit">Conservar en memoria demo</button>${buttonLink("hoy", "Volver a Hoy")}</div></form></article><article class="card" id="record-summary"><h2>Registro en memoria · No enviado</h2><div id="record-values">${recordValues()}</div><p class="muted">Recargar o cerrar borra este registro.</p></article>`;
+}
+function recordValues() {
+  return `${demo.sets.map((set, i) => `<p>Serie ${i + 1} · ${set.checked ? "Realizada" : "Pendiente"}: ${observed(set.reps, " rep")} · ${observed(set.load, " kg")} · RPE ${observed(set.rpe)} · RIR ${observed(set.rir)}</p>`).join("")}<p>Cardio medido: ${observed(demo.cardio.minutes, " min")} · ${observed(demo.cardio.distance, " km")}</p>`;
 }
 function planning() {
-  return `<div class="grid"><article class="card"><p class="eyebrow">MICROCICLO / SEMANA 04</p><h2 data-plan-name>${escapeHTML(demo.plan)}</h2><p>Fecha programada: <strong data-plan-date>${demo.date}</strong></p><p class="muted">La reprogramación de este boceto cambia solo esta fecha en memoria; no altera registros realizados ni historia.</p><form id="reschedule-form"><div class="field"><label for="new-date">Nueva fecha de la sesión ficticia</label><input type="date" id="new-date" name="new-date" min="2026-10-23" max="2027-10-23" value="${demo.date}" required /></div><div class="actions"><button id="reschedule" class="primary" type="submit">Aplicar fecha solo en demo</button>${buttonLink("hoy", "Cancelar y volver")}</div></form></article><article class="card"><h2>Antes de cambiar</h2><p class="muted">En el producto, la revisión de versión evita sobrescribir cambios concurrentes. Explora «Conflicto» para ver la comparación, no una resolución remota real.</p><p>Plan actual: ${demo.accepted ? "propuesta ficticia aceptada en esta pestaña" : "original ficticio, sin cambios de IA"}.</p>${buttonLink("entrenador", "Ver propuesta IA")}</article></div>`;
+  const days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+  return `<section aria-label="Semana ficticia del 19 al 25 de octubre de 2026"><ol id="week-strip">${days.map((day, i) => `<li${i === 4 ? ' class="fixture-today"' : ""}><span>${day}</span><time datetime="2026-10-${19 + i}">${19 + i}</time>${i === 4 ? '<span class="sr-only">Hoy ficticio</span>' : ""}</li>`).join("")}</ol><p class="muted">Hoy ficticio: viernes 23. La fecha del próximo plan puede quedar fuera de esta semana.</p></section><div class="grid"><article class="card"><h2 data-plan-name>${escapeHTML(demo.plan)}</h2><p>Fecha programada: <strong data-plan-date>${demo.date}</strong></p><p class="muted">Cambia solo la fecha del próximo plan en memoria, no el registro A ni la historia.</p><details id="reschedule-details"><summary id="show-reschedule">Reprogramar</summary><form id="reschedule-form"><div class="field"><label for="new-date">Nueva fecha de la sesión ficticia</label><input type="date" id="new-date" name="new-date" min="2026-10-23" max="2027-10-23" value="${demo.date}" required /></div><div class="actions"><button id="reschedule" class="primary" type="submit">Aplicar fecha solo en demo</button><button id="cancel-reschedule" type="button">Cancelar</button></div></form></details></article><article class="card"><h2>Antes de cambiar</h2><p class="muted">En el producto, la revisión de versión evita sobrescribir cambios concurrentes. «Conflicto» solo muestra una comparación ilustrativa.</p><p>Plan actual: ${demo.accepted ? "propuesta ficticia aceptada en esta pestaña" : "original ficticio, sin cambios de IA"}.</p>${buttonLink("entrenador", "Ver propuesta IA")}</article></div>`;
 }
 function progress() {
-  return `<div class="hero"><div><p class="eyebrow">LECTURA SIN INFERENCIAS</p><h2>Lo que sabes.<br />Y lo que aún no.</h2><p>No comparar deportes ni completar observaciones ausentes.</p></div></div><div class="grid"><article class="card"><h2>Semana de ejemplo · Ficticia</h2><dl class="stats"><div><dt>Sesiones completadas</dt><dd>2</dd></div><div><dt>Sesiones previstas</dt><dd>3</dd></div><div><dt>FC media medida</dt><dd>Sin datos</dd></div></dl><p class="muted">Conteos ilustrativos fijos, independientes del formulario demo. No representan tu adherencia real.</p><div class="progress-row"><span>Sentadilla · Carga externa medida</span><strong>40 kg</strong></div><div class="progress-row"><span>Sentadilla · e1RM estimado</span><strong>Sin datos</strong></div><div class="progress-row"><span>Cardio · Duración estimada</span><strong>20 min</strong></div><div class="progress-row"><span>Cardio · Duración medida</span><strong>Sin datos</strong></div><div class="progress-row"><span>Cardio · Ascenso medido</span><strong>0 m</strong></div><p class="muted">0 m es una observación ficticia de cero. «Sin datos» es ausencia. No hay cálculo de e1RM ni equivalencia entre RPE/RIR.</p></article><article class="card"><h2>Registro de esta pestaña</h2><p>Serie 1 realizada: ${observed(demo.sets[0].reps, " rep")} · ${observed(demo.sets[0].load, " kg")}</p><p>Cardio medido: ${observed(demo.cardio.minutes, " min")}</p><p class="muted">No se combina con el historial fijo de ejemplo.</p>${buttonLink("entrenamiento", "Volver al registro")}</article></div>`;
+  return `<section class="weekly-summary"><h2>Lo que sabes. Y lo que aún no.</h2><p>No comparar deportes ni completar observaciones ausentes.</p></section><div class="grid"><article class="card"><h2>Semana de ejemplo · Ficticia</h2><dl class="stats"><div><dt>Sesiones completadas</dt><dd>2</dd></div><div><dt>Sesiones previstas</dt><dd>3</dd></div><div><dt>FC media medida</dt><dd>Sin datos</dd></div></dl><p class="muted">Conteos ilustrativos fijos, independientes del formulario demo. No representan tu adherencia real.</p><div class="progress-row"><span>Sentadilla · Carga externa medida</span><strong>40 kg</strong></div><div class="progress-row"><span>Sentadilla · e1RM estimado</span><strong>Sin datos</strong></div><div class="progress-row"><span>Cardio · Duración estimada</span><strong>20 min</strong></div><div class="progress-row"><span>Cardio · Duración medida</span><strong>Sin datos</strong></div><div class="progress-row"><span>Cardio · Ascenso medido</span><strong>0 m</strong></div><p class="muted">0 m es una observación ficticia de cero. «Sin datos» es ausencia. No hay cálculo de e1RM ni equivalencia entre RPE/RIR.</p></article><article class="card"><h2>Registro de esta pestaña</h2><p>Serie 1 realizada: ${observed(demo.sets[0].reps, " rep")} · ${observed(demo.sets[0].load, " kg")}</p><p>Cardio medido: ${observed(demo.cardio.minutes, " min")}</p><p class="muted">No se combina con el historial fijo de ejemplo.</p>${buttonLink("entrenamiento", "Volver al registro")}</article></div>`;
 }
 function coach() {
   const status = demo.accepted
@@ -113,24 +130,44 @@ function coach() {
     : demo.rejected
       ? "Rechazada solo en memoria"
       : "Sin aceptar";
-  return `<article class="card"><div class="card-top"><h2>Propuesta IA · Ficticia</h2><span class="badge" id="proposal-status">${status}</span></div><p>Ejemplo editorial para revisar una decisión, no generado por IA. No evalúa tu salud, recuperación ni objetivos.</p><div class="comparison"><div><h3>Plan original ficticio</h3><p>Fuerza A · 3 series × 8 repeticiones</p><p>Cardio estimado: 20 min</p></div><div><h3>Propuesta, aún sin aplicar</h3><p>Fuerza B · 2 series × 8 repeticiones</p><p>Mantener cardio estimado: 20 min</p></div></div><p class="muted">Motivo ficticio: ilustrar una reducción de series. No es una recomendación. Las prescripciones del registro A y las ejecuciones pasadas no cambian.</p><p>Plan vigente en esta pestaña: <strong data-plan-name>${escapeHTML(demo.plan)}</strong></p>${!demo.accepted && !demo.rejected ? `<div class="actions"><button id="accept-proposal" class="primary" type="button">Aceptar cambio en plan demo</button><button id="reject-proposal" type="button">Rechazar propuesta demo</button></div><p class="muted">Aceptar es explícito y solo afecta al próximo plan ficticio, nunca al servidor.</p>` : `<p>No se ha enviado nada. Puedes restaurar el plan original y revisar de nuevo.</p><button id="reset-proposal" type="button">Restaurar plan original demo</button>`}</article><div class="actions">${buttonLink("plan", "Consultar plan vigente")}${buttonLink("hoy", "Volver a Hoy")}</div>`;
+  return `<article class="card"><div class="card-top"><h2>Propuesta IA · Ficticia</h2><span class="badge" id="proposal-status">${status}</span></div><p>Ejemplo editorial, no generado por IA. No evalúa tu salud, recuperación ni objetivos.</p><div class="comparison"><div><h3>Plan original ficticio</h3><p>Fuerza A · 3 series × 8 repeticiones</p><p>Cardio estimado: 20 min</p></div><div><h3>Propuesta, aún sin aplicar</h3><p>Fuerza B · 2 series × 8 repeticiones</p><p>Mantener cardio estimado: 20 min</p></div></div><p class="muted">Motivo ficticio: ilustrar una reducción de series. No es una recomendación. Las prescripciones del registro A y las ejecuciones pasadas no cambian.</p><p>Plan vigente en esta pestaña: <strong data-plan-name>${escapeHTML(demo.plan)}</strong></p>${!demo.accepted && !demo.rejected ? '<div class="actions"><button id="accept-proposal" class="primary" type="button">Aceptar cambio en plan demo</button><button id="reject-proposal" type="button">Rechazar propuesta demo</button></div><p class="muted">Aceptar es explícito y solo afecta al próximo plan ficticio, nunca al servidor.</p>' : '<p>No se ha enviado nada. Puedes restaurar el plan original y revisar de nuevo.</p><button id="reset-proposal" type="button">Restaurar plan original demo</button>'}</article><div class="actions">${buttonLink("plan", "Consultar plan vigente")}${buttonLink("hoy", "Volver a Hoy")}</div>`;
+}
+function welcome() {
+  return `<section class="card"><h2>Tu plan orienta. Tú decides.</h2><p>Explora una sesión, distingue lo prescrito de lo realizado y revisa propuestas antes de aceptarlas.</p><p><strong>Demo ficticia y solo en memoria.</strong> No hay cuenta, correo, servidor ni sincronización. Recargar borra todo.</p><p>No introduzcas datos personales ni credenciales reales.</p><a class="button primary" id="open-registration" href="#registro">Probar registro demo</a><p class="actions"><a href="#hoy">Seguir sin registro a Hoy</a></p></section>`;
+}
+function signupResult() {
+  return '<h2>Prueba completada solo en memoria</h2><p><strong>NO se ha creado una cuenta, NO se ha enviado correo y NO hay sincronización con servidor.</strong></p><p>No se conservan el nombre, email ni contraseña en el objeto demo. Recargar borra este resultado.</p><a class="button primary" href="#hoy">Volver a Hoy</a>';
+}
+function registration() {
+  return `<section class="card"><p><strong>Solo datos inventados.</strong> No uses tu email ni una contraseña real. No hay servicio de registro.</p><form id="signup-form" autocomplete="off"${demo.signupComplete ? " hidden" : ""}><div class="field"><label for="signup-name">Nombre ficticio</label><input id="signup-name" name="demo-name" type="text" minlength="2" maxlength="60" required autocomplete="off" /></div><div class="field"><label for="signup-email">Email ficticio (ej.: atleta@example.test)</label><input id="signup-email" name="demo-email" type="email" required autocomplete="off" /></div><div class="field"><label for="signup-password">Contraseña ficticia (mínimo 8 caracteres)</label><input id="signup-password" type="password" minlength="8" required autocomplete="new-password" aria-describedby="password-help" /><p class="muted" id="password-help">Solo validación local; se borra al enviar o navegar. No se almacena ni se muestra en el resultado.</p></div><div class="field"><label for="signup-adult">Confirmación de mayoría de edad para la demo</label><select id="signup-adult" required><option value="">Selecciona una opción</option><option value="adult">Confirmo que soy mayor de 18 años</option></select></div><p class="muted">Todos los campos son obligatorios. Corrige el campo indicado y vuelve a intentar; no se envía nada.</p><button id="signup-submit" class="primary" type="submit">Completar prueba local</button></form><section id="signup-result" tabindex="-1"${demo.signupComplete ? "" : " hidden"}>${demo.signupComplete ? signupResult() : ""}</section></section>`;
 }
 function renderState() {
   const [title, text] = stateMessages[demo.state];
-  const panel = document.querySelector("#state-panel");
-  panel.innerHTML =
+  document.querySelector("#state-panel").innerHTML =
     demo.state === "normal"
       ? ""
-      : `<section class="notice${demo.state === "error" ? " error" : ""}" aria-labelledby="state-title"><h2 id="state-title">${title}</h2><p>${text}</p>${demo.state === "conflict" ? `<div class="comparison"><div><h3>Copia local ficticia</h3><p>Sesión: 2026-10-24 · revisión 1</p></div><div><h3>Copia remota ilustrativa</h3><p>Sesión: 2026-10-25 · revisión 2</p></div></div><p>En el producto: conservar ambas y elegir después de revisar. Aquí no existe una copia remota real.</p>` : ""}${["empty", "error", "conflict"].includes(demo.state) ? `<button id="normal-state" type="button">Volver a Normal (demo)</button>` : ""}</section>`;
+      : `<section class="notice${demo.state === "error" ? " error" : ""}" aria-labelledby="state-title"><h2 id="state-title">${title}</h2><p>${text}</p>${demo.state === "conflict" ? '<div class="comparison"><div><h3>Copia local ficticia</h3><p>Sesión: 2026-10-24 · revisión 1</p></div><div><h3>Copia remota ilustrativa</h3><p>Sesión: 2026-10-25 · revisión 2</p></div></div><p>No hay copia remota real ni resolución automática.</p>' : ""}${["empty", "error", "conflict"].includes(demo.state) ? '<button id="normal-state" type="button">Volver a Normal (demo)</button>' : ""}</section>`;
   view.hidden = ["empty", "loading"].includes(demo.state);
   view.setAttribute("aria-busy", String(demo.state === "loading"));
   view
-    .querySelectorAll("form button, #accept-proposal, #reject-proposal, #reset-proposal")
-    .forEach((button) => {
-      button.disabled = blocked();
+    .querySelectorAll(
+      "form button, form input, form select, #accept-proposal, #reject-proposal, #reset-proposal",
+    )
+    .forEach((control) => {
+      control.disabled = blocked();
     });
+  demo.sets.forEach((set, i) => {
+    ["load", "reps", "rpe", "rir"].forEach((key) => {
+      const field = document.getElementById(`${key}-${i + 1}`);
+      if (field) field.disabled = blocked() || set.checked;
+    });
+  });
+  updateRestText();
 }
 function render(moveFocus = false) {
+  // Never retain credentials in the model or carry the password across navigation.
+  const password = document.querySelector("#signup-password");
+  if (password) password.value = "";
   const current = route();
   const [title, eyebrow, description] = routes[current];
   document.title = `BASIS · ${title} · Demo ficticia`;
@@ -138,8 +175,8 @@ function render(moveFocus = false) {
   document.querySelector("#eyebrow").textContent = eyebrow;
   document.querySelector("#page-description").textContent = description;
   document.querySelectorAll("[data-nav]").forEach((link) => {
-    const active = link.dataset.nav === (current === "entrenamiento" ? "hoy" : current);
-    if (active) link.setAttribute("aria-current", "page");
+    if (link.dataset.nav === (current === "entrenamiento" ? "hoy" : current))
+      link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
   view.innerHTML = {
@@ -148,6 +185,8 @@ function render(moveFocus = false) {
     plan: planning,
     progreso: progress,
     entrenador: coach,
+    bienvenida: welcome,
+    registro: registration,
   }[current]();
   renderState();
   if (moveFocus) {
@@ -157,46 +196,149 @@ function render(moveFocus = false) {
 }
 function rememberForm() {
   const form = document.querySelector("#training-form");
-  if (!form) return;
+  if (!form || blocked() || !form.checkValidity()) return;
   const read = (id) => {
     const field = document.getElementById(id);
     return field.value === "" ? null : field.valueAsNumber;
   };
-  if (!form.checkValidity()) return;
-  demo.sets = demo.sets.map((_, index) => ({
-    reps: read(`reps-${index + 1}`),
-    load: read(`load-${index + 1}`),
-    rpe: read(`rpe-${index + 1}`),
-    rir: read(`rir-${index + 1}`),
-  }));
+  demo.sets.forEach((set, index) => {
+    if (set.checked) return;
+    ["reps", "load", "rpe", "rir"].forEach((key) => {
+      set[key] = read(`${key}-${index + 1}`);
+    });
+  });
   demo.cardio = { minutes: read("minutes"), distance: read("distance") };
 }
-// Keep drafts when navigating or changing the illustrative state, without storage.
-view.addEventListener("input", rememberForm);
+// A single interval follows a deadline, not accumulated ticks. Only its text is updated.
+let restInterval = null;
+function updateRestText() {
+  const remaining =
+    demo.restDeadline === null
+      ? 0
+      : Math.max(0, Math.ceil((demo.restDeadline - Date.now()) / 1000));
+  const text = document.querySelector("#rest-timer");
+  if (text)
+    text.textContent =
+      remaining > 0 ? `Descanso ilustrativo: ${remaining} s restantes` : "Sin descanso activo.";
+  const skip = document.querySelector("#skip-rest");
+  if (skip) skip.disabled = blocked() || remaining === 0;
+}
+function endRest(message) {
+  if (restInterval !== null) window.clearInterval(restInterval);
+  restInterval = null;
+  demo.restDeadline = null;
+  updateRestText();
+  announce(message);
+}
+function startRest() {
+  demo.restDeadline = Date.now() + 90000;
+  if (restInterval === null)
+    restInterval = window.setInterval(() => {
+      if (demo.restDeadline !== null && Date.now() >= demo.restDeadline)
+        endRest(
+          "Descanso ilustrativo terminado. Ninguna serie se ha marcado ni enviado automáticamente.",
+        );
+      else updateRestText();
+    }, 1000);
+  updateRestText();
+  announce(
+    "Serie marcada realizada solo en memoria. Comienza un descanso ilustrativo de 90 segundos; no envía ni completa la sesión.",
+  );
+}
+function checkSet(n) {
+  if (blocked()) return;
+  const set = demo.sets[n - 1];
+  if (!set) return;
+  if (set.checked) {
+    set.checked = false;
+    announce(`Serie ${n} pendiente de nuevo. Puedes corregir sus datos.`);
+  } else {
+    const fields = ["load", "reps", "rpe", "rir"].map((key) =>
+      document.getElementById(`${key}-${n}`),
+    );
+    const invalid = fields.find(
+      (field, index) => !field.checkValidity() || (index < 3 && field.value === ""),
+    );
+    if (invalid) {
+      announce(`Completa kg, repeticiones y RPE válidos de la serie ${n}. RIR es opcional.`);
+      if (invalid.value === "")
+        invalid.setCustomValidity("Completa este dato real antes de marcar la serie.");
+      invalid.reportValidity();
+      invalid.focus();
+      return;
+    }
+    // Read only the validated row; unrelated unfinished rows must not be discarded.
+    ["load", "reps", "rpe", "rir"].forEach((key, i) => {
+      set[key] = fields[i].value === "" ? null : fields[i].valueAsNumber;
+    });
+    set.checked = true;
+    startRest();
+  }
+  const button = document.getElementById(`check-${n}`);
+  button.setAttribute("aria-pressed", String(set.checked));
+  button.setAttribute("aria-label", `${set.checked ? "Desmarcar" : "Marcar"} serie ${n}`);
+  button.textContent = set.checked ? "✓ Realizada" : "Pendiente";
+  ["load", "reps", "rpe", "rir"].forEach((key) => {
+    document.getElementById(`${key}-${n}`).disabled = set.checked;
+  });
+  document.querySelector("#record-values").innerHTML = recordValues();
+}
+view.addEventListener("input", (event) => {
+  if (event.target.matches("input")) event.target.setCustomValidity("");
+  rememberForm();
+});
 view.addEventListener("submit", (event) => {
   event.preventDefault();
   if (blocked()) {
-    announce("Acción bloqueada en este estado ilustrativo. No se ha cambiado el plan.");
+    announce("Acción bloqueada en este estado ilustrativo. No se ha cambiado nada.");
     return;
   }
+  if (!event.target.reportValidity()) return;
   if (event.target.id === "training-form") {
     rememberForm();
-    render();
-    document.querySelector("#save-training").focus();
+    document.querySelector("#record-values").innerHTML = recordValues();
     announce(
       "Registro ficticio conservado solo en memoria. No enviado ni sincronizado. Recargar lo borra.",
     );
-  }
-  if (event.target.id === "reschedule-form") {
+  } else if (event.target.id === "reschedule-form") {
     demo.date = document.querySelector("#new-date").value;
     render();
-    document.querySelector("#reschedule").focus();
+    document.querySelector("#show-reschedule").focus();
     announce(`Fecha ficticia cambiada a ${demo.date} solo en memoria. No enviada al servidor.`);
+  } else if (event.target.id === "signup-form") {
+    // Read no credential values. The only model change is a demonstration boolean.
+    demo.signupComplete = true;
+    event.target.reset();
+    document.querySelector("#signup-password").value = "";
+    event.target.hidden = true;
+    const result = document.querySelector("#signup-result");
+    result.innerHTML = signupResult();
+    result.hidden = false;
+    result.focus();
+    announce(
+      "Prueba local completada. NO se creó cuenta, NO se envió correo y NO hay sincronización. Solo memoria demo.",
+    );
   }
 });
 view.addEventListener("click", (event) => {
   const id = event.target.closest("button")?.id;
-  if (blocked()) return;
+  if (blocked() || !id) return;
+  if (/^check-[1-3]$/.test(id)) {
+    checkSet(Number(id.slice(-1)));
+    return;
+  }
+  if (id === "skip-rest") {
+    if (demo.restDeadline !== null)
+      endRest("Descanso ilustrativo omitido. No se ha marcado ni enviado ninguna serie.");
+    return;
+  }
+  if (id === "cancel-reschedule") {
+    document.querySelector("#new-date").value = demo.date;
+    document.querySelector("#reschedule-details").open = false;
+    document.querySelector("#show-reschedule").focus();
+    announce("Reprogramación cancelada. La fecha no ha cambiado.");
+    return;
+  }
   if (id === "accept-proposal") {
     demo.plan = "Fuerza B · 2 series × 8 repeticiones";
     demo.accepted = true;
@@ -228,6 +370,7 @@ document.querySelector("#state-panel").addEventListener("click", (event) => {
   demo.state = "normal";
   document.querySelector("#state").value = "normal";
   renderState();
+  document.querySelector("#demo-tools").open = true;
   document.querySelector("#state").focus();
   announce("Normal restablecido solo para explorar la demo. Ninguna operación se ha sincronizado.");
 });

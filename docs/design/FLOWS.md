@@ -2,6 +2,41 @@
 
 MAM-626 · [Abrir el HTML local](prototipo/index.html) · [Guía y verificación](STYLE_GUIDE.md). Complemento del [contrato del producto](../UX_CONTRACT.md), no reemplazo de las rutas Django. Todos los ejemplos son ficticios, sin servidor ni proveedor IA. **Recargar o cerrar borra los cambios.**
 
+## Referencia actual · R2 + onboarding · 23 de octubre de 2026
+
+Esta sección reemplaza las decisiones de presentación iniciales, no la evidencia histórica que se conserva más abajo. **R2: gates, contraste medido, teclado automatizado y nuevas capturas NOT RUN en esta asignación. Auditor R2 pendiente de asignación separada; revisión independiente BT2 PENDING; revisor externo, aprobación humana, lector de pantalla y dispositivo físico NOT RUN.** La evidencia anterior no acredita este candidato.
+
+### Navegación y jerarquía
+
+Se mantienen las cinco rutas originales y los cuatro destinos Hoy / Plan / Progreso / Entrenador. La barra móvil fija tiene iconos decorativos `aria-hidden` y texto; espacio inferior, safe-area y scroll-margin permiten desplazar controles por encima de ella. La navegación por hash mueve foco a `#main`. El tema solo cambia tokens.
+
+La insignia «Demo ficticia» siempre está visible. `#demo-tools` es un details nativo, cerrado inicialmente; su resumen abre la advertencia completa de datos ficticios y memoria, el selector de siete estados y `#onboarding-link` hacia `#bienvenida`. La región global `#announcement` conserva aria-live cortés, visualmente oculta para priorizar la sesión.
+
+| Recorrido R2 | Pasos | Resultado y límites |
+| --- | --- | --- |
+| Hoy | Abrir → `#today-session` → `#start-training` «Comenzar» | Una sesión A, una acción dominante de ancho completo. Prescripción A y cardio estimado separados del próximo plan futuro. Resumen semanal compacto debajo. Objetivo 390×844: sesión y CTA sobre la barra; pendiente de captura y medición. |
+| Entrenamiento A | Comenzar → tabla `#sets-table` serie/kg/reps/RPE/check → completar observaciones → `#check-N` | Inputs inicialmente vacíos. Texto «Anterior ficticio» separado, nunca autocompletado. Para marcar se exigen kg/reps/RPE válidos; cero es observado, vacío es ausente. RIR real opcional y prescripción accesibles en details por serie. |
+| Serie y descanso | Marcar → «Realizada», aria-pressed=true → descanso ilustrativo de 90 s | Marca solo tras validar la fila. Sus inputs quedan bloqueados hasta desmarcar explícitamente. Un deadline y como máximo un intervalo en memoria sobreviven a navegación. Solo cambia texto del reloj: no rerender de inputs mientras se escribe. Anuncia inicio/fin, no cada segundo. Omitir solo termina descanso; nunca completa ni envía series/sesión. |
+| Conservar registro | Introducir cardio medido → Conservar en memoria demo | Resumen «No enviado». No exige completar todas las series, no inventa valores ni sincroniza. Prescrito 20 min separado de duración/distancia medidas. |
+| Plan | Tira `#week-strip` → Reprogramar → fecha → Aplicar o Cancelar | Siete días ficticios, lunes 19 a domingo 25 de octubre de 2026; viernes 23 es hoy ficticio fijo. `#reschedule-details` cerrado al entrar, `#show-reschedule` lo abre. La nueva fecha solo se aplica al enviar. Cancelar restaura el borrador y cierra sin aplicar; navegar sin enviar tampoco aplica. Fechas fuera de la tira no se presentan como hoy ni se desplaza la semana silenciosamente. |
+| Progreso | Historial fijo → registro de pestaña | No mezcla conteos ilustrativos con observaciones actuales; mantiene Sin datos distinto de 0. |
+| Entrenador | Comparar → consultar/rechazar/aceptar → restaurar | Solo aceptación explícita cambia el futuro plan B; ni consultar ni rechazar modifican el plan. Restaurar recupera A. La sesión de hoy y el registro A nunca se convierten en B. `data-plan-name` y `data-plan-date` identifican el próximo plan en Hoy/Plan; Entrenador conserva `data-plan-name`. |
+| Bienvenida | Herramientas demo → `#onboarding-link` → `#bienvenida` → `#open-registration` | Explica intención y límites, permite seguir a Hoy sin registro. No exige cuenta para los recorridos originales. |
+| Registro | `#registro` → `#signup-form` → nombre/email/contraseña ficticios + select de mayoría de edad → `#signup-submit` | Labels explícitos, required, email nativo, nombre mínimo 2 y contraseña ficticia mínimo 8 caracteres. Validación cliente nativa: corrige el campo indicado y reintenta; fallo no crea resultado ni borra los demás campos. No uses credenciales reales. |
+| Resultado de alta demo | Envío válido → `#signup-result` → Volver a Hoy | Texto explícito: NO cuenta creada, NO correo enviado, NO sincronización de servidor; solo resultado en memoria. Se resetea el formulario y se borra contraseña. El objeto demo solo registra un booleano, nunca nombre/email/contraseña; no los refleja ni registra en informes. Navegar elimina los inputs y limpia contraseña. Recargar elimina todo. |
+
+### Siete estados, seguridad y recuperación
+
+Normal, vacío, cargando, error, sin conexión, sincronización pendiente y conflicto siguen siendo ilustraciones seleccionables, nunca detección real de red. Vacío/cargando ocultan contenido; error/conflicto bloquean edición y acciones, incluidos checks y alta demo. Volver a Normal no convierte nada en éxito remoto ni cambia una serie marcada. Inputs de series realizadas permanecen protegidos al cambiar de estado. Offline/pendiente permiten memoria sin prometer durabilidad. El descanso puede terminar mientras se mira otra ruta/estado, pero su fin no modifica observaciones ni marca ni envía nada. Selector/tema/navegación siguen permitiendo recuperación.
+
+### Contrato para la siguiente asignación de auditoría
+
+Conservar verificaciones previas y ampliar recorridos, sin rebajar umbrales: details global cerrado, badge visible; Hoy/CTA arriba de barra a 390×844; tabla real y campos inicialmente vacíos; fila inválida no marcada, recuperación, check >=48×48, texto pendiente/realizada, RIR independiente; edición bloqueada y protección de filas realizadas en siete estados; deadline que sobrevive a navegación, un intervalo máximo y sin autoenvío; semana correcta y cancelación sin aplicar; bienvenida/registro con errores corregibles, no exfiltración/almacenamiento/reflejo de credenciales, contraseña vacía tras envío/navegación y pérdida al recargar; propuesta/rechazo/restauración y separación A/B intactas. Medir texto >=4.5:1 incluso pequeño >=14 px, controles y foco, overflow/oclusión y teclado en ambos temas. Regenerar Hoy 390/1440 y añadir Plan/bienvenida/registro a 390 en claro/oscuro en un destino de evidencia nuevo, sin sobrescribir PNG históricos. No registrar valores de credenciales en informes. Ninguna de estas pruebas se ejecutó aquí.
+
+## Historia preservada · entrega inicial anterior a R2
+
+Las descripciones siguientes son históricas: Comenzar demo, fieldsets y formulario de fecha expuesto se sustituyen por las decisiones R2 anteriores.
+
 ## Navegación estable
 
 `Hoy (#hoy) → Plan (#plan) → Progreso (#progreso) → Entrenador (#entrenador)` conserva orden y marca actual. Entrenamiento (`#entrenamiento`) pertenece a Hoy. Los enlaces usan hashes locales; al cambiar de vista, el foco llega a `main`. El primer Tab ofrece «Saltar al contenido». Cambiar tema o estado no navega ni mueve inesperadamente el foco.
@@ -53,4 +88,4 @@ Estado al entregar fuentes: **automatización NOT RUN; revisión independiente P
 
 ## Evidencia posterior a la entrega inicial
 
-El coordinador ejecutó los cinco recorridos, los siete estados y las 140 combinaciones: preparación **VERIFIED**, con cuatro capturas y pruebas negativas del auditor. Véase [VERIFICATION.md](VERIFICATION.md) para comandos, hashes, alcance y limitaciones. Esto actualiza el NOT RUN histórico anterior, no constituye aceptación humana ni sincronización de servidor. Aprobación del propietario **PENDING**; lector de pantalla y dispositivo físico **NOT RUN**.
+El coordinador ejecutó los cinco recorridos, los siete estados y las 140 combinaciones: preparación **VERIFIED**, con cuatro capturas y pruebas negativas del auditor. Véase [VERIFICATION.md](VERIFICATION.md) para comandos, hashes, alcance y limitaciones. Esto actualiza el NOT RUN histórico anterior, no constituye aceptación humana ni sincronización de servidor. Aprobación del propietario **PENDING**; lector de pantalla y dispositivo físico **NOT RUN**. Esta evidencia es anterior a R2 y no acredita los cambios actuales.
