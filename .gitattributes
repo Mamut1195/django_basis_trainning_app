@@ -1,0 +1,11 @@
+# Running files checked byte-for-byte by tests_architecture/test_running.py (LF only).
+# Exact paths only; no other file changes line endings.
+basis/modules/training/domain/sports.py text eol=lf
+basis/modules/training/adapters/templatetags/training_tags.py text eol=lf
+basis/modules/training/adapters/templates/training/execution/_metrics.html text eol=lf
+basis/modules/training/adapters/templates/training/execution/_intervals.html text eol=lf
+tests_architecture/test_running.py text eol=lf
+tests/regression/test_running.py text eol=lf
+tests/regression/test_running_browser.py text eol=lf
+tests/regression/test_endurance.py text eol=lf
+docs/RUNNING_VERIFICATION.md text eol=lf

@@ -53,7 +53,7 @@ VARIABLES: dict[str, dict[str, Variable]] = {
     "cardio": COMMON,
     "running": {
         **COMMON,
-        **{k: OUTDOOR[k] for k in ("ascent_m", "descent_m")},
+        **{k: OUTDOOR[k] for k in ("ascent_m", "descent_m", "pause_seconds")},
         "cadence_spm": Variable("Cadencia medida", "pasos/min", 300),
     },
     "cycling": {
