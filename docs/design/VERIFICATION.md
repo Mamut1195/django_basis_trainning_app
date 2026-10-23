@@ -96,8 +96,16 @@ Herramientas: Python 3.13.7, Playwright 1.64.0, Chromium 153.0.8010.12 ya instal
 | [Bienvenida 390 oscuro](capturas/onboarding-390-dark.png) | `6fdb8d3cb37f63938b8481359a6272ca894af5a2bf45d30a54537bba7cef190e` |
 | [Registro 390 claro](capturas/registro-390-light.png) | `50be2657278087b459af093a1617da1781b11cbab92c64e2b9b862abbe831ba0` |
 | [Registro 390 oscuro](capturas/registro-390-dark.png) | `7a71ff3b4fd7b5005e32fe63739d9b39c4038f4ee8ba02b2703293217d8c4ae2` |
+| [Registro 390 claro, fin de scroll real](capturas/registro-390-light-fin-scroll.png) | `408ce2e509249739160d74ce219de37b1f45f6b3470e914ccd8b5777599e64d8` |
+| [Registro 390 oscuro, fin de scroll real](capturas/registro-390-dark-fin-scroll.png) | `1ac9bff6b27ef494f4d7a186f4ae0fa00cd7de9d63526bbb16e4c0f4e81586e1` |
 
 El coordinador inspeccionó visualmente Hoy 390 claro, Plan 390 oscuro, bienvenida 390 claro y registro 390 oscuro; no se atribuye revisión visual a las 224 combinaciones. En full-page Chromium compone la barra fixed en la posición de su viewport original; la imagen larga no demuestra por sí sola oclusión durante todo el scroll. La prueba de geometría registra el scroll nativo de cada control enfocado, no lo corrige artificialmente.
+
+**Aviso sobre las capturas full-page de registro:** `registro-390-light.png` y `registro-390-dark.png` muestran la barra inferior fixed fuera de lugar, superpuesta al campo de mayoría de edad. Es un artefacto de la captura full-page, no una oclusión real; ver la medición siguiente.
+
+### Registro 390: la barra inferior fija no tapa el campo de mayoría de edad
+
+Medición con Playwright/Chromium headless (390×844, tema claro y oscuro aplicado con `data-theme` en `html`, scroll real de la ventana, sin tocar código del prototipo) sobre `#registro`. Altura del documento 1279 px; scroll máximo `scrollY`=435. Barra inferior `position: fixed`: top 763, alto 81, bottom 844. Al final del scroll: campo `#signup-adult` top 381,8 y bottom 429,8 (48 px de alto); botón `#signup-submit` top 545,8 y bottom 593,8, a 169 px sobre la barra. `.workspace` tiene `padding-bottom` de 128 px. El foco por teclado en el campo no lo desplaza bajo la barra (bottom 429,8 < 763) y `elementFromPoint` en su centro devuelve el propio control: **sin oclusión (VERIFIED)** en ambos temas. El solape visible en `registro-390-light.png` es un artefacto de la captura full-page: Chromium compone la barra fixed en la posición de su viewport original (y=763), que en la imagen larga cae sobre el campo. Esas imágenes se conservan sin cambios; las dos capturas `*-fin-scroll.png` muestran el viewport real al final del scroll (SHA-256 en la tabla). Script de la medición, fuera del repositorio: `basis-runs/MAM-626-ux1/measure-registro-occlusion.py`. No se ejecutó en un dispositivo físico ni con lector de pantalla (**NOT RUN**).
 
 Correcciones reproducidas durante R2: esperar hashchange/render antes de cerrar herramientas con teclado; ampliar enlaces de texto de 21/24 px a targets de 48 px; aplicar scroll-padding/scroll-margin también en escritorio para no recortar el outline. Se corrigió la UI donde falló, sin silenciar el auditor.
 
