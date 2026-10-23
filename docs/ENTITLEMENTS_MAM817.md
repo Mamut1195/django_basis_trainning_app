@@ -30,14 +30,17 @@ ni JavaScript offline.
   `source-before.json` y `source-after.json` incluyen los hashes de las seis rutas del
   delta, incluidos el script, esta documentación y `mypy-django.ini`; no se intenta
   incrustar el hash del candidato en sus propios archivos.
-- Intento anterior de navegador: **FAILED / timeout de 300000 ms**, no VERIFIED.
+- Intento anterior de navegador (histórico, no reutilizado): **FAILED / timeout de 300000 ms**,
+  no VERIFIED.
   Alcanzó edición/reload offline y `db-expired.json`; `server.log` mostró `/api/sync/`
   con 403 real, pero faltaron `result.json`, `db-after-403.json` y `real-403.json`.
   El bloqueo al leer el body de ServiceWorker es una hipótesis, no causa demostrada.
   El coordinador confirmó y terminó solo wrapper/child propios del runserver anterior.
   Architecture anterior falló por el script fuera de strict scope; la adición literal
   a `files` corrige el registro, sin alterar el checker.
-- **Todo resultado del candidato final queda NOT RUN** hasta validación del coordinador.
+- Resultado posterior del navegador sobre de69d53: **VERIFIED** local (ver «Resultado real del
+  navegador»). Los demás gates locales del candidato final siguen **NOT RUN** hasta
+  validación del coordinador; el CI remoto está verde (ver «Revisión y CI»).
   Los errores reproducidos sobre el candidato anterior no son una ejecución ni una
   certificación del candidato entregado aquí. Tampoco se heredan resultados de MAM-816.
 
@@ -99,15 +102,36 @@ separado antes de las comprobaciones conservadas de cola/servidor/export/otra cu
 
 | Criterio | Nombres exactos de checks del script | Evidencia prevista | Estado final |
 | --- | --- | --- | --- |
-| Fixture con acceso real, sin bypass | `owned_fixture_active_without_development_bypass`, `edge_executable_sha256_verified_before_launch` | `db-initial.json`, hash y versión Edge/Python en `result.json` | NOT RUN |
-| Fechas inicial/final visibles, sin overflow a 1440 y 390 px | `billing_dates_visible_no_overflow_1440`, `billing_dates_visible_no_overflow_390` | `billing-desktop.png`, `billing-mobile.png`, fecha esperada ORM | NOT RUN |
-| Descargar con acceso, editar offline y recargar sin perder datos | `real_offline_edit_reload_preserves_uuid_entire_payload_and_measurements` | `queue-before-reconnect.json`, UUID y payload completo de IndexedDB | NOT RUN |
-| UI 403 real con misma operación y estado de denegación; confirmación HTTP independiente | `real_ui_403_same_queued_wire_and_denial_status`, `real_direct_http_entitlement_403_same_queued_wire` | `real-ui-403.json` y `real-direct-403.json`, sin leer body de ServiceWorker | NOT RUN |
-| Vencer acceso en DB propia, reconectar y recibir 403 real sin cambio servidor | `real_entitlement_403_same_uuid_payload_local_data_and_server_unchanged` | `real-403.json` (UI y confirmación separadas), `queue-after-403.json`, `db-before-expiry.json`, `db-expired.json`, `db-after-403.json` | NOT RUN |
-| Descargar JSON exacto de pendientes caducados y offline sin borrarlos | `exact_local_json_download_after_expiry_and_offline_without_data_loss` | `pending-expired.json`, `pending-offline.json`, `expired-pending.png`; igualdad exacta por cuenta | NOT RUN |
-| Historial propio legible/exportable tras caducidad | `expired_owner_history_readable_and_exportable` | Respuestas HTTP reales y snapshots de servidor | NOT RUN |
-| Otra cuenta no ve/exporta/envía cola ni historial ajenos, aun con filas presentes en el mismo perfil | `same_profile_other_account_cannot_view_export_or_submit_foreign_queue_or_history` | `other-account.json`, `other-account-offline.json`, `db-final.json`; export local vacío, historial 404, envío 403 | NOT RUN |
-| Sin entrega HTTP fuera del origen local | `outside_origin_requests_aborted_no_external_responses` | Lista de bloqueos/respuestas externas y errores JavaScript en `result.json` | NOT RUN |
+| Fixture con acceso real, sin bypass | `owned_fixture_active_without_development_bypass`, `edge_executable_sha256_verified_before_launch` | `db-initial.json`, hash y versión Edge/Python en `result.json` | VERIFIED local (run1, de69d53) |
+| Fechas inicial/final visibles, sin overflow a 1440 y 390 px | `billing_dates_visible_no_overflow_1440`, `billing_dates_visible_no_overflow_390` | `billing-desktop.png`, `billing-mobile.png`, fecha esperada ORM | VERIFIED local (run1, de69d53) |
+| Descargar con acceso, editar offline y recargar sin perder datos | `real_offline_edit_reload_preserves_uuid_entire_payload_and_measurements` | `queue-before-reconnect.json`, UUID y payload completo de IndexedDB | VERIFIED local (run1, de69d53) |
+| UI 403 real con misma operación y estado de denegación; confirmación HTTP independiente | `real_ui_403_same_queued_wire_and_denial_status`, `real_direct_http_entitlement_403_same_queued_wire` | `real-ui-403.json` y `real-direct-403.json`, sin leer body de ServiceWorker | VERIFIED local (run1, de69d53) |
+| Vencer acceso en DB propia, reconectar y recibir 403 real sin cambio servidor | `real_entitlement_403_same_uuid_payload_local_data_and_server_unchanged` | `real-403.json` (UI y confirmación separadas), `queue-after-403.json`, `db-before-expiry.json`, `db-expired.json`, `db-after-403.json` | VERIFIED local (run1, de69d53) |
+| Descargar JSON exacto de pendientes caducados y offline sin borrarlos | `exact_local_json_download_after_expiry_and_offline_without_data_loss` | `pending-expired.json`, `pending-offline.json`, `expired-pending.png`; igualdad exacta por cuenta | VERIFIED local (run1, de69d53) |
+| Historial propio legible/exportable tras caducidad | `expired_owner_history_readable_and_exportable` | Respuestas HTTP reales y snapshots de servidor | VERIFIED local (run1, de69d53) |
+| Otra cuenta no ve/exporta/envía cola ni historial ajenos, aun con filas presentes en el mismo perfil | `same_profile_other_account_cannot_view_export_or_submit_foreign_queue_or_history` | `other-account.json`, `other-account-offline.json`, `db-final.json`; export local vacío, historial 404, envío 403 | VERIFIED local (run1, de69d53) |
+| Sin entrega HTTP fuera del origen local | `outside_origin_requests_aborted_no_external_responses` | Lista de bloqueos/respuestas externas y errores JavaScript en `result.json` | VERIFIED local (run1, de69d53) |
+
+## Resultado real del navegador (de69d53)
+
+- Comando: `.venv-win/Scripts/python.exe -B scripts/mam817_browser.py --output <basis-runs>/MAM817-BT1-browser/run1-20261023-110136 --browser-executable <Edge> --browser-sha256 <hash>`.
+- Resultado: **VERIFIED** (PASS). Inicio 2026-10-23 11:01:42 y fin 11:02:10, hora America/Guayaquil
+  (UTC-5); duración 27 s. Cabeza del worktree: `de69d53`, árbol limpio.
+- Cubrió los tres criterios pedidos: edición offline con recarga sin pérdida, 403 real tras
+  vencer el acceso (UI y confirmación HTTP, mismo UUID/payload, servidor sin cambios) y
+  exportación local exacta con acceso vencido y offline; además las 12 comprobaciones
+  listadas arriba (aislamiento entre cuentas, sin entrega fuera del origen). `server.log`
+  muestra `POST /api/sync/` con 403 real.
+- `result.json`: `status=VERIFIED`, `browser_stopped`, `server_stopped`, `source_unchanged` y
+  `browser_cleanup_finished` verdaderos; 0 errores JavaScript; proveedores y SMTP
+  DISABLED; Edge 155.0.4283.62 con SHA-256 verificado; Python 3.13.7.
+- Evidencia externa (fuera del repo): `basis-runs/MAM817-BT1-browser/run1-20261023-110136/`;
+  SHA-256 de `result.json`: `50c3ca33e70674e6fa0e16158b232f542140ea36e87fdc5586827dc88aabf1ae`.
+- El timeout de 300 s anterior no se reprodujo en esta ejecución y su causa sigue sin
+  demostrarse. No se debilitó el script ni las pruebas. Se corrió con tope de 1200 s.
+- Esta ejecución es de BT1, no del launcher/coordinador: `source-before.json` incluye el hash
+  de este documento anterior a esta actualización; no es evidencia sellada del candidato
+  final tras este commit.
 
 El script conserva DB/perfil propios para inspección, registra cleanup y hashes y
 redacta secretos sintéticos en logs/JSON. En Windows termina exclusivamente el subárbol
@@ -126,9 +150,9 @@ evidencia del candidato exacto cuando el launcher los selle y el coordinador val
 
 ## Gates y límites pendientes
 
-Todos **NOT RUN** para el candidato final: `django-suite`, `pure-tests`, `check`,
+Siguen **NOT RUN** para el candidato final (local; `browser` ya figura arriba): `django-suite`, `pure-tests`, `check`,
 `migration-drift`, `ruff`, `ruff-format`, `djlint`, `mypy-core`, `mypy-django`,
-`mypy-browser`, `architecture`, `imports`, `browser`. Se usan únicamente los comandos,
+`mypy-browser`, `architecture`, `imports`. Se usan únicamente los comandos,
 entornos, timeouts y ejecutables del snapshot congelado. La inspección del script y la
 validación del coordinador preceden a su ejecución; se requiere revisión strong del
 candidato exacto y revisión UI. Esta entrega no implica aceptación, integración,
@@ -139,3 +163,11 @@ Polar LIVE/sandbox ni CI remoto. Los skips SQLite no cuentan como prueba de conc
 Las referencias/cobertura previa no sustituyen resultados propios por SHA. La PR debe
 registrar por separado VERIFIED/FAILED/NOT RUN con sus registros sellados y los límites
 restantes; no se cambia esta documentación para fingir una ejecución que no ocurrió.
+
+## Revisión y CI (de69d53)
+
+- Revisión independiente: **BT2 = APROBABLE** el código (sin cambios requeridos).
+- **BT3 QA = PASS** sobre `de69d53`.
+- CI del PR #17: **verde** (`postgres` y `operations` pass; `gh pr checks 17`).
+- Revisor externo `mamut-reviewer`: **NOT RUN (HTTP 401)**. Polar LIVE/sandbox, dispositivos
+  físicos y accesibilidad humana: **NOT RUN**.
