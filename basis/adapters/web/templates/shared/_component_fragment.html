@@ -1,0 +1,12 @@
+<div id="component-fragment" class="stack-sm" x-data="{ clicks: 0 }">
+  <p>Fragmento ficticio nuevo. El contador local se reinicia al sustituirlo.</p>
+  <c-ui.button id="child-counter" @click="clicks++">
+    Contador del fragmento: <span id="child-value" x-text="clicks">0</span>
+  </c-ui.button>
+  <c-ui.collapse>
+    <c-slot name="trigger">
+      Detalle del fragmento
+    </c-slot>
+    Contenido ficticio desplegable.
+  </c-ui.collapse>
+</div>

@@ -1,0 +1,158 @@
+{% extends 'shared/base.html' %}
+{% block title %}Catálogo de componentes · BASIS{% endblock %}
+{% block content %}
+  <div id="component-catalog" class="stack">
+    <c-basis.page-heading title="Catálogo de componentes"
+                          eyebrow="Solo desarrollo"
+                          subtitle="Datos ficticios. Ningún envío guarda información ni llama a proveedores." />
+    <div class="actions">
+      <c-ui.button data-theme-toggle>
+        Cambiar tema
+      </c-ui.button>
+      <a href="#catalog-form">Probar formulario</a>
+    </div>
+    <c-ui.nav aria-label="Secciones del catálogo" class="catalog-nav">
+      <c-ui.nav.item href="#buttons">
+        Botones
+      </c-ui.nav.item>
+      <c-ui.nav.item href="#catalog-form">
+        Campos
+      </c-ui.nav.item>
+      <c-ui.nav.item href="#interactions">
+        Interacción
+      </c-ui.nav.item>
+    </c-ui.nav>
+    <section id="buttons" class="stack-sm" aria-labelledby="buttons-title">
+      <h2 id="buttons-title">Botones: seis variantes y seis tamaños</h2>
+      {% for variant in variants %}
+        <c-ui.card class="stack-sm" padding="sm">
+          <h3>{{ variant }}</h3>
+          <div class="actions">
+            {% for size in sizes %}
+              <c-ui.button variant="{{ variant }}" size="{{ size }}">
+                {{ size }}
+              </c-ui.button>
+            {% endfor %}
+            <c-ui.button variant="{{ variant }}" :outlined="True">
+              Contorno
+            </c-ui.button>
+            <c-ui.button variant="{{ variant }}" disabled>
+              Deshabilitado
+            </c-ui.button>
+          </div>
+        </c-ui.card>
+      {% endfor %}
+    </section>
+    <section class="stack-sm" aria-labelledby="surfaces-title">
+      <h2 id="surfaces-title">Tarjetas y estados explícitos</h2>
+      <c-ui.card id="token-card" title="Tarjeta elevada" subheading="Superficie del kit">
+        Texto ficticio con tipografía, espaciado y radio compartidos.
+      </c-ui.card>
+      <c-ui.card variant="outline" padding="sm">
+        Tarjeta de contorno.
+      </c-ui.card>
+      <c-basis.empty title="Sin registros ficticios">
+        Elige una acción para comenzar.
+      </c-basis.empty>
+      <c-basis.notice>
+        Estado informativo: no hay cambios pendientes.
+      </c-basis.notice>
+      <c-basis.notice tone="warning">
+        Advertencia: ejemplo sin persistencia.
+      </c-basis.notice>
+      <c-basis.notice tone="error">
+        Error ilustrativo: revisa los campos.
+      </c-basis.notice>
+      <c-basis.submit-status>
+        Estado de envío: preparado.
+      </c-basis.submit-status>
+      <c-ui.button disabled aria-busy="true">
+        Cargando ejemplo…
+      </c-ui.button>
+      {% for appearance in appearances %}
+        {% for tone in tones %}
+          <c-ui.alert variant="{{ tone }}"
+                      appearance="{{ appearance }}"
+                      :icon="False"
+                      data-basis-tone="{{ tone }}"
+                      data-basis-appearance="{{ appearance }}">
+            {{ tone }} / {{ appearance }}: aviso ficticio del kit.
+          </c-ui.alert>
+        {% endfor %}
+      {% endfor %}
+    </section>
+    <section id="catalog-form" class="stack-sm" aria-labelledby="form-title">
+      <h2 id="form-title">Formulario Django: validación y CSRF reales</h2>
+      {% if accepted %}
+        <c-basis.notice tone="success" id="catalog-accepted">
+          Datos ficticios válidos. No se ha guardado nada.
+        </c-basis.notice>
+      {% endif %}
+      <c-basis.form-frame :form="form" submit="Validar ejemplo" />
+      <c-ui.card class="stack-sm">
+        <h3>Campo del kit (no se envía)</h3>
+        <label for="kit-input">Texto ficticio</label>
+        <c-ui.input id="kit-input" name="kit-example" value="Ejemplo" />
+        <label for="kit-disabled">Campo deshabilitado</label>
+        <c-ui.input id="kit-disabled" :disabled="True" />
+        <label for="kit-error">Campo con error ilustrativo</label>
+        <c-ui.input id="kit-error" aria-invalid="true" aria-describedby="kit-error-message" />
+        <p id="kit-error-message" class="errorlist">Introduce un texto ficticio.</p>
+      </c-ui.card>
+    </section>
+    <section class="stack-sm" aria-labelledby="table-title">
+      <h2 id="table-title">Tabla sintética</h2>
+      <c-ui.table>
+        <caption>Estados ficticios, sin métricas deportivas</caption>
+        <thead>
+          <tr>
+            <th scope="col">Ejemplo</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Tarjeta</th>
+            <td>Disponible</td>
+          </tr>
+          <tr>
+            <th scope="row">Registro</th>
+            <td>Sin datos</td>
+          </tr>
+        </tbody>
+      </c-ui.table>
+    </section>
+    <section id="interactions"
+             class="stack-sm"
+             aria-labelledby="interactions-title"
+             x-data="{ kept: 0 }">
+      <h2 id="interactions-title">HTMX y Alpine: estado padre conservado</h2>
+      <c-ui.button id="parent-counter" @click="kept++">
+        Contador padre: <span id="parent-value" x-text="kept">0</span>
+      </c-ui.button>
+      <c-ui.button id="swap-fragment"
+                   hx-get="{% url 'component-fragment' %}"
+                   hx-target="#component-fragment"
+                   hx-swap="outerHTML">
+        Renovar fragmento
+      </c-ui.button>
+      {% include 'shared/_component_fragment.html' %}
+      <c-ui.dialog id="catalog-dialog">
+        <c-slot name="trigger">
+          <c-ui.button id="open-dialog">
+            Abrir diálogo ficticio
+          </c-ui.button>
+        </c-slot>
+        <c-slot name="header">
+          <c-ui.dialog.title>
+            Diálogo ficticio
+          </c-ui.dialog.title>
+          <c-ui.dialog.description>
+            Prueba Escape y retorno del foco.
+          </c-ui.dialog.description>
+        </c-slot>
+        <p>No se modifica ninguna sesión.</p>
+      </c-ui.dialog>
+    </section>
+  </div>
+{% endblock %}
