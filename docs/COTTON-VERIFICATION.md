@@ -6,7 +6,7 @@
 - Snapshot: `c1f486008483f1cbb478983a40ced1fa3cb7f4c6a7ecd479634266784220102f`.
 - Base: `de24ce7ef686c0b990342537d7a47a6fec5274a6`.
 - Rama: `ticket/MAM-627-cotton-ui`.
-- Contrato UX autorizado: MAM-626 PR #15, **ronda 2 (R2)**, head `cdcbac5f1e305f2609710422aeae4e1215a4d604` (sustituye la ronda 1, `c9bc2351a25e4f6f1038cdecba837e3d5bf89e83`).
+- Contrato UX autorizado: MAM-626 PR #15, **ronda 2 (R2)**, ya fusionado en `main` mediante el commit de merge `c176002b3e1b0875442d80c3549983a351124b9b`, con contenido equivalente al head `e1cbfd6ecfd727801333e4a41641ab160161fa46` (sustituye la ronda 1, `c9bc2351a25e4f6f1038cdecba837e3d5bf89e83`).
 - Riesgo congelado 2; MATH OFF; METHOD NONE. Sin cambio deportivo ni de dependencias.
 
 Esta página describe las fuentes y el protocolo, **no certifica el candidato**.
@@ -110,7 +110,7 @@ La ejecución conserva implementación round 1, fix round 0 y review round 0. El
 
 Hallazgos diagnosticados sin modificar el kit ni debilitar ratios: el auditor antiguo interpretaba OKLCH como canales RGB; el auditor Cotton normaliza colores con el motor del navegador y rechaza los no soportados/fuera de gamut. Los avisos del catálogo tienen mapeo sRGB semántico en tokens. El controlador instalado del diálogo no asigna role=dialog; la composición de accesibilidad del catálogo añade ese rol al contenedor interno y conserva apertura/trap/Escape del kit. Se distingue tipografía heredada de controles frente a las utilidades del kit.
 
-**Aceptación de navegador (ronda 2, resultados reales).** La corrida completa de `scripts.cotton_acceptance` (Chromium headless shell 1243, navegador 153.0.8010.12, solo Windows local) pasó por todas las etapas: `status=VERIFIED`, `stage=browser_complete`, sin errores JavaScript ni peticiones externas bloqueadas, fuentes antes/después iguales. Evidencia local: `basis-runs/MAM627-r2-acceptance-3` (y repetición `MAM627-r2-acceptance-4`); no son artefactos de CI.
+**Aceptación de navegador (ronda 2, resultados reales).** La corrida completa de `scripts.cotton_acceptance` (Chromium headless shell 1243, navegador 153.0.8010.12, solo Windows local) pasó por todas las etapas: `status=VERIFIED`, `stage=browser_complete`, sin errores JavaScript ni peticiones externas bloqueadas, fuentes antes/después iguales. Evidencia local de aceptación del head: `basis-runs/MAM627-r2-acceptance-5` (`source_unchanged: true`); las corridas `MAM627-r2-acceptance-3` y `MAM627-r2-acceptance-4` se conservan solo como historial. No son artefactos de CI.
 
 Causas de los fallos previos, todas del auditor y no de la UI (diagnosticadas y corregidas en commits separados, sin relajar ratios ni omitir pruebas):
 
