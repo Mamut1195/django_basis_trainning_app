@@ -32,3 +32,7 @@ Base aislada con proveedores deshabilitados; proceso de servidor/navegador deten
 # Risks
 
 Edge se cierra antes de iniciar una página en el entorno actual. Chromium headless shell instalado sí supera el caso mínimo de lanzamiento; su recorrido completo se valida por separado. La matriz automatizada puede revelar brechas de contraste/tamaño que deberán documentarse o corregirse de forma acotada, sin relajar comprobaciones para obtener un resultado verde.
+
+# Complemento portable · 23 de octubre de 2026
+
+Boceto estático adicional: [HTML local](design/prototipo/index.html), [guía de tokens y verificación](design/STYLE_GUIDE.md) y [cinco flujos y estados](design/FLOWS.md). Se abre con `file://`, sin servidor; datos ficticios y cambios solo en memoria que se pierden al recargar/cerrar. No reemplaza la aplicación ni la evidencia histórica anterior. Fuentes entregadas con gates/capturas NOT RUN por el implementador; el coordinador ejecuta la CLI documentada tras revisar/formatear el candidato. Revisión humana PENDING y lector de pantalla NOT RUN.
