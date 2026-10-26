@@ -20,6 +20,20 @@
   addEventListener("offline", network);
   network();
   document.addEventListener("htmx:configRequest", (event) => {
+    // Never forward the session's CSRF token to a different origin, even if an
+    // extension changes HTMX's default selfRequestsOnly policy.
+    let target;
+    try {
+      target = new URL(event.detail.path, document.baseURI);
+    } catch (_) {
+      event.preventDefault();
+      return;
+    }
+    if (target.origin !== location.origin) {
+      delete event.detail.headers["X-CSRFToken"];
+      event.preventDefault();
+      return;
+    }
     event.detail.headers["X-CSRFToken"] =
       document.querySelector("meta[name=csrf-token]")?.content || "";
   });
@@ -44,5 +58,20 @@
       event.preventDefault();
       history.back();
     }
+  });
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!document.querySelector("#component-catalog")) return;
+    // Compose missing semantics on the actual (teleported) inner panel, not
+    // the always-visible root. The kit still owns show, trap, Escape and focus.
+    document.querySelectorAll('[x-bind="dialog"]').forEach((dialog) => {
+      dialog.setAttribute("role", "dialog");
+    });
+    // Localize the installed dialog's fixed close label, without copying its
+    // primitive or interfering with Alpine's sole ownership of initialization.
+    document.querySelectorAll('[x-bind="closeButton"]').forEach((button) => {
+      button.setAttribute("aria-label", "Cerrar");
+      const label = button.querySelector(".sr-only");
+      if (label) label.textContent = "Cerrar";
+    });
   });
 })();
