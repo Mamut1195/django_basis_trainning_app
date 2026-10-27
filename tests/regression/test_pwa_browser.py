@@ -272,12 +272,30 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                     )
                     checks.append("Another tab's open editor blocks update and keeps unsaved input")
                     second.close()
-                    page.evaluate("localStorage.setItem('basis-timer', String(Date.now()+60000))")
-                    self.blocked_update(page)
-                    self.assertTrue(
+                    for timer_key in ("basis-timer", f"basis-rest:{first.athlete.public_id}"):
                         page.evaluate(
-                            "async () => !!(await navigator.serviceWorker.getRegistration()).waiting"
+                            "key => localStorage.setItem(key, String(Date.now()+60000))", timer_key
                         )
+                        self.blocked_update(page)
+                        self.assertTrue(
+                            page.evaluate(
+                                "async () => !!(await navigator.serviceWorker.getRegistration()).waiting"
+                            )
+                        )
+                        page.evaluate("key => localStorage.removeItem(key)", timer_key)
+                    checks.append("Both basis-rest:<account> and legacy basis-timer block updates")
+                    # Simulate a worker disappearing while an asynchronous guard hangs.
+                    page.evaluate("""() => {
+                      window.originalPending = window.basisPending;
+                      window.basisPending = () => new Promise(resolve => window.finishPending = resolve);
+                      const channel = new MessageChannel();
+                      channel.port1.onmessage = event => window.lateUpdateVote = event.data.safe;
+                      navigator.serviceWorker.dispatchEvent(new MessageEvent('message', {
+                        data: {type:'PREPARE_UPDATE'}, ports:[channel.port2]
+                      }));
+                    }""")
+                    self.assertTrue(
+                        page.evaluate("document.body.inert && window.basisUpdateBlocked")
                     )
                     checks.append("Active rest timer blocks update")
                     page.evaluate("localStorage.removeItem('basis-timer')")
@@ -304,6 +322,15 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                     stale = context.new_page()
                     stale.goto(self.live_server_url + "/offline/")
                     stale.get_by_role("button", name="Abrir sesión", exact=True).click()
+                    timers = [
+                        "basis-timer",
+                        f"basis-rest:{first.athlete.public_id}",
+                        "basis-rest:old",
+                    ]
+                    page.evaluate(
+                        "keys => keys.forEach(key => localStorage.setItem(key, String(Date.now()+60000)))",
+                        timers,
+                    )
                     self.login(page, other.username)
                     stale.wait_for_url("**/accounts/login/")
                     page.goto(self.live_server_url + "/offline/")
@@ -324,6 +351,11 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                       } finally {db.close();}
                     }""")
                     self.assertEqual(counts, [0, 0, 0])
+                    self.assertTrue(
+                        page.evaluate(
+                            "keys => keys.every(key => localStorage.getItem(key) === null)", timers
+                        )
+                    )
                     checks.append(
                         "Account switch purges old data and invalidates an old account tab"
                     )
@@ -344,10 +376,22 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                     self.assertTrue(all(self.local_records(page)))
                     context.set_offline(False)
                     page.goto(self.live_server_url + "/profile/")
+                    page.evaluate("() => window.basisOfflineReady")
+                    page.evaluate(
+                        "keys => keys.forEach(key => localStorage.setItem(key, String(Date.now()+60000)))",
+                        timers,
+                    )
+                    page.once("dialog", lambda dialog: dialog.accept())
                     page.locator("[data-logout] button").click()
                     page.wait_for_url("**/accounts/login/")
                     page.evaluate("() => window.basisOfflineReady")
                     self.assertEqual(page.evaluate("localStorage.getItem('basis-account')"), "")
+                    self.assertEqual(self.local_records(page), [[], [], []])
+                    self.assertTrue(
+                        page.evaluate(
+                            "keys => keys.every(key => localStorage.getItem(key) === null)", timers
+                        )
+                    )
                     context.set_offline(True)
                     page.goto(self.live_server_url + "/offline/")
                     page.evaluate("() => window.basisOfflineReady")

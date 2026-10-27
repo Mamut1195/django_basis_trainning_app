@@ -23,6 +23,13 @@
   });
   if ("serviceWorker" in navigator) {
     let frozen = false;
+    function resting() {
+      return Object.keys(localStorage).some(
+        (key) =>
+          (key === "basis-timer" || key.startsWith("basis-rest:")) &&
+          Number(localStorage.getItem(key)) > Date.now(),
+      );
+    }
     navigator.serviceWorker.addEventListener("message", async (event) => {
       if (event.data?.type === "RELEASE_UPDATE") {
         frozen = false;
@@ -42,7 +49,7 @@
           !dirty &&
           !document.querySelector("#offline-editor:not([hidden])") &&
           !window.basisSyncing?.() &&
-          Number(localStorage.getItem("basis-timer")) <= Date.now() &&
+          !resting() &&
           !!window.basisPending &&
           !(await window.basisPending());
       } catch (_) {

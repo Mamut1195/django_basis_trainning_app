@@ -39,6 +39,10 @@
       transaction.onabort = () => reject(transaction.error);
     });
   }
+  function clearRestTimers() {
+    for (const key of Object.keys(localStorage))
+      if (key === "basis-timer" || key.startsWith("basis-rest:")) localStorage.removeItem(key);
+  }
   async function initialize() {
     if (!navigator.locks)
       throw new Error("Este navegador necesita Web Locks para el modo offline.");
@@ -83,7 +87,7 @@
         // Invalidate old windows BEFORE cleanup; their async callbacks must fail closed.
         localStorage.setItem("basis-account", "");
         await clearLocal();
-        localStorage.removeItem("basis-timer");
+        clearRestTimers();
         localStorage.setItem("basis-account", account);
       }
       scope = account;
@@ -891,7 +895,7 @@
         localStorage.setItem("basis-account", "");
         invalidated = true;
         await clearLocal();
-        localStorage.removeItem("basis-timer");
+        clearRestTimers();
       });
       channel.postMessage({ type: "logout", account: scope });
       location.assign(response.url);
