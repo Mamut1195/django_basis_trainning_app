@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from typing import cast
 from unittest import skipUnless
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -72,6 +73,26 @@ class PwaBrowserTests(StaticLiveServerTestCase):
         page.wait_for_url(self.live_server_url + "/")
         page.evaluate("() => window.basisOfflineReady")
 
+    def local_records(self, page: Page) -> list[list[object]]:
+        return cast(
+            list[list[object]],
+            page.evaluate("""async () => {
+          const db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open('basis-offline-v1');
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+          try {
+            return await Promise.all(['sessions', 'outbox', 'archive'].map(name =>
+              new Promise((resolve, reject) => {
+                const request = db.transaction(name).objectStore(name).getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              })));
+          } finally { db.close(); }
+        }"""),
+        )
+
     def test_offline_reload_accounts_and_safe_multitab_update(self) -> None:
         global GENERATION, urlpatterns
         from .factories import account, session
@@ -85,6 +106,7 @@ class PwaBrowserTests(StaticLiveServerTestCase):
         item = session(first)
         item.title = "Sesión privada ficticia A"
         item.save()
+        other_item = session(other)
         extra_ids = [session(first).pk for _ in range(20)]
         output = Path(os.environ["BASIS_PWA_OUTPUT"])
         checks: list[str] = []
@@ -160,6 +182,13 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                     page.reload()
                     page.get_by_role("button", name="Abrir sesión", exact=True).click()
                     self.assertEqual(page.locator("#offline-duration_seconds").input_value(), "650")
+                    # A real correction also gives archive content to protect at login.
+                    page.locator("#offline-duration_seconds").fill("649")
+                    page.get_by_role("button", name="Guardar registro", exact=True).click()
+                    page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                    page.locator("#offline-duration_seconds").fill("650")
+                    page.get_by_role("button", name="Guardar registro", exact=True).click()
+                    self.wait_async(page, "async () => (await window.basisPending()) === 1")
                     page.screenshot(path=str(output / "offline-reloaded.png"), full_page=True)
                     checks.append(
                         "Network disabled: shell reload, edit, durable queue and restored value"
@@ -168,6 +197,39 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                     context.route("**/api/sync/", lambda route: route.abort())
                     context.set_offline(False)
                     page.reload()
+                    page.evaluate("() => window.basisOfflineReady")
+                    self.wait_async(page, "async () => !window.basisSyncing()")
+                    before_login = self.local_records(page)
+                    self.assertTrue(all(before_login))
+                    identity = page.evaluate("localStorage.getItem('basis-account')")
+                    page.goto(self.live_server_url + "/accounts/login/")
+                    page.evaluate("() => window.basisOfflineReady")
+                    self.assertEqual(self.local_records(page), before_login)
+                    self.assertEqual(
+                        page.evaluate("localStorage.getItem('basis-account')"), identity
+                    )
+                    self.login(page, first.username)
+                    self.wait_async(page, "async () => !window.basisSyncing()")
+                    self.assertEqual(self.local_records(page), before_login)
+                    checks.append(
+                        "Pending sessions/outbox/archive survive login and same-account return"
+                    )
+                    context.clear_cookies()
+                    page.goto(self.live_server_url + "/offline/")
+                    page.evaluate("() => window.basisOfflineReady")
+                    self.assertEqual(self.local_records(page), before_login)
+                    self.assertEqual(
+                        page.evaluate("localStorage.getItem('basis-account')"), identity
+                    )
+                    self.assertEqual(page.evaluate("() => window.basisPending()"), 0)
+                    self.assertNotIn(item.title, page.locator("#offline-sessions").inner_text())
+                    self.login(page, first.username)
+                    self.wait_async(page, "async () => !window.basisSyncing()")
+                    self.assertEqual(self.local_records(page), before_login)
+                    checks.append(
+                        "Expired session cookie preserves all stores without exposing them online"
+                    )
+                    page.goto(self.live_server_url + "/offline/")
                     page.evaluate("() => window.basisOfflineReady")
                     GENERATION = 1
                     page.evaluate("async () => (await navigator.serviceWorker.ready).update()")
@@ -266,6 +328,21 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                         "Account switch purges old data and invalidates an old account tab"
                     )
                     stale.close()
+                    page.goto(f"{self.live_server_url}/sessions/{other_item.pk}/")
+                    page.evaluate("() => window.basisOfflineReady")
+                    page.locator("[data-download-session]").click()
+                    page.wait_for_function(
+                        "document.querySelector('#global-status').textContent.includes('Sesión guardada')"
+                    )
+                    context.set_offline(True)
+                    page.goto(self.live_server_url + "/offline/")
+                    for duration in ("660", "661"):
+                        page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                        page.locator("#offline-duration_seconds").fill(duration)
+                        page.get_by_role("button", name="Guardar registro", exact=True).click()
+                        self.wait_async(page, "async () => (await window.basisPending()) === 1")
+                    self.assertTrue(all(self.local_records(page)))
+                    context.set_offline(False)
                     page.goto(self.live_server_url + "/profile/")
                     page.locator("[data-logout] button").click()
                     page.wait_for_url("**/accounts/login/")

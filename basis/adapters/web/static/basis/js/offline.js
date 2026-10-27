@@ -46,6 +46,7 @@
       // Public cached HTML contains no identity. Online, always verify the cookie;
       // only the public offline shell can recover the last account without a network.
       let account = scope;
+      let verified = false;
       if (scope || document.querySelector("#offline-sessions")) {
         if (navigator.onLine) {
           let response;
@@ -68,6 +69,7 @@
             account = (await response.json()).account;
             if (typeof account !== "string" || !account)
               throw new Error("No se pudo verificar la cuenta; las copias locales se conservan.");
+            verified = true;
           } else if (response.redirected && new URL(response.url).pathname === "/accounts/login/")
             account = "";
           else throw new Error("No se pudo verificar la cuenta; las copias locales se conservan.");
@@ -77,7 +79,7 @@
             ? localStorage.getItem("basis-account") || ""
             : scope;
       }
-      if (localStorage.getItem("basis-account") !== account) {
+      if (verified && localStorage.getItem("basis-account") !== account) {
         // Invalidate old windows BEFORE cleanup; their async callbacks must fail closed.
         localStorage.setItem("basis-account", "");
         await clearLocal();
