@@ -12,6 +12,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="theme-color" content="{{ basis_brand.colors.primary }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="BASIS">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="htmx-config" content='{"historyCacheSize":0,"allowScriptTags":false}'>
     <title>
@@ -82,6 +84,7 @@
             </c-basis.notice>
           {% endfor %}
           <div id="global-status" role="status" aria-live="polite" hidden></div>
+          {% include 'shared/_pwa.html' %}
           {% block content %}{% endblock %}
         </main>
         {% if request.user.is_authenticated %}</div>{% endif %}
