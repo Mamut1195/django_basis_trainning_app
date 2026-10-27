@@ -184,6 +184,26 @@ def run(output: Path, executable: str) -> int:
                         expect(page.locator("[data-timer-output]")).to_have_text("00:59")
                         page.reload()
                         expect(page.locator("[data-timer-output]")).to_have_text("00:59")
+                        # A fresh tab loses sessionStorage; localStorage must retain the deadline.
+                        result["stage"] = "timer tab closure and reopen"
+                        player_url = page.url
+                        account_key = page.locator("body").get_attribute("data-account")
+                        timer_key = "basis-rest:" + str(account_key)
+                        deadline = page.evaluate("key => localStorage.getItem(key)", timer_key)
+                        assert deadline is not None
+                        page.close()
+                        page = context.new_page()
+                        page.on("pageerror", lambda error: errors.append(str(error)))
+                        page.on("dialog", lambda dialog: dialog.accept())
+                        page.goto(player_url)
+                        assert (
+                            page.evaluate("key => localStorage.getItem(key)", timer_key) == deadline
+                        )
+                        expect(page.locator("[data-timer-output]")).to_have_text("00:59")
+                        quick = page.locator("[data-quick-set]").first
+                        kg = quick.locator("[name=actual_kg]")
+                        reps = quick.locator("[name=actual_reps]")
+                        rpe = quick.locator("[name=actual_rpe]")
                         page.clock.fast_forward(60000)
                         expect(page.locator("[data-timer-output]")).to_have_text("00:00")
                         # Focus and responsive screens, both themes, without recording credentials.
@@ -276,6 +296,7 @@ def run(output: Path, executable: str) -> int:
                                     "invalid input",
                                     "navigation",
                                     "timestamp suspension/reload",
+                                    "timer tab closure/reopen with persistent deadline",
                                     "keyboard",
                                     "network ambiguity",
                                     "explicit draft recovery",

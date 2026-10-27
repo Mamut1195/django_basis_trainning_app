@@ -7,7 +7,7 @@ Validación local heredada del 26 de octubre de 2026 (Ecuador; recibos UTC del 2
 - Hoy prioriza una ejecución propia en curso y ofrece objetivo y check-in.
 - Registro rápido por serie: repeticiones, carga, RPE y RIR reales separados de prescripción y referencia anterior privada. Ausente no equivale a cero; no se autocompletan observaciones.
 - Autoguardado serializado con revisión y confirmación HTTP; edición/deshacer compensatorio, errores recuperables y cierre explícito parcial. Se reutilizan casos de uso, autorización, CSRF y validaciones existentes.
-- Temporizador por deadline, por cuenta/pestaña, recuperable tras recarga y salto del reloj. Navegación local entre series.
+- Temporizador por deadline y cuenta en `localStorage`, recuperable tras recarga, cierre/reapertura de pestaña y salto del reloj. Comparte el deadline entre pestañas del mismo origen/cuenta; depende de que el navegador conserve el almacenamiento local. Navegación local entre series.
 - Borrador recuperable de pestaña opcional que requiere revisión/envío explícito. No es la cola offline de BASIS-018/MAM-632 ni una promesa de durabilidad.
 - Se reutilizan composiciones Cotton y estilos/tokens existentes; no se modifican app.js, base.html, service worker ni CSS compartido.
 
@@ -121,3 +121,29 @@ player-acceptance: python -B -m scripts.player_acceptance --output "C:/Users/Jon
 `DJANGO_SETTINGS_MODULE=config.test_settings`, SQLite `.cache/mam628-finish4.sqlite3`, sin proveedores ni SMTP. Se reutilizan los binarios instalados, sin descargas. Límites del runner: 180 s por gate/navegador y 300 s por grupo de tests, stdin deshabilitado, limpieza acotada al árbol hijo propio si vence el timeout. No hubo timeout ni terminación forzada. PostgreSQL local no se inició en finish4. Browser: `browser_closed=true`, `server_stopped=true`, cero errores JS y cero solicitudes externas. La advertencia de `staticfiles` ausente continúa sin causar fallos.
 
 **Revisión independiente BT2/BT3: PENDING; PR solo draft.** El estado remoto del CI se registra en el PR y en la entrega, sin confundir publicación con aceptación o cierre. Se mantienen los avisos de solapamiento con MAM-629 (training/migraciones/urls) y MAM-631 (app.js/base.html).
+
+
+## Arreglo PR #22 / fix22f (27-oct-2026)
+
+El job `postgres` de CI en `7a67b5955bd6c98ae1b6ab013b30f85a37438260`
+(run `40558192217`) falló exactamente por Ruff I001 en los imports de
+`test_player.py`, no por PostgreSQL. El commit `72b1510` corrige ese orden.
+Los gates directos `gate-fix22f-step1-*` verificaron Ruff check/format, mypy
+core/Django, arquitectura, 209 tests_architecture, ocho contratos lint-imports,
+djLint, Django check y ausencia de migraciones. Pasaron 75 pruebas training y
+regresiones afectadas en SQLite y las mismas 75 en PostgreSQL desechable, sin
+omisiones. PostgreSQL puerto 55628 se inició, verificó y detuvo con exit 0.
+
+El cronómetro vuelve a `localStorage`, manteniendo su clave `basis-rest:<cuenta>`
+y la aritmética del deadline. Los borradores de formularios permanecen en
+`sessionStorage`; no se cambia la cola offline ni la política de sincronización.
+La aceptación headless ahora cierra la pestaña, abre una nueva y exige el mismo
+deadline y los 59 segundos restantes antes de comprobar la expiración. Esto
+prueba cierre de pestaña, no suspensión real del SO ni reinstalación/limpieza del
+navegador. La reapertura de app depende del almacenamiento persistido del perfil.
+Los resultados de gates del cambio de almacenamiento se registran por separado;
+no se atribuyen a este cambio los PASS anteriores.
+
+Systems **NOT RUN — WORKTREE_ALREADY_OWNED**, sin init ni cambios de ownership.
+Evidencia manual directa, no sellada Systems; revisión semántica/visual fuerte
+independiente **NOT RUN / PENDING BT2/BT3**. Sin aceptación, integración ni cierre.

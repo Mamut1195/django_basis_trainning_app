@@ -10,7 +10,7 @@
       const seconds = Number(timer.dataset.timer);
       try {
         memoryEnd = seconds ? Date.now() + seconds * 1000 : 0;
-        sessionStorage.setItem(key, String(memoryEnd));
+        localStorage.setItem(key, String(memoryEnd));
       } catch (_) {
         window.basisStatus?.("El temporizador necesita almacenamiento local disponible.");
       }
@@ -20,7 +20,7 @@
   function tick() {
     let end = memoryEnd;
     try {
-      end = Number(sessionStorage.getItem(key)) || memoryEnd;
+      end = Number(localStorage.getItem(key)) || memoryEnd;
     } catch (_) {
       /* Optional timer. */
     }
