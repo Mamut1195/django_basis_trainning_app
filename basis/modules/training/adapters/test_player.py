@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 from django.db import connection
 from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 
 from basis.modules.training.adapters.actions import start_session
 from basis.modules.training.adapters.models import Block, Session, StrengthSet
