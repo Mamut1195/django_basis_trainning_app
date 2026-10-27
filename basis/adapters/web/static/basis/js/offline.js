@@ -6,6 +6,93 @@
   let dbPromise,
     syncing = false,
     conflict = null;
+  let ready;
+  let invalidated = false;
+  window.basisSyncing = () => syncing || !!conflict;
+  function assertAccount() {
+    if (invalidated || !scope || localStorage.getItem("basis-account") !== scope)
+      throw new Error("La cuenta cambió. Entra de nuevo antes de abrir los registros locales.");
+  }
+  function invalidate() {
+    if (invalidated) return;
+    invalidated = true;
+    document.body.inert = true;
+    document.body.hidden = true;
+    location.replace("/accounts/login/");
+  }
+  addEventListener("storage", (event) => {
+    if (event.key === "basis-account" && scope && event.newValue !== scope) invalidate();
+  });
+  addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      document.body.hidden = true;
+      location.reload();
+    }
+  });
+  async function clearLocal() {
+    const db = await database();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["sessions", "outbox", "archive"], "readwrite");
+      for (const name of ["sessions", "outbox", "archive"]) transaction.objectStore(name).clear();
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  }
+  function clearRestTimers() {
+    for (const key of Object.keys(localStorage))
+      if (key === "basis-timer" || key.startsWith("basis-rest:")) localStorage.removeItem(key);
+  }
+  async function initialize() {
+    if (!navigator.locks)
+      throw new Error("Este navegador necesita Web Locks para el modo offline.");
+    await navigator.locks.request("basis-identity", async () => {
+      // Public cached HTML contains no identity. Online, always verify the cookie;
+      // only the public offline shell can recover the last account without a network.
+      let account = scope;
+      let verified = false;
+      if (scope || document.querySelector("#offline-sessions")) {
+        if (navigator.onLine) {
+          let response;
+          try {
+            response = await fetch("/api/csrf/", {
+              credentials: "same-origin",
+              cache: "no-store",
+              signal: AbortSignal.timeout(10000),
+              headers: { Accept: "application/json" },
+            });
+          } catch (error) {
+            // navigator.onLine can remain true with the server unreachable.
+            if (!document.querySelector("#offline-sessions")) throw error;
+          }
+          if (!response) account = localStorage.getItem("basis-account") || "";
+          else if (
+            response.ok &&
+            response.headers.get("Content-Type")?.includes("application/json")
+          ) {
+            account = (await response.json()).account;
+            if (typeof account !== "string" || !account)
+              throw new Error("No se pudo verificar la cuenta; las copias locales se conservan.");
+            verified = true;
+          } else if (response.redirected && new URL(response.url).pathname === "/accounts/login/")
+            account = "";
+          else throw new Error("No se pudo verificar la cuenta; las copias locales se conservan.");
+          if (scope && account !== scope) return invalidate();
+        } else
+          account = document.querySelector("#offline-sessions")
+            ? localStorage.getItem("basis-account") || ""
+            : scope;
+      }
+      if (verified && localStorage.getItem("basis-account") !== account) {
+        // Invalidate old windows BEFORE cleanup; their async callbacks must fail closed.
+        localStorage.setItem("basis-account", "");
+        await clearLocal();
+        clearRestTimers();
+        localStorage.setItem("basis-account", account);
+      }
+      scope = account;
+    });
+  }
   const status = (text) => {
     const node = document.querySelector("#offline-status");
     if (node) node.textContent = text;
@@ -25,23 +112,21 @@
       });
     return dbPromise;
   }
-  async function write(store, value, remove = false) {
-    const db = await database();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(store, "readwrite");
-      const objectStore = transaction.objectStore(store);
-      if (remove) objectStore.delete(value);
-      else objectStore.put(value);
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-  }
   async function all(store) {
+    await ready;
     const db = await database();
+    if (!scope && !invalidated) return [];
+    assertAccount();
     return new Promise((resolve, reject) => {
       const request = db.transaction(store).objectStore(store).getAll();
-      request.onsuccess = () => resolve(request.result.filter((row) => row.account === scope));
+      request.onsuccess = () => {
+        try {
+          assertAccount();
+          resolve(request.result.filter((row) => row.account === scope));
+        } catch (error) {
+          reject(error);
+        }
+      };
       request.onerror = () => reject(request.error);
     });
   }
@@ -84,12 +169,52 @@
     return result.token;
   }
   async function storeSession(session) {
-    await write("sessions", {
-      key: scope + ":" + session.id,
-      account: scope,
-      session,
-      updated: Date.now(),
-      local_version: crypto.randomUUID(),
+    await ready;
+    const db = await database();
+    assertAccount();
+    if (window.basisUpdateBlocked) throw new Error("Espera a que termine la actualización.");
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(["sessions", "outbox"], "readwrite");
+      const store = transaction.objectStore("sessions");
+      let failure;
+      const request = transaction.objectStore("outbox").getAll();
+      request.onsuccess = () => {
+        if (request.result.some((row) => row.account === scope && row.session.id === session.id)) {
+          failure = new Error(
+            "Hay registros pendientes. Sincroniza antes de descargar otra versión.",
+          );
+          transaction.abort();
+          return;
+        }
+        const records = store.getAll();
+        records.onsuccess = () => {
+          const rows = records.result.filter(
+            (row) => row.account === scope && row.session.id !== session.id,
+          );
+          const size = (value) => new TextEncoder().encode(JSON.stringify(value)).length;
+          if (
+            rows.length >= 20 ||
+            size(session) > 2 * 1024 * 1024 ||
+            rows.reduce((sum, row) => sum + size(row.session), size(session)) > 10 * 1024 * 1024
+          ) {
+            failure = new Error(
+              "Límite local alcanzado (20 sesiones / 10 MB; 2 MB por sesión). Elimina una copia sincronizada antes de descargar.",
+            );
+            transaction.abort();
+            return;
+          }
+          store.put({
+            key: scope + ":" + session.id,
+            account: scope,
+            session,
+            updated: Date.now(),
+            local_version: crypto.randomUUID(),
+          });
+        };
+      };
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(failure || transaction.error);
+      transaction.onabort = () => reject(failure || transaction.error);
     });
   }
   const queueOrder = (a, b) =>
@@ -100,7 +225,10 @@
   // Read/decide/write in one transaction: another tab or a response cannot race
   // a correction into deleting an operation that has already begun sending.
   async function changeQueue(sessionId, change) {
+    await ready;
     const db = await database();
+    assertAccount();
+    if (window.basisUpdateBlocked) throw new Error("Espera a que termine la actualización.");
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(["sessions", "outbox", "archive"], "readwrite");
       const stores = Object.fromEntries(
@@ -187,6 +315,7 @@
     });
     status("Guardado en este dispositivo. Pendiente de sincronización.");
     await renderSessions();
+    document.dispatchEvent(new Event("basis:saved"));
     // Do not hold the editor's submit promise across a network operation: a user
     // can reopen and deliberately correct the local snapshot while it is in flight.
     if (navigator.onLine) void sync();
@@ -245,7 +374,7 @@
     try {
       const token = await csrf();
       const blocked = new Set();
-      while (navigator.onLine) {
+      while (navigator.onLine && !invalidated && !window.basisUpdateBlocked) {
         const next = (await all("outbox"))
           .filter((row) => !blocked.has(row.session.id))
           .sort((a, b) => a.session.id.localeCompare(b.session.id) || queueOrder(a, b))[0];
@@ -350,6 +479,7 @@
     container.replaceChildren();
     const queued = await all("outbox");
     for (const record of await all("sessions")) {
+      assertAccount();
       const row = element("div", null, { class: "offline-row row" });
       const text = element("div", null);
       text.append(
@@ -372,6 +502,22 @@
       const count = queued.filter((item) => item.session.id === record.session.id).length;
       if (count) text.append(element("small", `${count} envío(s) pendiente(s)`));
       row.append(text, button);
+      if (!queued.some((item) => item.session.id === record.session.id)) {
+        const remove = element("button", "Eliminar copia descargada", { type: "button" });
+        remove.addEventListener("click", async () => {
+          try {
+            await changeQueue(record.session.id, (stores, rows) => {
+              if (rows.length)
+                throw new Error("Hay registros pendientes; sincroniza antes de eliminar.");
+              stores.sessions.delete(record.key);
+            });
+            await renderSessions();
+          } catch (error) {
+            status(error.message);
+          }
+        });
+        row.append(remove);
+      }
       container.append(row);
     }
     if (!container.children.length)
@@ -404,6 +550,7 @@
     form.append(wrapper);
   }
   async function openEditor(record) {
+    assertAccount();
     // A list row may predate a save/close in another tab. Review must open the
     // actual record, not just attach a fresh version to that stale row's data.
     const current = (await all("sessions")).find((row) => row.key === record.key);
@@ -419,6 +566,7 @@
     const completed =
       snapshot.status === "completed" &&
       !(await all("outbox")).some((item) => item.session.id === snapshot.id);
+    assertAccount();
     container.append(element("h2", snapshot.title));
     const form = element("form", null, { class: "stack" });
     const fields = element("div", null, { class: "form-fields" });
@@ -727,18 +875,28 @@
       )
         return;
     }
+    if (
+      document.querySelector("#offline-editor:not([hidden])") &&
+      !confirm(
+        "Hay un editor abierto. Guarda y exporta tus cambios antes de salir. ¿Cerrar sesión?",
+      )
+    )
+      return;
     try {
+      assertAccount();
       const response = await fetch(event.target.action, {
         method: "POST",
         body: new FormData(event.target),
         credentials: "same-origin",
       });
       if (!response.ok) throw new Error("Logout failed");
-      for (const store of ["sessions", "outbox", "archive"])
-        for (const row of await all(store))
-          await write(store, store === "outbox" ? row.mutation_id : row.key, true);
-      localStorage.removeItem("basis-account");
-      localStorage.removeItem("basis-timer");
+      await navigator.locks.request("basis-identity", async () => {
+        if (localStorage.getItem("basis-account") !== scope) return;
+        localStorage.setItem("basis-account", "");
+        invalidated = true;
+        await clearLocal();
+        clearRestTimers();
+      });
       channel.postMessage({ type: "logout", account: scope });
       location.assign(response.url);
     } catch (_) {
@@ -750,14 +908,14 @@
   addEventListener("online", sync);
   const channel = new BroadcastChannel("basis-auth");
   channel.onmessage = (event) => {
-    if (event.data?.type === "logout" && event.data.account === scope)
-      location.replace("/accounts/login/");
+    if (event.data?.type === "logout" && event.data.account === scope) invalidate();
   };
+  ready = initialize();
+  window.basisOfflineReady = ready;
   (async () => {
     try {
-      if (scope) localStorage.setItem("basis-account", scope);
-      else if (location.pathname === "/offline/")
-        scope = localStorage.getItem("basis-account") || "";
+      await ready;
+      if (invalidated) return;
       if (document.querySelector("#offline-sessions")) {
         await renderSessions();
         status(
