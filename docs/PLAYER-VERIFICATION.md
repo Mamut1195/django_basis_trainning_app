@@ -147,3 +147,143 @@ no se atribuyen a este cambio los PASS anteriores.
 Systems **NOT RUN — WORKTREE_ALREADY_OWNED**, sin init ni cambios de ownership.
 Evidencia manual directa, no sellada Systems; revisión semántica/visual fuerte
 independiente **NOT RUN / PENDING BT2/BT3**. Sin aceptación, integración ni cierre.
+
+## Implementación codex1 sobre 974ab15 (27-oct-2026, detenida)
+
+Los resultados de esta sección corresponden exclusivamente a esta ejecución.
+Los PASS históricos anteriores no validan el cambio sin commit actual.
+Se leyeron primero `gate-fix22f-step2-player-acceptance.txt` y su JSON: el fallo
+histórico fue `00:00` al exigir `00:59` tras recargar (línea 186); la reapertura
+no llegó a ejecutarse en aquella corrida.
+
+Diagnóstico: la API instalada de Playwright Python (`_impl/_clock.py`,
+`parse_time`) multiplica por 1.000 los valores numéricos de `pause_at`, que espera
+segundos Unix. El script le pasaba `Date.now()` en milisegundos. La captura
+`codex1/gate-timer-diagnosis.txt` demuestra una hora de 16 dígitos y conserva
+la clave y el deadline. Además, el reloj se instalaba después de que el JS
+registrara sus temporizadores: mezclaba temporizadores nativos y virtuales.
+La ejecución original sin cambios pasó esta vez (`gate-player-reproduce.txt`),
+igual que la instrumentada (`gate-player-diagnosis.txt`); por tanto, **no se ha
+reproducido de forma determinista el fallo histórico ni probado su causa exacta**.
+Sí se ha demostrado el error de unidades del arnés. No hay evidencia de pérdida
+del valor en localStorage, cambio de clave o defecto de hidratación en estas
+capturas. No se modificó `timer.js`.
+
+El candidato sin commit instala el reloj antes de navegar, convierte los
+milisegundos a segundos y mantiene las aserciones `01:30`, `00:59` tras avance,
+`00:59` tras recarga, `00:59` tras cerrar/reabrir pestaña y `00:00` al expirar.
+Añade aserciones independientes de hora, cuenta y deadline persistido, con
+recibos `timer_reload` y `timer_reopen` cuando esas etapas pasen. **El candidato
+no está verificado.**
+
+La invocación del candidato terminó antes de migrar o abrir Chromium:
+
+```text
+FileExistsError: [WinError 183] Cannot create a file when that file already exists: 'C:\Users\Jonnathan\Mamut system\basis-runs\MAM-628\acceptance-codex1'
+```
+
+La carpeta de salida ya existía y `run()` usa `output.mkdir(exist_ok=False)`.
+Se conserva vacía, sin borrarla. Se detuvo el trabajo conforme a la orden
+«Si algo falla, guarda lo hecho y para escribiendo la causa literal».
+
+| Gate codex1 | Estado | Evidencia / alcance |
+| --- | --- | --- |
+| Diagnóstico del reloj y almacenamiento | VERIFIED | `codex1/gate-timer-diagnosis.txt`, `gate-timer-diagnosis-expect.txt`; defecto de unidades demostrado; fallo histórico intermitente no reproducido |
+| Aceptación original sin cambios | VERIFIED | `codex1/gate-player-reproduce.txt`, `codex1/reproduce-player/result.json`; no valida el candidato |
+| Aceptación del candidato | FAILED | `codex1/gate-player-acceptance.txt`; WinError 183 antes de ejecutar el flujo |
+| Recarga y cierre/reapertura del candidato | NOT RUN | El lanzamiento falló antes de abrir el navegador |
+| N+1 SQLite / PostgreSQL | NOT RUN | Inspección solamente: `PlayerTests.test_session_detail_query_count_is_constant_as_series_grow` ya usa `assertNumQueries(len(queries))`, compara 2 y 22 series renderizadas, exige una consulta ROW_NUMBER y valida las 22 referencias |
+| Ruff check / Ruff format --check | NOT RUN | Parada tras fallo de aceptación |
+| mypy core / Django | NOT RUN | Parada tras fallo de aceptación |
+| djLint | NOT RUN | Parada tras fallo de aceptación |
+| manage.py check / makemigrations --check | NOT RUN | Parada tras fallo de aceptación |
+| Training y regresiones afectadas SQLite / PostgreSQL | NOT RUN | Parada tras fallo de aceptación |
+| lint-imports --no-cache | NOT RUN | Parada tras fallo de aceptación |
+| Prettier / tests_architecture LF o CI | NOT RUN | Sin red, sin ejecución CI ni normalización de archivos CRLF ajenos |
+| Systems | NOT RUN | WORKTREE_ALREADY_OWNED; no se ejecutó systems-cli ni se alteró ownership |
+| Revisión independiente BT2/BT3 | NOT RUN | Delegada a BT2/BT3 para el ejecutor; pendiente, no realizada por este implementador |
+
+Comandos para retomar, **NOT RUN sobre el candidato**, desde el worktree con
+`.venv-win/Scripts/python.exe` abreviado como `python`. Para el navegador debe
+usarse una subcarpeta nueva bajo `acceptance-codex1` y un timeout externo de
+240 segundos; no reutilizar la raíz existente ni borrar evidencia.
+
+```text
+python -B -m scripts.player_acceptance --output "C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/acceptance-codex1/player-01" --browser-executable "C:/Users/Jonnathan/AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe"
+python -m ruff check .
+python -m ruff format --check scripts/player_acceptance.py basis/modules/training/adapters/test_player.py
+python -m mypy --config-file mypy-core.ini
+python -m mypy --config-file mypy-django.ini
+python -m djlint basis --check
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test basis.modules.training.adapters.test_player.PlayerTests.test_session_detail_query_count_is_constant_as_series_grow --noinput --verbosity 2
+python manage.py test basis.modules.training tests.regression.test_swimming tests.regression.test_running tests.regression.test_execution_records tests.regression.test_web tests.regression.test_training_contract tests.regression.test_strength_metrics --noinput
+python -c "from importlinter.cli import lint_imports; lint_imports()" --no-cache
+```
+
+Usar `DJANGO_SETTINGS_MODULE=config.test_settings`, `DJANGO_DEBUG=1`,
+`AI_ENABLED=0`, sin proveedores ni SMTP; SQLite desechable y, por separado,
+`DATABASE_URL=postgresql://postgres@127.0.0.1:55638/mam628_codex1` para PostgreSQL
+desechable. No se inició ni inicializó PostgreSQL en esta ejecución. Las carpetas
+de diagnóstico y `.cache/mam628-browser-*` quedan conservadas; no hubo limpieza.
+
+Cambios sin commit, sin push, sin gh, sin red, sin integración ni cierre.
+**Aviso de choque:** MAM-629 comparte training/migraciones/urls; MAM-631 comparte
+app.js/base.html. Coordinar revisión e integración; estos avisos no crean
+dependencias entre tickets.
+
+## Verificación codex2 sobre 974ab15 (27-oct-2026)
+
+Se revisó y conservó el diff heredado de codex1 sin reducir comprobaciones.
+La API local instalada confirma `parse_time(time * 1000)`: `pause_at()` recibe
+segundos Unix. La conversión de `Date.now()` y la instalación del reloj antes
+de navegar son correctas. No se modificaron `timer.js` ni código de producto.
+La causa exacta del fallo histórico intermitente sigue sin demostración;
+el defecto de unidades del arnés sí está confirmado y el candidato ahora pasó.
+
+Aceptación **VERIFIED** en una salida nueva, inexistente al iniciar:
+`C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/acceptance-codex2/run-20261027-134901-945`.
+Se usó el Chromium headless shell 1243 indicado y timeout externo duro de 240 s.
+`result.json` confirma `stage=complete`, `timer_reload=VERIFIED` y
+`timer_reopen=VERIFIED`: ambos conservan 59 segundos, cuenta y deadline de
+localStorage. También pasó la expiración a cero y el resto del flujo.
+Navegador y servidor cerrados, fuentes sin cambios, cero errores JavaScript y
+cero solicitudes externas. Se comprobaron los hashes del arnés y las siete
+capturas; esto no sustituye la revisión visual independiente.
+
+Evidencia y comandos completos:
+`C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/codex2/result.md`.
+Los resultados siguientes pertenecen a esta ejecución del candidato sin commit:
+
+| Gate codex2 | Estado | Evidencia bajo `codex2/` |
+| --- | --- | --- |
+| Aceptación headless / recarga / cierre y reapertura | VERIFIED | `gate-player-acceptance.txt`, `gate-player-receipt.txt`; recibo en la salida anterior |
+| N+1 de session_detail, SQLite / PostgreSQL | VERIFIED | `gate-n-plus-one-sqlite.txt`, `gate-n-plus-one-postgres.txt`; prueba existente con assertNumQueries, 2 frente a 22 series y una consulta ROW_NUMBER |
+| Ruff check / format --check | VERIFIED | `gate-ruff-check.txt`, `gate-ruff-format.txt`; alcance CI más player_acceptance.py |
+| mypy core / Django | VERIFIED | `gate-mypy-core.txt`, `gate-mypy-django.txt`; 123 y 381 archivos |
+| architecture_check / tests_architecture | VERIFIED | `gate-architecture-check.txt`, `gate-tests-architecture.txt`; 209 tests en copia LF |
+| lint-imports --no-cache | VERIFIED | `gate-lint-imports.txt`; 8 contratos |
+| djLint | VERIFIED | `gate-djlint.txt` |
+| manage.py check / makemigrations --check | VERIFIED | `gate-django-check.txt`, `gate-makemigrations.txt` |
+| Training y regresiones afectadas SQLite / PostgreSQL | VERIFIED | `gate-training-sqlite.txt`, `gate-training-postgres.txt`; 91 tests por motor, sin skips |
+| Prettier, CSS/JS tocados, LF | VERIFIED | `gate-prettier.txt`, `prettier-files.txt`, `lf-source-manifest.json` |
+| PostgreSQL desechable detenido | VERIFIED | `gate-postgres-stop.txt`; puerto 55639 sin respuesta y sin postmaster.pid |
+| Diff acotado y sin whitespace errors | VERIFIED | `gate-diff-review.txt` |
+| Systems | NOT RUN | WORKTREE_ALREADY_OWNED; sin systems-cli ni cambios de ownership |
+| Revisión independiente BT2/BT3 | NOT RUN | Delegada a BT2/BT3 para el ejecutor; pendiente |
+
+Prettier y tests_architecture se juzgaron sobre una copia de archivos rastreados
+del candidato, cambiando únicamente CRLF a LF en texto UTF-8. El manifiesto
+conserva hashes originales y normalizados. No se normalizaron archivos ajenos
+del worktree ni se atribuye una ejecución CI nueva a estos gates locales.
+
+El primer initdb directo falló por restricted token y creación de directorio;
+el reintento indicado con carpeta nueva vacía y `Start-Process -Wait` pasó.
+`postgres.exe` se ejecutó directamente desde un `.ps1`, ligado a 127.0.0.1:55639.
+El servidor se detuvo al terminar. `codex2/pgdata` queda conservado, sin borrar.
+
+Cambios sin commit; HEAD sigue en 974ab15903761d94f99381b1ba0f95f7af174704.
+Sin push, gh, red, LIVE, Polar, D:, integración ni cierre del ticket.
+**Aviso de choque:** MAM-629 comparte `basis/modules/training`, migraciones y urls;
+MAM-631 comparte `app.js` y `base.html`. Revisar ambos cruces antes de integrar.
