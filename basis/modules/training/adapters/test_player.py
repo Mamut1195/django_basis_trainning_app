@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from django.db import connection
 from django.test import Client, TestCase
+from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 from django.urls import reverse
 
 from basis.modules.training.adapters.actions import start_session
@@ -171,6 +175,103 @@ class PlayerTests(TestCase):
         self.assertNotContains(response, "999,99")
         self.assertContains(response, f'id="kg-{self.row.pk}"')
         self.assertIsNone(StrengthSet.objects.get(pk=self.row.pk).actual_kg)
+
+    def test_session_detail_query_count_is_constant_as_series_grow(self) -> None:
+        previous = Session.objects.create(owner=self.owner, title="Anterior", status="completed")
+        block = Block.objects.create(session=previous, sport="strength", title="Anterior")
+        reference = StrengthSet.objects.create(
+            block=block, exercise=self.exercise, actual_reps=0, actual_kg=Decimal("0")
+        )
+        url = reverse("session-detail", args=[self.session.pk])
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # The entire rendered request stays bounded, including dates in reference labels.
+        self.assertEqual(sum("ROW_NUMBER()" in query["sql"] for query in queries), 1)
+        current_block = self.session.blocks.get()
+        for order in range(3, 23):
+            StrengthSet.objects.create(
+                block=current_block, exercise=self.exercise, order=order, target_reps=5
+            )
+        with self.assertNumQueries(len(queries)):
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        quick_sets = response.context["quick_sets"]
+        self.assertEqual(len(quick_sets), 22)
+        self.assertTrue(all(prior.pk == reference.pk for _, prior in quick_sets))
+
+    def test_previous_reference_preserves_dimensions_and_latest_order(self) -> None:
+        alternate = exercise()
+        StrengthSet.objects.filter(pk=self.row.pk).update(
+            actual_exercise=alternate, actual_load_type="assisted", actual_side="left"
+        )
+        previous = Session.objects.create(owner=self.owner, title="Anterior", status="completed")
+        block = Block.objects.create(session=previous, sport="strength", title="Anterior")
+        reference = StrengthSet.objects.create(
+            block=block, exercise=alternate, load_type="assisted", side="left", actual_reps=3
+        )
+        # Same session/date: the last PK wins. Actual dimensions override prescriptions.
+        reference = StrengthSet.objects.create(
+            block=block,
+            exercise=self.exercise,
+            actual_exercise=alternate,
+            actual_load_type="assisted",
+            actual_side="left",
+            actual_reps=4,
+            adaptation_reason="Adaptación ficticia de prueba",
+        )
+        for load_type, side in (("external", "left"), ("assisted", "right")):
+            StrengthSet.objects.create(
+                block=block, exercise=alternate, load_type=load_type, side=side, actual_reps=99
+            )
+        StrengthSet.objects.create(block=block, exercise=alternate, actual_reps=None)
+        # A later creation timestamp beats PK, but a later training date beats creation.
+        older = Session.objects.create(
+            owner=self.owner,
+            title="Más antigua",
+            status="completed",
+            date=self.session.date - timedelta(days=1),
+        )
+        older_block = Block.objects.create(session=older, sport="strength", title="Antigua")
+        StrengthSet.objects.create(
+            block=older_block,
+            exercise=alternate,
+            load_type="assisted",
+            side="left",
+            actual_reps=88,
+        )
+        for status, day in (("in_progress", 0), ("completed", 1)):
+            excluded = Session.objects.create(
+                owner=self.owner,
+                title="No comparable",
+                status=status,
+                date=self.session.date + timedelta(days=day),
+            )
+            excluded_block = Block.objects.create(session=excluded, sport="strength", title="Otra")
+            StrengthSet.objects.create(
+                block=excluded_block,
+                exercise=alternate,
+                load_type="assisted",
+                side="left",
+                actual_reps=77,
+            )
+        url = reverse("session-detail", args=[self.session.pk])
+        response = self.client.get(url)
+        matches = {row.pk: prior for row, prior in response.context["quick_sets"]}
+        self.assertEqual(matches[self.row.pk].pk, reference.pk)
+        self.assertIsNone(matches[self.session.blocks.get().sets.all()[1].pk])
+        # Ordering within the same date uses session creation before row PK.
+        recent = Session.objects.create(owner=self.owner, title="Reciente", status="completed")
+        recent_block = Block.objects.create(session=recent, sport="strength", title="Reciente")
+        recent_reference = StrengthSet.objects.create(
+            block=recent_block, exercise=alternate, load_type="assisted", side="left", actual_reps=5
+        )
+        Session.objects.filter(pk=recent.pk).update(
+            created_at=timezone.now() + timedelta(seconds=1)
+        )
+        response = self.client.get(url)
+        matches = {row.pk: prior for row, prior in response.context["quick_sets"]}
+        self.assertEqual(matches[self.row.pk].pk, recent_reference.pk)
 
     def test_model_form_reuses_domain_validation(self) -> None:
         form = QuickSetForm(
