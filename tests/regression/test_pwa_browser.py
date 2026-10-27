@@ -297,8 +297,18 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                     self.assertTrue(
                         page.evaluate("document.body.inert && window.basisUpdateBlocked")
                     )
-                    checks.append("Active rest timer blocks update")
-                    page.evaluate("localStorage.removeItem('basis-timer')")
+                    page.wait_for_function("!document.body.inert && !window.basisUpdateBlocked")
+                    page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                    page.locator("#offline-duration_seconds").fill("654")
+                    page.evaluate("window.finishPending(0)")
+                    page.wait_for_function("window.lateUpdateVote === false")
+                    self.assertEqual(page.locator("#offline-duration_seconds").input_value(), "654")
+                    page.evaluate("window.basisPending = window.originalPending")
+                    checks.append(
+                        "Missing RELEASE_UPDATE recovers editing and rejects a late safe vote"
+                    )
+                    page.reload()
+                    page.evaluate("() => window.basisOfflineReady")
                     with page.expect_navigation():
                         page.evaluate(
                             "async () => (await navigator.serviceWorker.getRegistration()).waiting.postMessage({type:'ACTIVATE'})"

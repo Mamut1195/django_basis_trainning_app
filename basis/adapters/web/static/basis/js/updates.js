@@ -23,6 +23,16 @@
   });
   if ("serviceWorker" in navigator) {
     let frozen = false;
+    let preparation = 0;
+    let releaseTimer;
+    function release() {
+      preparation++;
+      clearTimeout(releaseTimer);
+      frozen = false;
+      window.basisUpdateBlocked = false;
+      document.body.inert = false;
+      window.basisStatus?.("Actualización aplazada: termina y guarda en todas las pantallas.");
+    }
     function resting() {
       return Object.keys(localStorage).some(
         (key) =>
@@ -32,16 +42,18 @@
     }
     navigator.serviceWorker.addEventListener("message", async (event) => {
       if (event.data?.type === "RELEASE_UPDATE") {
-        frozen = false;
-        window.basisUpdateBlocked = false;
-        document.body.inert = false;
-        window.basisStatus?.("Actualización aplazada: termina y guarda en todas las pantallas.");
+        release();
       }
       if (event.data?.type !== "PREPARE_UPDATE" || !event.ports[0]) return;
       // Freeze first so input cannot race the asynchronous pending-data check.
       frozen = true;
       window.basisUpdateBlocked = true;
       document.body.inert = true;
+      const attempt = ++preparation;
+      clearTimeout(releaseTimer);
+      // The worker normally responds within 3s. Recover even if it dies or storage hangs.
+      const deadline = Date.now() + 10000;
+      releaseTimer = setTimeout(release, 10000);
       let safe = false;
       try {
         await window.basisOfflineReady;
@@ -55,7 +67,10 @@
       } catch (_) {
         /* Unavailable storage or an unresponsive window blocks activation. */
       }
-      event.ports[0].postMessage({ safe });
+      // A late storage result must never approve an attempt after editing resumes.
+      event.ports[0].postMessage({
+        safe: safe && frozen && preparation === attempt && Date.now() < deadline,
+      });
     });
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (frozen) location.reload();
