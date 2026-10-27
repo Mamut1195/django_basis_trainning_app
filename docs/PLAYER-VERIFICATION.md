@@ -21,7 +21,7 @@ Prettier histórico fallaba por CRLF en ocho archivos compartidos ajenos. Solo s
 
 ## Resultados históricos finish3 (antes del merge)
 
-Estos resultados corresponden al árbol previo al merge, no certifican por sí solos el candidato posterior. Los recibos y logs se conservan en `C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628`, con prefijo `gate-finish3-`. El resumen es `evidence-finish3-summary.json`.
+Todas las rutas de este documento son relativas a la raíz del worktree. Estos resultados corresponden al árbol previo al merge, no certifican por sí solos el candidato posterior. Los recibos y logs se conservan en `../../basis-runs/MAM-628`, con prefijo `gate-finish3-`. El resumen es `evidence-finish3-summary.json`.
 
 | Gate | Estado histórico | Evidencia / resultado |
 | --- | --- | --- |
@@ -61,17 +61,17 @@ architecture: python scripts/architecture_check.py
 architecture-tests: python -m unittest discover -s tests_architecture
 lint-imports: .venv-win/Scripts/lint-imports.exe
 djlint: python -m djlint basis --check
-prettier: python "C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/prettier_lf.py"
+prettier: python "../../basis-runs/MAM-628/prettier_lf.py"
 django-check: python manage.py check
 migrations: python manage.py makemigrations --check --dry-run
 tests-sqlite: python manage.py test --noinput
 tests-postgres: python manage.py test --noinput
-player-acceptance: python -B -m scripts.player_acceptance --output "C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/browser-finish3-player-acceptance" --browser-executable C:/Users/Jonnathan/AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe
+player-acceptance: python -B -m scripts.player_acceptance --output "../../basis-runs/MAM-628/browser-finish3-player-acceptance" --browser-executable ../../../AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe
 ```
 
 Ruff format incluye la lista de CI más `scripts/player_acceptance.py`. Las suites completas incluyen los 11 nuevos PlayerTests en ambas bases. Cada recibo `.json` registra comando, entorno, paquetes, hashes de ejecutable/runner/snapshot, timestamps, PID, exit, fuentes antes/después y hash del log. La evidencia externa no se sube al repositorio ni sustituye la revisión independiente.
 
-PostgreSQL desechable se inició con `pg_ctl -D .cache/mam628-pg -l .cache/mam628-pg.log -o "-p 55628" -w -t 60 start` y se detuvo con `pg_ctl -D .cache/mam628-pg stop -m fast -w -t 30`, usando `C:/Users/Jonnathan/scoop/apps/postgresql/current/bin/pg_ctl.exe`.
+PostgreSQL desechable se inició con `pg_ctl -D .cache/mam628-pg -l .cache/mam628-pg.log -o "-p 55628" -w -t 60 start` y se detuvo con `pg_ctl -D .cache/mam628-pg stop -m fast -w -t 30`, usando `../../../scoop/apps/postgresql/current/bin/pg_ctl.exe`.
 
 ## Continuación finish4
 
@@ -115,7 +115,7 @@ Se mantienen los comandos de lint/tipado/arquitectura/djLint/check/migraciones a
 prettier: node node_modules/prettier/bin/prettier.cjs --check basis/adapters/web/static/basis/js/player.js basis/adapters/web/static/basis/js/timer.js
 tests-training: python manage.py test basis.modules.training --noinput
 tests-affected-regression: python manage.py test tests.regression.test_swimming tests.regression.test_running tests.regression.test_execution_records tests.regression.test_web tests.regression.test_training_contract tests.regression.test_strength_metrics --noinput
-player-acceptance: python -B -m scripts.player_acceptance --output "C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/browser-finish4-player-acceptance" --browser-executable C:/Users/Jonnathan/AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe
+player-acceptance: python -B -m scripts.player_acceptance --output "../../basis-runs/MAM-628/browser-finish4-player-acceptance" --browser-executable ../../../AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe
 ```
 
 `DJANGO_SETTINGS_MODULE=config.test_settings`, SQLite `.cache/mam628-finish4.sqlite3`, sin proveedores ni SMTP. Se reutilizan los binarios instalados, sin descargas. Límites del runner: 180 s por gate/navegador y 300 s por grupo de tests, stdin deshabilitado, limpieza acotada al árbol hijo propio si vence el timeout. No hubo timeout ni terminación forzada. PostgreSQL local no se inició en finish4. Browser: `browser_closed=true`, `server_stopped=true`, cero errores JS y cero solicitudes externas. La advertencia de `staticfiles` ausente continúa sin causar fallos.
@@ -179,10 +179,10 @@ no está verificado.**
 La invocación del candidato terminó antes de migrar o abrir Chromium:
 
 ```text
-FileExistsError: [WinError 183] Cannot create a file when that file already exists: 'C:\Users\Jonnathan\Mamut system\basis-runs\MAM-628\acceptance-codex1'
+FileExistsError: [WinError 183] Cannot create a file when that file already exists: '../../basis-runs/MAM-628/acceptance-codex1'
 ```
 
-La carpeta de salida ya existía y `run()` usa `output.mkdir(exist_ok=False)`.
+La ruta del error anterior se muestra relativa para portabilidad. La carpeta de salida ya existía y `run()` usa `output.mkdir(exist_ok=False)`.
 Se conserva vacía, sin borrarla. Se detuvo el trabajo conforme a la orden
 «Si algo falla, guarda lo hecho y para escribiendo la causa literal».
 
@@ -209,7 +209,7 @@ usarse una subcarpeta nueva bajo `acceptance-codex1` y un timeout externo de
 240 segundos; no reutilizar la raíz existente ni borrar evidencia.
 
 ```text
-python -B -m scripts.player_acceptance --output "C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/acceptance-codex1/player-01" --browser-executable "C:/Users/Jonnathan/AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe"
+python -B -m scripts.player_acceptance --output "../../basis-runs/MAM-628/acceptance-codex1/player-01" --browser-executable "../../../AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe"
 python -m ruff check .
 python -m ruff format --check scripts/player_acceptance.py basis/modules/training/adapters/test_player.py
 python -m mypy --config-file mypy-core.ini
@@ -243,7 +243,7 @@ La causa exacta del fallo histórico intermitente sigue sin demostración;
 el defecto de unidades del arnés sí está confirmado y el candidato ahora pasó.
 
 Aceptación **VERIFIED** en una salida nueva, inexistente al iniciar:
-`C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/acceptance-codex2/run-20261027-134901-945`.
+`../../basis-runs/MAM-628/acceptance-codex2/run-20261027-134901-945`.
 Se usó el Chromium headless shell 1243 indicado y timeout externo duro de 240 s.
 `result.json` confirma `stage=complete`, `timer_reload=VERIFIED` y
 `timer_reopen=VERIFIED`: ambos conservan 59 segundos, cuenta y deadline de
@@ -253,7 +253,7 @@ cero solicitudes externas. Se comprobaron los hashes del arnés y las siete
 capturas; esto no sustituye la revisión visual independiente.
 
 Evidencia y comandos completos:
-`C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/codex2/result.md`.
+`../../basis-runs/MAM-628/codex2/result.md`.
 Los resultados siguientes pertenecen a esta ejecución del candidato sin commit:
 
 | Gate codex2 | Estado | Evidencia bajo `codex2/` |
