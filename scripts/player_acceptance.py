@@ -118,6 +118,8 @@ def run(output: Path, executable: str) -> int:
                                 route.abort()
 
                         context.route("**/*", guard)
+                        # Install before navigation so application timers use one clock.
+                        context.clock.install()
                         page = context.new_page()
                         page.on("pageerror", lambda error: errors.append(str(error)))
                         page.on("dialog", lambda dialog: dialog.accept())
@@ -174,32 +176,54 @@ def run(output: Path, executable: str) -> int:
                         expect(kg).to_have_value("0.00")
                         # Timestamp oracle independent of the displayed countdown: advance wall clock.
                         result["stage"] = "timestamp suspension and reload"
-                        page.clock.install()
-                        page.clock.pause_at(page.evaluate("Date.now()"))
+                        # Python pause_at takes Unix seconds; Date.now() returns milliseconds.
+                        page.clock.pause_at(page.evaluate("Date.now()") / 1000)
+                        timer_now = page.evaluate("Date.now()")
+                        account_key = page.locator("body").get_attribute("data-account")
+                        assert account_key
+                        timer_key = "basis-rest:" + account_key
                         quick.get_by_role(
                             "button", name="Iniciar descanso prescrito", exact=True
                         ).click()
                         expect(page.locator("[data-timer-output]")).to_have_text("01:30")
+                        deadline = page.evaluate("key => localStorage.getItem(key)", timer_key)
+                        assert deadline is not None
+                        assert int(deadline) - timer_now == 90000
                         page.clock.fast_forward(31000)
+                        assert page.evaluate("Date.now()") == timer_now + 31000
                         expect(page.locator("[data-timer-output]")).to_have_text("00:59")
                         page.reload()
+                        assert page.locator("body").get_attribute("data-account") == account_key
+                        assert page.evaluate("Date.now()") == timer_now + 31000
+                        assert (
+                            page.evaluate("key => localStorage.getItem(key)", timer_key) == deadline
+                        )
                         expect(page.locator("[data-timer-output]")).to_have_text("00:59")
+                        result["timer_reload"] = {
+                            "status": "VERIFIED",
+                            "elapsed_ms": 31000,
+                            "remaining_seconds": 59,
+                            "same_account_key_and_deadline": True,
+                        }
                         # A fresh tab loses sessionStorage; localStorage must retain the deadline.
                         result["stage"] = "timer tab closure and reopen"
                         player_url = page.url
-                        account_key = page.locator("body").get_attribute("data-account")
-                        timer_key = "basis-rest:" + str(account_key)
-                        deadline = page.evaluate("key => localStorage.getItem(key)", timer_key)
-                        assert deadline is not None
                         page.close()
                         page = context.new_page()
                         page.on("pageerror", lambda error: errors.append(str(error)))
                         page.on("dialog", lambda dialog: dialog.accept())
                         page.goto(player_url)
+                        assert page.locator("body").get_attribute("data-account") == account_key
+                        assert page.evaluate("Date.now()") == timer_now + 31000
                         assert (
                             page.evaluate("key => localStorage.getItem(key)", timer_key) == deadline
                         )
                         expect(page.locator("[data-timer-output]")).to_have_text("00:59")
+                        result["timer_reopen"] = {
+                            "status": "VERIFIED",
+                            "remaining_seconds": 59,
+                            "same_account_key_and_deadline": True,
+                        }
                         quick = page.locator("[data-quick-set]").first
                         kg = quick.locator("[name=actual_kg]")
                         reps = quick.locator("[name=actual_reps]")
