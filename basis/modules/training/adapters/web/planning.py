@@ -68,6 +68,9 @@ def today(request: HttpRequest) -> HttpResponse:
                 for row in effective_sessions(AccountId(owner(request).pk), owner_date)
                 if row.date == day
             ],
+            "active_session": Session.objects.filter(
+                owner=owner(request), status="in_progress"
+            ).first(),
             "recent": Session.objects.filter(owner=owner(request))[:5],
             "wellness": presentation.wellness_today(owner(request).pk, day),
             "goals": Goal.objects.filter(owner=owner(request))[:3],
@@ -190,7 +193,11 @@ def cycle_new(request: HttpRequest, pk: int) -> HttpResponse:
     return render(
         request,
         "shared/form.html",
-        {"title": "Añadir ciclo", "subtitle": "Macrociclo → mesociclo → microciclo", "form": form},
+        {
+            "title": "Añadir ciclo",
+            "subtitle": "Macrociclo → mesociclo → microciclo",
+            "form": form,
+        },
     )
 
 

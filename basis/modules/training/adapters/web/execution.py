@@ -20,6 +20,7 @@ from ..models import (
     Block,
     PlannedSession,
     Session,
+    StrengthSet,
 )
 from .forms import (
     BlockForm,
@@ -61,10 +62,45 @@ def session_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
         pk=pk,
         owner=owner(request),
     )
+    quick_sets = []
+    for block in session.blocks.all():
+        for row in block.sets.all():
+            previous = (
+                StrengthSet.objects.filter(
+                    block__session__owner=owner(request),
+                    block__session__status="completed",
+                    block__session__date__lte=session.date,
+                    actual_reps__isnull=False,
+                )
+                .filter(
+                    Q(actual_exercise_id=row.actual_exercise_id or row.exercise_id)
+                    | Q(
+                        actual_exercise__isnull=True,
+                        exercise_id=row.actual_exercise_id or row.exercise_id,
+                    ),
+                    Q(actual_load_type=row.actual_load_type or row.load_type)
+                    | Q(
+                        actual_load_type__isnull=True,
+                        load_type=row.actual_load_type or row.load_type,
+                    ),
+                    Q(actual_side=row.actual_side or row.side)
+                    | Q(actual_side__isnull=True, side=row.actual_side or row.side),
+                )
+                .select_related("block__session")
+                .exclude(block__session=session)
+                .order_by("-block__session__date", "-block__session__created_at", "-pk")
+                .first()
+            )
+            quick_sets.append((row, previous))
     return render(
         request,
         "training/execution/session.html",
-        {"session": session, "snapshot": session_snapshot(session), "blocks": session.blocks.all()},
+        {
+            "session": session,
+            "snapshot": session_snapshot(session),
+            "blocks": session.blocks.all(),
+            "quick_sets": quick_sets,
+        },
     )
 
 
