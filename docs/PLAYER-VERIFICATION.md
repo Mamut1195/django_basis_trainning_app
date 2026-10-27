@@ -85,3 +85,39 @@ La documentación se reescribió directamente en UTF-8, sin tuberías de texto. 
 - Docker/build de producción y job operations Linux: **NOT RUN localmente**. CI remoto se consulta para el SHA publicado; no se infiere CI PASS de checks Windows.
 - Integración en main, cierre del ticket, tracker/Notion/Linear, cambios de dependencias y limpieza: **NOT RUN**, no autorizados.
 - **AVISO:** PR #21 / MAM-814 ya está fusionado en main; comparte el área training y las rutas `_metrics.html` y `training_tags.py`. MAM-629 comparte `basis/modules/training`, migraciones/urls; MAM-631 comparte `app.js`/`base.html`. No se crean relaciones de dependencia por estos avisos.
+
+## Resultados finish4 tras incorporar main
+
+Se incorporó `origin/main` **5cbcd32** (incluye PR #21 / MAM-814) mediante merge normal **5a3daf5**; no hubo conflictos ni resolución manual. `_metrics.html` y `training_tags.py` conservan exactamente el contenido de main/natación, y el diff del ticket frente a main sigue limitado a sus 13 archivos. No se cambiaron modelos, migraciones, métricas ni los algoritmos incorporados desde main. La incorporación a la rama no equivale a integración del ticket en main.
+
+Se ejecutaron los siguientes controles sobre **5a3daf5** con `finish4_gates.py`, snapshot directo v8. Todos terminaron con exit 0 y fuentes sin cambios. `verify-finish4.py` contrastó comandos, timeouts, hashes de runner/snapshot/ejecutables/logs, paquetes Python, HEAD/índice/estado y archivos completos antes/después contra el árbol probado. También comprobó hashes de las siete capturas. Resumen externo: `evidence-finish4-summary.json`. Esta documentación se amplió después de las pruebas; el cambio posterior es exclusivamente documental, sin modificar código, fixtures, tests ni configuración ejecutable. No se atribuye aceptación Systems sellada al nuevo commit.
+
+| Gate | Estado finish4 | Evidencia / resultado |
+| --- | --- | --- |
+| Ruff check | VERIFIED | `gate-finish4-ruff-check.txt` |
+| Ruff format --check | VERIFIED | `gate-finish4-ruff-format.txt`; 390 archivos |
+| mypy core / Django | VERIFIED | `gate-finish4-mypy-core.txt`, `gate-finish4-mypy-django.txt`; 123 / 381 archivos |
+| architecture_check | VERIFIED | `gate-finish4-architecture.txt` |
+| tests_architecture | VERIFIED | `gate-finish4-architecture-tests.txt`; 209 pruebas |
+| lint-imports | VERIFIED | `gate-finish4-lint-imports.txt`; 8 contratos, 0 rotos |
+| djLint | VERIFIED | `gate-finish4-djlint.txt`; 43 archivos, 0 a actualizar |
+| Prettier JS de MAM-628 | VERIFIED | `gate-finish4-prettier.txt`; player.js y timer.js, sin tocar CRLF ajenos |
+| manage.py check | VERIFIED | `gate-finish4-django-check.txt`; 0 incidencias |
+| makemigrations --check --dry-run | VERIFIED | `gate-finish4-migrations.txt`; sin cambios |
+| Módulo training en SQLite | VERIFIED | `gate-finish4-tests-training.txt`; 15 pruebas, 0 omisiones; 0.791 s |
+| Regresiones afectadas en SQLite | VERIFIED | `gate-finish4-tests-affected-regression.txt`; 74 pruebas, 0 omisiones; 4.263 s |
+| player_acceptance | VERIFIED | `gate-finish4-player-acceptance.txt`; complete, siete capturas, 390/768/1440 × light/dark |
+| Suites completas SQLite / PostgreSQL tras merge | NOT RUN | Se conserva evidencia histórica finish3; no hay cambios de persistencia/esquema/migraciones y el brief exige repetir solo lo afectado. CI remoto verifica el SHA publicado por separado. |
+
+Se mantienen los comandos de lint/tipado/arquitectura/djLint/check/migraciones anteriores. Los comandos que cambian respecto de finish3 son:
+
+```text
+prettier: node node_modules/prettier/bin/prettier.cjs --check basis/adapters/web/static/basis/js/player.js basis/adapters/web/static/basis/js/timer.js
+tests-training: python manage.py test basis.modules.training --noinput
+tests-affected-regression: python manage.py test tests.regression.test_swimming tests.regression.test_running tests.regression.test_execution_records tests.regression.test_web tests.regression.test_training_contract tests.regression.test_strength_metrics --noinput
+player-acceptance: python -B -m scripts.player_acceptance --output "C:/Users/Jonnathan/Mamut system/basis-runs/MAM-628/browser-finish4-player-acceptance" --browser-executable C:/Users/Jonnathan/AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe
+```
+
+`DJANGO_SETTINGS_MODULE=config.test_settings`, SQLite `.cache/mam628-finish4.sqlite3`, sin proveedores ni SMTP. Se reutilizan los binarios instalados, sin descargas. Límites del runner: 180 s por gate/navegador y 300 s por grupo de tests, stdin deshabilitado, limpieza acotada al árbol hijo propio si vence el timeout. No hubo timeout ni terminación forzada. PostgreSQL local no se inició en finish4. Browser: `browser_closed=true`, `server_stopped=true`, cero errores JS y cero solicitudes externas. La advertencia de `staticfiles` ausente continúa sin causar fallos.
+
+**Revisión independiente BT2/BT3: PENDING; PR solo draft.** El estado remoto del CI se registra en el PR y en la entrega, sin confundir publicación con aceptación o cierre. Se mantienen los avisos de solapamiento con MAM-629 (training/migraciones/urls) y MAM-631 (app.js/base.html).
