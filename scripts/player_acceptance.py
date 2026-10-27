@@ -418,6 +418,70 @@ def run(output: Path, executable: str) -> int:
                         forbidden = other_page.request.get(origin + f"/sessions/{session_id}/")
                         assert forbidden.status == 404
                         other.close()
+                        # Exercise real logout, including failure preservation and all timer scopes.
+                        result["stage"] = "logout timer cleanup"
+                        page.goto(origin + "/profile/")
+                        page.evaluate(
+                            """key => {
+                              for (const name of [key, 'basis-rest:regression-a',
+                                  'basis-rest:regression-b', 'basis-timer', 'mam628-unrelated'])
+                                localStorage.setItem(name, 'regression-value');
+                            }""",
+                            timer_key,
+                        )
+                        logout = page.locator("form[data-logout] button[type=submit]")
+                        page.route("**/accounts/logout/", fail_save)
+                        logout.click()
+                        expect(page.locator("#global-status")).to_contain_text(
+                            "No se pudo cerrar la sesión"
+                        )
+                        assert page.evaluate(
+                            """key => [key, 'basis-rest:regression-a', 'basis-rest:regression-b',
+                              'basis-timer', 'mam628-unrelated'].every(
+                                name => localStorage.getItem(name) === 'regression-value')""",
+                            timer_key,
+                        )
+                        page.unroute("**/accounts/logout/", fail_save)
+                        with page.expect_request(
+                            lambda request: (
+                                request.url == origin + "/accounts/logout/"
+                                and request.method == "POST"
+                            )
+                        ):
+                            logout.click()
+                        page.wait_for_url(origin + "/accounts/login/")
+                        assert (
+                            page.evaluate(
+                                """() => Object.keys(localStorage).filter(
+                              key => key.startsWith('basis-rest:'))"""
+                            )
+                            == []
+                        )
+                        assert page.evaluate("localStorage.getItem('basis-timer')") is None
+                        assert page.evaluate("localStorage.getItem('basis-account')") is None
+                        assert (
+                            page.evaluate("localStorage.getItem('mam628-unrelated')")
+                            == "regression-value"
+                        )
+                        assert (
+                            page.request.get(origin + "/api/csrf/", max_redirects=0).status == 302
+                        )
+                        result["logout_timer_cleanup"] = {
+                            "status": "VERIFIED",
+                            "failed_logout_preserves_storage": True,
+                            "rest_keys_removed": 3,
+                            "legacy_timer_and_account_removed": True,
+                            "unrelated_key_preserved": True,
+                            "server_session_revoked": True,
+                        }
+                        assert all(
+                            item["failure"] == "net::ERR_FAILED"
+                            and (
+                                item["url"].startswith(origin + "/player/sets/")
+                                or item["url"] == origin + "/accounts/logout/"
+                            )
+                            for item in failed_requests
+                        ), failed_requests
                         assert not errors, errors
                         assert not external, external
                         result.update(
@@ -442,6 +506,8 @@ def run(output: Path, executable: str) -> int:
                                     "stale revision",
                                     "partial close",
                                     "account isolation",
+                                    "settled control contrast >= 4.5 across themes and draft recovery",
+                                    "failed logout preserves timers; successful logout removes all rest keys",
                                 ],
                             }
                         )
