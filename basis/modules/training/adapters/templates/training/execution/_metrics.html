@@ -33,5 +33,12 @@
       Ritmo derivado de duración transcurrida y distancia del mismo objetivo o resultado manual,
       en s/km. Las pausas se registran por separado y no se restan. — significa sin datos suficientes.
     </p>
+  {% elif block.sport == 'swimming' or block.block.sport == 'swimming' %}
+    <p class="muted">
+      Ritmo derivado de duración transcurrida y distancia del mismo objetivo o resultado manual,
+      en s/100 m. Los descansos se registran por separado y no se restan. — significa sin datos suficientes.
+      Los totales del bloque son autoritativos: largos e intervalos son detalle, no se suman de nuevo.
+      No se infiere distancia desde largos ni longitud de piscina.
+    </p>
   {% endif %}
 {% endwith %}
