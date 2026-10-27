@@ -13,9 +13,9 @@ import traceback
 from importlib.metadata import version
 from pathlib import Path
 from uuid import uuid4
-from wsgiref.simple_server import WSGIRequestHandler, make_server
+from wsgiref.simple_server import WSGIRequestHandler, WSGIServer, make_server
 
-from playwright.sync_api import Route, expect, sync_playwright
+from playwright.sync_api import Page, Route, expect, sync_playwright
 
 from scripts.acceptance_browser import ROOT, child_environment, execute, source_binding
 from scripts.browser_smoke import login, no_overflow
@@ -46,10 +46,70 @@ def fixture() -> str:
     return str(item.pk)
 
 
+class AcceptanceServer(WSGIServer):
+    # Chromium loads parallel scripts on every reload; avoid loopback queue refusal.
+    request_queue_size = 128
+
+
 class QuietHandler(WSGIRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         # No HTTP/session/header/form logging. Assertions and screenshots are evidence.
         pass
+
+
+def capture_player(page: Page, path: Path) -> list[dict[str, object]]:
+    """Finish finite CSS transitions even with a paused application clock."""
+    page.screenshot(path=str(path), full_page=True, animations="disabled")
+    measurements: list[dict[str, object]] = page.evaluate(
+        r"""() => {
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 1;
+          const ctx = canvas.getContext('2d', {willReadFrequently: true});
+          const rgba = color => {
+            ctx.clearRect(0, 0, 1, 1);
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, 1, 1);
+            const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+            return [r, g, b, a / 255];
+          };
+          const blend = (front, back) => front.slice(0, 3).map(
+            (v, i) => v * front[3] + back[i] * (1 - front[3]));
+          const luminance = rgb => rgb.map(v => v / 255).map(
+            v => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+          ).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+          return [...document.querySelectorAll('button, a')].filter(el =>
+            el.checkVisibility() && !el.matches(':disabled') &&
+            /Editar resumen|Añadir bloque|Completar sesión|Guardar|Descartar|Iniciar descanso|Confirmar cierre/.test(el.innerText)
+          ).map(el => {
+            const chain = [];
+            for (let node = el; node; node = node.parentElement) chain.unshift(node);
+            let background = [255, 255, 255];
+            for (const node of chain)
+              background = blend(rgba(getComputedStyle(node).backgroundColor), background);
+            const style = getComputedStyle(el);
+            const foreground = blend(rgba(style.color), background);
+            const a = luminance(foreground), b = luminance(background);
+            return {
+              label: el.innerText.trim().replace(/\s+/g, ' '),
+              theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+              color: style.color, backgroundColor: style.backgroundColor,
+              foreground_rgb: foreground, background_rgb: background,
+              contrast: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
+              opacities: chain.map(node => getComputedStyle(node).opacity),
+              running_transitions: el.getAnimations().filter(
+                a => a instanceof CSSTransition && a.playState !== 'finished').length
+            };
+          });
+        }"""
+    )
+    assert measurements, "No player controls measured"
+    for row in measurements:
+        opacities = row["opacities"]
+        assert isinstance(opacities, list), row
+        assert all(float(str(value)) == 1 for value in opacities), row
+        assert row["running_transitions"] == 0, row
+        assert float(str(row["contrast"])) >= 4.5, row
+    return measurements
 
 
 def run(output: Path, executable: str) -> int:
@@ -64,6 +124,7 @@ def run(output: Path, executable: str) -> int:
     environment = child_environment(cache / "player.sqlite3", password, secret)
     before = source_binding()
     script_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    contrast: dict[str, list[dict[str, object]]] = {}
     result: dict[str, object] = {
         "status": "FAILED",
         "providers": "DISABLED",
@@ -72,6 +133,7 @@ def run(output: Path, executable: str) -> int:
         "script_sha256": script_hash,
         "python": sys.version.split()[0],
         "playwright": version("playwright"),
+        "contrast": contrast,
     }
     server_thread: threading.Thread | None = None
     try:
@@ -90,7 +152,9 @@ def run(output: Path, executable: str) -> int:
         from django.core.wsgi import get_wsgi_application
 
         app = StaticFilesHandler(get_wsgi_application())
-        with make_server("127.0.0.1", 0, app, handler_class=QuietHandler) as server:
+        with make_server(
+            "127.0.0.1", 0, app, server_class=AcceptanceServer, handler_class=QuietHandler
+        ) as server:
             server_thread = threading.Thread(target=server.serve_forever, daemon=True)
             server_thread.start()
             origin = f"http://127.0.0.1:{server.server_port}"
@@ -108,6 +172,28 @@ def run(output: Path, executable: str) -> int:
                         context.set_default_navigation_timeout(15000)
                         result["stage"] = "login and today"
                         errors: list[str] = []
+                        result["javascript_errors"] = errors
+                        console_errors: list[str] = []
+                        result["console_errors"] = console_errors
+                        failed_requests: list[dict[str, str]] = []
+                        result["failed_requests"] = failed_requests
+                        context.on(
+                            "requestfailed",
+                            lambda request: failed_requests.append(
+                                {
+                                    "url": request.url.split("?")[0],
+                                    "failure": request.failure or "unknown",
+                                }
+                            ),
+                        )
+                        context.on(
+                            "console",
+                            lambda message: (
+                                console_errors.append(message.text)
+                                if message.type == "error"
+                                else None
+                            ),
+                        )
                         external: list[str] = []
 
                         def guard(route: Route) -> None:
@@ -128,8 +214,13 @@ def run(output: Path, executable: str) -> int:
                             page.get_by_role("link", name="Continuar sesión", exact=True)
                         ).to_be_visible()
                         no_overflow(page)
-                        page.screenshot(path=str(output / "today-390-light.png"), full_page=True)
+                        page.screenshot(
+                            path=str(output / "today-390-light.png"),
+                            full_page=True,
+                            animations="disabled",
+                        )
                         page.get_by_role("link", name="Continuar sesión", exact=True).click()
+                        expect(page.locator("[data-player-navigation]")).to_be_visible()
                         quick = page.locator("[data-quick-set]").first
                         kg = quick.locator("[name=actual_kg]")
                         reps = quick.locator("[name=actual_reps]")
@@ -145,6 +236,7 @@ def run(output: Path, executable: str) -> int:
                             "Guardado confirmado por el servidor."
                         )
                         page.reload()
+                        expect(page.locator("[data-player-navigation]")).to_be_visible()
                         expect(kg).to_have_value("37.25")
                         expect(reps).to_have_value("7")
                         kg.fill("38.5")
@@ -193,6 +285,7 @@ def run(output: Path, executable: str) -> int:
                         assert page.evaluate("Date.now()") == timer_now + 31000
                         expect(page.locator("[data-timer-output]")).to_have_text("00:59")
                         page.reload()
+                        expect(page.locator("[data-player-navigation]")).to_be_visible()
                         assert page.locator("body").get_attribute("data-account") == account_key
                         assert page.evaluate("Date.now()") == timer_now + 31000
                         assert (
@@ -224,6 +317,7 @@ def run(output: Path, executable: str) -> int:
                             "remaining_seconds": 59,
                             "same_account_key_and_deadline": True,
                         }
+                        expect(page.locator("[data-player-navigation]")).to_be_visible()
                         quick = page.locator("[data-quick-set]").first
                         kg = quick.locator("[name=actual_kg]")
                         reps = quick.locator("[name=actual_reps]")
@@ -243,8 +337,11 @@ def run(output: Path, executable: str) -> int:
                                 kg.focus()
                                 page.keyboard.press("Tab")
                                 assert page.evaluate("document.activeElement.name") == "actual_rpe"
-                                page.screenshot(
-                                    path=str(output / f"player-{width}-{theme}.png"), full_page=True
+                                contrast[f"{width}-{theme}"] = capture_player(
+                                    page, output / f"player-{width}-{theme}.png"
+                                )
+                                assert all(
+                                    row["theme"] == theme for row in contrast[f"{width}-{theme}"]
                                 )
                         page.set_viewport_size({"width": 390, "height": 844})
 
@@ -259,7 +356,19 @@ def run(output: Path, executable: str) -> int:
                         expect(quick.locator("[data-row-status]")).to_contain_text("Sin confirmar")
                         page.unroute("**/player/sets/*/", fail_save)
                         page.reload()
+                        expect(page.locator("[data-player-navigation]")).to_be_visible()
                         expect(kg).to_have_value("0.00")
+                        page.evaluate("document.documentElement.classList.add('dark')")
+                        contrast["draft-recovery-dark"] = capture_player(
+                            page, output / "player-draft-recovery-dark.png"
+                        )
+                        assert all(
+                            row["theme"] == "dark" for row in contrast["draft-recovery-dark"]
+                        )
+                        assert any(
+                            row["label"] == "Descartar borrador recuperable"
+                            for row in contrast["draft-recovery-dark"]
+                        )
                         quick.get_by_role("button", name="Recuperar borrador", exact=False).click()
                         expect(kg).to_have_value("12.34")
                         expect(quick.locator("[data-row-status]")).to_contain_text("sin enviar")
@@ -270,7 +379,9 @@ def run(output: Path, executable: str) -> int:
                         # Two tabs: stale page must not overwrite a confirmed value.
                         result["stage"] = "stale revision conflict"
                         stale = context.new_page()
+                        stale.on("pageerror", lambda error: errors.append(str(error)))
                         stale.goto(page.url)
+                        expect(stale.locator("[data-player-navigation]")).to_be_visible()
                         kg.fill("13.34")
                         page.clock.fast_forward(1000)
                         expect(quick.locator("[data-row-status]")).to_have_text(
@@ -278,6 +389,9 @@ def run(output: Path, executable: str) -> int:
                         )
                         stale_form = stale.locator("[data-quick-set]").first
                         stale_form.locator("[name=actual_kg]").fill("99")
+                        expect(stale_form.locator("[data-row-status]")).to_have_text(
+                            "Cambios pendientes de guardar."
+                        )
                         # The context clock is paused: fire this tab's 800 ms debounce.
                         stale.clock.fast_forward(1000)
                         expect(stale_form.locator("[data-row-status]")).to_contain_text(
@@ -285,6 +399,7 @@ def run(output: Path, executable: str) -> int:
                         )
                         stale.close()
                         page.reload()
+                        expect(page.locator("[data-player-navigation]")).to_be_visible()
                         result["stage"] = "partial close"
                         close = page.locator("#close-session")
                         close.locator("[name=confirm]").check()
@@ -332,6 +447,17 @@ def run(output: Path, executable: str) -> int:
                         )
                         context.close()
                     finally:
+                        if (
+                            result.get("stage") != "complete"
+                            and "page" in locals()
+                            and not page.is_closed()
+                        ):
+                            result["failure_dom"] = page.evaluate("""() => ({
+                              ready: document.readyState,
+                              scripts: [...document.scripts].filter(s => s.src).map(s => s.src),
+                              script_resources: performance.getEntriesByType('resource').filter(e => e.initiatorType === 'script').map(e => ({name: e.name, size: e.decodedBodySize})),
+                              navigation_hidden: document.querySelector('[data-player-navigation]')?.hidden
+                            })""")
                         browser.close()
                         result["browser_closed"] = True
             finally:
