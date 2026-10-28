@@ -739,6 +739,8 @@
           await write(store, store === "outbox" ? row.mutation_id : row.key, true);
       localStorage.removeItem("basis-account");
       localStorage.removeItem("basis-timer");
+      for (const key of Object.keys(localStorage))
+        if (key.startsWith("basis-rest:")) localStorage.removeItem(key);
       channel.postMessage({ type: "logout", account: scope });
       location.assign(response.url);
     } catch (_) {

@@ -5,6 +5,8 @@ from django.urls import path
 from basis.modules.training.adapters import web as training
 from basis.modules.training.adapters.web import editor
 
+from . import player
+
 urlpatterns = [
     path("plans/from-template/", editor.template_new, name="plan-template"),
     path("plans/<int:pk>/calendar/", editor.calendar, name="plan-calendar"),
@@ -27,6 +29,8 @@ urlpatterns = [
     path(
         "scheduled/<int:pk>/reschedule/", training.scheduled_reschedule, name="scheduled-reschedule"
     ),
+    path("player/sets/<int:pk>/", player.save_set, name="player-set"),
+    path("player/sessions/<uuid:pk>/complete/", player.complete, name="player-complete"),
     path("sessions/new/", training.session_new, name="session-new"),
     path("sessions/<uuid:pk>/", training.session_detail, name="session-detail"),
     path("sessions/<uuid:pk>/edit/", training.session_edit, name="session-edit"),

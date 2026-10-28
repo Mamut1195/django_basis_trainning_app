@@ -1,0 +1,125 @@
+{% load l10n %}
+<section id="session-player" class="stack" data-revision="{{ session.revision }}">
+  <c-basis.card title="Registro rápido por serie">
+    <p class="muted">
+      Solo resultados reales. Los objetivos y el registro anterior son referencias, nunca se rellenan automáticamente.
+    </p>
+    <p role="status" aria-live="polite" data-player-status>
+      Datos confirmados por el servidor. Los cambios válidos se guardan automáticamente.
+    </p>
+    <div class="actions" data-player-navigation hidden>
+      <c-ui.button type="button" data-player-prev>
+        Anterior
+      </c-ui.button>
+      <output data-player-position aria-live="polite"></output>
+      <c-ui.button type="button" data-player-next>
+        Siguiente
+      </c-ui.button>
+      <c-ui.button type="button" data-player-all>
+        Ver todas las series
+      </c-ui.button>
+    </div>
+  </c-basis.card>
+  {% for row, previous in quick_sets %}
+    <article class="stack-sm"
+             data-player-row
+             data-rest="{{ row.rest_seconds|default_if_none:0 }}">
+      <c-basis.card>
+        <h3 tabindex="-1">{{ row.exercise.nombre }} · serie {{ row.order }}</h3>
+        <p>
+          {{ row.block.title }} · {{ row.get_kind_display }} · {{ row.get_side_display }} · {{ row.get_load_type_display }}
+        </p>
+        {% if row.actual_exercise_id %}
+          <p>Ejercicio realizado: {{ row.actual_exercise.nombre }} · {{ row.adaptation_reason }}</p>
+        {% endif %}
+        <details>
+          <summary>Prescripción de esta serie</summary>
+          <p>
+            Objetivo: {{ row.target_reps|default_if_none:'—' }} rep · {{ row.target_kg|default_if_none:'—' }} kg · RPE {{ row.target_rpe|default_if_none:'—' }} · RIR {{ row.target_rir|default_if_none:'—' }}
+          </p>
+          <p>
+            Rango: {{ row.target_reps_min|default_if_none:'—' }}–{{ row.target_reps_max|default_if_none:'—' }} rep · Descanso objetivo: {{ row.rest_seconds|default_if_none:'—' }} s
+          </p>
+        </details>
+        <p>
+          Anterior (referencia, no objetivo):
+          {% if previous %}
+            {{ previous.block.session.date|date:'j M Y' }} · {{ previous.actual_reps|default_if_none:'—' }} rep · {{ previous.actual_kg|default_if_none:'—' }} kg · RPE {{ previous.actual_rpe|default_if_none:'—' }}
+          {% else %}
+            Sin registro previo comparable
+          {% endif %}
+        </p>
+        <form method="post" action="{% url 'player-set' row.pk %}" data-quick-set>
+          {% csrf_token %}
+          <input type="hidden"
+                 name="revision"
+                 value="{{ session.revision }}"
+                 data-player-revision>
+          <div class="form-fields">
+            <label for="reps-{{ row.pk }}">
+              Repeticiones reales
+              <input id="reps-{{ row.pk }}"
+                     name="actual_reps"
+                     type="number"
+                     min="0"
+                     max="2147483647"
+                     step="1"
+                     inputmode="numeric"
+                     value="{{ row.actual_reps|default_if_none:''|unlocalize }}">
+            </label>
+            <label for="kg-{{ row.pk }}">
+              Carga real (kg)
+              <input id="kg-{{ row.pk }}"
+                     name="actual_kg"
+                     type="number"
+                     min="0"
+                     max="99999.99"
+                     step="0.01"
+                     inputmode="decimal"
+                     value="{{ row.actual_kg|default_if_none:''|unlocalize }}">
+            </label>
+            <label for="rpe-{{ row.pk }}">
+              RPE real / 10
+              <input id="rpe-{{ row.pk }}"
+                     name="actual_rpe"
+                     type="number"
+                     min="0"
+                     max="10"
+                     step="0.1"
+                     inputmode="decimal"
+                     value="{{ row.actual_rpe|default_if_none:''|unlocalize }}">
+            </label>
+            <label for="rir-{{ row.pk }}">
+              RIR real (opcional)
+              <input id="rir-{{ row.pk }}"
+                     name="actual_rir"
+                     type="number"
+                     min="0"
+                     max="20"
+                     step="1"
+                     inputmode="numeric"
+                     value="{{ row.actual_rir|default_if_none:''|unlocalize }}">
+            </label>
+          </div>
+          <div class="actions">
+            <c-ui.button type="submit">
+              Guardar serie
+            </c-ui.button>
+            <c-ui.button type="button" data-player-undo disabled>
+              Deshacer último guardado
+            </c-ui.button>
+            {% if row.rest_seconds %}
+              <c-ui.button type="button" data-timer="{{ row.rest_seconds }}">
+                Iniciar descanso prescrito
+              </c-ui.button>
+            {% endif %}
+            <a href="{% url 'set-edit' row.pk %}">Edición detallada / adaptación</a>
+          </div>
+          <p role="status" data-row-status>Sin cambios pendientes</p>
+        </form>
+      </c-basis.card>
+    </article>
+  {% empty %}
+    <p>No hay series de fuerza. Registra las variables e intervalos en los bloques de abajo.</p>
+  {% endfor %}
+</section>

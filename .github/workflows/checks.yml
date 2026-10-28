@@ -45,7 +45,7 @@ jobs:
       - run: lint-imports
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
-      - run: python manage.py test tests.regression basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
+      - run: python manage.py test tests.regression basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.training.adapters.test_player basis.modules.sync.adapters.test_wire --noinput
       - run: python manage.py collectstatic --noinput
       - name: Build and start the production image against disposable PostgreSQL
         env:
