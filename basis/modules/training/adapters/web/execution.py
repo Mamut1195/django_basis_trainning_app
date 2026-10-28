@@ -5,7 +5,8 @@ from __future__ import annotations
 import uuid
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import F, Q, Window
+from django.db.models.functions import Coalesce, RowNumber
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET
@@ -20,6 +21,7 @@ from ..models import (
     Block,
     PlannedSession,
     Session,
+    StrengthSet,
 )
 from .forms import (
     BlockForm,
@@ -61,10 +63,87 @@ def session_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
         pk=pk,
         owner=owner(request),
     )
+    rows = [row for block in session.blocks.all() for row in block.sets.all()]
+    keys = {
+        (
+            row.actual_exercise_id or row.exercise_id,
+            row.actual_load_type or row.load_type,
+            row.actual_side or row.side,
+        )
+        for row in rows
+    }
+    previous_by_key: dict[tuple[int, str, str], StrengthSet] = {}
+    if keys:
+        # One latest result per effective exercise/load/side, not one query per set.
+        # Coalesce deliberately falls back only on NULL in historical observations.
+        history = (
+            StrengthSet.objects.filter(
+                block__session__owner_id=session.owner_id,
+                block__session__status="completed",
+                block__session__date__lte=session.date,
+                actual_reps__isnull=False,
+            )
+            .exclude(block__session=session)
+            .annotate(
+                reference_exercise=Coalesce("actual_exercise_id", "exercise_id"),
+                reference_load_type=Coalesce("actual_load_type", "load_type"),
+                reference_side=Coalesce("actual_side", "side"),
+                reference_rank=Window(
+                    expression=RowNumber(),
+                    partition_by=[
+                        Coalesce("actual_exercise_id", "exercise_id"),
+                        Coalesce("actual_load_type", "load_type"),
+                        Coalesce("actual_side", "side"),
+                    ],
+                    order_by=[
+                        F("block__session__date").desc(),
+                        F("block__session__created_at").desc(),
+                        F("pk").desc(),
+                    ],
+                ),
+            )
+            .filter(
+                reference_exercise__in={key[0] for key in keys},
+                reference_load_type__in={key[1] for key in keys},
+                reference_side__in={key[2] for key in keys},
+                reference_rank=1,
+            )
+            .select_related("block__session")
+            .order_by()
+        )
+        for previous in history:
+            key = (
+                previous.actual_exercise_id
+                if previous.actual_exercise_id is not None
+                else previous.exercise_id,
+                previous.actual_load_type
+                if previous.actual_load_type is not None
+                else previous.load_type,
+                previous.actual_side if previous.actual_side is not None else previous.side,
+            )
+            previous_by_key[key] = previous
+    quick_sets = [
+        (
+            row,
+            previous_by_key.get(
+                (
+                    row.actual_exercise_id or row.exercise_id,
+                    row.actual_load_type or row.load_type,
+                    row.actual_side or row.side,
+                )
+            ),
+        )
+        for row in rows
+    ]
     return render(
         request,
         "training/execution/session.html",
-        {"session": session, "snapshot": session_snapshot(session), "blocks": session.blocks.all()},
+        {
+            "session": session,
+            "snapshot": session_snapshot(session),
+            "blocks": session.blocks.all(),
+            "quick_sets": quick_sets,
+        },
     )
 
 
