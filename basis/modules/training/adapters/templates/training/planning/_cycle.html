@@ -1,0 +1,17 @@
+<details class="card-line" open>
+  <summary>{{ node.cycle.get_kind_display }} · {{ node.cycle.title }}</summary>
+  <p>{{ node.cycle.start_date }} → {{ node.cycle.end_date }} · {{ node.cycle.focus }}</p>
+  {% if editable %}
+    <a href="{% url 'editor-cycle' plan.pk node.cycle.pk %}">Editar ciclo {{ node.cycle.title }}</a>
+  {% endif %}
+  <ul>
+    {% for item in node.sessions %}
+      <li>
+        <a href="{% url 'scheduled-detail' item.pk %}">{{ item.title }}</a> · {{ item.date }} · {{ item.get_status_display }}
+      </li>
+    {% endfor %}
+  </ul>
+  {% for child in node.children %}
+    {% include 'training/planning/_cycle.html' with node=child %}
+  {% endfor %}
+</details>
