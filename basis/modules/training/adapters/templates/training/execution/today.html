@@ -5,22 +5,35 @@
                         subtitle="Un lugar para planificar, registrar y entender tu entrenamiento." />
   <div class="split">
     <div class="stack">
-      <section class="hero stack-sm">
+      <section class="hero stack-sm" aria-label="Tu siguiente sesión">
         <p class="eyebrow">Hoy cuenta</p>
-        <h2>El progreso se construye sesión a sesión.</h2>
-        <p class="muted">Registra lo que haces. Aprende de cómo te sientes.</p>
-        <div class="actions">
+        {% if active_session %}
+          <h2>{{ active_session.title }}</h2>
+          <p>Registro en curso · {{ active_session.date|date:'j M' }}</p>
+          <c-ui.button variant="primary" href="{% url 'session-detail' active_session.pk %}">
+            Continuar sesión
+          </c-ui.button>
+        {% elif scheduled %}
+          {% with item=scheduled.0.0 %}
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.plan.title }} · Sesión programada</p>
+            <c-ui.button variant="primary" href="{% url 'scheduled-detail' item.pk %}">
+              Ver sesión de hoy
+            </c-ui.button>
+          {% endwith %}
+        {% else %}
+          <h2>Tu agenda está abierta</h2>
+          <p>Registra una actividad libre o prepara tu siguiente sesión.</p>
           {% if write_access %}
             <c-ui.button variant="primary" href="{% url 'session-new' %}">
-              Registrar entrenamiento ↗
+              Registrar entrenamiento
             </c-ui.button>
           {% else %}
             <c-ui.button variant="primary" href="{% url 'billing' %}">
-              Empieza tu prueba
+              Consultar acceso
             </c-ui.button>
           {% endif %}
-          <a href="{% url 'plans' %}" style="color:inherit">Ver mi plan</a>
-        </div>
+        {% endif %}
       </section>
       <c-basis.card title="Tu agenda de hoy">
         {% for item, state in scheduled %}

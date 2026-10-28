@@ -1,4 +1,5 @@
 {% extends 'shared/base.html' %}
+{% load static %}
 {% block content %}
   <c-basis.page-heading :title="session.title"
                         subtitle="{{ session.date|date:'l, j M Y' }} · {{ session.get_status_display }}" />
@@ -21,6 +22,10 @@
   <p class="muted">
     Completar significa cerrar el registro, también parcial. Los valores sin registrar siguen desconocidos; no se copian objetivos ni se acredita su cumplimiento.
   </p>
+  {% if session.status == 'in_progress' and write_access %}
+    {% include 'training/execution/_player.html' %}
+  {% endif %}
+  {% include 'training/execution/_timer.html' %}
   <div class="grid">
     <c-basis.card title="Duración">
       <p class="stat">
@@ -43,6 +48,29 @@
   {% else %}
     {% include 'training/execution/_blocks.html' with editable=False %}
   {% endif %}
-  {% include 'training/execution/_timer.html' %}
+  {% if session.status == 'in_progress' and write_access %}
+    <c-basis.card title="Cerrar el registro">
+      <form id="close-session"
+            method="post"
+            action="{% url 'player-complete' session.pk %}">
+        {% csrf_token %}
+        <input type="hidden"
+               name="revision"
+               value="{{ session.revision }}"
+               data-player-revision>
+        <p>
+          Se conservarán solo tus observaciones. Puedes cerrar una sesión parcial; los datos ausentes no se completan con objetivos. Una sesión cerrada no se puede editar.
+        </p>
+        <label>
+          <input type="checkbox" required name="confirm">
+          He revisado los datos y quiero cerrar el registro.
+        </label>
+        <c-ui.button type="submit" variant="primary">
+          Confirmar cierre de sesión
+        </c-ui.button>
+      </form>
+    </c-basis.card>
+  {% endif %}
+  <script defer src="{% static 'basis/js/player.js' %}"></script>
   {{ snapshot|json_script:'session-snapshot' }}
 {% endblock %}
