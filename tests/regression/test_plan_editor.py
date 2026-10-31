@@ -3,7 +3,8 @@
 from dataclasses import replace
 from datetime import timedelta
 
-from django.test import TestCase
+from django.apps import apps
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from basis.bootstrap.plan_editor import plan_editor
@@ -12,10 +13,15 @@ from basis.modules.training.adapters.editor_read import differences
 from basis.modules.training.adapters.models import Goal, PlannedSession, TrainingPlan
 from basis.modules.training.application.plan_editor import CopyTemplate, EditPlan
 from basis.modules.training.domain.plan_editor import edit_definition, template_definition
-from basis.modules.training.public import InvalidPlanning, PlanningConflict, PlanningUnavailable
+from basis.modules.training.public import (
+    CreatePlan,
+    InvalidPlanning,
+    PlanningConflict,
+    PlanningUnavailable,
+)
 from basis.shared.identifiers import AccountId, GoalId
 from tests.regression.test_planning_versioning import PlanningFixture
-from tests_architecture.test_planning import TODAY
+from tests_architecture.test_planning import TODAY, definition
 
 
 class PlanEditorTests(PlanningFixture, TestCase):
@@ -298,3 +304,200 @@ class PlanEditorTests(PlanningFixture, TestCase):
         self.assertEqual(
             self.client.post(reverse("plan-edit", args=[self.header.id]), {}).status_code, 403
         )
+
+
+class PlanEditorSecurityTests(PlanningFixture, TestCase):
+    def database_state(self) -> dict[str, list[dict[str, object]]]:
+        """Compare rows, fields and relations, including versions and audit records."""
+        return {
+            model._meta.label: list(model._base_manager.order_by("pk").values())
+            for model in apps.get_models(include_auto_created=True)
+            if model._meta.managed and not model._meta.proxy
+        }
+
+    def editor_cases(self) -> dict[str, tuple[str, dict[str, object]]]:
+        plan = TrainingPlan.objects.get(pk=self.header.id)
+        cycle = plan.cycles.get(kind="micro")
+        cycle_data = {
+            "kind": cycle.kind,
+            "parent": cycle.parent_id,
+            "title": "Ciclo editado",
+            "start_date": cycle.start_date,
+            "end_date": cycle.end_date,
+            "focus": "Constancia",
+            "reason": "Ajustar ciclo",
+        }
+        revision = {"revision": self.future.revision, "reason": "Ajustar sesión"}
+        cases = {
+            "template": (
+                reverse("plan-template"),
+                {
+                    "source": plan.pk,
+                    "goal": plan.goal_id,
+                    "title": "Copia privada",
+                    "start_date": TODAY,
+                    "reason": "Nuevo periodo",
+                },
+            ),
+            "plan-edit": (
+                reverse("plan-edit", args=[plan.pk]),
+                {
+                    "title": "Plan editado",
+                    "start_date": plan.start_date,
+                    "end_date": plan.end_date,
+                    "notes": "Notas nuevas",
+                    "reason": "Ajustar plan",
+                },
+            ),
+            "cycle-new": (reverse("editor-cycle-new", args=[plan.pk]), cycle_data),
+            "cycle-edit": (reverse("editor-cycle", args=[plan.pk, cycle.pk]), cycle_data),
+            "session-new": (
+                reverse("editor-session-new", args=[plan.pk]),
+                {"plan": plan.pk, "cycle": cycle.pk, "title": "Nueva sesión", "date": TODAY},
+            ),
+            "edit": (
+                reverse("editor-session", args=[self.future.pk, "edit"]),
+                {**revision, "title": "Sesión editada", "notes": "Notas nuevas"},
+            ),
+            "move": (
+                reverse("editor-session", args=[self.future.pk, "move"]),
+                {**revision, "date": TODAY + timedelta(days=2), "cycle": cycle.pk},
+            ),
+        }
+        for action in ("skipped", "cancelled", "replace"):
+            cases[action] = (
+                reverse("editor-session", args=[self.future.pk, "change"]),
+                {
+                    **revision,
+                    "action": action,
+                    "replacement": plan.sessions.get(title="past").pk
+                    if action == "replace"
+                    else "",
+                },
+            )
+        return cases
+
+    def additional_plan(self, *, foreign: bool = False) -> TrainingPlan:
+        user = self.other if foreign else self.user
+        goal = Goal.objects.create(owner=user, title="Otro objetivo", sport="running")
+        header = self.service.create(CreatePlan(AccountId(user.pk), definition(GoalId(goal.pk))))
+        return TrainingPlan.objects.get(pk=header.id)
+
+    def assert_foreign_case_rejected(self, case: str) -> None:
+        url, payload = self.editor_cases()[case]
+        self.client.force_login(self.other)
+        for method in (self.client.get, self.client.post):
+            with self.subTest(case=case, method=method.__name__):
+                before = self.database_state()
+                response = method(url, payload)
+                self.assertEqual(self.database_state(), before)
+                self.assertEqual(response.status_code, 404)
+
+    def assert_invalid_reference_without_write(
+        self, url: str, payload: dict[str, object], field: str
+    ) -> None:
+        before = self.database_state()
+        response = self.client.post(url, payload)
+        self.assertEqual(self.database_state(), before)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(field, response.context["form"].errors)
+
+    def test_template_rejects_foreign_source_and_goal_without_writes(self) -> None:
+        foreign = self.additional_plan(foreign=True)
+        url, payload = self.editor_cases()["template"]
+        for field, value in (("source", foreign.pk), ("goal", foreign.goal_id)):
+            with self.subTest(field=field):
+                self.assert_invalid_reference_without_write(url, {**payload, field: value}, field)
+
+    def test_foreign_plan_edit_get_post_are_404_without_writes(self) -> None:
+        self.assert_foreign_case_rejected("plan-edit")
+
+    def test_foreign_cycle_new_get_post_are_404_without_writes(self) -> None:
+        self.assert_foreign_case_rejected("cycle-new")
+
+    def test_foreign_cycle_edit_get_post_are_404_without_writes(self) -> None:
+        self.assert_foreign_case_rejected("cycle-edit")
+
+    def test_foreign_cycle_id_in_own_plan_is_404_without_writes(self) -> None:
+        own = self.additional_plan(foreign=True)
+        foreign_cycle = self.future.cycle_id
+        _, payload = self.editor_cases()["cycle-edit"]
+        self.client.force_login(self.other)
+        url = reverse("editor-cycle", args=[own.pk, foreign_cycle])
+        for method in (self.client.get, self.client.post):
+            with self.subTest(method=method.__name__):
+                before = self.database_state()
+                response = method(url, payload)
+                self.assertEqual(self.database_state(), before)
+                self.assertEqual(response.status_code, 404)
+
+    def test_foreign_session_new_get_post_are_404_without_writes(self) -> None:
+        self.assert_foreign_case_rejected("session-new")
+
+    def test_foreign_session_actions_get_post_are_404_without_writes(self) -> None:
+        for action in ("edit", "move", "skipped", "cancelled", "replace"):
+            self.assert_foreign_case_rejected(action)
+
+    def test_cycle_new_rejects_parent_from_another_own_plan_without_writes(self) -> None:
+        other_plan = self.additional_plan()
+        url, payload = self.editor_cases()["cycle-new"]
+        self.assert_invalid_reference_without_write(
+            url, {**payload, "parent": other_plan.cycles.get(kind="meso").pk}, "parent"
+        )
+
+    def test_cycle_edit_rejects_parent_from_another_own_plan_without_writes(self) -> None:
+        other_plan = self.additional_plan()
+        url, payload = self.editor_cases()["cycle-edit"]
+        self.assert_invalid_reference_without_write(
+            url, {**payload, "parent": other_plan.cycles.get(kind="meso").pk}, "parent"
+        )
+
+    def test_session_move_rejects_cycle_from_another_own_plan_without_writes(self) -> None:
+        other_plan = self.additional_plan()
+        url, payload = self.editor_cases()["move"]
+        self.assert_invalid_reference_without_write(
+            url, {**payload, "cycle": other_plan.cycles.get(kind="micro").pk}, "cycle"
+        )
+
+    def test_session_new_rejects_cycle_from_another_own_plan_without_writes(self) -> None:
+        other_plan = self.additional_plan()
+        url, payload = self.editor_cases()["session-new"]
+        self.assert_invalid_reference_without_write(
+            url, {**payload, "cycle": other_plan.cycles.get(kind="micro").pk}, "cycle"
+        )
+
+    def test_replacement_rejects_foreign_session_without_writes(self) -> None:
+        foreign = self.additional_plan(foreign=True)
+        url, payload = self.editor_cases()["replace"]
+        self.assert_invalid_reference_without_write(
+            url, {**payload, "replacement": foreign.sessions.get(title="past").pk}, "replacement"
+        )
+
+    def test_all_editor_posts_require_csrf_token_without_writes(self) -> None:
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        for case, (url, payload) in self.editor_cases().items():
+            # Both a missing cookie and a cookie without the submitted token must fail.
+            for cookie in (False, True):
+                with self.subTest(case=case, csrf_cookie=cookie):
+                    if cookie:
+                        before = self.database_state()
+                        self.assertEqual(client.get(url).status_code, 200)
+                        self.assertEqual(self.database_state(), before)
+                        self.assertIn("csrftoken", client.cookies)
+                    else:
+                        client.cookies.pop("csrftoken", None)
+                    before = self.database_state()
+                    response = client.post(url, payload)
+                    self.assertEqual(self.database_state(), before)
+                    self.assertEqual(response.status_code, 403)
+
+    def test_all_editor_gets_with_mutation_fields_do_not_write(self) -> None:
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        for case, (url, payload) in self.editor_cases().items():
+            with self.subTest(case=case):
+                before = self.database_state()
+                response = client.get(url, payload)
+                self.assertEqual(self.database_state(), before)
+                self.assertEqual(response.status_code, 200)
