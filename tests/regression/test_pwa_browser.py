@@ -196,8 +196,13 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                     # Keep a pending operation while the real worker update installs.
                     context.route("**/api/sync/", lambda route: route.abort())
                     context.set_offline(False)
-                    page.reload()
-                    page.evaluate("() => window.basisOfflineReady")
+                    # Snapshot only after automatic sync has claimed the queued operation.
+                    with page.expect_event(
+                        "requestfailed",
+                        predicate=lambda request: request.url.endswith("/api/sync/"),
+                    ):
+                        page.reload()
+                        page.evaluate("() => window.basisOfflineReady")
                     self.wait_async(page, "async () => !window.basisSyncing()")
                     before_login = self.local_records(page)
                     self.assertTrue(all(before_login))
@@ -385,17 +390,64 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                         self.wait_async(page, "async () => (await window.basisPending()) === 1")
                     self.assertTrue(all(self.local_records(page)))
                     context.set_offline(False)
-                    page.goto(self.live_server_url + "/profile/")
-                    page.evaluate("() => window.basisOfflineReady")
+                    with page.expect_event(
+                        "requestfailed",
+                        predicate=lambda request: request.url.endswith("/api/sync/"),
+                    ):
+                        page.goto(self.live_server_url + "/profile/")
+                        page.evaluate("() => window.basisOfflineReady")
+                    self.wait_async(page, "async () => !window.basisSyncing()")
                     page.evaluate(
                         "keys => keys.forEach(key => localStorage.setItem(key, String(Date.now()+60000)))",
                         timers,
+                    )
+                    before_logout = self.local_records(page)
+                    self.assertTrue(all(before_logout))
+                    identity = page.evaluate("localStorage.getItem('basis-account')")
+                    timer_values = page.evaluate(
+                        "keys => keys.map(key => localStorage.getItem(key))", timers
+                    )
+                    context.route(
+                        "**/accounts/logout/", lambda route: route.fulfill(status=503, body="Retry")
+                    )
+                    page.once("dialog", lambda dialog: dialog.accept())
+                    page.locator("[data-logout] button").click()
+                    page.wait_for_function(
+                        "document.querySelector('#global-status').textContent.includes('No se pudo cerrar')"
+                    )
+                    self.assertEqual(self.local_records(page), before_logout)
+                    self.assertEqual(
+                        page.evaluate("localStorage.getItem('basis-account')"), identity
+                    )
+                    self.assertEqual(
+                        page.evaluate("keys => keys.map(key => localStorage.getItem(key))", timers),
+                        timer_values,
+                    )
+                    checks.append(
+                        "Failed logout preserves sessions/outbox/archive, identity and timers"
+                    )
+                    context.unroute("**/accounts/logout/")
+                    stale = context.new_page()
+                    # Isolate the native storage event from the parallel logout broadcast.
+                    stale.add_init_script("""window.BroadcastChannel = class {
+                      postMessage() {}
+                    };""")
+                    stale.goto(self.live_server_url + "/offline/")
+                    stale.evaluate("() => window.basisOfflineReady")
+                    self.assertEqual(
+                        stale.evaluate("localStorage.getItem('basis-account')"), identity
                     )
                     page.once("dialog", lambda dialog: dialog.accept())
                     page.locator("[data-logout] button").click()
                     page.wait_for_url("**/accounts/login/")
                     page.evaluate("() => window.basisOfflineReady")
-                    self.assertEqual(page.evaluate("localStorage.getItem('basis-account')"), "")
+                    self.assertIsNone(page.evaluate("localStorage.getItem('basis-account')"))
+                    stale.wait_for_url("**/accounts/login/")
+                    self.assertIsNone(stale.evaluate("localStorage.getItem('basis-account')"))
+                    stale.close()
+                    checks.append(
+                        "Successful logout removes identity; storage null invalidates another tab"
+                    )
                     self.assertEqual(self.local_records(page), [[], [], []])
                     self.assertTrue(
                         page.evaluate(

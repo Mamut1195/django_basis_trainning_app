@@ -892,7 +892,7 @@
       if (!response.ok) throw new Error("Logout failed");
       await navigator.locks.request("basis-identity", async () => {
         if (localStorage.getItem("basis-account") !== scope) return;
-        localStorage.setItem("basis-account", "");
+        localStorage.removeItem("basis-account");
         invalidated = true;
         await clearLocal();
         clearRestTimers();
