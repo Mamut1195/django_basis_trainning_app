@@ -1,7 +1,10 @@
 # MAM-629 · Calendario y editor de planes y ciclos
 
-Base local: `5cbcd32`, rama `ticket/MAM-629-calendario-editor`. Sin commit,
-publicación ni integración. Revisión BT2/BT3 pendiente.
+Base de esta revisión: `f76b873`, rama `ticket/MAM-629-calendario-editor`.
+Incluye cuatro commits del editor y el merge `--no-ff` de `origin/main`
+`128e746`, que integra PR #22. PR #24 permanece DRAFT. `head: ver PR #24`;
+el ejecutor humano fijará el nuevo head después de revisar estos cambios.
+Esta ampliación H2/H6 modifica únicamente tests y documentación, sin commits.
 
 ## Comportamiento
 
@@ -29,124 +32,139 @@ publicación ni integración. Revisión BT2/BT3 pendiente.
 - Cotton, composiciones BASIS y tokens existentes; sin nuevo CSS, dependencia,
   modelo, migración, proveedor ni modificación de recursos PWA.
 
-## Evidencia ejecutada
+## Evidencia y conteos por fuente
 
-Logs de cada gate: `../../basis-runs/MAM-629/codex1/gate-*.txt`.
-Manifiesto y hashes finales: `../../basis-runs/MAM-629/codex1/verification.json`.
-Los hashes del manifiesto identifican los archivos sin necesidad de commit.
+Las cifras corresponden a alcances distintos. Los conteos de BT1 y BT3 son
+anteriores a los 14 tests añadidos aquí; no se presentan como una nueva ejecución
+completa después de esta ampliación.
 
-| Gate                                               | Estado   | Evidencia                                                                                          |
-| -------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| Ruff check y format --check                        | VERIFIED | `gate-ruff-check.txt`, `gate-ruff-format.txt`                                                      |
-| mypy core y Django estrictos                       | VERIFIED | `gate-mypy-core.txt`, `gate-mypy-django.txt`                                                       |
-| architecture_check                                 | VERIFIED | `gate-architecture.txt`                                                                            |
-| tests_architecture                                 | VERIFIED | `gate-tests-architecture.txt`, 209 pruebas                                                         |
-| lint-imports                                       | VERIFIED | `gate-lint-imports.txt`, ocho contratos                                                            |
-| djLint                                             | VERIFIED | `gate-djlint.txt`                                                                                  |
-| Django check y makemigrations --check              | VERIFIED | `gate-django-check.txt`, `gate-makemigrations.txt`                                                 |
-| Suite completa SQLite                              | VERIFIED | `gate-tests-sqlite.txt`; 512 pruebas; 64 omisiones                                                 |
-| Suite completa PostgreSQL desechable               | VERIFIED | `gate-tests-postgresql.txt`; 512 pruebas; 2 omisiones                                              |
-| Prettier del Markdown tocado                       | VERIFIED | `gate-prettier.txt`; usa `.gitignore` para comprobar este documento excluido por `.prettierignore` |
-| Chromium headless                                  | VERIFIED | `gate-headless.txt` y el informe descrito abajo                                                    |
-| Systems                                            | NOT RUN  | Prohibido por el encargo                                                                           |
-| LIVE / proveedores reales                          | NOT RUN  | Sin Polar, IA ni SMTP reales                                                                       |
-| BT2 / BT3, lector de pantalla y dispositivo físico | NOT RUN  | Revisión independiente y aceptación humana pendientes                                              |
+| Alcance                                            | Conteo    | Fuente                                                                                               | Resultado y límite                                                           |
+| -------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Suite completa mergeada, SQLite                    | 734 tests | BT1: `../../basis-runs/MAM-629/merge-main/gate-tests-sqlite.txt`                                     | VERIFIED histórico; `OK (skipped=64)`                                        |
+| Suite completa mergeada, PostgreSQL                | 734 tests | BT1: `../../basis-runs/MAM-629/merge-main/gate-tests-postgresql.txt`                                 | VERIFIED histórico; `OK (skipped=2)`                                         |
+| Subconjunto de tests de `checks.yml` en `f76b873`  | 525 tests | BT3, cifra comunicada en el encargo H6; etiquetas en `.github/workflows/checks.yml`                  | No equivale a la suite completa de BT1; no repetido aquí                     |
+| Nuevos tests H2, `PlanEditorSecurityTests`         | 14 tests  | `tests/regression/test_plan_editor.py`; `../../basis-runs/MAM-629/codex2/gate-tests-plan-editor.txt` | VERIFIED en esta revisión                                                    |
+| Módulo `tests.regression.test_plan_editor` tras H2 | 26 tests  | `../../basis-runs/MAM-629/codex2/gate-tests-plan-editor.txt`                                         | VERIFIED; 12 existentes + 14 nuevos; `OK`, sin omisiones ni fallos esperados |
 
-El navegador ejecutó `run-20261027-190100-409` en
-`../../basis-runs/MAM-629/acceptance-codex1/`: siete grupos de comprobaciones,
-Chromium headless, viewport 390 × 844 con táctil, cero errores JavaScript y cero
-solicitudes externas. El informe `result.json` registra `status=VERIFIED`,
-`source_unchanged=true`, `server_stopped=true` y SHA-256 de tres capturas.
-Se inspeccionaron visualmente `calendar-390.png`, `cycle-error-390.png` y `versions-390.png`.
-No equivale a auditoría WCAG ni aprobación del propietario.
+La revisión lee los logs históricos de BT1; no vuelve a levantar PostgreSQL.
+La suite completa posterior a H2 y el subconjunto BT3 posterior a H2 quedan
+NOT RUN. No se suman ni confunden conteos de suites con alcances diferentes.
 
-| Criterio de aceptación                              | Estado   | Comprobación                                                                                                 |
-| --------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------ |
-| Construir y recorrer bloque hasta sesión            | VERIFIED | Formularios de plan, macro/meso/micro, sesión y enlaces del árbol                                            |
-| Mostrar impacto y conservar registros ejecutados    | VERIFIED | Resumen previo, nueva versión, igualdad de snapshot de ejecución y rechazo de edición de intención ejecutada |
-| Usar calendario/editor sin arrastrar                | VERIFIED | Formularios, selectores, Tab/Shift+Tab/Enter, HTMX real y fallback sin JavaScript                            |
-| Restricciones y errores junto a la acción           | VERIFIED | Ciclo fuera de fechas, error resumen/campo y conflicto en formulario de sesión                               |
-| Crear/editar/reprogramar/omitir/sustituir/versiones | VERIFIED | Pruebas de regresión y recorrido headless con aserciones ORM de resultados                                   |
-| Privacidad entre cuentas                            | VERIFIED | GET/POST privados rechazados, plantillas/objetivos propios y comparación ajena 404                           |
+## Cobertura añadida en H2
 
-Las fixtures son locales y ficticias. El resultado de distancia usado para
-comprobar conservación se introduce como fixture; no se atribuye a una persona
-ni a un entrenamiento real. Las lecturas de fixture del auditor se ejecutan
-en un hilo propio; no se deshabilita la protección asíncrona de Django.
+Los 14 métodos nuevos se distribuyen así; los subcasos no se cuentan como tests
+adicionales:
+
+| Grupo                          | Métodos nuevos | Cobertura                                                                                                                                                                                                                         |
+| ------------------------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aislamiento entre cuentas      | 7              | Plantilla con origen u objetivo ajenos; GET/POST de plan, alta/edición de ciclo y alta de sesión ajenos; ciclo ajeno dentro de un plan propio; acciones de sesión `edit`, `move`, `change` con `skipped`, `cancelled` y `replace` |
+| Referencias a otro plan propio | 4              | Padre ajeno al plan al crear/editar ciclo; microciclo de otro plan al mover/crear sesión                                                                                                                                          |
+| Sustitución ajena              | 1              | `replacement` apuntando a una sesión planificada de otra cuenta, con prescripción completa                                                                                                                                        |
+| CSRF estricto                  | 1              | `Client(enforce_csrf_checks=True)`: 20 POST sin token, diez variantes con y sin cookie CSRF; todos devuelven 403                                                                                                                  |
+| GET sin efectos de mutación    | 1              | Las diez variantes reciben por query string los mismos campos de mutación; todas devuelven 200 sin alterar la BD                                                                                                                  |
+
+Las diez variantes son `plan-template`, `plan-edit`, `editor-cycle-new`,
+`editor-cycle`, `editor-session-new` y `editor-session` con `edit`, `move`,
+`change/skipped`, `change/cancelled` y `change/replace`.
+
+Cada petición cubierta compara el estado completo antes/después de todos los
+modelos gestionados de la BD de tests, incluidas relaciones intermedias,
+versiones y registros de auditoría. Las fixtures y el login se preparan antes
+del snapshot. Las rutas de recursos ajenos devuelven 404; las referencias
+inválidas devuelven 200 con error en el campo correspondiente y sin persistir
+cambios. El editor usa una sesión planificada como `replacement`; no dispone
+de campos de sustitución por ejercicio o por entidad plantilla independiente.
+
+Bugs encontrados en estos escenarios H2: ninguno. No se añadieron
+`expectedFailure`. H1, ciclos hermanos con fechas solapadas, no se modifica ni
+se cubre en esta ampliación: queda pendiente de decisión de Jonathan.
+
+## Checks de esta revisión H2/H6
+
+Evidencia: `../../basis-runs/MAM-629/codex2/`. Cada gate conserva su salida y
+un recibo `status-*.json` con comando, código de salida y fechas UTC.
+
+| Gate                                              | Estado   | Evidencia                                                  |
+| ------------------------------------------------- | -------- | ---------------------------------------------------------- |
+| Ruff check de todo el worktree                    | VERIFIED | `gate-ruff-check.txt`                                      |
+| Ruff format --check del test                      | VERIFIED | `gate-ruff-format.txt`                                     |
+| Regresión del editor, SQLite en memoria           | VERIFIED | `gate-tests-plan-editor.txt`; 26 tests                     |
+| Django check                                      | VERIFIED | `gate-django-check.txt`; cero incidencias                  |
+| Prettier del documento por stdin con contenido LF | VERIFIED | `gate-prettier.txt`                                        |
+| Suite completa SQLite/PostgreSQL después de H2    | NOT RUN  | Este encargo limita la ejecución a la regresión del editor |
+| Aceptación de navegador de esta revisión          | NOT RUN  | No solicitada; no se inicia navegador                      |
+| Systems                                           | NOT RUN  | Prohibido por el encargo                                   |
+| LIVE, Polar, IA y SMTP reales                     | NOT RUN  | Proveedores deshabilitados; correo de tests en memoria     |
+| Dispositivos reales                               | NOT RUN  | Pendiente de aceptación humana                             |
+| Integración con PR #23                            | NOT RUN  | Pendiente de integración conjunta                          |
+| Certificación WCAG                                | NOT RUN  | Los tests y las capturas históricas no la acreditan        |
+| Lector de pantalla                                | NOT RUN  | Pendiente de aceptación humana                             |
 
 ## Comandos reproducibles desde la raíz del worktree
 
-El wrapper local configura `config.test_settings`, base SQLite propia, IA
-deshabilitada y rutas de evidencia. Invocaciones exactas, una por gate:
-
-```powershell
-../../basis-runs/MAM-629/codex1/gate.ps1 ruff-check
-../../basis-runs/MAM-629/codex1/gate.ps1 ruff-format
-../../basis-runs/MAM-629/codex1/gate.ps1 mypy-core
-../../basis-runs/MAM-629/codex1/gate.ps1 mypy-django
-../../basis-runs/MAM-629/codex1/gate.ps1 architecture
-../../basis-runs/MAM-629/codex1/gate.ps1 tests-architecture
-../../basis-runs/MAM-629/codex1/gate.ps1 lint-imports
-../../basis-runs/MAM-629/codex1/gate.ps1 djlint
-../../basis-runs/MAM-629/codex1/gate.ps1 django-check
-../../basis-runs/MAM-629/codex1/gate.ps1 makemigrations
-../../basis-runs/MAM-629/codex1/gate.ps1 tests-sqlite
-../../basis-runs/MAM-629/codex1/gate.ps1 tests-postgresql
-../../basis-runs/MAM-629/codex1/gate.ps1 prettier
-```
-
-Los comandos expandidos y códigos de salida figuran en los logs. Las suites
-ejecutan las mismas etiquetas completas de `checks.yml`, añadiendo la prueba
-nueva bajo `tests.regression`; no se excluyen escenarios. SQLite omite los
-casos que requieren bloqueos reales; PostgreSQL ejecuta esas carreras. Las
-omisiones exactas se conservan en logs con verbosidad 2.
-
-Para otra aceptación, elegir una carpeta **nueva** y un navegador ya instalado:
+El wrapper de esta revisión fuerza SQLite en memoria y una clave ficticia
+exclusiva de tests, sin leer ni imprimir credenciales. Configuración común:
 
 ```powershell
 $env:DJANGO_SETTINGS_MODULE = 'config.test_settings'
-.venv-win/Scripts/python.exe -B -m tests.regression.planning_browser --output ../../basis-runs/MAM-629/acceptance-codex1/run-NUEVO --browser-executable ../../../AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe
+$env:AI_ENABLED = '0'
+$env:POLAR_ENABLED = '0'
+$env:DATABASE_URL = 'sqlite:///:memory:'
+$env:PYTHONDONTWRITEBYTECODE = '1'
 ```
 
-El auditor migra una SQLite exclusiva en `codex1`, levanta WSGI en loopback
-en un hilo propio, cierra navegador/conexiones/servidor en `finally` y conserva
-la base y el informe. No lanza un runner Python de comandos secundarios.
-PostgreSQL se inicializó con `postgres-init-retry.ps1` y se ejecutó con
-`postgres-server.ps1`, dentro de `codex1/pgdata`, puerto 55654, solo loopback.
-Se detiene mediante `gate.ps1 postgres-stop` después de la suite; verificar
-`gate-postgres-stop.txt` y `verification.json` antes de reusar el puerto.
+Invocaciones exactas del wrapper, una por gate:
 
-## Fallos diagnosticados y límites
+```powershell
+../../basis-runs/MAM-629/codex2/gate-h2-h6.ps1 ruff-check
+../../basis-runs/MAM-629/codex2/gate-h2-h6.ps1 ruff-format
+../../basis-runs/MAM-629/codex2/gate-h2-h6.ps1 tests-plan-editor
+../../basis-runs/MAM-629/codex2/gate-h2-h6.ps1 django-check
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex2/prettier-doc.py --check
+```
 
-- FAILED resuelto: el primer initdb directo no pudo inicializar por token/ruta
-  en el sandbox. El script con directorio de trabajo propio y ruta relativa
-  terminó correctamente. Los logs de ambos intentos se conservan.
-- FAILED resuelto: una aserción esperaba `no-store` sin el `private` añadido
-  por el middleware. La prueba ahora exige que se conserve `no-store`.
-- FAILED resuelto: el auditor accedía al ORM en el contexto de Playwright;
-  se trasladaron sus lecturas de fixture a un hilo, manteniendo las guardias.
-- FAILED resuelto: el editor no formateaba las fechas iniciales como ISO para
-  controles date nativos. Corregido con `%Y-%m-%d` y regresión dedicada.
-- FAILED resuelto: selector del auditor coincidía con dos registros históricos;
-  se identifica la intención ejecutada concreta sin eliminar aserciones.
-- Comparaciones de ciclos son descriptivas por orden. Para cambios complejos,
-  consultar los dos árboles completos. No hay edición masiva por arrastre.
+Los cuatro primeros ejecutan, respectivamente:
+
+```powershell
+.venv-win/Scripts/python.exe -B -m ruff check .
+.venv-win/Scripts/python.exe -B -m ruff format --check tests/regression/test_plan_editor.py
+.venv-win/Scripts/python.exe -B manage.py test tests.regression.test_plan_editor -v 2 --noinput
+.venv-win/Scripts/python.exe -B manage.py check
+```
+
+`prettier-doc.py` comprueba que el archivo esté en LF y envía su contenido a
+`node node_modules/prettier/bin/prettier.cjs --check --stdin-filepath
+docs/PLAN-EDITOR-VERIFICATION.md --ignore-path .gitignore`. El uso de
+`.gitignore` evita que `.prettierignore`, que excluye `docs/`, omita el documento.
+No se altera la configuración del repositorio.
+
+## Evidencia histórica y límites
+
+- BT1 conserva los gates de la base mergeada en
+  `../../basis-runs/MAM-629/merge-main/gate-*.txt`.
+- La aceptación Chromium histórica del editor está en
+  `../../basis-runs/MAM-629/acceptance-codex1/run-20261027-190100-409/`;
+  la aceptación posterior al merge, en
+  `../../basis-runs/MAM-629/acceptance-merge-20261027-191732/`.
+  Estas rutas identifican evidencia previa; no se ejecutó ni se revalidó una
+  aceptación de navegador en esta revisión H2/H6.
+- Las fixtures son locales y ficticias. La distancia usada para comprobar
+  conservación de una ejecución es un dato de prueba, sin atribución a personas
+  ni entrenamientos reales.
+- Las comparaciones de ciclos son descriptivas por orden; para cambios
+  complejos deben consultarse ambos árboles completos. No hay edición masiva
+  por arrastre.
 - La plantilla conserva prescripciones y referencias de medición; no calcula
   ni actualiza umbrales deportivos para el nuevo período.
-- La aceptación cubre Chromium local. Otros navegadores, lector de pantalla,
-  dispositivos físicos, despliegue, CI remoto y revisión independiente NOT RUN.
+- Las verificaciones automáticas no equivalen a certificación WCAG, uso con
+  lector de pantalla ni aceptación en dispositivos físicos.
 
 ## Convivencia con PR abiertos
 
-- #22 / `9b8ac8d`: único archivo compartido, `training/adapters/web/urls.py`.
-  Aquí se añade el import `editor` y siete rutas; se deben conservar también
-  el import `player` y sus dos rutas al integrar. `web/planning.py`, ejecución,
-  reproductor y `test_player.py` permanecen intactos. Integración conjunta NOT RUN.
-- #23 / `309880f`: cero archivos compartidos. No se cambian offline, service
-  worker, updates, base, `_pwa` ni shell offline. Integración conjunta NOT RUN.
-- Sin migraciones nuevas; el último nodo sigue siendo
-  `training/0004_block_threshold_snapshot`.
-
-El service worker se bloquea solo en el auditor; el aviso de modo sin conexión
-indisponible en las capturas no acredita ni modifica la PWA. PostgreSQL propio
-ya detenido: `gate-postgres-stop.txt` VERIFIED y `pgdata/postmaster.pid` ausente.
+- PR #22 está integrado en `origin/main` mediante `128e746` y mergeado en
+  `f76b873`. Las rutas de editor y reproductor conviven en la base real;
+  los conteos BT1 anteriores corresponden a esa suite completa mergeada.
+- PR #23: integración conjunta NOT RUN. Esta ampliación no cambia PWA, offline,
+  service worker, reproductor, rutas ni migraciones.
+- PR #24 continúa DRAFT; el nuevo head lo fijará el ejecutor humano.
+- H1 continúa pendiente de decisión de Jonathan.
