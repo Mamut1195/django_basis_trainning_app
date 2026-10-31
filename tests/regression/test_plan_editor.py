@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 from datetime import timedelta
+from typing import cast
 
 from django.apps import apps
 from django.test import Client, TestCase
@@ -490,7 +491,7 @@ class PlanEditorSecurityTests(PlanningFixture, TestCase):
     def editor_cases(self) -> dict[str, tuple[str, dict[str, object]]]:
         plan = TrainingPlan.objects.get(pk=self.header.id)
         cycle = plan.cycles.get(kind="micro")
-        cycle_data = {
+        cycle_data: dict[str, object] = {
             "kind": cycle.kind,
             "parent": cycle.parent_id,
             "title": "Ciclo editado",
@@ -500,7 +501,7 @@ class PlanEditorSecurityTests(PlanningFixture, TestCase):
             "reason": "Ajustar ciclo",
         }
         revision = {"revision": self.future.revision, "reason": "Ajustar sesión"}
-        cases = {
+        cases: dict[str, tuple[str, dict[str, object]]] = {
             "template": (
                 reverse("plan-template"),
                 {
@@ -561,7 +562,7 @@ class PlanEditorSecurityTests(PlanningFixture, TestCase):
         for method in (self.client.get, self.client.post):
             with self.subTest(case=case, method=method.__name__):
                 before = self.database_state()
-                response = method(url, payload)
+                response = method(url, cast("dict[str, str]", payload))
                 self.assertEqual(self.database_state(), before)
                 self.assertEqual(response.status_code, 404)
 
@@ -599,7 +600,7 @@ class PlanEditorSecurityTests(PlanningFixture, TestCase):
         for method in (self.client.get, self.client.post):
             with self.subTest(method=method.__name__):
                 before = self.database_state()
-                response = method(url, payload)
+                response = method(url, cast("dict[str, str]", payload))
                 self.assertEqual(self.database_state(), before)
                 self.assertEqual(response.status_code, 404)
 
@@ -670,6 +671,6 @@ class PlanEditorSecurityTests(PlanningFixture, TestCase):
         for case, (url, payload) in self.editor_cases().items():
             with self.subTest(case=case):
                 before = self.database_state()
-                response = client.get(url, payload)
+                response = client.get(url, cast("dict[str, str]", payload))
                 self.assertEqual(self.database_state(), before)
                 self.assertEqual(response.status_code, 200)
