@@ -177,6 +177,12 @@ class Cycle(ValidatedModel):
                 self.plan.end_date,
                 definition(parent) if parent is not None else None,
                 same_plan=parent is None or parent.plan_id == self.plan_id,
+                siblings=tuple(
+                    definition(sibling)
+                    for sibling in Cycle.objects.using(self._state.db)
+                    .filter(plan_id=self.plan_id, parent_id=self.parent_id)
+                    .exclude(pk=self.pk)
+                ),
             )
         except InvalidPlanning as error:
             raise ValidationError(str(error)) from error

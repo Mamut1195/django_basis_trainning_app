@@ -10,18 +10,22 @@ from django.urls import reverse
 from basis.bootstrap.plan_editor import plan_editor
 from basis.modules.training.adapters.actions import session_snapshot, start_session
 from basis.modules.training.adapters.editor_read import differences
-from basis.modules.training.adapters.models import Goal, PlannedSession, TrainingPlan
+from basis.modules.training.adapters.models import Cycle, Goal, PlannedSession, TrainingPlan
 from basis.modules.training.application.plan_editor import CopyTemplate, EditPlan
 from basis.modules.training.domain.plan_editor import edit_definition, template_definition
 from basis.modules.training.public import (
+    AddCycle,
     CreatePlan,
+    CycleDefinition,
+    CycleKind,
     InvalidPlanning,
     PlanningConflict,
     PlanningUnavailable,
 )
-from basis.shared.identifiers import AccountId, GoalId
+from basis.shared.identifiers import AccountId, CycleId, GoalId, PlanId
 from tests.regression.test_planning_versioning import PlanningFixture
 from tests_architecture.test_planning import TODAY, definition
+from tests_architecture.test_planning_siblings import OVERLAP, sibling_plan
 
 
 class PlanEditorTests(PlanningFixture, TestCase):
@@ -304,6 +308,174 @@ class PlanEditorTests(PlanningFixture, TestCase):
         self.assertEqual(
             self.client.post(reverse("plan-edit", args=[self.header.id]), {}).status_code, 403
         )
+
+
+class PlanEditorSiblingTests(PlanningFixture, TestCase):
+    def database_state(self) -> dict[str, list[dict[str, object]]]:
+        return {
+            model._meta.label: list(model._base_manager.order_by("pk").values())
+            for model in apps.get_models(include_auto_created=True)
+            if model._meta.managed and not model._meta.proxy
+        }
+
+    def sibling_fixture(
+        self, kind: CycleKind, *, with_following: bool = False
+    ) -> tuple[TrainingPlan, CycleDefinition]:
+        data, following = sibling_plan(kind)
+        data = replace(data, goal=self.data.goal)
+        if with_following:
+            data = replace(data, cycles=(*data.cycles, following))
+        header = self.service.create(CreatePlan(self.owner, data))
+        return TrainingPlan.objects.get(pk=header.id), following
+
+    def cycle_payload(self, cycle: CycleDefinition, parent: int | None) -> dict[str, object]:
+        return {
+            "kind": cycle.kind.value,
+            "parent": parent or "",
+            "title": cycle.title,
+            "start_date": cycle.start_date,
+            "end_date": cycle.end_date,
+            "focus": cycle.focus,
+            "reason": "Ajustar calendario H1",
+        }
+
+    def assert_overlap_without_writes(self, url: str, payload: dict[str, object]) -> None:
+        before = self.database_state()
+        response = self.client.post(url, payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(OVERLAP, response.context["form"].non_field_errors())
+        self.assertContains(response, OVERLAP)
+        self.assertEqual(self.database_state(), before)
+
+    def test_web_create_rejects_overlap_and_accepts_adjacency_at_all_levels(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, following = self.sibling_fixture(kind)
+                first = plan.cycles.get(title="Primero")
+                payload = self.cycle_payload(following, first.parent_id)
+                url = reverse("editor-cycle-new", args=[plan.pk])
+                self.assert_overlap_without_writes(url, {**payload, "start_date": first.end_date})
+                response = self.client.post(url, payload)
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(
+                    plan.cycles.get(title="Siguiente").start_date, following.start_date
+                )
+
+    def test_web_edit_rejects_overlap_and_versions_adjacent_siblings(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, following = self.sibling_fixture(kind, with_following=True)
+                cycle = plan.cycles.get(title="Siguiente")
+                payload = self.cycle_payload(replace(following, title="Editado"), cycle.parent_id)
+                url = reverse("editor-cycle", args=[plan.pk, cycle.pk])
+                self.assert_overlap_without_writes(
+                    url, {**payload, "start_date": TODAY + timedelta(days=9)}
+                )
+                response = self.client.post(url, payload)
+                self.assertEqual(response.status_code, 302)
+                head = TrainingPlan.objects.get(previous=plan)
+                self.assertEqual(head.cycles.get(title="Editado").start_date, following.start_date)
+                cycle.refresh_from_db()
+                self.assertEqual(cycle.title, "Siguiente")
+
+    def test_web_move_validates_destination_and_preserves_source(self) -> None:
+        plan, _ = self.sibling_fixture(CycleKind.MESO, with_following=True)
+        parents = (plan.cycles.get(title="Primero"), plan.cycles.get(title="Siguiente"))
+        source = Cycle.objects.create(
+            plan=plan,
+            parent=parents[0],
+            kind="micro",
+            title="Origen",
+            start_date=TODAY,
+            end_date=TODAY + timedelta(days=4),
+        )
+        Cycle.objects.create(
+            plan=plan,
+            parent=parents[1],
+            kind="micro",
+            title="Destino",
+            start_date=TODAY + timedelta(days=10),
+            end_date=TODAY + timedelta(days=14),
+        )
+        url = reverse("editor-cycle", args=[plan.pk, source.pk])
+        payload = {
+            "kind": "micro",
+            "parent": parents[1].pk,
+            "title": "Movido",
+            "start_date": TODAY + timedelta(days=15),
+            "end_date": TODAY + timedelta(days=19),
+            "reason": "Cambiar de padre",
+        }
+        self.assert_overlap_without_writes(
+            url, {**payload, "start_date": TODAY + timedelta(days=14)}
+        )
+        response = self.client.post(url, payload)
+        self.assertEqual(response.status_code, 302)
+        head = TrainingPlan.objects.get(previous=plan)
+        moved = head.cycles.get(title="Movido")
+        self.assertEqual(moved.parent_id, head.cycles.get(title="Siguiente").pk)
+        self.assertEqual(moved.start_date, TODAY + timedelta(days=15))
+        source.refresh_from_db()
+        self.assertEqual((source.parent_id, source.start_date), (parents[0].pk, TODAY))
+
+    def test_web_template_accepts_adjacency_and_rejects_legacy_overlap(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, _ = self.sibling_fixture(kind, with_following=True)
+                payload = {
+                    "source": plan.pk,
+                    "goal": plan.goal_id,
+                    "title": "Plantilla H1",
+                    "start_date": TODAY + timedelta(days=60),
+                    "reason": "Nuevo periodo",
+                }
+                url = reverse("plan-template")
+                response = self.client.post(url, payload)
+                self.assertEqual(response.status_code, 302)
+                copied = TrainingPlan.objects.get(
+                    pk=response["Location"].rstrip("/").split("/")[-2]
+                )
+                self.assertEqual(
+                    copied.cycles.get(title="Siguiente").start_date, TODAY + timedelta(days=70)
+                )
+                # Simulate pre-H1 persisted data, bypassing current model validation only here.
+                plan.cycles.filter(title="Siguiente").update(start_date=TODAY + timedelta(days=9))
+                self.assert_overlap_without_writes(url, payload)
+
+    def test_application_create_overlap_fails_before_writing_any_rows(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                data, following = sibling_plan(kind)
+                following = replace(following, start_date=TODAY + timedelta(days=9))
+                before = self.database_state()
+                with self.assertRaisesRegex(InvalidPlanning, OVERLAP):
+                    self.service.create(
+                        CreatePlan(
+                            self.owner,
+                            replace(data, goal=self.data.goal, cycles=(*data.cycles, following)),
+                        )
+                    )
+                self.assertEqual(self.database_state(), before)
+
+    def test_application_add_cycle_rejects_overlap_under_aggregate_lock(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, following = self.sibling_fixture(kind)
+                first = plan.cycles.get(title="Primero")
+                command = AddCycle(
+                    self.owner,
+                    PlanId(plan.pk),
+                    following,
+                    CycleId(first.parent_id) if first.parent_id else None,
+                )
+                before = self.database_state()
+                with self.assertRaisesRegex(InvalidPlanning, OVERLAP):
+                    self.service.add_cycle(
+                        replace(command, data=replace(following, start_date=first.end_date))
+                    )
+                self.assertEqual(self.database_state(), before)
+                added = self.service.add_cycle(command)
+                self.assertEqual(plan.cycles.get(pk=added).start_date, following.start_date)
 
 
 class PlanEditorSecurityTests(PlanningFixture, TestCase):

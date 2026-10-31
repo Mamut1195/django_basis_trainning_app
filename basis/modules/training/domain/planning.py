@@ -143,7 +143,13 @@ def validate_cycle(
     parent: CycleDefinition | None,
     *,
     same_plan: bool = True,
+    siblings: tuple[CycleDefinition, ...] = (),
 ) -> None:
+    """Validate inclusive [start_date, end_date] ranges within one plan.
+
+    Siblings may start the day after another ends; sharing an endpoint overlaps.
+    The candidate itself is ignored when validating an edit.
+    """
     if data.end_date < data.start_date or data.start_date < plan_start or data.end_date > plan_end:
         raise InvalidPlanning("El ciclo debe estar dentro de las fechas del plan.")
     if data.kind == CycleKind.MACRO and data.parent is not None:
@@ -155,6 +161,14 @@ def validate_cycle(
         not same_plan or data.start_date < parent.start_date or data.end_date > parent.end_date
     ):
         raise InvalidPlanning("El ciclo debe estar dentro de su padre y plan.")
+    if any(
+        sibling.key != data.key
+        and sibling.parent == data.parent
+        and data.start_date <= sibling.end_date
+        and sibling.start_date <= data.end_date
+        for sibling in siblings
+    ):
+        raise InvalidPlanning("Los ciclos con el mismo padre no pueden solaparse en fechas.")
 
 
 def validate_schedule(
@@ -237,6 +251,7 @@ def validate_definition(data: PlanDefinition, *, allow_drafts: bool = False) -> 
                 data.start_date,
                 data.end_date,
                 cycles.get(cycle.parent) if cycle.parent is not None else None,
+                siblings=tuple(cycles.values()),
             )
             cycles[cycle.key] = cycle
     intents: set[PlannedSessionId] = set()

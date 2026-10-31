@@ -102,6 +102,7 @@ class CycleCreationContext:
     parent: CycleDefinition | None
     same_plan: bool
     has_successor: bool = False
+    siblings: tuple[CycleDefinition, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -222,6 +223,7 @@ class Planning:
                 context.plan_end,
                 context.parent,
                 same_plan=context.same_plan,
+                siblings=context.siblings,
             )
             result = self.repository.add_cycle(command)
             work.commit()

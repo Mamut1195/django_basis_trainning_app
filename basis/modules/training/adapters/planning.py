@@ -270,6 +270,7 @@ class DjangoPlanRepository:
             cycle_definition(parent) if parent is not None else None,
             parent is None or parent.plan_id == plan.pk,
             TrainingPlan.objects.filter(previous_id=plan.pk).exists(),
+            tuple(cycle_definition(c) for c in plan.cycles.filter(parent_id=command.parent)),
         )
 
     def schedule_context(self, command: ScheduleSession) -> ScheduleCreationContext:

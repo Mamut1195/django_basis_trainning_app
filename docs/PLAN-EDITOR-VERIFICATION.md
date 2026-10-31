@@ -4,7 +4,9 @@ Base de esta revisión: `f76b873`, rama `ticket/MAM-629-calendario-editor`.
 Incluye cuatro commits del editor y el merge `--no-ff` de `origin/main`
 `128e746`, que integra PR #22. PR #24 permanece DRAFT. `head: ver PR #24`;
 el ejecutor humano fijará el nuevo head después de revisar estos cambios.
-Esta ampliación H2/H6 modifica únicamente tests y documentación, sin commits.
+La ampliación H2/H6 modificó únicamente tests y documentación, sin commits.
+La corrección H1 parte de `e24c9cf` y añade la regla de dominio y su cobertura,
+también sin commits.
 
 ## Comportamiento
 
@@ -19,6 +21,13 @@ Esta ampliación H2/H6 modifica únicamente tests y documentación, sin commits.
 - Editar plan o ciclo crea otra versión con motivo, autor y fecha efectiva.
   Conserva borradores. Solo copia sesiones futuras sin ejecución; las demás
   permanecen consultables en su versión histórica y en la agenda efectiva.
+- Por decisión de Jonathan, los ciclos hermanos del mismo plan no pueden
+  solaparse, incluidos los macrociclos raíz con padre vacío. Las fechas son
+  inclusivas: `[inicio, final]`, como la pertenencia de sesiones a un ciclo y
+  los ciclos de un día que ya admite el dominio. Terminar el 7 y empezar el 8
+  es adyacencia válida; terminar y empezar el 7 comparte un día y se rechaza.
+  Se comprueba al crear, editar, cambiar de padre y aplicar una plantilla.
+  La contención entre padre e hijo sigue siendo válida.
 - Reprogramar, editar nombre/notas, omitir, cancelar o sustituir una sesión utiliza
   los casos de planificación existentes con bloqueo cuenta/linaje y revisión.
   La fecha y relación de intención se conservan al sustituir la prescripción.
@@ -76,8 +85,59 @@ cambios. El editor usa una sesión planificada como `replacement`; no dispone
 de campos de sustitución por ejercicio o por entidad plantilla independiente.
 
 Bugs encontrados en estos escenarios H2: ninguno. No se añadieron
-`expectedFailure`. H1, ciclos hermanos con fechas solapadas, no se modifica ni
-se cubre en esta ampliación: queda pendiente de decisión de Jonathan.
+`expectedFailure`. H1 está corregido por decisión de Jonathan; su evidencia
+se registra por separado a continuación.
+
+## Corrección H1: ciclos hermanos sin solapes
+
+`validate_cycle` comprueba intersecciones inclusivas entre hermanos y omite
+el propio ciclo al editar. `validate_definition` aplica la regla al agregado.
+El alta individual obtiene los hermanos del mismo plan bajo el bloqueo ya
+existente; `Cycle.clean` usa la misma regla para el formulario. El editor
+reutiliza sus errores de formulario, sin 500 ni escrituras parciales. No hay
+migraciones ni conversión de fechas o corrección automática de datos históricos.
+Una plantilla histórica con solapes se rechaza antes de copiarla.
+
+Evidencia H1: `../../basis-runs/MAM-629/codex3/result.md`, logs `gate-*.txt`
+y recibos `status-*.json`. El wrapper `gate-h1.py` usa SQLite en memoria,
+`config.test_settings`, `AI_ENABLED=0`, `POLAR_ENABLED=0` y una clave ficticia
+de tests. Sus auxiliares y cachés se guardan en esa carpeta.
+
+| Gate H1                                    | Estado   | Resultado                                                           |
+| ------------------------------------------ | -------- | ------------------------------------------------------------------- |
+| Dominio de planning                        | VERIFIED | 25 tests: 18 existentes y 7 nuevos                                  |
+| `tests.regression.test_plan_editor`         | VERIFIED | 32 tests: 26 existentes y 6 nuevos                                  |
+| Ruff check global                          | VERIFIED | Sin incidencias                                                     |
+| Ruff format --check de los archivos H1     | VERIFIED | 7 archivos Python conformes                                        |
+| Ruff format --check global                 | FAILED   | Formato preexistente en `manage.py` y `scripts/arch09_remediation.py` |
+| Mypy core                                  | VERIFIED | 126 archivos sin errores                                           |
+| Mypy Django                                | FAILED   | 4 errores preexistentes en `PlanEditorSecurityTests`                |
+| Django check                               | VERIFIED | Cero incidencias                                                    |
+| Makemigrations --check --dry-run            | VERIFIED | Sin cambios detectados                                              |
+| PostgreSQL, navegador y suite completa H1  | NOT RUN  | Fuera del alcance solicitado                                       |
+
+Los fallos de formato se reprodujeron con el contenido de `HEAD`; ambos
+archivos permanecen intactos. Los cuatro errores de mypy Django se reprodujeron
+con `--shadow-file` del test original de `HEAD`. No se modificaron ni eliminaron
+métodos de tests existentes; solo se amplió la fixture en memoria para aportar
+los ciclos al contexto de alta. Todos los existentes de las dos suites
+solicitadas pasan. Los 13 métodos nuevos cubren adyacencia,
+extremos compartidos, contención/igualdad de rangos, orden inverso, creación,
+edición, cambio de padre, plantilla y rechazo antes de un escritor permisivo.
+Los rechazos web comparan todos los modelos gestionados antes/después,
+incluidas versiones y auditoría. Estos conteos no sustituyen la evidencia
+histórica de suite completa.
+
+Para repetir un gate desde la raíz:
+
+```powershell
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex3/gate-h1.py tests-domain
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex3/gate-h1.py tests-editor
+```
+
+El mismo wrapper admite `ruff-check`, `ruff-format`, `ruff-format-h1`,
+`mypy-core`, `mypy-django`, `django-check` y `migrations`. `result.md` detalla
+los comandos y las comprobaciones de la base.
 
 ## Checks de esta revisión H2/H6
 
@@ -167,4 +227,5 @@ No se altera la configuración del repositorio.
 - PR #23: integración conjunta NOT RUN. Esta ampliación no cambia PWA, offline,
   service worker, reproductor, rutas ni migraciones.
 - PR #24 continúa DRAFT; el nuevo head lo fijará el ejecutor humano.
-- H1 continúa pendiente de decisión de Jonathan.
+- H1 corregido por decisión de Jonathan: hermanos del mismo plan sin solapes,
+  con fechas inclusivas y adyacencia permitida.

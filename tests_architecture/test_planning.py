@@ -142,7 +142,12 @@ class MemoryPlans:
             (cycle for cycle in plan.definition.cycles if cycle.key == str(command.parent)), None
         )
         return CycleCreationContext(
-            plan.definition.start_date, plan.definition.end_date, parent, True, plan.has_successor
+            plan.definition.start_date,
+            plan.definition.end_date,
+            parent,
+            True,
+            plan.has_successor,
+            plan.definition.cycles,
         )
 
     def schedule_context(self, command: ScheduleSession) -> ScheduleCreationContext:
