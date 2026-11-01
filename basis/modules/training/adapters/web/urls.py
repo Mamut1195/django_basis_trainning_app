@@ -3,10 +3,18 @@
 from django.urls import path
 
 from basis.modules.training.adapters import web as training
+from basis.modules.training.adapters.web import editor
 
 from . import player
 
 urlpatterns = [
+    path("plans/from-template/", editor.template_new, name="plan-template"),
+    path("plans/<int:pk>/calendar/", editor.calendar, name="plan-calendar"),
+    path("plans/<int:pk>/edit/", editor.plan_edit, name="plan-edit"),
+    path("plans/<int:pk>/editor/cycles/new/", editor.cycle_editor, name="editor-cycle-new"),
+    path("plans/<int:pk>/editor/cycles/<int:cycle_id>/", editor.cycle_editor, name="editor-cycle"),
+    path("plans/<int:pk>/editor/sessions/new/", editor.session_new, name="editor-session-new"),
+    path("scheduled/<int:pk>/editor/<str:action>/", editor.session_action, name="editor-session"),
     path("", training.today, name="today"),
     path("plans/", training.plan_list, name="plans"),
     path("plans/new/", training.plan_new, name="plan-new"),

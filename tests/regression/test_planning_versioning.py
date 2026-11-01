@@ -207,6 +207,9 @@ class PlanningVersioningTests(PlanningFixture, TestCase):
         self.assertFalse(Session.objects.exists())
 
     def test_move_between_explicit_microcycles_retains_temporal_bounds(self) -> None:
+        # Inclusive ranges: shorten the original micro to end on TODAY + 1 (it still
+        # holds past/executed/future) so sibling "Destino" starts the next day.
+        Cycle.objects.filter(pk=self.future.cycle_id).update(end_date=TODAY + timedelta(days=1))
         cycle = Cycle.objects.create(
             plan_id=self.header.id,
             parent=self.future.cycle.parent,
