@@ -97,6 +97,8 @@ class RecordSport:
 
 @dataclass(frozen=True)
 class RecordWellness:
+    """Create a date/moment check-in, or edit an explicitly owned identifier."""
+
     owner: AccountId
     data: WellnessData
     id: WellnessId | None = None

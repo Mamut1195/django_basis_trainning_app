@@ -4,13 +4,13 @@ from basis.adapters.django.export import export_section
 from basis.shared.export import ExportSection
 from basis.shared.identifiers import AccountId
 
+from .django import wellness_rows
 from .models import (
     AthleteSettings,
     Measurement,
     SportProfile,
     User,
     UserExerciseRM,
-    Wellness,
     WorkoutData,
 )
 
@@ -32,9 +32,7 @@ class DjangoAthleteExport:
             export_section(
                 SportProfile.objects.filter(owner_id=owner), "sportprofile", "training.sportprofile"
             ),
-            export_section(
-                Wellness.objects.filter(owner_id=owner), "wellness", "training.wellness"
-            ),
+            export_section(wellness_rows(owner), "wellness", "training.wellness"),
             export_section(
                 WorkoutData.objects.filter(user__account_id=owner),
                 "workoutdata",

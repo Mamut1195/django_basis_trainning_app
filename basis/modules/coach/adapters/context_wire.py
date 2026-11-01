@@ -113,6 +113,7 @@ def encode_context(context: CoachContext) -> dict[str, object]:
         ],
         "wellness_latest": {
             "date": w.date,
+            "moment": w.moment,
             "sleep_hours": w.sleep_hours,
             "fatigue": w.fatigue,
             "stress": w.stress,
@@ -218,6 +219,7 @@ def decode_context(value: object) -> CoachContext:
             None,
             "",
             "",
+            text(w.get("moment", "day")),
         )
         if w
         else None

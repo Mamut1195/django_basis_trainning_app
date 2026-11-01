@@ -210,9 +210,17 @@ class AthleteIntegrationTests(TestCase):
     def test_wellness_web_update_preserves_identifier_zero_and_missing(self) -> None:
         day = timezone.localdate()
         for notes in ("first", "second"):
+            row = Wellness.objects.filter(owner_id=self.owner, date=day, moment="day").first()
+            url = f"/profile/wellness/{row.pk}/edit/" if row else "/records/wellness/new/"
             result = self.client.post(
-                "/records/wellness/new/",
-                {"date": day.isoformat(), "sleep_hours": "0", "pain_score": "0", "notes": notes},
+                url,
+                {
+                    "date": day.isoformat(),
+                    "moment": "day",
+                    "sleep_hours": "0",
+                    "pain_score": "0",
+                    "notes": notes,
+                },
             )
             assert result.status_code == 302
         row = Wellness.objects.get(owner_id=self.owner)

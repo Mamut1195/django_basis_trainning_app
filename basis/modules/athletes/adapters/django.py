@@ -4,7 +4,7 @@ from dataclasses import fields
 from decimal import Decimal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from django.db import models
+from django.db import IntegrityError, models, transaction
 
 from basis.modules.athletes.adapters.models import (
     AthleteSettings,
@@ -182,6 +182,23 @@ def wellness_data(row: Wellness) -> WellnessData:
         row.hrv_ms,
         row.hrv_method,
         row.notes,
+        row.moment,
+    )
+
+
+def wellness_rows(owner: AccountId) -> models.QuerySet[Wellness]:
+    """Latest day first, then after > before > day, consistently for all readers."""
+    return (
+        Wellness.objects.filter(owner_id=owner)
+        .annotate(
+            moment_priority=models.Case(
+                models.When(moment="after", then=2),
+                models.When(moment="before", then=1),
+                default=0,
+                output_field=models.IntegerField(),
+            )
+        )
+        .order_by("-date", "-moment_priority", "-pk")
     )
 
 
@@ -289,7 +306,22 @@ class DjangoAthleteRecords:
         if row is None:
             raise AthleteUnavailable
         assign(row, data)
-        persist(row)
+        # Lock the account profile to serialize same-account writes on PostgreSQL.
+        self.lock_profile(owner)
+        duplicates = Wellness.objects.filter(owner_id=owner, date=data.date, moment=data.moment)
+        if id is not None:
+            duplicates = duplicates.exclude(pk=id)
+        message = "Ya registraste un check-in para esa fecha y momento. Edita el existente."
+        if duplicates.exists():
+            raise InvalidAthleteData(message)
+        try:
+            # Savepoint keeps a uniqueness race from leaving the caller's UoW broken.
+            with transaction.atomic():
+                persist(row)
+        except IntegrityError as error:
+            if duplicates.exists():
+                raise InvalidAthleteData(message) from error
+            raise
         return WellnessId(row.pk)
 
     def save_measurement(self, owner: AccountId, data: MeasurementData) -> MeasurementId:

@@ -1,18 +1,18 @@
 """Owner-scoped coach projection; no unrelated identity/contact data."""
 
-from basis.modules.athletes.adapters.models import AthleteSettings, SportProfile, Wellness
+from basis.modules.athletes.adapters.models import AthleteSettings, SportProfile
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.shared.identifiers import AccountId
 
 from ..application.coach import AthleteCoachContext
-from .django import preferences_data, sport_data, wellness_data
+from .django import preferences_data, sport_data, wellness_data, wellness_rows
 
 
 class DjangoAthleteCoachContexts:
     def read(self, owner: AccountId) -> AthleteCoachContext:
         profile = Athlete.objects.get(account_id=owner)
         preferences = AthleteSettings.objects.filter(owner_id=owner).first()
-        wellness = Wellness.objects.filter(owner_id=owner).order_by("-date").first()
+        wellness = wellness_rows(owner).first()
         return AthleteCoachContext(
             profile.edad,
             (profile.objetivos or "")[:300],

@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import F
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 
 from basis.adapters.web.framework import owner, write_required
 from basis.adapters.web.presentation import profile_goals
+from basis.modules.athletes.adapters.django import wellness_rows
+from basis.modules.athletes.adapters.local_dates import owner_local_date
 from basis.modules.athletes.adapters.models import (
     Measurement,
     SportProfile,
@@ -32,7 +35,9 @@ from basis.modules.athletes.adapters.web.forms import (
     RMForm,
     SportProfileForm,
     WellnessForm,
+    WellnessRangeForm,
 )
+from basis.shared.identifiers import AccountId
 
 
 @login_required
@@ -128,19 +133,77 @@ def _owned_new(request: HttpRequest, resource: str) -> HttpResponse:
     model, cls, title = mapping[resource]
     instance = model(owner=owner(request))
     if resource == "wellness":
-        instance = (
-            Wellness.objects.filter(owner=owner(request), date=timezone.localdate()).first()
-            or instance
+        moment = request.GET.get("moment")
+        instance = Wellness(
+            owner=owner(request),
+            date=owner_local_date(owner(request).pk),
+            moment=moment if moment in ("before", "after") else "day",
         )
-    form = cls(request.POST or None, instance=instance)
+    form = cls(request.POST if request.method == "POST" else None, instance=instance)
     if request.method == "POST" and form.is_valid():
         instance = form.save(commit=False)
         try:
             save_observation(owner(request).pk, instance)
-            return redirect("profile" if resource in ("sport", "measurement") else "progress")
+            return redirect(
+                "profile" if resource in ("sport", "measurement") else "wellness-history"
+            )
         except ValidationError as error:
             form.add_error(None, error)
-    return render(request, "shared/form.html", {"title": title, "form": form})
+    return render(
+        request,
+        "shared/form.html",
+        {
+            "title": title,
+            "form": form,
+            "subtitle": "Solo un registro para tu seguimiento. Todos los datos de bienestar son opcionales."
+            if resource == "wellness"
+            else "",
+        },
+    )
+
+
+@write_required
+def wellness_edit(request: HttpRequest, pk: int) -> HttpResponse:
+    row = get_object_or_404(Wellness, pk=pk, owner=owner(request))
+    form = WellnessForm(request.POST if request.method == "POST" else None, instance=row)
+    if request.method == "POST" and form.is_valid():
+        try:
+            save_observation(owner(request).pk, form.save(commit=False))
+            return redirect("wellness-history")
+        except ValidationError as error:
+            form.add_error(None, error)
+    return render(
+        request,
+        "shared/form.html",
+        {
+            "title": "Editar check-in",
+            "form": form,
+            "subtitle": "Solo un registro para tu seguimiento.",
+        },
+    )
+
+
+@login_required
+def wellness_history(request: HttpRequest) -> HttpResponse:
+    today = owner_local_date(owner(request).pk)
+    form = WellnessRangeForm(
+        {
+            "start": request.GET.get("start", (today - timedelta(days=29)).isoformat()),
+            "end": request.GET.get("end", today.isoformat()),
+        }
+    )
+    rows = wellness_rows(AccountId(owner(request).pk))
+    valid = form.is_valid()
+    if valid:
+        rows = rows.filter(date__range=(form.cleaned_data["start"], form.cleaned_data["end"]))
+    else:
+        rows = rows.none()
+    return render(
+        request,
+        "athletes/profile/wellness.html",
+        {"form": form, "wellness_records": rows},
+        status=200 if valid else 400,
+    )
 
 
 @personal_required

@@ -7,8 +7,8 @@ from basis.shared.identifiers import AccountId, ExerciseId
 
 from ..application.presentation import AthleteHistory, ExerciseName, HistoricalWorkout
 from ..domain.records import MeasurementData, WellnessData
-from .django import wellness_data
-from .models import Measurement, Wellness, WorkoutData
+from .django import wellness_data, wellness_rows
+from .models import Measurement, WorkoutData
 
 
 class DjangoAthletePresentation:
@@ -25,7 +25,7 @@ class DjangoAthletePresentation:
         self.exercises = exercises
 
     def wellness(self, owner: AccountId, day: date) -> WellnessData | None:
-        row = Wellness.objects.filter(owner_id=owner, date=day).first()
+        row = wellness_rows(owner).filter(date=day).first()
         return wellness_data(row) if row else None
 
     def history(self, owner: AccountId) -> AthleteHistory:
@@ -43,10 +43,7 @@ class DjangoAthletePresentation:
                 )
                 for row in workouts
             ),
-            tuple(
-                wellness_data(row)
-                for row in Wellness.objects.filter(owner_id=owner).order_by("-date")[:14]
-            ),
+            tuple(wellness_data(row) for row in wellness_rows(owner)[:14]),
             tuple(
                 MeasurementData(row.date, row.weight_kg, row.notes)
                 for row in Measurement.objects.filter(
