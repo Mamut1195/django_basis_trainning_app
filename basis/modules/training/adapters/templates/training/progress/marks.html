@@ -1,0 +1,58 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading title="Marcas de fuerza"
+                        subtitle="Consulta tus registros declarados y estimaciones por serie sin mezclarlos." />
+  <c-basis.card title="Filtros">
+    <p>Filtra por ejercicio y fechas inclusivas. Los ejercicios archivados conservan su historial.</p>
+    <form method="get">
+      <c-basis.error-summary :form="form" />
+      {{ form.as_div }}
+      <c-ui.button type="submit">
+        Consultar
+      </c-ui.button>
+    </form>
+  </c-basis.card>
+  {% if valid %}
+    <c-basis.card title="1RM medido declarado">
+      <p>
+        Valores registrados por ti; no son una certificación instrumental. Solo se muestran valores positivos. Los registros anteriores sin valor positivo se conservan en la exportación.
+      </p>
+      {% for mark in measured.rows %}
+        <p>
+          {{ mark.date|date:'Y-m-d' }} · {{ mark.exercise_name }} · {{ mark.kg }} kg · Medido declarado · <a href="{% url 'measured-rm-detail' mark.id %}">Ver registro fuente</a>
+        </p>
+      {% empty %}
+        <p>Sin marcas medidas en este filtro.</p>
+      {% endfor %}
+      {% if measured.previous %}
+        <a href="?{{ measured_query }}&amp;measured_page={{ measured.previous }}">Medidas anteriores</a>
+      {% endif %}
+      {% if measured.pages > 1 %}<p>Página {{ measured.number }} de {{ measured.pages }}</p>{% endif %}
+      {% if measured.next %}
+        <a href="?{{ measured_query }}&amp;measured_page={{ measured.next }}">Medidas siguientes</a>
+      {% endif %}
+    </c-basis.card>
+    <c-basis.card title="1RM estimado por serie">
+      <p>
+        Epley sobre series de trabajo con carga externa y RPE real 10; es una estimación y no sustituye una medición. Solo se incluyen sesiones completadas.
+      </p>
+      {% for mark in estimated.rows %}
+        <p>
+          {{ mark.date|date:'Y-m-d' }} · {{ mark.exercise_name }} · {{ mark.kg }} kg estimados · {{ mark.observed_kg }} kg × {{ mark.reps }} rep · RPE real {{ mark.rpe }} · Epley · {{ mark.block_title }} / serie {{ mark.set_order }} · <a href="{% url 'session-detail' mark.session_id %}">{{ mark.session_title }}</a>
+        </p>
+      {% empty %}
+        <p>Sin estimaciones elegibles en este filtro.</p>
+      {% endfor %}
+      {% if estimated.previous %}
+        <a href="?{{ estimated_query }}&amp;estimated_page={{ estimated.previous }}">Estimaciones anteriores</a>
+      {% endif %}
+      {% if estimated.pages > 1 %}
+        <p>Página {{ estimated.number }} de {{ estimated.pages }}</p>
+      {% endif %}
+      {% if estimated.next %}
+        <a href="?{{ estimated_query }}&amp;estimated_page={{ estimated.next }}">Estimaciones siguientes</a>
+      {% endif %}
+    </c-basis.card>
+  {% endif %}
+  <a href="{% url 'progress' %}">Volver a progreso</a>
+{% endblock %}

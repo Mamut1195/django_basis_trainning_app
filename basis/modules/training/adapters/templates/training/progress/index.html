@@ -33,6 +33,11 @@
       <c-ui.button href="{% url 'owned-new' 'trip' %}">
         Nuevo trekking
       </c-ui.button>
+      {% if period_start %}
+        <a href="{% url 'strength-marks' %}?start={{ period_start|date:'Y-m-d' }}&amp;end={{ period_end|date:'Y-m-d' }}">Ver marcas de fuerza</a>
+      {% else %}
+        <a href="{% url 'strength-marks' %}">Ver marcas de fuerza</a>
+      {% endif %}
       <a href="{% url 'export' %}">Exportar mis datos</a>
     </div>
     <c-basis.card title="Adherencia al plan">

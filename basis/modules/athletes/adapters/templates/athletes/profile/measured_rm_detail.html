@@ -1,0 +1,14 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading title="Registro de 1RM"
+                        subtitle="Valor registrado por ti; no es una certificación instrumental." />
+  <c-basis.card title="Detalle de la medición declarada">
+    <p>{{ record.fecha_registro|date:'Y-m-d' }} · {{ record.exercise.nombre }}</p>
+    {% if record.peso_maximo_rm > 0 %}
+      <p>{{ record.peso_maximo_rm }} kg · 1RM medido declarado</p>
+    {% else %}
+      <p>Registro sin valor positivo; no es una marca válida.</p>
+    {% endif %}
+  </c-basis.card>
+  <a href="{% url 'strength-marks' %}">Volver a marcas</a>
+{% endblock %}

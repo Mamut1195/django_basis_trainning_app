@@ -13,4 +13,5 @@ urlpatterns = [
     path("profile/wellness/", athletes.wellness_history, name="wellness-history"),
     path("profile/wellness/<int:pk>/edit/", athletes.wellness_edit, name="wellness-edit"),
     path("measurements/rm/new/", athletes.rm_new, name="rm-new"),
+    path("measurements/rm/<int:pk>/", athletes.measured_rm_detail, name="measured-rm-detail"),
 ]
