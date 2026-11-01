@@ -201,7 +201,7 @@ def wellness_history(request: HttpRequest) -> HttpResponse:
     return render(
         request,
         "athletes/profile/wellness.html",
-        {"form": form, "wellness_records": rows},
+        {"form": form, "wellness_records": Paginator(rows, 20).get_page(request.GET.get("page"))},
         status=200 if valid else 400,
     )
 

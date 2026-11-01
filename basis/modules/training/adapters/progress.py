@@ -43,14 +43,13 @@ class DjangoProgressRepository:
         return tuple(progress_session(s) for s in rows)
 
     def scheduled(self, owner: AccountId, today: date) -> tuple[ScheduledProgress, ...]:
-        from .calendar import effective_sessions
-        from .locking import intent_executions
+        from .calendar import effective_sessions, has_completed_execution
 
         rows = effective_sessions(owner, self.local_date)
         return tuple(
             ScheduledProgress(
                 s.date,
-                intent_executions(s).filter(status="completed").exists(),
+                has_completed_execution(s),
                 None,
             )
             for s in rows
