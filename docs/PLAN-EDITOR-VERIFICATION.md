@@ -4,6 +4,7 @@ Base de esta revisión: `f76b873`, rama `ticket/MAM-629-calendario-editor`.
 Incluye cuatro commits del editor y el merge `--no-ff` de `origin/main`
 `128e746`, que integra PR #22. PR #24 permanece DRAFT. `head: ver PR #24`;
 el ejecutor humano fijará el nuevo head después de revisar estos cambios.
+La ampliación R1 de auditoría y mensajes parte de `3b0c0a2`, sin crear commits.
 Commits posteriores a `f76b873`, por orden de Jonathan: H2 `e4ee205` (tests),
 H6 `e24c9cf` (documentación), H1 `f823400` (no-solape de ciclos hermanos),
 `53fd8d0` (tipado de payloads para mypy Django) y `0ddde9c` (fixture de
@@ -149,6 +150,101 @@ Para repetir un gate desde la raíz:
 El mismo wrapper admite `ruff-check`, `ruff-format`, `ruff-format-h1`,
 `mypy-core`, `mypy-django`, `django-check` y `migrations`. `result.md` detalla
 los comandos y las comprobaciones de la base.
+
+## R1 resuelto: auditoría de solo lectura y mensaje en el editor
+
+Decisión de Jonathan: «Haz ambas: conteo de solo lectura de planes con solape
+y mensaje claro en el editor». R1 queda resuelto con estas dos medidas.
+Se conserva H1 de `f823400`: mismo plan y padre (incluido padre nulo), fechas
+inclusivas y adyacencia válida. No se corrigen datos históricos automáticamente.
+
+El management command `audit_sibling_cycle_overlaps` sigue el patrón de
+`adapters/management/commands` de los módulos existentes. Reutiliza el predicado
+de solape extraído del dominio y agrupa por plan/padre. Lista cada par una sola
+vez, con `plan_id`, `parent_id`, ids de ciclos, `kind` y fechas ISO; termina con
+el número de planes distintos afectados y el total de pares. No cuenta un plan
+varias veces por tener varios pares. Las versiones se cuentan por su id de plan.
+
+La consulta solo recupera ids, tipo y fechas; no recupera ni imprime nombres,
+usuarios, emails, títulos, notas ni otros campos libres. No usa `save`, `delete`,
+`update`, bloqueos ni transacciones de escritura. Procesa un grupo de hermanos
+a la vez. Su uso operativo sería `python manage.py audit_sibling_cycle_overlaps`;
+en esta revisión **solo se ejecutó dentro de tests con SQLite en memoria**.
+El conteo de planes reales queda NOT RUN; no se atribuyen los conteos de fixtures
+a datos de producción.
+
+Cuando H1 rechaza una operación, `InvalidPlanning` conserva el aviso genérico
+como primer mensaje y añade un diagnóstico con el título, tipo y rango de
+ambos ciclos, además de la indicación de ajustar fechas para que uno termine
+antes de que empiece el otro. `ValidationError` conserva esos mensajes separados
+y el formulario los muestra escapados. Esto cubre copiar plantilla, editar plan
+o ciclo mediante nueva versión, mover sesión y crear ciclo. En plantillas,
+las fechas del diagnóstico corresponden al calendario desplazado que se intenta
+crear. El mensaje informa del primer par detectado; la auditoría lista todos.
+No se añade una nueva condición de rechazo a las altas de ciclos.
+
+Cobertura nueva: 11 métodos (los subcasos no se cuentan aparte):
+
+- 4 del comando: cero solapes con adyacencia y contención padre/hijo; 3 planes
+  con 9 pares históricos, incluidos extremos compartidos y ciclos de un día;
+  separación por plan/padre; un único SELECT sin campos libres y snapshot de
+  todos los modelos gestionados antes/después.
+- 2 de dominio: ambos títulos/tipos/fechas y corrección sugerida, en ambos
+  órdenes y los tres niveles; diagnóstico de edición y plantilla desplazada.
+- 5 del editor: plantilla, edición de plan/ciclo, movimiento de sesión y alta
+  de ciclo. En cada caso, los tres niveles devuelven HTTP 200 con texto visible,
+  sin DML ni cambios en el snapshot completo de la BD. El alta también comprueba
+  que se escapan títulos con etiquetas y comillas.
+
+Se conservan todos los tests y asserts anteriores. Los solapes históricos se
+simulan exclusivamente en fixtures mediante `QuerySet.update` o `bulk_create`.
+
+Evidencia de esta ampliación: `../../basis-runs/MAM-629/codex4/result.md`,
+logs `gate-*.txt` y recibos `status-*.json`. El wrapper `gates.py` fuerza
+`config.test_settings`, `AI_ENABLED=0`, `POLAR_ENABLED=0`, SQLite en memoria y
+un valor ficticio de clave para tests; mantiene logs, temporales y cachés fuera
+del repositorio, en esa carpeta.
+
+| Gate R1                                      | Estado   | Resultado                                                  |
+| -------------------------------------------- | -------- | ---------------------------------------------------------- |
+| Planning de `tests_architecture`              | VERIFIED | 27 tests: 25 anteriores y 2 nuevos                         |
+| Editor, versionado y comando, SQLite          | VERIFIED | 58 tests: editor 37, versionado 17, comando 4; sin omisiones |
+| Ruff check global                            | VERIFIED | Sin incidencias                                            |
+| Ruff format --check, 10 archivos de la tarea  | VERIFIED | Todos conformes                                            |
+| Ruff format --check global                   | FAILED   | Formato preexistente en `manage.py` y `scripts/arch09_remediation.py` |
+| Mypy core / Django                           | VERIFIED | 126 / 393 archivos sin errores                             |
+| Django check                                 | VERIFIED | Cero incidencias                                           |
+| Makemigrations --check --dry-run              | VERIFIED | Sin cambios detectados                                     |
+| Auditoría sobre BD real                      | NOT RUN  | Prohibida por el encargo                                    |
+| PostgreSQL, navegador y suite completa R1     | NOT RUN  | Fuera del alcance solicitado                               |
+| Commit y push                                | NOT RUN  | Prohibidos por el encargo                                   |
+
+El fallo global de formato se reproduce con los archivos de `HEAD 3b0c0a2`;
+ambos permanecen intactos. Mypy Django detectó inicialmente una lista sin
+anotación en el test nuevo del comando; se añadió `list[str]` y se repitió
+el gate con éxito. La salida inicial se conserva en `gate-mypy-django-initial.txt`.
+
+Comandos de esta revisión desde la raíz, uno por gate:
+
+```powershell
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py tests-domain
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py tests-regression
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py ruff-check
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py ruff-format
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py ruff-format-changed
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py mypy-core
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py mypy-django
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py django-check
+.venv-win/Scripts/python.exe -B ../../basis-runs/MAM-629/codex4/gates.py migrations
+```
+
+`tests-domain` ejecuta `unittest` sobre `tests_architecture.test_planning` y
+`tests_architecture.test_planning_siblings`. `tests-regression` ejecuta
+`manage.py test tests.regression.test_plan_editor
+tests.regression.test_planning_versioning
+tests.regression.test_audit_sibling_cycle_overlaps --noinput -v 2`.
+Los conteos anteriores son de esta ejecución y no sustituyen las suites
+completas históricas documentadas en las otras secciones.
 
 ## Checks de esta revisión H2/H6
 
