@@ -334,6 +334,30 @@ class WellnessTests(TestCase):
                 self.assertTrue(response.context["form"].errors)
                 self.assertEqual(list(response.context["wellness_records"]), [])
 
+    def test_history_paginates_stable_range_without_truncating_export(self) -> None:
+        rows = [
+            Wellness.objects.create(owner_id=self.owner, date=self.day - timedelta(days=offset))
+            for offset in range(25)
+        ]
+        Wellness.objects.create(owner_id=self.other, date=self.day, notes="foreign-only")
+        start, end = rows[-1].date.isoformat(), self.day.isoformat()
+        first = self.client.get(self.history, {"start": start, "end": end})
+        self.assertEqual(list(first.context["wellness_records"]), rows[:20])
+        self.assertContains(first, f"start={start}&amp;end={end}&amp;page=2", html=False)
+        second = self.client.get(self.history, {"start": start, "end": end, "page": "2"})
+        self.assertEqual(list(second.context["wellness_records"]), rows[20:])
+        self.assertNotContains(second, "foreign-only")
+        exported = json.loads(self.client.get(reverse("export")).content)
+        self.assertEqual(len(exported["wellness"]), 25)
+        self.assertEqual(
+            list(
+                self.client.get(
+                    self.history, {"start": start, "end": end, "page": "invalid"}
+                ).context["wellness_records"]
+            ),
+            rows[:20],
+        )
+
     def test_presentation_coach_wire_and_export_keep_moments(self) -> None:
         # Deliberately create in reverse priority order.
         after = Wellness.objects.create(owner_id=self.owner, moment="after", fatigue=1)

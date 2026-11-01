@@ -122,6 +122,222 @@ class DjangoProgressTests(ProgressContract, TestCase):
         )
         self.assertNotEqual(prior.pk, cutoff.pk)
 
+    def test_calendar_query_budget_and_original_intent_semantics(self) -> None:
+        from basis.modules.training.adapters.calendar import calendar_status, effective_sessions
+        from basis.modules.training.adapters.locking import intent_executions
+        from basis.modules.training.adapters.progress import DjangoProgressRepository
+
+        goal = Goal.objects.create(owner=self.user, title="Budget", sport="hiking")
+        plan = TrainingPlan.objects.create(
+            owner=self.user, goal=goal, title="v1", start_date=self.today, end_date=self.today
+        )
+        macro = Cycle.objects.create(
+            plan=plan, title="macro", kind="macro", start_date=self.today, end_date=self.today
+        )
+        meso = Cycle.objects.create(
+            plan=plan,
+            parent=macro,
+            title="meso",
+            kind="meso",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        cycle = Cycle.objects.create(
+            plan=plan,
+            parent=meso,
+            title="micro",
+            kind="micro",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        TrainingPlan.objects.create(
+            owner=self.user,
+            goal=goal,
+            title="v2",
+            start_date=self.today,
+            end_date=self.today,
+            previous=plan,
+            lineage=plan.lineage,
+            version=2,
+            effective_on=self.today + timedelta(days=1),
+        )
+        PlannedSession.objects.bulk_create(
+            [
+                PlannedSession(
+                    owner=self.user, plan=plan, cycle=cycle, title="planned", date=self.today
+                )
+                for _ in range(30)
+            ]
+        )
+        originals = list(PlannedSession.objects.filter(owner=self.user))
+        Session.objects.bulk_create(
+            [
+                Session(
+                    owner=self.user, planned=row, title="done", date=self.today, status="completed"
+                )
+                for row in originals[::2]
+            ]
+        )
+        with self.assertNumQueries(2):
+            selected = effective_sessions(self.owner)
+        self.assertEqual(len(selected), 30)
+        with self.assertNumQueries(0):
+            statuses = [calendar_status(row, self.today) for row in selected]
+        self.assertEqual(statuses.count("Completada"), 15)
+        for row, status in zip(selected, statuses, strict=True):
+            expected = intent_executions(row).filter(status="completed").exists()
+            self.assertEqual(status == "Completada", expected)
+        with self.assertNumQueries(2):
+            scheduled = DjangoProgressRepository().scheduled(self.owner, self.today)
+        self.assertEqual(sum(row.completed for row in scheduled), 15)
+
+    def test_copied_intent_matches_root_and_copy_executions_without_foreign_rows(self) -> None:
+        from basis.modules.training.adapters.calendar import calendar_status, effective_sessions
+        from basis.modules.training.adapters.locking import intent_executions
+
+        goal = Goal.objects.create(owner=self.user, title="Versions", sport="hiking")
+        plan = TrainingPlan.objects.create(
+            owner=self.user, goal=goal, title="v1", start_date=self.today, end_date=self.today
+        )
+        macro = Cycle.objects.create(
+            plan=plan, title="macro", kind="macro", start_date=self.today, end_date=self.today
+        )
+        meso = Cycle.objects.create(
+            plan=plan,
+            parent=macro,
+            title="meso",
+            kind="meso",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        micro = Cycle.objects.create(
+            plan=plan,
+            parent=meso,
+            title="micro",
+            kind="micro",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        root_done = PlannedSession.objects.create(
+            owner=self.user, plan=plan, cycle=micro, title="done", date=self.today
+        )
+        root_started = PlannedSession.objects.create(
+            owner=self.user, plan=plan, cycle=micro, title="started", date=self.today
+        )
+        Session.objects.create(
+            owner=self.user, planned=root_done, title="done", date=self.today, status="completed"
+        )
+        successor = TrainingPlan.objects.create(
+            owner=self.user,
+            goal=goal,
+            title="v2",
+            start_date=self.today,
+            end_date=self.today,
+            previous=plan,
+            lineage=plan.lineage,
+            version=2,
+            effective_on=self.today,
+        )
+        macro2 = Cycle.objects.create(
+            plan=successor, title="macro", kind="macro", start_date=self.today, end_date=self.today
+        )
+        meso2 = Cycle.objects.create(
+            plan=successor,
+            parent=macro2,
+            title="meso",
+            kind="meso",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        micro2 = Cycle.objects.create(
+            plan=successor,
+            parent=meso2,
+            title="micro",
+            kind="micro",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        copy_done = PlannedSession.objects.create(
+            owner=self.user,
+            plan=successor,
+            cycle=micro2,
+            origin=root_done,
+            title="done",
+            date=self.today,
+        )
+        copy_started = PlannedSession.objects.create(
+            owner=self.user,
+            plan=successor,
+            cycle=micro2,
+            origin=root_started,
+            title="started",
+            date=self.today,
+        )
+        Session.objects.create(
+            owner=self.user,
+            planned=copy_started,
+            title="started",
+            date=self.today,
+            status="in_progress",
+        )
+        foreign_goal = Goal.objects.create(owner=self.other, title="Other", sport="hiking")
+        foreign_plan = TrainingPlan.objects.create(
+            owner=self.other,
+            goal=foreign_goal,
+            title="Other",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        foreign_macro = Cycle.objects.create(
+            plan=foreign_plan,
+            title="macro",
+            kind="macro",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        foreign_meso = Cycle.objects.create(
+            plan=foreign_plan,
+            parent=foreign_macro,
+            title="meso",
+            kind="meso",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        foreign_micro = Cycle.objects.create(
+            plan=foreign_plan,
+            parent=foreign_meso,
+            title="micro",
+            kind="micro",
+            start_date=self.today,
+            end_date=self.today,
+        )
+        foreign_scheduled = PlannedSession.objects.create(
+            owner=self.other,
+            plan=foreign_plan,
+            cycle=foreign_micro,
+            title="foreign",
+            date=self.today,
+        )
+        Session.objects.create(
+            owner=self.other,
+            planned=foreign_scheduled,
+            title="foreign",
+            date=self.today,
+            status="completed",
+        )
+        rows = effective_sessions(self.owner)
+        self.assertEqual({row.pk for row in rows}, {copy_done.pk, copy_started.pk})
+        self.assertEqual(
+            {row.pk: calendar_status(row, self.today) for row in rows},
+            {copy_done.pk: "Completada", copy_started.pk: "En curso"},
+        )
+        for row in rows:
+            self.assertEqual(
+                calendar_status(row, self.today) == "Completada",
+                intent_executions(row).filter(status="completed").exists(),
+            )
+            self.assertTrue(intent_executions(row).exists())
+
     def test_trip_stage_owner_validation_order_and_summary(self) -> None:
         trip = self.service.create_trip(CreateTrip(self.owner, TripData("Trip", "Notes")))
         session = self.hiking()
