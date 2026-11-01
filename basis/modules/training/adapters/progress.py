@@ -26,9 +26,11 @@ def progress_session(row: Session) -> ProgressSession:
                 b.sport,
                 metrics(b.actual),
                 tuple(s.external_volume_kg for s in b.sets.all()),
+                tuple((s.actual_load_type or s.load_type) == "external" for s in b.sets.all()),
             )
             for b in row.blocks.all()
         ),
+        row.date,
     )
 
 
@@ -36,10 +38,13 @@ class DjangoProgressRepository:
     def __init__(self, local_date: Callable[[AccountId, datetime], date] | None = None) -> None:
         self.local_date = local_date
 
-    def sessions(self, owner: AccountId) -> tuple[ProgressSession, ...]:
-        rows = Session.objects.filter(owner_id=owner, status="completed").prefetch_related(
-            "blocks__sets", "blocks__intervals"
-        )
+    def sessions(
+        self, owner: AccountId, start: date | None = None, end: date | None = None
+    ) -> tuple[ProgressSession, ...]:
+        query = Session.objects.filter(owner_id=owner, status="completed")
+        if start is not None and end is not None:
+            query = query.filter(date__range=(start, end))
+        rows = query.prefetch_related("blocks__sets", "blocks__intervals")
         return tuple(progress_session(s) for s in rows)
 
     def scheduled(self, owner: AccountId, today: date) -> tuple[ScheduledProgress, ...]:

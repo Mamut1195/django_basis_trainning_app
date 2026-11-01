@@ -1,3 +1,5 @@
+from datetime import date
+
 from basis.bootstrap.progress import progress
 from basis.modules.training.adapters.models import TrekStage, TrekTrip
 from basis.modules.training.adapters.progress_wire import encode_progress, encode_trip
@@ -12,8 +14,8 @@ from basis.modules.training.public import (
 from basis.shared.identifiers import AccountId, SessionId, TrekStageId, TrekTripId
 
 
-def report(owner: int) -> dict[str, object]:
-    return encode_progress(progress().read(ReadProgress(AccountId(owner))))
+def report(owner: int, start: date | None = None, end: date | None = None) -> dict[str, object]:
+    return encode_progress(progress().read(ReadProgress(AccountId(owner), start, end)))
 
 
 def trip_summary(owner: int, trip: int) -> dict[str, object]:

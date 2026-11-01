@@ -1,0 +1,17 @@
+# MAM-625 — períodos y cobertura de progreso
+
+El informe conserva por defecto el acumulado existente. Permite consultar día local, semana ISO de lunes a domingo o rango inclusivo; el selector usa la zona de la cuenta para resolver hoy. Las sesiones usan su `Session.date` almacenada, sin reinterpretar marcas de tiempo. Los rangos futuros son válidos; la adherencia solo incluye prescripciones elegibles hasta hoy y mantiene el linaje y el corte de versiones antes de aplicar el rango. Los enlaces de paginación conservan la fecha de referencia resuelta.
+
+El resumen agrega únicamente sesiones completadas y muestra la cobertura: distancia y ascenso por bloque, según las variables permitidas de la disciplina; volumen externo por serie según el tipo efectivo. Una observación permitida sin valor es faltante; una variable o carga no aplicable se distingue de ausencia. El cero es dato. El volumen de calentamiento externo se incluye y se expresa en kg·rep. Los subtotales no certifican cobertura completa ni calidad instrumental. En objetos históricos sin clasificación de aplicabilidad, un volumen desconocido se muestra con tipo de carga desconocido. El detalle paginado enlaza sesiones de la cuenta, incluidas parciales para consulta; no las suma al reporte completado.
+
+La cobertura no incorpora un nuevo historial de 1RM medido/estimado ni completa toda la aceptación de MAM-625. El reporte acumulado y los consumidores existentes conservan sus campos; el wire incorpora cobertura. La selección efectiva de agenda todavía materializa historial; la optimización de consultas anterior no prueba capacidad ni latencia en producción.
+
+El smoke local usó SQLite temporal, cuenta sintética y Chromium headless mediante `.cache/mam625-periods-20261101/smoke_progress.py`. Comprobó un período, `No aplica`, `Sin datos`, cero, paginación y enlace a sesión. No se usaron datos ni proveedores reales. PostgreSQL y CI remoto del candidato quedan pendientes de ejecución.
+
+## Verificación local
+
+- **VERIFIED:** suite Django SQLite 589 pruebas, 65 omitidas, 110.800 s. Se ejecutó antes del último ajuste de presentación de carga sin datos; después de ese ajuste pasaron 14 pruebas focales de períodos y semana contractual, incluyendo ausencia y cero observados.
+- **VERIFIED:** 225 pruebas de arquitectura y ocho contratos de importación; mypy sin caché core 128 archivos y Django 400; Ruff check y formato, djLint 49 plantillas, Prettier y migraciones sin cambios. Tras el ajuste final se repitieron Ruff y el formato de las pruebas tocadas y djLint de la plantilla.
+- **VERIFIED:** semana contractual con rango explícito conserva 680 kg·rep, adherencia 66,7 % y cargas 995/480 UA; una sesión movida no reaparece en el día original, y se excluyen canceladas y futuras de la adherencia.
+- **VERIFIED:** smoke Chromium headless con `StaticLiveServerTestCase` (1 prueba, 2.263 s), SQLite temporal y cuenta sintética; `player.js` respondió 200. Capturas del viewport 390 × 844: `.cache/mam625-periods-20261101/progress-mobile-viewport.png` y `progress-mobile-metrics.png`. Una ejecución anterior con `LiveServerTestCase` registró 404 de `player.js`; se corrigió el servidor del helper. El smoke no verifica todos los recursos estáticos ni dispositivos físicos.
+- **NOT RUN:** PostgreSQL y CI remoto del candidato y aceptación integral de MAM-625. La CI combinada con los cambios de hiking debe ejecutarse sobre el árbol integrado final.

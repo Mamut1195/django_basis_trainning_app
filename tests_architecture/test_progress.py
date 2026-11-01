@@ -59,7 +59,9 @@ class Memory:
         if owner != OWNER:
             raise PermissionError
 
-    def sessions(self, owner: AccountId) -> tuple[ProgressSession, ...]:
+    def sessions(
+        self, owner: AccountId, start: date | None = None, end: date | None = None
+    ) -> tuple[ProgressSession, ...]:
         return ()
 
     def scheduled(self, owner: AccountId, today: date) -> tuple[ScheduledProgress, ...]:

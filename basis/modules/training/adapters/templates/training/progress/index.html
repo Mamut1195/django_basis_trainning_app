@@ -3,95 +3,179 @@
   <c-basis.page-heading title="Entiende lo que estás construyendo."
                         eyebrow="Progreso"
                         subtitle="Tus datos por disciplina, con las unidades y los vacíos a la vista." />
-  <div class="actions">
-    <c-ui.button href="{% url 'owned-new' 'wellness' %}">
-      Bienestar
-    </c-ui.button>
-    <c-ui.button href="{% url 'owned-new' 'measurement' %}">
-      Registrar peso
-    </c-ui.button>
-    <c-ui.button href="{% url 'owned-new' 'trip' %}">
-      Nuevo trekking
-    </c-ui.button>
-    <a href="{% url 'export' %}">Exportar mis datos</a>
-  </div>
-  <c-basis.card title="Adherencia al plan">
+  <c-basis.card title="Período del informe">
     <p>
-      {{ report.completed_scheduled }} de {{ report.scheduled_past }} sesiones programadas hasta hoy completadas · {{ report.adherence_percent|default_if_none:"Sin datos" }}
-      {% if report.adherence_percent != None %}
-        %
-      {% endif %}
+      El filtro afecta el resumen y las sesiones fuente. Las secciones de recuperación, peso, trekking y registros anteriores muestran su historial reciente o acumulado. La semana ISO va de lunes a domingo. El rango incluye ambas fechas; los datos usan la fecha registrada de sesión.
     </p>
+    <form method="get">
+      <c-basis.error-summary :form="period_form" />
+      {{ period_form.as_div }}
+      <c-ui.button type="submit">
+        Consultar
+      </c-ui.button>
+    </form>
+    {% if period_valid %}
+      {% if period_start %}
+        <p>Del {{ period_start|date:'Y-m-d' }} al {{ period_end|date:'Y-m-d' }}.</p>
+      {% else %}
+        <p>Todo el historial.</p>
+      {% endif %}
+    {% endif %}
   </c-basis.card>
-  <div class="grid">
-    {% for sport in report.sports %}
-      <c-basis.card :title="sport.label">
-        <div class="stack-sm">
-          <p class="stat">
-            {{ sport.sessions }} <span class="stat-unit">sesiones</span>
+  {% if period_valid %}
+    <div class="actions">
+      <c-ui.button href="{% url 'owned-new' 'wellness' %}">
+        Bienestar
+      </c-ui.button>
+      <c-ui.button href="{% url 'owned-new' 'measurement' %}">
+        Registrar peso
+      </c-ui.button>
+      <c-ui.button href="{% url 'owned-new' 'trip' %}">
+        Nuevo trekking
+      </c-ui.button>
+      <a href="{% url 'export' %}">Exportar mis datos</a>
+    </div>
+    <c-basis.card title="Adherencia al plan">
+      <p>
+        {{ report.completed_scheduled }} de {{ report.scheduled_past }} sesiones programadas hasta hoy completadas · {{ report.adherence_percent|default_if_none:"Sin datos" }}
+        {% if report.adherence_percent != None %}
+          %
+        {% endif %}
+      </p>
+    </c-basis.card>
+    <div class="grid">
+      {% for sport in report.sports %}
+        <c-basis.card :title="sport.label">
+          <div class="stack-sm">
+            <p class="stat">
+              {{ sport.sessions }} <span class="stat-unit">sesiones</span>
+            </p>
+            <p>
+              Distancia:
+              {% if sport.distance_not_applicable %}
+                No aplica
+              {% elif sport.distance_m == None %}
+                Sin datos
+              {% else %}
+                {{ sport.distance_m }} m
+              {% endif %}
+              · bloques: {{ sport.distance_coverage.known }} con dato, {{ sport.distance_coverage.missing }} sin dato, {{ sport.distance_coverage.not_applicable }} no aplican.
+            </p>
+            <p>
+              Ascenso:
+              {% if sport.ascent_not_applicable %}
+                No aplica
+              {% elif sport.ascent_m == None %}
+                Sin datos
+              {% else %}
+                {{ sport.ascent_m }} m
+              {% endif %}
+              · bloques: {{ sport.ascent_coverage.known }} con dato, {{ sport.ascent_coverage.missing }} sin dato, {{ sport.ascent_coverage.not_applicable }} no aplican.
+            </p>
+            <p>
+              Volumen externo:
+              {% if sport.volume_not_applicable %}
+                No aplica
+              {% elif sport.external_volume_kg == None %}
+                Sin datos
+              {% else %}
+                {{ sport.external_volume_kg }} kg·rep
+              {% endif %}
+              {% if sport.sport == 'strength' %}
+                · series: {{ sport.volume_coverage.known }} con dato, {{ sport.volume_coverage.missing }} sin dato, {{ sport.volume_coverage.not_applicable }} no aplican
+                {% if sport.volume_coverage.unknown_applicability %}
+                  , {{ sport.volume_coverage.unknown_applicability }} sin tipo de carga conocido
+                {% endif %}
+              {% endif %}
+              .
+            </p>
+            <small>Los totales son subtotales conocidos; los conteos no certifican calidad de medición.</small>
+          </div>
+        </c-basis.card>
+      {% empty %}
+        <c-basis.card>
+          <c-basis.empty title="El progreso necesita contexto">
+            Completa tu primera sesión para empezar a ver tus registros.
+          </c-basis.empty>
+        </c-basis.card>
+      {% endfor %}
+    </div>
+    <c-basis.card title="Carga interna · minutos × RPE real">
+      {% for load in report.loads %}
+        <div class="card-line row">
+          <p>{{ load.label }} · {{ load.known }} sesiones con datos</p>
+          <p>
+            {% if load.known %}
+              {{ load.value }} UA
+            {% else %}
+              Sin datos
+            {% endif %}
+            · {{ load.missing }} sin datos
           </p>
-          {% if sport.distance_m != None %}<p>{{ sport.distance_m }} m registrados</p>{% endif %}
-          {% if sport.ascent_m != None %}<p>↑ {{ sport.ascent_m }} m registrados</p>{% endif %}
-          {% if sport.external_volume_kg != None %}
-            <p>{{ sport.external_volume_kg }} kg · volumen externo</p>
-          {% endif %}
-        </div>
-      </c-basis.card>
-    {% empty %}
-      <c-basis.card>
-        <c-basis.empty title="El progreso necesita contexto">
-          Completa tu primera sesión para empezar a ver tus registros.
-        </c-basis.empty>
-      </c-basis.card>
-    {% endfor %}
-  </div>
-  <c-basis.card title="Carga interna · minutos × RPE real">
-    {% for load in report.loads %}
-      <div class="card-line row">
-        <p>{{ load.label }} · {{ load.known }} sesiones con datos</p>
-        <p>{{ load.value }} UA · {{ load.missing }} sin datos</p>
-      </div>
-    {% empty %}
-      <p class="muted">Sin carga registrada todavía.</p>
-    {% endfor %}
-    <small>Compara el mismo protocolo de duración. Estas unidades no son una predicción de lesiones ni una equivalencia exacta entre deportes.</small>
-  </c-basis.card>
-  <div class="split">
-    <c-basis.card title="Recuperación">
-      {% for item in wellness_records %}
-        <div class="card-line">
-          <strong>{{ item.date|date:'j M Y' }}</strong>
-          <p class="muted">
-            Sueño: {{ item.sleep_hours|default_if_none:'—' }} h · Fatiga: {{ item.fatigue|default_if_none:'—' }}/5 · Disposición: {{ item.readiness|default_if_none:'—' }}/5
-          </p>
-          {% if item.pain_regions %}<p>Dolor: {{ item.pain_regions }}</p>{% endif %}
         </div>
       {% empty %}
-        <c-basis.empty title="Escucha cómo te sientes">
-          Registra sueño, fatiga y disposición sin convertirlos en una puntuación inventada.
-        </c-basis.empty>
+        <p class="muted">Sin carga registrada todavía.</p>
       {% endfor %}
+      <small>Compara el mismo protocolo de duración. Estas unidades no son una predicción de lesiones ni una equivalencia exacta entre deportes.</small>
     </c-basis.card>
-    <div class="stack">
-      <c-basis.card title="Trekking por etapas">
-        {% for trip in trips %}
+    <div class="split">
+      <c-basis.card title="Recuperación">
+        {% for item in wellness_records %}
           <div class="card-line">
-            <a href="{% url 'trip-detail' trip.pk %}">{{ trip.title }}</a>
+            <strong>{{ item.date|date:'j M Y' }}</strong>
+            <p class="muted">
+              Sueño: {{ item.sleep_hours|default_if_none:'—' }} h · Fatiga: {{ item.fatigue|default_if_none:'—' }}/5 · Disposición: {{ item.readiness|default_if_none:'—' }}/5
+            </p>
+            {% if item.pain_regions %}<p>Dolor: {{ item.pain_regions }}</p>{% endif %}
           </div>
         {% empty %}
-          <p class="muted">Agrupa tus jornadas de hiking en un recorrido.</p>
+          <c-basis.empty title="Escucha cómo te sientes">
+            Registra sueño, fatiga y disposición sin convertirlos en una puntuación inventada.
+          </c-basis.empty>
         {% endfor %}
       </c-basis.card>
-      <c-basis.card title="Peso registrado">
-        {% for item in measurements %}
-          <div class="row card-line">
-            <small>{{ item.date|date:'j M' }}</small><strong>{{ item.weight_kg }} kg</strong>
-          </div>
-        {% empty %}
-          <p class="muted">Sin mediciones.</p>
-        {% endfor %}
-      </c-basis.card>
+      <div class="stack">
+        <c-basis.card title="Trekking por etapas">
+          {% for trip in trips %}
+            <div class="card-line">
+              <a href="{% url 'trip-detail' trip.pk %}">{{ trip.title }}</a>
+            </div>
+          {% empty %}
+            <p class="muted">Agrupa tus jornadas de hiking en un recorrido.</p>
+          {% endfor %}
+        </c-basis.card>
+        <c-basis.card title="Peso registrado">
+          {% for item in measurements %}
+            <div class="row card-line">
+              <small>{{ item.date|date:'j M' }}</small><strong>{{ item.weight_kg }} kg</strong>
+            </div>
+          {% empty %}
+            <p class="muted">Sin mediciones.</p>
+          {% endfor %}
+        </c-basis.card>
+      </div>
     </div>
-  </div>
-  {% include 'athletes/history/_strength.html' %}
+    {% include 'athletes/history/_strength.html' %}
+    <c-basis.card title="Sesiones fuente del período">
+      <p>
+        El resumen suma las completadas; las sesiones parciales se muestran para consulta y no se suman. Las métricas de distancia y ascenso proceden de bloques; el volumen procede de series. La carga usa duración y RPE declarado de sesión.
+      </p>
+      {% for source in source_sessions %}
+        <p>
+          {{ source.date|date:'Y-m-d' }} · {{ source.get_status_display }} · <a href="{% url 'session-detail' source.pk %}">{{ source.title }}</a>
+        </p>
+      {% empty %}
+        <p>Sin sesiones en este período.</p>
+      {% endfor %}
+      {% if source_sessions.has_previous %}
+        <a href="?{{ detail_query }}&amp;page={{ source_sessions.previous_page_number }}">Anteriores</a>
+      {% endif %}
+      {% if source_sessions.paginator.num_pages > 1 %}
+        <p>Página {{ source_sessions.number }} de {{ source_sessions.paginator.num_pages }}</p>
+      {% endif %}
+      {% if source_sessions.has_next %}
+        <a href="?{{ detail_query }}&amp;page={{ source_sessions.next_page_number }}">Siguientes</a>
+      {% endif %}
+    </c-basis.card>
+  {% endif %}
 {% endblock %}

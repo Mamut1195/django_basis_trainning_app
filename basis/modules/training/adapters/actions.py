@@ -1,5 +1,7 @@
 """Django entry actions for execution, plan versions and progress."""
 
+from datetime import date
+
 from django.contrib.auth.base_user import AbstractBaseUser
 
 from basis.modules.training.adapters import execution_actions as execution
@@ -26,8 +28,10 @@ def revise_plan(owner: AbstractBaseUser, plan: TrainingPlan, reason: str = "") -
     return planning.revise(owner.pk, plan.pk, reason)
 
 
-def progress_report(owner: AbstractBaseUser) -> dict[str, object]:
-    return progress_application.report(owner.pk)
+def progress_report(
+    owner: AbstractBaseUser, start: date | None = None, end: date | None = None
+) -> dict[str, object]:
+    return progress_application.report(owner.pk, start, end)
 
 
 def trip_summary(trip: TrekTrip) -> dict[str, object]:

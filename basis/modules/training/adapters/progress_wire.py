@@ -1,7 +1,16 @@
 """Existing report dictionaries remain a presentation concern."""
 
-from ..domain.progress import ProgressReport, TrekSummary
+from ..domain.progress import Coverage, ProgressReport, TrekSummary
 from ..domain.sports import SPORT_LABELS
+
+
+def coverage(value: Coverage) -> dict[str, int]:
+    return {
+        "known": value.known,
+        "missing": value.missing,
+        "not_applicable": value.not_applicable,
+        "unknown_applicability": value.unknown_applicability,
+    }
 
 
 def encode_progress(result: ProgressReport) -> dict[str, object]:
@@ -14,6 +23,22 @@ def encode_progress(result: ProgressReport) -> dict[str, object]:
                 "distance_m": s.distance_m,
                 "ascent_m": s.ascent_m,
                 "external_volume_kg": s.external_volume_kg,
+                "distance_not_applicable": s.distance_coverage.known == 0
+                and s.distance_coverage.missing == 0
+                and s.distance_coverage.not_applicable > 0,
+                "ascent_not_applicable": s.ascent_coverage.known == 0
+                and s.ascent_coverage.missing == 0
+                and s.ascent_coverage.not_applicable > 0,
+                "volume_not_applicable": s.sport != "strength"
+                or (
+                    s.volume_coverage.known == 0
+                    and s.volume_coverage.missing == 0
+                    and s.volume_coverage.unknown_applicability == 0
+                    and s.volume_coverage.not_applicable > 0
+                ),
+                "distance_coverage": coverage(s.distance_coverage),
+                "ascent_coverage": coverage(s.ascent_coverage),
+                "volume_coverage": coverage(s.volume_coverage),
             }
             for s in result.sports
         ],
