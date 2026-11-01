@@ -9,3 +9,9 @@ tests/regression/test_running.py text eol=lf
 tests/regression/test_running_browser.py text eol=lf
 tests/regression/test_endurance.py text eol=lf
 docs/RUNNING_VERIFICATION.md text eol=lf
+
+# First-party assets checked by Prettier.
+assets/css/**/*.css text eol=lf
+assets/js/**/*.js text eol=lf
+basis/**/static/basis/**/*.css text eol=lf
+basis/**/static/basis/**/*.js text eol=lf
