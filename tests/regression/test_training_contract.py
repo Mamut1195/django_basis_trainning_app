@@ -22,6 +22,7 @@ from django.utils import timezone
 from basis.modules.athletes.adapters.models import SportProfile, UserExerciseRM
 from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.modules.sync.adapters.actions import Conflict
+from basis.modules.training.adapters.actions import progress_report as ranged_progress_report
 from basis.modules.training.adapters.actions import revise_plan, start_session
 from basis.modules.training.adapters.metrics import internal_load_legacy as internal_load
 from basis.modules.training.adapters.metrics import pace_seconds_legacy as pace_seconds
@@ -194,6 +195,12 @@ class TrainingContractTests(TestCase):
             self.assertEqual((moved.date.isoformat(), moved.revision), (review["to"], 3))
             new = moved.plan
             self.assert_report(self.week["expected"]["after_reschedule"])
+            thursday = ranged_progress_report(self.owner, date(2026, 10, 15), date(2026, 10, 15))
+            self.assertEqual((thursday["scheduled_past"], thursday["completed_scheduled"]), (0, 0))
+            wednesday = ranged_progress_report(self.owner, date(2026, 10, 14), date(2026, 10, 14))
+            self.assertEqual(
+                (wednesday["scheduled_past"], wednesday["completed_scheduled"]), (1, 0)
+            )
             with self.assertRaises(ValidationError):
                 revise_plan(self.owner, self.plan)
         self.assertEqual(original, self.prescription_snapshot())
@@ -214,6 +221,8 @@ class TrainingContractTests(TestCase):
                 )
         with on_day("2026-10-18"):
             report = self.assert_report(self.week["expected"]["week_end"])
+            ranged = ranged_progress_report(self.owner, date(2026, 10, 12), date(2026, 10, 18))
+            self.assertEqual(ranged, report)
         sports = {row["sport"]: row for row in report["sports"]}
         self.assertSetEqual(set(sports), set(self.week["expected"]["sports"]))
         for sport, expected in self.week["expected"]["sports"].items():

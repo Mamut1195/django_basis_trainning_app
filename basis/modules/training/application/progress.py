@@ -22,6 +22,8 @@ from .execution import WriteAuthorization
 @dataclass(frozen=True)
 class ReadProgress:
     owner: AccountId
+    start: date | None = None
+    end: date | None = None
 
 
 @dataclass(frozen=True)
@@ -44,7 +46,9 @@ class AddStage:
 
 
 class ProgressRepository(Protocol):
-    def sessions(self, owner: AccountId) -> tuple[ProgressSession, ...]: ...
+    def sessions(
+        self, owner: AccountId, start: date | None = None, end: date | None = None
+    ) -> tuple[ProgressSession, ...]: ...
     def scheduled(self, owner: AccountId, today: date) -> tuple[ScheduledProgress, ...]: ...
     def stages(self, owner: AccountId, trip: TrekTripId) -> tuple[ProgressSession, ...]: ...
     def create_trip(self, command: CreateTrip) -> TrekTripId: ...
@@ -69,16 +73,20 @@ class Progress:
         self.local_date = local_date
 
     def read(self, command: ReadProgress) -> ProgressReport:
+        if (command.start is None) != (command.end is None) or (
+            command.start is not None and command.end is not None and command.start > command.end
+        ):
+            raise ValueError("Invalid progress date range")
         today = (
             self.local_date(command.owner, self.clock.now())
             if self.local_date
             else self.clock.today()
         )
-        return report(
-            self.repository.sessions(command.owner),
-            self.repository.scheduled(command.owner, today),
-            today,
-        )
+        sessions = self.repository.sessions(command.owner, command.start, command.end)
+        scheduled = self.repository.scheduled(command.owner, today)
+        if command.start is not None and command.end is not None:
+            scheduled = tuple(s for s in scheduled if command.start <= s.date <= command.end)
+        return report(sessions, scheduled, today)
 
     def trip(self, command: ReadTrip) -> TrekSummary:
         return summarize_trip(self.repository.stages(command.owner, command.trip))

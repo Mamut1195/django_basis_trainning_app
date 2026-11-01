@@ -7,7 +7,7 @@ from decimal import Decimal
 from basis.shared.identifiers import SessionId
 
 from .execution import DurationProtocol, Metric, MetricName
-from .sports import internal_load
+from .sports import VARIABLES, internal_load
 
 
 @dataclass(frozen=True)
@@ -15,6 +15,7 @@ class ProgressBlock:
     sport: str
     actual: tuple[Metric, ...] = ()
     set_volumes: tuple[Decimal | None, ...] = ()
+    set_applicable: tuple[bool, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ class ProgressSession:
     duration_seconds: int | None = None
     reported_rpe: Decimal | None = None
     blocks: tuple[ProgressBlock, ...] = ()
+    date: Date | None = None
 
 
 @dataclass(frozen=True)
@@ -35,12 +37,23 @@ class ScheduledProgress:
 
 
 @dataclass(frozen=True)
+class Coverage:
+    known: int = 0
+    missing: int = 0
+    not_applicable: int = 0
+    unknown_applicability: int = 0
+
+
+@dataclass(frozen=True)
 class SportProgress:
     sport: str
     sessions: int
     distance_m: Decimal | None
     ascent_m: Decimal | None
     external_volume_kg: Decimal | None
+    distance_coverage: Coverage = Coverage()
+    ascent_coverage: Coverage = Coverage()
+    volume_coverage: Coverage = Coverage()
 
 
 @dataclass(frozen=True)
@@ -86,6 +99,42 @@ def measured_sum(values: tuple[Decimal | None, ...]) -> Decimal | None:
     return sum(known, Decimal(0)) if known else None
 
 
+def metric_coverage(blocks: list[ProgressBlock], name: MetricName) -> Coverage:
+    known = missing = not_applicable = 0
+    for block in blocks:
+        if name.value not in VARIABLES[block.sport]:
+            not_applicable += 1
+        elif metric_value(block, name) is None:
+            missing += 1
+        else:
+            known += 1
+    return Coverage(known, missing, not_applicable)
+
+
+def volume_coverage(blocks: list[ProgressBlock]) -> Coverage:
+    known = missing = not_applicable = unknown = 0
+    for block in blocks:
+        if block.sport != "strength":
+            continue
+        if block.set_applicable and len(block.set_applicable) != len(block.set_volumes):
+            raise ValueError("Set volume applicability length mismatch")
+        for index, value in enumerate(block.set_volumes):
+            if not block.set_applicable:
+                if value is None:
+                    unknown += 1
+                else:
+                    known += 1
+                continue
+            applicable = block.set_applicable[index]
+            if not applicable:
+                not_applicable += 1
+            elif value is None:
+                missing += 1
+            else:
+                known += 1
+    return Coverage(known, missing, not_applicable, unknown)
+
+
 def report(
     sessions: tuple[ProgressSession, ...],
     scheduled: tuple[ScheduledProgress, ...],
@@ -108,6 +157,9 @@ def report(
             measured_sum(tuple(metric_value(b, MetricName.DISTANCE_M) for b in blocks)),
             measured_sum(tuple(metric_value(b, MetricName.ASCENT_M) for b in blocks)),
             measured_sum(tuple(v for b in blocks for v in b.set_volumes)),
+            metric_coverage(blocks, MetricName.DISTANCE_M),
+            metric_coverage(blocks, MetricName.ASCENT_M),
+            volume_coverage(blocks),
         )
         for sport, blocks in sport_blocks.items()
     )
