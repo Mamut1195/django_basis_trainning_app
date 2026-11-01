@@ -29,3 +29,7 @@ Una primera versión de la barrera parcheaba `httpx.HTTPTransport`, que no inter
 Revisión independiente informada por coordinación: los dos tests focales de revalidación y barrera pasaron en 0.104 s con SQLite en memoria; `git check-attr` confirmó LF en `app.css` y `offline.js` y sin atributo especificado para el vendor HTMX; `npm.cmd run format:check` pasó. El ejecutor de este documento no repitió esa revisión independiente.
 
 **NOT RUN:** PostgreSQL para el candidato, CI remoto del candidato, pruebas LIVE de Polar y aceptación de producción. Las omisiones SQLite incluyen pruebas dependientes de capacidades de PostgreSQL; el resultado no demuestra concurrencia PostgreSQL. Los dos documentos de handoff y revisión preexistentes permanecen fuera del cambio.
+
+## Incidente de formato en CI del candidato
+
+El run 41339839603 de PR #26 falló en `ruff format --check`: el ajuste final al alias de HTTPX superó el ancho permitido y no recibió un nuevo chequeo de formato antes de publicar. El job de operaciones terminó correctamente. Se aplicó `ruff format` únicamente al archivo de prueba afectado y se repitieron el chequeo de formato y los dos tests focales. La nueva CI remota queda pendiente.

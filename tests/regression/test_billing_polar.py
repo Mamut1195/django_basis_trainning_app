@@ -113,7 +113,8 @@ def signature(
 class PolarAcceptanceTests(TestCase):
     def setUp(self) -> None:
         no_network = patch(
-            "httpx._client.HTTPTransport", side_effect=AssertionError("unexpected external HTTP transport")
+            "httpx._client.HTTPTransport",
+            side_effect=AssertionError("unexpected external HTTP transport"),
         )
         no_network.start()
         self.addCleanup(no_network.stop)
