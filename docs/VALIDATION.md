@@ -1,5 +1,39 @@
 # Validación de la entrega — 2026-10-17
 
+## MAM-624 / BASIS-010: check-in y evolución
+
+Wellness distingue `day` (general del día, valor de las filas anteriores),
+`before` y `after`. Hay un registro por cuenta, fecha y momento. Crear no
+sobrescribe: un duplicado devuelve un error en español; las correcciones usan
+la edición explícita desde **Perfil → Evolución del bienestar**.
+Solo fecha y momento son siempre necesarios; un formulario sin observaciones,
+con fecha y momento válidos, sigue siendo válido. Se conserva el contrato
+histórico: si indicas HRV (incluido 0 ms), indica también el método; si el dolor
+es mayor que 0, indica la zona o regiones. Dolor 0 no requiere regiones y la
+ausencia de HRV no exige método. Estas reglas se aplican en dominio, modelo y
+formulario, cuya ayuda las muestra. Registrar entrenamiento sigue sin requerir
+check-in. Las escalas muestran sus extremos y unidades.
+
+La evolución (`/profile/wellness/`) incluye ambos extremos del rango; por defecto
+son los últimos 30 días incluido hoy. `start`/`end` usan AAAA-MM-DD; fechas
+inválidas o invertidas devuelven 400 con explicación. Un dato ausente aparece
+como `Sin dato`, y cero sigue siendo cero. Las fechas futuras de check-in se rechazan.
+La página requiere login y solo consulta la cuenta autenticada; editar una fila
+ajena devuelve 404 con acceso de escritura. Se conserva la política comercial
+existente para escribir; consultar el historial propio no exige suscripción.
+
+La tarjeta del día y el contexto más reciente del coach eligen primero la fecha
+más reciente y, dentro de ella, **after > before > day**. No se combinan valores
+de distintas filas. La historia conserva las últimas 14 observaciones (no días),
+y la exportación conserva todas con `moment`. El wire del coach incluye `moment`
+y acepta payloads anteriores sin ese campo como `day`.
+Es solo un registro para seguimiento: sin puntuaciones agregadas, alertas,
+diagnósticos ni predicciones. No cambia el catálogo ni duración/RPE de sesión.
+
+Los resultados ejecutados de esta entrega se registran en `result.md` y logs de
+la carpeta de evidencia indicada por el operador; las tablas siguientes son
+evidencia histórica y no acreditan esta entrega.
+
 La tabla siguiente registra la validación de la implementación inicial, antes de su integración. La ejecución posterior se documenta en [la primera tanda](IMPLEMENTATION_WAVE_01.md), con sus comprobaciones y límites propios. No se activaron despliegues, pagos ni llamadas reales al modelo. El estado no equivale a una versión publicada ni al cierre de todos los criterios del roadmap.
 
 **Aclaración actual,2026-10-21:** la cadena810/620/622/623 está Done con integración y CI, según el [readback de cierre](DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623). SMTP LIVE/proveedor continúa NOT RUN, pero **no es gate de MAM-810 ni de MAM-623**; el transporte SMTP local de810 es evidencia separada. La tabla y la continuación siguientes son históricas. Esto no retira los pendientes de correo operativo, Polar/IA LIVE, despliegue, dispositivos o aceptación humana del producto completo.

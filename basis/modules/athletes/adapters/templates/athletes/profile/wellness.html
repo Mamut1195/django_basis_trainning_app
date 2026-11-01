@@ -1,0 +1,126 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading title="Evolución del bienestar"
+                        subtitle="Solo un registro para tu seguimiento. Todos los datos de bienestar son opcionales." />
+  <div class="actions">
+    {% if write_access %}
+      <c-ui.button href="{% url 'owned-new' 'wellness' %}?moment=before">
+        Check-in antes
+      </c-ui.button>
+      <c-ui.button href="{% url 'owned-new' 'wellness' %}?moment=after">
+        Check-in después
+      </c-ui.button>
+      <c-ui.button href="{% url 'owned-new' 'wellness' %}">
+        Check-in del día
+      </c-ui.button>
+    {% endif %}
+    <c-ui.button href="{% url 'profile' %}">
+      Volver al perfil
+    </c-ui.button>
+  </div>
+  <c-basis.card title="Rango de fechas">
+    <p>Por defecto se muestran los últimos 30 días, incluido hoy. Ambos extremos se incluyen.</p>
+    <form method="get">
+      <c-basis.error-summary :form="form" />
+      <div class="form-fields">{{ form.as_div }}</div>
+      <c-ui.button type="submit">
+        Consultar
+      </c-ui.button>
+    </form>
+  </c-basis.card>
+  <c-basis.card title="Registros privados">
+    <p>Sin dato indica una observación no registrada; un cero registrado se conserva como cero.</p>
+    <p>
+      Escalas 1–5: calidad del sueño, 1 = muy mala y 5 = muy buena;
+      fatiga, 1 = nada cansado y 5 = muy cansado;
+      estrés, 1 = nada y 5 = mucho;
+      dolor muscular, 1 = nada y 5 = mucho;
+      disposición, 1 = sin ganas y 5 = con muchas ganas.
+      Dolor 0–10: 0 = sin dolor y 10 = máximo dolor percibido.
+    </p>
+    {% for item in wellness_records %}
+      <div class="card-line">
+        <h3>{{ item.date|date:'Y-m-d' }} · {{ item.get_moment_display }}</h3>
+        <dl class="metric-list">
+          <div>
+            <dt>Sueño (h)</dt>
+            <dd>
+              {{ item.sleep_hours|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Calidad del sueño (1–5)</dt>
+            <dd>
+              {{ item.sleep_quality|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Fatiga (1–5)</dt>
+            <dd>
+              {{ item.fatigue|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Estrés (1–5)</dt>
+            <dd>
+              {{ item.stress|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Dolor muscular (1–5)</dt>
+            <dd>
+              {{ item.soreness|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Disposición (1–5)</dt>
+            <dd>
+              {{ item.readiness|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Dolor (0–10)</dt>
+            <dd>
+              {{ item.pain_score|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Zona de dolor</dt>
+            <dd>
+              {{ item.pain_regions|default:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>FC en reposo (lpm)</dt>
+            <dd>
+              {{ item.resting_hr_bpm|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>HRV (ms)</dt>
+            <dd>
+              {{ item.hrv_ms|default_if_none:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Método HRV</dt>
+            <dd>
+              {{ item.hrv_method|default:'Sin dato' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Notas</dt>
+            <dd>
+              {{ item.notes|default:'Sin dato' }}
+            </dd>
+          </div>
+        </dl>
+        {% if write_access %}
+          <a href="{% url 'wellness-edit' item.pk %}">Editar check-in</a>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p>Sin registros para este rango. Puedes entrenar sin completar un check-in.</p>
+    {% endfor %}
+  </c-basis.card>
+{% endblock %}

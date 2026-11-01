@@ -65,6 +65,7 @@ class WellnessData:
     hrv_ms: Decimal | None
     hrv_method: str
     notes: str
+    moment: str = "day"
 
 
 @dataclass(frozen=True)
@@ -146,11 +147,40 @@ def validate_sport(data: SportData) -> None:
         raise InvalidAthleteData("Los metadatos de umbral requieren un valor; ausencia no es cero.")
 
 
-def validate_wellness(data: WellnessData) -> None:
+def validate_wellness(data: WellnessData, today: date | None = None) -> None:
     if data.hrv_ms is not None and not data.hrv_method:
         raise InvalidAthleteData("Indica el método de medición HRV.")
     if data.pain_score is not None and data.pain_score > 0 and not data.pain_regions:
         raise InvalidAthleteData("Indica dónde sientes dolor.")
+    if data.moment not in {"day", "before", "after"}:
+        raise InvalidAthleteData("Elige un momento válido para el check-in.")
+    if not isinstance(data.date, date):
+        raise InvalidAthleteData("Indica una fecha válida para el check-in.")
+    if today is not None:
+        validate_observation_date(data.date, today)
+    for name, value in (
+        ("Calidad del sueño", data.sleep_quality),
+        ("Fatiga", data.fatigue),
+        ("Estrés", data.stress),
+        ("Dolor muscular", data.soreness),
+        ("Disposición", data.readiness),
+    ):
+        if value is not None and (type(value) is not int or not 1 <= value <= 5):
+            raise InvalidAthleteData(f"{name}: usa la escala de 1 a 5.")
+    if data.pain_score is not None and (
+        type(data.pain_score) is not int or not 0 <= data.pain_score <= 10
+    ):
+        raise InvalidAthleteData("Dolor: usa la escala de 0 a 10.")
+    if data.sleep_hours is not None and (
+        not data.sleep_hours.is_finite() or not 0 <= data.sleep_hours <= 24
+    ):
+        raise InvalidAthleteData("Sueño: indica entre 0 y 24 h.")
+    if data.resting_hr_bpm is not None and not 20 <= data.resting_hr_bpm <= 250:
+        raise InvalidAthleteData("FC en reposo: indica entre 20 y 250 lpm.")
+    if data.hrv_ms is not None and (
+        not data.hrv_ms.is_finite() or not 0 <= data.hrv_ms <= Decimal("99999.99")
+    ):
+        raise InvalidAthleteData("HRV: indica entre 0 y 99999,99 ms.")
 
 
 @dataclass(frozen=True)

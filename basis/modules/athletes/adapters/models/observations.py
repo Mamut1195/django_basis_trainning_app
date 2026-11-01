@@ -78,6 +78,15 @@ class Measurement(Owned):
 
 class Wellness(Owned):
     date = models.DateField(default=timezone.localdate)
+    moment = models.CharField(
+        max_length=6,
+        choices=[
+            ("day", "General del día"),
+            ("before", "Antes de entrenar"),
+            ("after", "Después de entrenar"),
+        ],
+        default="day",
+    )
     sleep_hours = models.DecimalField(
         max_digits=3,
         decimal_places=1,
@@ -115,10 +124,14 @@ class Wellness(Owned):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["owner", "date"], name="wellness_owner_date")
+            models.UniqueConstraint(
+                fields=["owner", "date", "moment"], name="wellness_owner_date_moment"
+            )
         ]
 
     def clean(self) -> None:
+        from ..local_dates import owner_local_date
+
         try:
             validate_wellness(
                 WellnessData(
@@ -135,7 +148,9 @@ class Wellness(Owned):
                     self.hrv_ms,
                     self.hrv_method,
                     self.notes,
-                )
+                    self.moment,
+                ),
+                owner_local_date(self.owner_id, using=self._state.db or "default"),
             )
         except InvalidAthleteData as error:
             raise ValidationError(str(error)) from error

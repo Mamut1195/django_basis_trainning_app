@@ -10,5 +10,7 @@ urlpatterns = [
     path("profile/preferences/", athletes.preferences_edit, name="preferences-edit"),
     path("profile/sports/<int:pk>/edit/", athletes.sport_edit, name="sport-edit"),
     path("profile/measurements/", athletes.measurement_history, name="measurement-history"),
+    path("profile/wellness/", athletes.wellness_history, name="wellness-history"),
+    path("profile/wellness/<int:pk>/edit/", athletes.wellness_edit, name="wellness-edit"),
     path("measurements/rm/new/", athletes.rm_new, name="rm-new"),
 ]

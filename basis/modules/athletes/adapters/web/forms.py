@@ -125,11 +125,20 @@ class SportProfileForm(forms.ModelForm[SportProfile]):
 
 
 class WellnessForm(forms.ModelForm[Wellness]):
+    date = forms.DateField(
+        label="Fecha (AAAA-MM-DD)",
+        input_formats=["%Y-%m-%d"],
+        initial=timezone.localdate,
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+        error_messages={"invalid": "Indica una fecha válida en formato AAAA-MM-DD."},
+    )
+
     class Meta:
         model = Wellness
         exclude = ["owner"]
         labels = {
             "date": "Fecha",
+            "moment": "Momento del check-in",
             "sleep_hours": "Sueño (h)",
             "sleep_quality": "Calidad del sueño (1–5)",
             "fatigue": "Fatiga (1–5)",
@@ -144,6 +153,61 @@ class WellnessForm(forms.ModelForm[Wellness]):
             "notes": "Notas",
         }
         widgets = {"date": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"})}
+        help_texts = {
+            "moment": "General del día, antes o después de entrenar. Los demás datos son opcionales.",
+            "sleep_hours": "Horas de sueño (h), entre 0 y 24. Puedes dejarlo vacío.",
+            "sleep_quality": "1 = muy mala; 5 = muy buena.",
+            "fatigue": "1 = nada cansado; 5 = muy cansado.",
+            "stress": "1 = nada de estrés; 5 = mucho estrés.",
+            "soreness": "1 = nada de dolor muscular; 5 = mucho dolor muscular.",
+            "readiness": "1 = sin ganas; 5 = con muchas ganas.",
+            "pain_regions": "Si el dolor es mayor que 0, indica la zona.",
+            "pain_score": (
+                "0 = sin dolor; 10 = máximo dolor percibido. Escala 0–10. "
+                "Si el dolor es mayor que 0, indica la zona."
+            ),
+            "resting_hr_bpm": "Latidos por minuto (lpm), entre 20 y 250; dato opcional.",
+            "hrv_ms": "Milisegundos (ms); dato opcional. Si indicas HRV, indica también el método.",
+            "hrv_method": "Cómo obtuviste el dato de HRV. Si indicas HRV, indica también el método.",
+        }
+
+    def clean(self) -> dict[str, object]:
+        data = super().clean() or {}
+        day, moment = data.get("date"), data.get("moment")
+        if day and moment:
+            existing = Wellness.objects.filter(
+                owner_id=self.instance.owner_id, date=day, moment=moment
+            )
+            if self.instance.pk is not None:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                self.add_error(
+                    None,
+                    "Ya registraste un check-in para esa fecha y momento. Edita el existente.",
+                )
+        return data
+
+
+class WellnessRangeForm(forms.Form):
+    start = forms.DateField(
+        label="Desde (AAAA-MM-DD)",
+        input_formats=["%Y-%m-%d"],
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+        error_messages={"invalid": "Indica una fecha inicial válida (AAAA-MM-DD)."},
+    )
+    end = forms.DateField(
+        label="Hasta (AAAA-MM-DD)",
+        input_formats=["%Y-%m-%d"],
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+        error_messages={"invalid": "Indica una fecha final válida (AAAA-MM-DD)."},
+    )
+
+    def clean(self) -> dict[str, object]:
+        data = super().clean() or {}
+        start, end = self.cleaned_data.get("start"), self.cleaned_data.get("end")
+        if start and end and start > end:
+            raise ValidationError("La fecha inicial no puede ser posterior a la final.")
+        return data
 
 
 class MeasurementForm(forms.ModelForm[Measurement]):
