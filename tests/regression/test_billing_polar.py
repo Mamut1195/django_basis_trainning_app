@@ -112,10 +112,20 @@ def signature(
 )
 class PolarAcceptanceTests(TestCase):
     def setUp(self) -> None:
+        no_network = patch(
+            "httpx._client.HTTPTransport",
+            side_effect=AssertionError("unexpected external HTTP transport"),
+        )
+        no_network.start()
+        self.addCleanup(no_network.stop)
         self.owner = account("polar", status="inactive")
         self.other = account("foreign-polar", status="inactive")
         self.public = self.owner.athlete.public_id
         self.client.force_login(self.owner)
+
+    def test_external_http_transport_is_blocked(self) -> None:
+        with self.assertRaisesRegex(AssertionError, "unexpected external HTTP transport"):
+            httpx.Client()
 
     def send(self, event_id: str, kind: str, data: dict[str, object], *, bad: bool = False) -> int:
         body = json.dumps({"api_version": API_VERSION, "type": kind, "data": data}).encode()
@@ -512,18 +522,22 @@ class PolarAcceptanceTests(TestCase):
             with (
                 override_settings(**changes),
                 patch(
-                    "basis.modules.billing.adapters.actions.polar_request",
+                    "basis.bootstrap.billing.request",
                     side_effect=ProviderUnavailable("configuration switch"),
-                ),
+                ) as requester,
             ):
                 with self.assertRaises(ProviderUnavailable):
                     billing().checkout(command)
+                self.assertEqual(requester.call_count, 1)
+                self.assertEqual(requester.call_args.args, ("GET", "products/" + PRODUCT))
         with patch(
-            "basis.modules.billing.adapters.actions.polar_request",
+            "basis.bootstrap.billing.request",
             return_value=product(id="wrong-product"),
-        ):
+        ) as requester:
             with self.assertRaises(ProviderUnavailable):
                 billing().checkout(command)
+            self.assertEqual(requester.call_count, 1)
+            self.assertEqual(requester.call_args.args, ("GET", "products/" + PRODUCT))
         self.assertEqual(billing(provider).checkout(command), original)
 
     def test_strict_redirect_origins_and_legacy_price_periods(self) -> None:
