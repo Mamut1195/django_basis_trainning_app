@@ -1,6 +1,6 @@
 # Contrato de variables deportivas
 
-`training/domain.py` es la definición ejecutable de unidades, variables admitidas y validaciones; los formularios web y offline derivan del mismo diccionario. Un campo sin datos significa desconocido. Cero solo representa un cero registrado.
+`basis/modules/training/domain/sports.py` es la definición ejecutable de unidades, variables admitidas y validaciones; los formularios web y offline derivan del mismo diccionario. Un campo sin datos significa desconocido. Cero solo representa un cero registrado.
 
 | Área | Variables principales |
 |---|---|
@@ -14,6 +14,10 @@
 | Bienestar | Sueño h/calidad, fatiga, estrés, dolor muscular, disposición percibida, regiones/intensidad de dolor y notas; FC reposo/HRV medidas opcionales con método. |
 
 Las restricciones validan, entre otras cosas, que movimiento más pausas no exceda duración, que la altitud máxima incluya inicio/final, que las referencias RM no sean ajenas/futuras y que no se inserten resultados reales en una prescripción.
+
+En hiking, activo y pausas conocidos pueden sumar menos que el total si queda tiempo sin clasificar; no se completa el componente ausente. El ascenso acumulado debe cubrir tanto final−inicio como máxima−inicio cuando esos datos se conocen; el descenso debe cubrir inicio−final y máxima−final. Si inicio, final, ascenso y descenso están registrados, se exige ascenso−descenso = final−inicio con los decimales declarados, sin tolerancia añadida ni datos inferidos. Las comprobaciones solo usan operandos conocidos. Se admiten altitudes bajo el nivel del mar dentro del rango existente.
+
+Las observaciones de hiking, incluida la mochila decimal en kg, se registran en el bloque de esa sesión; no se propagan a otras sesiones ni se agregan mochilas de varios bloques. La duración global de la sesión y su protocolo siguen siendo el resumen utilizado para carga interna. La cola PWA conserva las observaciones manuales y el servidor aplica estas mismas validaciones al sincronizar; guardar localmente no confirma su aceptación por el servidor.
 
 ## Métricas
 
