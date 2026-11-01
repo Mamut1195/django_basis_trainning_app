@@ -4,9 +4,10 @@ Base de esta revisión: `f76b873`, rama `ticket/MAM-629-calendario-editor`.
 Incluye cuatro commits del editor y el merge `--no-ff` de `origin/main`
 `128e746`, que integra PR #22. PR #24 permanece DRAFT. `head: ver PR #24`;
 el ejecutor humano fijará el nuevo head después de revisar estos cambios.
-La ampliación H2/H6 modificó únicamente tests y documentación, sin commits.
-La corrección H1 parte de `e24c9cf` y añade la regla de dominio y su cobertura,
-también sin commits.
+Commits posteriores a `f76b873`, por orden de Jonathan: H2 `e4ee205` (tests),
+H6 `e24c9cf` (documentación), H1 `f823400` (no-solape de ciclos hermanos),
+`53fd8d0` (tipado de payloads para mypy Django) y `0ddde9c` (fixture de
+`test_move_between_explicit_microcycles_retains_temporal_bounds` sin solape).
 
 ## Comportamiento
 
@@ -103,22 +104,23 @@ y recibos `status-*.json`. El wrapper `gate-h1.py` usa SQLite en memoria,
 `config.test_settings`, `AI_ENABLED=0`, `POLAR_ENABLED=0` y una clave ficticia
 de tests. Sus auxiliares y cachés se guardan en esa carpeta.
 
-| Gate H1                                    | Estado   | Resultado                                                           |
-| ------------------------------------------ | -------- | ------------------------------------------------------------------- |
-| Dominio de planning                        | VERIFIED | 25 tests: 18 existentes y 7 nuevos                                  |
-| `tests.regression.test_plan_editor`         | VERIFIED | 32 tests: 26 existentes y 6 nuevos                                  |
-| Ruff check global                          | VERIFIED | Sin incidencias                                                     |
-| Ruff format --check de los archivos H1     | VERIFIED | 7 archivos Python conformes                                        |
-| Ruff format --check global                 | FAILED   | Formato preexistente en `manage.py` y `scripts/arch09_remediation.py` |
-| Mypy core                                  | VERIFIED | 126 archivos sin errores                                           |
-| Mypy Django                                | FAILED   | 4 errores preexistentes en `PlanEditorSecurityTests`                |
-| Django check                               | VERIFIED | Cero incidencias                                                    |
-| Makemigrations --check --dry-run            | VERIFIED | Sin cambios detectados                                              |
-| PostgreSQL, navegador y suite completa H1  | NOT RUN  | Fuera del alcance solicitado                                       |
+| Gate H1                                   | Estado   | Resultado                                                              |
+| ----------------------------------------- | -------- | ---------------------------------------------------------------------- |
+| Dominio de planning                       | VERIFIED | 25 tests: 18 existentes y 7 nuevos                                     |
+| `tests.regression.test_plan_editor`       | VERIFIED | 32 tests: 26 existentes y 6 nuevos                                     |
+| Ruff check global                         | VERIFIED | Sin incidencias                                                        |
+| Ruff format --check de los archivos H1    | VERIFIED | 7 archivos Python conformes                                            |
+| Ruff format --check global                | FAILED   | Formato preexistente en `manage.py` y `scripts/arch09_remediation.py`  |
+| Mypy core                                 | VERIFIED | 126 archivos sin errores                                               |
+| Mypy Django                               | VERIFIED | Los 4 errores de `PlanEditorSecurityTests` se corrigieron en `53fd8d0` |
+| Django check                              | VERIFIED | Cero incidencias                                                       |
+| Makemigrations --check --dry-run          | VERIFIED | Sin cambios detectados                                                 |
+| PostgreSQL, navegador y suite completa H1 | NOT RUN  | Fuera del alcance solicitado                                           |
 
 Los fallos de formato se reprodujeron con el contenido de `HEAD`; ambos
-archivos permanecen intactos. Los cuatro errores de mypy Django se reprodujeron
-con `--shadow-file` del test original de `HEAD`. No se modificaron ni eliminaron
+archivos permanecen intactos. Los cuatro errores de mypy Django, reproducidos
+con `--shadow-file` del test original, se corrigieron después en `53fd8d0`
+tipando los payloads de aislamiento. No se modificaron ni eliminaron
 métodos de tests existentes; solo se amplió la fixture en memoria para aportar
 los ciclos al contexto de alta. Todos los existentes de las dos suites
 solicitadas pasan. Los 13 métodos nuevos cubren adyacencia,
@@ -127,6 +129,15 @@ edición, cambio de padre, plantilla y rechazo antes de un escritor permisivo.
 Los rechazos web comparan todos los modelos gestionados antes/después,
 incluidas versiones y auditoría. Estos conteos no sustituyen la evidencia
 histórica de suite completa.
+
+La suite completa posterior a H1 detectó que
+`tests.regression.test_planning_versioning` creaba el micro hermano `Destino`
+(`TODAY+2`–`TODAY+3`) solapado con el micro original (`TODAY-2`–`TODAY+6`).
+`0ddde9c` ajusta solo esa fixture: el micro original termina en `TODAY+1`
+(sigue conteniendo sus sesiones) y `Destino` empieza al día siguiente, ambos
+dentro del meso y con fechas inclusivas. La prueba sigue verificando el cambio
+explícito de microciclo con fechas conservadas. Los gates finales sobre el head
+publicado se registran en el cuerpo de PR #24.
 
 Para repetir un gate desde la raíz:
 
