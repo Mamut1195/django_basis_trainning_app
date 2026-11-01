@@ -1,0 +1,25 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <div class="form-width stack">
+    <c-basis.page-heading :title="title" :subtitle="subtitle" />
+    {% if impact %}
+      <c-basis.card title="Impacto al guardar">
+        <p>
+          Se crea una nueva versión. {{ impact.0 }} sesiones futuras sin ejecución se copian; {{ impact.1 }} sesiones con ejecución y {{ impact.2 }} sesiones pasadas sin ejecución permanecen en su versión histórica.
+        </p>
+        {% if scheduled %}
+          <p>
+            La acción seleccionada afecta a {{ scheduled.title }} ({{ scheduled.date }}). Una reprogramación u omisión explícita también puede cambiar una sesión pasada sin ejecución.
+          </p>
+        {% endif %}
+        <p>
+          Las fechas del plan deben contener todos sus ciclos; las de cada ciclo deben contener a sus hijos y sesiones. Ningún resultado ejecutado se sobrescribe.
+        </p>
+      </c-basis.card>
+    {% endif %}
+    <c-basis.form-frame :form="form" submit="Guardar cambio" />
+    {% if plan %}
+      <a href="{% url 'plan-calendar' plan.pk %}">Cancelar y volver al calendario</a>
+    {% endif %}
+  </div>
+{% endblock %}

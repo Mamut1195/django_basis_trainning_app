@@ -36,7 +36,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run format:check
       - run: djlint basis --check
-      - run: ruff format --check basis config tests tests_architecture scripts/architecture_check.py scripts/browser_smoke.py scripts/acceptance_browser.py scripts/ux_acceptance.py scripts/verify_environment.py scripts/backup_db.py scripts/healthcheck.py scripts/verify_operations.py scripts/verify_gunicorn_logging.py deploy/gunicorn_config.py
+      - run: ruff format --check basis config tests tests_architecture scripts/architecture_check.py scripts/browser_smoke.py scripts/acceptance_browser.py scripts/ux_acceptance.py scripts/cotton_acceptance.py scripts/verify_environment.py scripts/backup_db.py scripts/healthcheck.py scripts/verify_operations.py scripts/verify_gunicorn_logging.py deploy/gunicorn_config.py
       - run: ruff check .
       - run: python scripts/architecture_check.py
       - run: python -m unittest discover -s tests_architecture
@@ -45,7 +45,7 @@ jobs:
       - run: lint-imports
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
-      - run: python manage.py test tests.regression basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.sync.adapters.test_wire --noinput
+      - run: python manage.py test tests.regression basis.bootstrap.tests basis.modules.billing.adapters.test_persistence basis.modules.billing.adapters.test_polar basis.modules.training.adapters.test_metrics basis.modules.training.adapters.test_player basis.modules.sync.adapters.test_wire --noinput
       - run: python manage.py collectstatic --noinput
       - name: Build and start the production image against disposable PostgreSQL
         env:

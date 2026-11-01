@@ -2,10 +2,13 @@
 
 from django.urls import include, path
 
+from basis.adapters.web import component_catalog
 from basis.adapters.web import platform_views as platform
 from basis.adapters.web.records import owned_new
 
 urlpatterns = [
+    path("ui/components/", component_catalog.catalog, name="component-catalog"),
+    path("ui/components/fragment/", component_catalog.fragment, name="component-fragment"),
     path("", include("basis.modules.training.adapters.web.urls")),
     path("", include("basis.modules.accounts.adapters.web.urls")),
     path("", include("basis.modules.athletes.adapters.web.urls")),

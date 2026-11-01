@@ -28,7 +28,7 @@ def metric_rows(block: Block | Interval, source: str = "actual") -> list[MetricR
         for key, value in values.items()
         if key in definitions
     ]
-    if sport == "running":
+    if sport in ("running", "swimming"):
         # Legacy JSON may contain true null; do not turn absence into zero or "None".
         pace_inputs = {
             key: str(values[key])
@@ -38,8 +38,10 @@ def metric_rows(block: Block | Interval, source: str = "actual") -> list[MetricR
         rows.append(
             {
                 "label": "Ritmo derivado transcurrido",
-                "value": pace_seconds_legacy(pace_inputs),
-                "unit": "s/km",
+                "value": pace_seconds_legacy(
+                    pace_inputs, per_metres=100 if sport == "swimming" else 1000
+                ),
+                "unit": "s/100 m" if sport == "swimming" else "s/km",
             }
         )
     return rows

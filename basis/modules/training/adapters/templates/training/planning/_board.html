@@ -1,0 +1,120 @@
+<section id="plan-board" class="stack" aria-label="Calendario y editor del plan">
+  <c-basis.page-heading :title="plan.title"
+                        subtitle="Versión {{ plan.version }} · {{ plan.start_date }} → {{ plan.end_date }}" />
+  <div class="actions">
+    <a href="{% url 'plans' %}">Todos los planes</a>
+    {% if editable %}
+      <c-ui.button href="{% url 'plan-edit' plan.pk %}">
+        Editar plan
+      </c-ui.button>
+      <c-ui.button href="{% url 'editor-cycle-new' plan.pk %}">
+        Añadir ciclo
+      </c-ui.button>
+      <c-ui.button href="{% url 'editor-session-new' plan.pk %}">
+        Programar sesión
+      </c-ui.button>
+    {% else %}
+      <p class="notice">Versión histórica: solo consulta. Abre la última versión para editar.</p>
+    {% endif %}
+  </div>
+  <c-basis.card title="Semana">
+    <nav class="actions" aria-label="Seleccionar semana">
+      <c-ui.button id="calendar-previous"
+                   href="?week={{ previous_week|date:'Y-m-d' }}"
+                   hx-get="?week={{ previous_week|date:'Y-m-d' }}"
+                   hx-target="#plan-board"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+        Semana anterior
+      </c-ui.button>
+      <c-ui.button id="calendar-next"
+                   href="?week={{ next_week|date:'Y-m-d' }}"
+                   hx-get="?week={{ next_week|date:'Y-m-d' }}"
+                   hx-target="#plan-board"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+        Semana siguiente
+      </c-ui.button>
+    </nav>
+    <form method="get" class="actions">
+      <label for="week">Ir a la semana de</label>
+      <input id="week" type="date" name="week" value="{{ start|date:'Y-m-d' }}" required>
+      <c-ui.button type="submit">
+        Ver semana
+      </c-ui.button>
+    </form>
+    <p role="status">
+      Semana del {{ start|date:'j M Y' }}. Cada cambio conserva su motivo y los resultados anteriores.
+    </p>
+    <div class="grid">
+      {% for day in days %}
+        <section class="stack-sm" aria-label="{{ day.date|date:'Y-m-d' }}">
+          <h3>{{ day.date|date:'l, j M' }}</h3>
+          {% for item, state in day.sessions %}
+            <div class="card-line">
+              <a href="{% url 'scheduled-detail' item.pk %}">{{ item.title }}</a>
+              <p>{{ state }} · {{ item.cycle.title }}</p>
+              {% if editable and item.plan_id == plan.pk and state != 'Completada' and state != 'En curso' %}
+                <div class="actions">
+                  <a href="{% url 'editor-session' item.pk 'edit' %}">Editar {{ item.title }}</a>
+                  <a href="{% url 'editor-session' item.pk 'move' %}">Reprogramar {{ item.title }}</a>
+                  <a href="{% url 'editor-session' item.pk 'change' %}">Omitir o sustituir {{ item.title }}</a>
+                </div>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p class="muted">Sin sesiones</p>
+          {% endfor %}
+        </section>
+      {% endfor %}
+    </div>
+  </c-basis.card>
+  <c-basis.card title="Jerarquía de ciclos">
+    {% for node in tree %}
+      {% include 'training/planning/_cycle.html' %}
+    {% empty %}
+      <c-basis.empty title="Empieza por un macrociclo">
+        Añade después un mesociclo y un microciclo antes de programar sesiones.
+      </c-basis.empty>
+    {% endfor %}
+    {% for item in historical %}
+      <p>
+        <a href="{% url 'scheduled-detail' item.pk %}">{{ item.title }}</a> · Conservada en v{{ item.plan.version }} con su ejecución o fecha histórica.
+      </p>
+    {% endfor %}
+  </c-basis.card>
+  <c-basis.card title="Versiones y comparación">
+    <form method="get" class="stack-sm">
+      <label for="compare">Comparar esta v{{ plan.version }} con</label>
+      <select id="compare" name="compare">
+        {% for version in versions %}
+          <option value="{{ version.pk }}"
+                  {% if comparison.pk == version.pk %}selected{% endif %}>
+            Versión {{ version.version }} · {{ version.change_reason|default:'Creación' }}
+          </option>
+        {% endfor %}
+      </select>
+      <c-ui.button type="submit">
+        Comparar versiones
+      </c-ui.button>
+    </form>
+    {% if comparison %}
+      <h3>Antes: v{{ comparison.version }} → Después: v{{ plan.version }}</h3>
+      {% for difference in differences %}
+        <div class="card-line">
+          <h4>{{ difference.label }}</h4>
+          <p>Antes: {{ difference.before }}</p>
+          <p>Después: {{ difference.after }}</p>
+        </div>
+      {% empty %}
+        <p>Sin cambios en la intención comparada.</p>
+      {% endfor %}
+      <a href="{% url 'plan-calendar' comparison.pk %}">Consultar v{{ comparison.version }} completa</a>
+    {% endif %}
+    {% for version in versions %}
+      <p class="card-line">
+        <a href="{% url 'plan-calendar' version.pk %}">Versión {{ version.version }}</a> · {{ version.change_reason|default:'Creación' }} · {{ version.created_at }}
+      </p>
+    {% endfor %}
+  </c-basis.card>
+</section>

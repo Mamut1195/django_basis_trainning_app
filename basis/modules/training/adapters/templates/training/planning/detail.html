@@ -3,6 +3,9 @@
   <c-basis.page-heading :title="plan.title"
                         subtitle="{{ plan.start_date }} → {{ plan.end_date }} · Versión {{ plan.version }}" />
   <div class="actions">
+    <c-ui.button href="{% url 'plan-calendar' plan.pk %}">
+      Calendario semanal y editor
+    </c-ui.button>
     {% if editable %}
       <c-ui.button href="{% url 'cycle-new' plan.pk %}" variant="primary">
         Añadir ciclo

@@ -4,6 +4,9 @@
                         eyebrow="Planificación"
                         subtitle="Objetivos, ciclos y sesiones. Cambia tu futuro sin borrar tu historia." />
   <div class="actions">
+    <c-ui.button href="{% url 'plan-template' %}">
+      Crear desde plantilla privada
+    </c-ui.button>
     <c-ui.button variant="primary" href="{% url 'plan-new' %}">
       Crear plan
     </c-ui.button>
@@ -22,6 +25,7 @@
           <h2>
             <a href="{% url 'plan-detail' plan.pk %}">{{ plan.title }}</a>
           </h2>
+          <a href="{% url 'plan-calendar' plan.pk %}">Calendario y editor</a>
           <p class="muted">{{ plan.goal.title }}</p>
           <small>{{ plan.start_date|date:'j M Y' }} → {{ plan.end_date|date:'j M Y' }}</small>
         </div>

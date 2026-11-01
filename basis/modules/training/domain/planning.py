@@ -18,7 +18,9 @@ from .execution import BlockData
 
 
 class InvalidPlanning(Exception):
-    pass
+    def __init__(self, message: str, *details: str) -> None:
+        self.messages = [message, *details]
+        super().__init__(" ".join(self.messages))
 
 
 class PlanningUnavailable(Exception):
@@ -136,6 +138,16 @@ def validate_dates(start: date, end: date) -> None:
         raise InvalidPlanning("El final debe ser posterior al inicio.")
 
 
+def sibling_cycles_overlap(first: CycleDefinition, second: CycleDefinition) -> bool:
+    """Compare distinct cycles within one plan, including siblings with no parent."""
+    return (
+        first.key != second.key
+        and first.parent == second.parent
+        and first.start_date <= second.end_date
+        and second.start_date <= first.end_date
+    )
+
+
 def validate_cycle(
     data: CycleDefinition,
     plan_start: date,
@@ -143,7 +155,13 @@ def validate_cycle(
     parent: CycleDefinition | None,
     *,
     same_plan: bool = True,
+    siblings: tuple[CycleDefinition, ...] = (),
 ) -> None:
+    """Validate inclusive [start_date, end_date] ranges within one plan.
+
+    Siblings may start the day after another ends; sharing an endpoint overlaps.
+    The candidate itself is ignored when validating an edit.
+    """
     if data.end_date < data.start_date or data.start_date < plan_start or data.end_date > plan_end:
         raise InvalidPlanning("El ciclo debe estar dentro de las fechas del plan.")
     if data.kind == CycleKind.MACRO and data.parent is not None:
@@ -155,6 +173,17 @@ def validate_cycle(
         not same_plan or data.start_date < parent.start_date or data.end_date > parent.end_date
     ):
         raise InvalidPlanning("El ciclo debe estar dentro de su padre y plan.")
+    for sibling in siblings:
+        if sibling_cycles_overlap(data, sibling):
+            raise InvalidPlanning(
+                "Los ciclos con el mismo padre no pueden solaparse en fechas.",
+                f'Se solapan "{data.title}" ({data.kind.value}, '
+                f"{data.start_date.isoformat()} a {data.end_date.isoformat()}) y "
+                f'"{sibling.title}" ({sibling.kind.value}, '
+                f"{sibling.start_date.isoformat()} a {sibling.end_date.isoformat()}). "
+                "Ajusta las fechas para que uno termine antes de que empiece el otro; "
+                "las fechas de inicio y final están incluidas.",
+            )
 
 
 def validate_schedule(
@@ -237,6 +266,7 @@ def validate_definition(data: PlanDefinition, *, allow_drafts: bool = False) -> 
                 data.start_date,
                 data.end_date,
                 cycles.get(cycle.parent) if cycle.parent is not None else None,
+                siblings=tuple(cycles.values()),
             )
             cycles[cycle.key] = cycle
     intents: set[PlannedSessionId] = set()

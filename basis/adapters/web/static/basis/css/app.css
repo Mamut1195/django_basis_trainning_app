@@ -39,8 +39,8 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: var(--focus-width) solid var(--accent);
-  outline-offset: 3px;
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-gap);
 }
 h1,
 h2,
@@ -170,8 +170,8 @@ small {
   color: var(--accent-strong);
 }
 .nav-icon {
-  font-size: 1.25rem;
-  width: 1.5rem;
+  font-size: var(--font-lg);
+  width: var(--space-6);
   text-align: center;
 }
 .sidebar-bottom {
@@ -195,7 +195,7 @@ small {
   max-width: var(--content-width);
   margin: auto;
   padding: var(--space-8);
-  padding-bottom: 7rem;
+  padding-bottom: var(--space-28);
 }
 .page-heading {
   margin-bottom: var(--space-8);
@@ -290,7 +290,7 @@ input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
@@ -305,7 +305,7 @@ input[type="radio"] {
   margin-right: var(--space-2);
 }
 textarea {
-  min-height: 7rem;
+  min-height: var(--space-28);
 }
 input[aria-invalid="true"],
 select[aria-invalid="true"],
@@ -497,7 +497,7 @@ details summary {
   }
   .content {
     padding: var(--space-5);
-    padding-bottom: 7rem;
+    padding-bottom: var(--space-28);
   }
   .split {
     grid-template-columns: 1fr;
@@ -545,8 +545,8 @@ details summary {
 
 /* Shared interaction states; appended to preserve the established cascade. */
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: var(--focus-width) solid var(--accent);
-  outline-offset: 3px;
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-gap);
 }
 [aria-busy="true"] {
   cursor: progress;
@@ -557,10 +557,10 @@ button:disabled,
   cursor: not-allowed;
 }
 .error-summary h2 {
-  font-size: 1rem;
+  font-size: var(--font-md);
 }
 .error-summary ul {
-  padding-inline-start: 1.25rem;
+  padding-inline-start: var(--space-5);
 }
 .submit-status {
   min-height: 1.4em;
@@ -573,7 +573,7 @@ button:disabled,
     flex-wrap: wrap;
   }
   .actions :where(button, a) {
-    min-height: 44px;
+    min-height: var(--control-height);
   }
   .table-wrap {
     max-width: 100%;
@@ -594,12 +594,80 @@ label:has(input[type="checkbox"]),
 label:has(input[type="radio"]) {
   display: flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--control-height);
 }
 @media (max-width: 850px) {
   .topbar .actions > a {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+    min-height: var(--control-height);
   }
+}
+
+/* Kit role mapping, not replacement primitives; vendor templates remain untouched. */
+.focus-ring {
+  min-height: var(--control-height);
+  min-width: var(--control-height);
+}
+.focus-ring.bg-white {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--control-border);
+}
+.focus-ring.bg-red-500 {
+  color: var(--on-accent);
+}
+/* Alert roles use canonical sRGB tokens in both themes, not Tailwind gamut paints.
+   Info/success retain the existing BASIS accent mapping. */
+[role="alert"][data-basis-tone="info"],
+[role="alert"][data-basis-tone="success"] {
+  --basis-alert-foreground: var(--accent-strong);
+  --basis-alert-background: var(--accent-soft);
+  --basis-alert-border: var(--accent);
+  --basis-alert-solid: var(--accent);
+  --basis-alert-on-solid: var(--on-accent);
+}
+[role="alert"][data-basis-tone="warning"] {
+  --basis-alert-foreground: var(--warning);
+  --basis-alert-background: var(--surface);
+  --basis-alert-border: var(--warning);
+  --basis-alert-solid: var(--warning-fill);
+  --basis-alert-on-solid: var(--color-ink-900);
+}
+[role="alert"][data-basis-tone="error"] {
+  --basis-alert-foreground: var(--danger);
+  --basis-alert-background: var(--surface);
+  --basis-alert-border: var(--danger);
+  --basis-alert-solid: var(--danger);
+  --basis-alert-on-solid: var(--on-accent);
+}
+[role="alert"][data-basis-tone][data-basis-appearance] {
+  color: var(--basis-alert-foreground);
+  background: var(--basis-alert-background);
+  border-color: var(--basis-alert-border);
+}
+[role="alert"][data-basis-tone][data-basis-appearance="solid"] {
+  color: var(--basis-alert-on-solid);
+  background: var(--basis-alert-solid);
+  border-color: var(--basis-alert-solid);
+}
+[role="alert"][data-basis-tone][data-basis-appearance="outline"] {
+  background: var(--surface);
+}
+.catalog-nav {
+  flex-wrap: wrap;
+}
+#component-catalog {
+  min-width: 0;
+}
+main:has(#component-catalog) {
+  max-width: var(--content-width);
+}
+#component-catalog :where(section, .rounded-box) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+#component-catalog [x-bind="trigger"] > button,
+#component-catalog [x-data] > button {
+  min-height: var(--control-height);
 }

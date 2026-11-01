@@ -23,8 +23,48 @@ self.addEventListener("activate", (event) =>
     })(),
   ),
 );
+let updating = false;
+async function activateSafely() {
+  if (updating) return;
+  updating = true;
+  let windows = [];
+  let activated = false;
+  try {
+    windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const replies = await Promise.all(
+      windows.map(
+        (client) =>
+          new Promise((resolve) => {
+            const channel = new MessageChannel();
+            const finish = (safe) => {
+              clearTimeout(timer);
+              channel.port1.close();
+              resolve(safe);
+            };
+            const timer = setTimeout(() => finish(false), 3000);
+            channel.port1.onmessage = (reply) => finish(reply.data?.safe === true);
+            client.postMessage({ type: "PREPARE_UPDATE" }, [channel.port2]);
+          }),
+      ),
+    );
+    const current = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    if (
+      replies.every(Boolean) &&
+      windows.length > 0 &&
+      current.every((client) => windows.some((previous) => previous.id === client.id))
+    ) {
+      await self.skipWaiting();
+      activated = true;
+      return;
+    }
+  } finally {
+    // On refusal all windows can keep editing. On success controllerchange reloads them.
+    if (!activated) for (const client of windows) client.postMessage({ type: "RELEASE_UPDATE" });
+    updating = false;
+  }
+}
 self.addEventListener("message", (event) => {
-  if (event.data?.type === "ACTIVATE") self.skipWaiting();
+  if (event.data?.type === "ACTIVATE") event.waitUntil(activateSafely());
 });
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);

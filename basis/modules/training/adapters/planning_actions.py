@@ -90,7 +90,7 @@ def save_cycle(owner: int, row: Cycle) -> None:
             )
         )
     except InvalidPlanning as error:
-        raise ValidationError(str(error)) from error
+        raise ValidationError(error.messages) from error
 
 
 def save_scheduled(owner: int, row: PlannedSession) -> int:
