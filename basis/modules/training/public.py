@@ -32,6 +32,7 @@ from .application.manual import (
     SaveStrength,
     StrengthContext,
 )
+from .application.marks import EstimatedMark, EstimatedMarkPage, EstimatedMarks
 from .application.planning import (
     AddCycle,
     ChangeScheduledSession,
@@ -156,6 +157,9 @@ from .domain.trekking import (
 )
 
 __all__ = (
+    "EstimatedMark",
+    "EstimatedMarkPage",
+    "EstimatedMarks",
     "AdaptationField",
     "AdaptationPresence",
     "ChangeScheduledSession",

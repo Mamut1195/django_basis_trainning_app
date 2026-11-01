@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db.models import F
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_safe
 
 from basis.adapters.web.framework import owner, write_required
 from basis.adapters.web.presentation import profile_goals
@@ -233,3 +234,12 @@ def measurement_history(request: HttpRequest) -> HttpResponse:
             "personal_access": can_edit_personal(owner(request).pk),
         },
     )
+
+
+@login_required
+@require_safe
+def measured_rm_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    row = get_object_or_404(
+        UserExerciseRM.objects.select_related("exercise"), pk=pk, user__account_id=owner(request).pk
+    )
+    return render(request, "athletes/profile/measured_rm_detail.html", {"record": row})

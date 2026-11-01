@@ -13,6 +13,7 @@ from .application.administration import (
 from .application.billing import BillingProfile, BillingProfiles
 from .application.coach import AthleteCoachContext, AthleteCoachContexts
 from .application.enrollment import AthleteEnrollment
+from .application.marks import MeasuredMark, MeasuredMarkPage, MeasuredMarks
 from .application.personal_access import (
     PersonalAccessDenied as PersonalAccessDenied,
 )
@@ -82,6 +83,9 @@ from .domain.workouts import (
 )
 
 __all__ = (
+    "MeasuredMark",
+    "MeasuredMarkPage",
+    "MeasuredMarks",
     "AdministrativeProfile",
     "AthleteAdministration",
     "SaveAdministrativeProfile",

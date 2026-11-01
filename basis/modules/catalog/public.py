@@ -13,7 +13,7 @@ from .application.catalog import (
     SaveExercise,
 )
 from .application.coach import CoachExercise, CoachExercises
-from .application.presentation import ExerciseNames
+from .application.presentation import ExerciseChoices, ExerciseNames
 from .domain.catalog import (
     CatalogDenied,
     ClassificationData,
@@ -31,6 +31,7 @@ __all__ = (
     "DeleteClassifications",
     "DeleteExercises",
     "ExerciseNames",
+    "ExerciseChoices",
     "CoachExercise",
     "CoachExercises",
     "Catalog",

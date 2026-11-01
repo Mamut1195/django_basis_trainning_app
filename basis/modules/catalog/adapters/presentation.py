@@ -11,3 +11,13 @@ class DjangoExerciseNames:
 
     def fatigue(self, exercise: ExerciseId) -> str | None:
         return Exercise.objects.filter(pk=exercise).values_list("nivel_fatiga", flat=True).first()
+
+
+class DjangoExerciseChoices:
+    def all(self) -> tuple[tuple[ExerciseId, str, bool], ...]:
+        return tuple(
+            (ExerciseId(pk), name, archived)
+            for pk, name, archived in Exercise.objects.order_by("nombre", "pk").values_list(
+                "pk", "nombre", "archivado"
+            )
+        )
