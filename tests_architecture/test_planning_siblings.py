@@ -202,3 +202,47 @@ class SiblingPlanningTests(TestCase):
             data.cycles[-2],
             siblings=(cycle, replace(cycle, key="other", parent="another-parent")),
         )
+
+    def test_overlap_diagnostic_names_both_cycles_types_dates_and_remedy(self) -> None:
+        for kind in CycleKind:
+            data, following = sibling_plan(kind)
+            following = replace(following, start_date=TODAY + timedelta(days=9))
+            for cycles in ((*data.cycles, following), (following, *data.cycles)):
+                with self.subTest(kind=kind, first=cycles[0].key):
+                    with self.assertRaises(InvalidPlanning) as raised:
+                        validate_definition(replace(data, cycles=cycles))
+                    error = raised.exception
+                    self.assertEqual(error.messages[0], OVERLAP)
+                    for cycle in (data.cycles[-1], following):
+                        self.assertIn(
+                            f'"{cycle.title}" ({kind.value}, '
+                            f"{cycle.start_date} a {cycle.end_date})",
+                            str(error),
+                        )
+                    self.assertIn(
+                        "Ajusta las fechas para que uno termine antes de que empiece el otro",
+                        str(error),
+                    )
+                    self.assertIn("inicio y final están incluidas", str(error))
+
+    def test_legacy_edit_and_shifted_template_keep_diagnostic_dates(self) -> None:
+        for kind in CycleKind:
+            data, following = sibling_plan(kind)
+            following = replace(following, start_date=TODAY + timedelta(days=9))
+            legacy = snapshot(replace(data, cycles=(*data.cycles, following)))
+            with self.subTest(kind=kind, operation="edit"):
+                with self.assertRaises(InvalidPlanning) as raised:
+                    edit_definition(legacy, TODAY, data.title, data.start_date, data.end_date, "")
+                self.assertIn(f'"Primero" ({kind.value}, {TODAY}', str(raised.exception))
+                self.assertIn(
+                    f'"Siguiente" ({kind.value}, {following.start_date}', str(raised.exception)
+                )
+            start = TODAY + timedelta(days=60)
+            with self.subTest(kind=kind, operation="template"):
+                with self.assertRaises(InvalidPlanning) as raised:
+                    template_definition(legacy, GoalId(2), "Copia", start)
+                self.assertIn(f'"Primero" ({kind.value}, {start}', str(raised.exception))
+                self.assertIn(
+                    f'"Siguiente" ({kind.value}, {start + timedelta(days=9)}',
+                    str(raised.exception),
+                )

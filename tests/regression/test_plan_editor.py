@@ -5,8 +5,11 @@ from datetime import timedelta
 from typing import cast
 
 from django.apps import apps
+from django.db import connection
 from django.test import Client, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from django.utils.html import escape
 
 from basis.bootstrap.plan_editor import plan_editor
 from basis.modules.training.adapters.actions import session_snapshot, start_session
@@ -477,6 +480,161 @@ class PlanEditorSiblingTests(PlanningFixture, TestCase):
                 self.assertEqual(self.database_state(), before)
                 added = self.service.add_cycle(command)
                 self.assertEqual(plan.cycles.get(pk=added).start_date, following.start_date)
+
+    def legacy_siblings(self, kind: CycleKind) -> tuple[TrainingPlan, Cycle, Cycle]:
+        plan, _ = self.sibling_fixture(kind, with_following=True)
+        first = plan.cycles.get(title="Primero")
+        second = plan.cycles.get(title="Siguiente")
+        # Persisted pre-H1 overlap, bypassing validation only in this fixture.
+        plan.cycles.filter(pk=second.pk).update(start_date=first.end_date)
+        second.refresh_from_db()
+        return plan, first, second
+
+    def assert_detailed_overlap_without_writes(
+        self,
+        url: str,
+        payload: dict[str, object],
+        first: Cycle,
+        second: Cycle,
+        *,
+        offset: int = 0,
+    ) -> None:
+        before = self.database_state()
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.post(url, payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(OVERLAP, response.context["form"].non_field_errors())
+        self.assertContains(response, OVERLAP)
+        for cycle in (first, second):
+            fragment = (
+                f'"{cycle.title}" ({cycle.kind}, '
+                f"{cycle.start_date + timedelta(days=offset)} a "
+                f"{cycle.end_date + timedelta(days=offset)})"
+            )
+            self.assertContains(response, escape(fragment))
+        self.assertContains(
+            response, "Ajusta las fechas para que uno termine antes de que empiece el otro"
+        )
+        self.assertContains(response, "inicio y final están incluidas")
+        self.assertEqual(self.database_state(), before)
+        for query in queries:
+            self.assertNotIn(
+                query["sql"].lstrip().split()[0].upper(),
+                {"INSERT", "UPDATE", "DELETE", "REPLACE"},
+            )
+
+    def test_legacy_template_shows_both_cycles_and_shifted_dates_without_writes(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, first, second = self.legacy_siblings(kind)
+                self.assert_detailed_overlap_without_writes(
+                    reverse("plan-template"),
+                    {
+                        "source": plan.pk,
+                        "goal": plan.goal_id,
+                        "title": "Copia",
+                        "start_date": plan.start_date + timedelta(days=60),
+                        "reason": "Nuevo periodo",
+                    },
+                    first,
+                    second,
+                    offset=60,
+                )
+
+    def test_legacy_plan_edit_shows_both_cycles_dates_and_remedy_without_writes(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, first, second = self.legacy_siblings(kind)
+                self.assert_detailed_overlap_without_writes(
+                    reverse("plan-edit", args=[plan.pk]),
+                    {
+                        "title": plan.title,
+                        "start_date": plan.start_date,
+                        "end_date": plan.end_date,
+                        "reason": "Ajustar plan",
+                    },
+                    first,
+                    second,
+                )
+
+    def test_legacy_cycle_edit_shows_both_cycles_dates_and_remedy_without_writes(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, first, second = self.legacy_siblings(kind)
+                candidate = CycleDefinition(
+                    str(second.pk),
+                    str(second.parent_id) if second.parent_id else None,
+                    kind,
+                    second.title,
+                    second.start_date,
+                    second.end_date,
+                )
+                self.assert_detailed_overlap_without_writes(
+                    reverse("editor-cycle", args=[plan.pk, second.pk]),
+                    self.cycle_payload(candidate, second.parent_id),
+                    first,
+                    second,
+                )
+
+    def test_legacy_session_move_shows_inherited_overlap_without_writes(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, first, second = self.legacy_siblings(kind)
+                micro = first
+                for child_kind in (CycleKind.MESO, CycleKind.MICRO):
+                    if child_kind == kind or (kind == CycleKind.MICRO):
+                        continue
+                    micro = Cycle.objects.create(
+                        plan=plan,
+                        parent=micro,
+                        kind=child_kind.value,
+                        title=child_kind.value,
+                        start_date=first.start_date,
+                        end_date=first.end_date,
+                    )
+                session = PlannedSession.objects.create(
+                    owner=self.user,
+                    plan=plan,
+                    cycle=micro,
+                    title="Sesión futura",
+                    date=TODAY + timedelta(days=1),
+                )
+                self.assert_detailed_overlap_without_writes(
+                    reverse("editor-session", args=[session.pk, "move"]),
+                    {
+                        "date": TODAY + timedelta(days=2),
+                        "cycle": micro.pk,
+                        "revision": session.revision,
+                        "reason": "Mover sesión",
+                    },
+                    first,
+                    second,
+                )
+
+    def test_cycle_create_shows_conflicting_titles_types_dates_and_remedy(self) -> None:
+        for kind in CycleKind:
+            with self.subTest(kind=kind):
+                plan, first, _ = self.legacy_siblings(kind)
+                candidate = Cycle(
+                    plan=plan,
+                    parent_id=first.parent_id,
+                    kind=kind.value,
+                    title='Nuevo <ciclo> "privado"',
+                    start_date=first.start_date,
+                    end_date=first.end_date,
+                )
+                self.assert_detailed_overlap_without_writes(
+                    reverse("editor-cycle-new", args=[plan.pk]),
+                    {
+                        "kind": kind.value,
+                        "parent": first.parent_id or "",
+                        "title": candidate.title,
+                        "start_date": candidate.start_date,
+                        "end_date": candidate.end_date,
+                    },
+                    first,
+                    candidate,
+                )
 
 
 class PlanEditorSecurityTests(PlanningFixture, TestCase):

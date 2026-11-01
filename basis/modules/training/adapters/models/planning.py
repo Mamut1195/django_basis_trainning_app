@@ -185,7 +185,7 @@ class Cycle(ValidatedModel):
                 ),
             )
         except InvalidPlanning as error:
-            raise ValidationError(str(error)) from error
+            raise ValidationError(error.messages) from error
 
 
 class PlannedSession(Owned):

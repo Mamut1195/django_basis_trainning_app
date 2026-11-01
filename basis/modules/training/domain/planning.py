@@ -18,7 +18,9 @@ from .execution import BlockData
 
 
 class InvalidPlanning(Exception):
-    pass
+    def __init__(self, message: str, *details: str) -> None:
+        self.messages = [message, *details]
+        super().__init__(" ".join(self.messages))
 
 
 class PlanningUnavailable(Exception):
@@ -136,6 +138,16 @@ def validate_dates(start: date, end: date) -> None:
         raise InvalidPlanning("El final debe ser posterior al inicio.")
 
 
+def sibling_cycles_overlap(first: CycleDefinition, second: CycleDefinition) -> bool:
+    """Compare distinct cycles within one plan, including siblings with no parent."""
+    return (
+        first.key != second.key
+        and first.parent == second.parent
+        and first.start_date <= second.end_date
+        and second.start_date <= first.end_date
+    )
+
+
 def validate_cycle(
     data: CycleDefinition,
     plan_start: date,
@@ -161,14 +173,17 @@ def validate_cycle(
         not same_plan or data.start_date < parent.start_date or data.end_date > parent.end_date
     ):
         raise InvalidPlanning("El ciclo debe estar dentro de su padre y plan.")
-    if any(
-        sibling.key != data.key
-        and sibling.parent == data.parent
-        and data.start_date <= sibling.end_date
-        and sibling.start_date <= data.end_date
-        for sibling in siblings
-    ):
-        raise InvalidPlanning("Los ciclos con el mismo padre no pueden solaparse en fechas.")
+    for sibling in siblings:
+        if sibling_cycles_overlap(data, sibling):
+            raise InvalidPlanning(
+                "Los ciclos con el mismo padre no pueden solaparse en fechas.",
+                f'Se solapan "{data.title}" ({data.kind.value}, '
+                f"{data.start_date.isoformat()} a {data.end_date.isoformat()}) y "
+                f'"{sibling.title}" ({sibling.kind.value}, '
+                f"{sibling.start_date.isoformat()} a {sibling.end_date.isoformat()}). "
+                "Ajusta las fechas para que uno termine antes de que empiece el otro; "
+                "las fechas de inicio y final están incluidas.",
+            )
 
 
 def validate_schedule(

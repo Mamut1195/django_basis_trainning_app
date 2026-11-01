@@ -114,7 +114,7 @@ def template_new(request: HttpRequest) -> HttpResponse:
             )
             return redirect("plan-calendar", pk=result.id)
         except (InvalidPlanning, ValidationError) as error:
-            form.add_error(None, str(error))
+            form.add_error(None, ValidationError(error.messages))
     return render(
         request,
         "training/planning/editor.html",
@@ -155,7 +155,7 @@ def plan_edit(request: HttpRequest, pk: int) -> HttpResponse:
             )
             return redirect("plan-calendar", pk=result.id)
         except (InvalidPlanning, ValidationError) as error:
-            form.add_error(None, str(error))
+            form.add_error(None, ValidationError(error.messages))
             status = 409 if isinstance(error, PlanningConflict) else 200
     return render(
         request,
@@ -197,7 +197,7 @@ def cycle_editor(request: HttpRequest, pk: int, cycle_id: int | None = None) -> 
             )
             return redirect("plan-calendar", pk=result.id)
         except (InvalidPlanning, ValidationError) as error:
-            form.add_error(None, str(error))
+            form.add_error(None, ValidationError(error.messages))
             status = 409 if isinstance(error, PlanningConflict) else 200
     return render(
         request,
@@ -301,7 +301,7 @@ def session_action(request: HttpRequest, pk: int, action: str) -> HttpResponse:
                 )
             return redirect("plan-calendar", pk=result.plan)
         except (InvalidPlanning, ValidationError) as error:
-            form.add_error(None, str(error))
+            form.add_error(None, ValidationError(error.messages))
             status = 409 if isinstance(error, PlanningConflict) else 200
     return render(
         request,
