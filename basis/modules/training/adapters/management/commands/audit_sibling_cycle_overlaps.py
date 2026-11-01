@@ -22,7 +22,7 @@ class Command(BaseCommand):
         plans: set[int] = set()
         pairs = 0
         for (plan_id, parent_id), siblings in groupby(
-            rows.iterator(chunk_size=2000), key=lambda row: (row.plan_id, row.parent_id)
+            rows, key=lambda row: (row.plan_id, row.parent_id)
         ):
             cycles = tuple(
                 CycleDefinition(
