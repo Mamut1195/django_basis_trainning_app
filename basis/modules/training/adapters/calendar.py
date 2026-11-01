@@ -16,7 +16,7 @@ from .models import PlannedSession, Session, TrainingPlan
 def effective_sessions(
     owner: AccountId, local_date: Callable[[AccountId, datetime], date] | None = None
 ) -> tuple[PlannedSession, ...]:
-    executions = Session.objects.filter(
+    executions = Session.objects.filter(owner_id=owner).filter(
         Q(planned_id=OuterRef("_intent_root")) | Q(planned__origin_id=OuterRef("_intent_root"))
     )
     rows = (

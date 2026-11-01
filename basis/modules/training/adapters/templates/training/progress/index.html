@@ -94,6 +94,16 @@
               {% endif %}
               .
             </p>
+            <p>
+              RPE real de sesión completa (0–10):
+              {% if sport.rpe_known %}
+                mínimo {{ sport.rpe_min }}, máximo {{ sport.rpe_max }}
+              {% else %}
+                Sin datos
+              {% endif %}
+              · {{ sport.rpe_known }} sesiones con dato, {{ sport.rpe_missing }} sin dato.
+            </p>
+            <small>En sesiones mixtas se muestra el RPE de la sesión completa en cada disciplina presente; no se suman disciplinas ni se infiere intensidad de cada bloque.</small>
             <small>Los totales son subtotales conocidos; los conteos no certifican calidad de medición.</small>
           </div>
         </c-basis.card>
@@ -161,6 +171,39 @@
       </div>
     </div>
     {% include 'athletes/history/_strength.html' %}
+    <c-basis.card title="Sesiones programadas del período">
+      <p>
+        La adherencia compara las programadas elegibles hasta hoy con las completadas. Las canceladas y las fechas futuras no cuentan.
+      </p>
+      {% for entry in agenda_entries %}
+        <div class="card-line">
+          <p>
+            {{ entry.planned.date|date:'Y-m-d' }} · {{ entry.state }} · <a href="{% url 'scheduled-detail' entry.planned.pk %}">{{ entry.planned.title }}</a>
+          </p>
+          {% if entry.exclusion_reason %}
+            <p>No cuenta en adherencia: {{ entry.exclusion_reason }}.</p>
+          {% else %}
+            <p>Cuenta en adherencia.</p>
+          {% endif %}
+          {% for execution in entry.executions %}
+            <p>
+              <a href="{% url 'session-detail' execution.pk %}">{{ execution.get_status_display }} · {{ execution.title }}</a>
+            </p>
+          {% endfor %}
+        </div>
+      {% empty %}
+        <p>Sin sesiones programadas en este período.</p>
+      {% endfor %}
+      {% if agenda_page.has_previous %}
+        <a href="?{{ agenda_query }}&amp;agenda_page={{ agenda_page.previous_page_number }}">Programadas anteriores</a>
+      {% endif %}
+      {% if agenda_page.paginator.num_pages > 1 %}
+        <p>Página {{ agenda_page.number }} de {{ agenda_page.paginator.num_pages }}</p>
+      {% endif %}
+      {% if agenda_page.has_next %}
+        <a href="?{{ agenda_query }}&amp;agenda_page={{ agenda_page.next_page_number }}">Programadas siguientes</a>
+      {% endif %}
+    </c-basis.card>
     <c-basis.card title="Sesiones fuente del período">
       <p>
         El resumen suma las completadas; las sesiones parciales se muestran para consulta y no se suman. Las métricas de distancia y ascenso proceden de bloques; el volumen procede de series. La carga usa duración y RPE declarado de sesión.
