@@ -18,7 +18,7 @@ no se cambiaron otros objetos. No se imprimió ningún secreto. Hora de referenc
 | 7 | Estado previo de la organización sandbox | VERIFIED (solo lectura) | Checkouts 0, clientes 0, órdenes 0, suscripciones 0. Producto con 0 benefits y 0 meters. | 11:14 |
 | 8 | Checkout de prueba por el adaptador de la app | NOT RUN | La app no tiene `POLAR_ACCESS_TOKEN` en el entorno (no se creó ni pidió un token). El MCP `polar-sandbox` **no expone `POST /v1/checkouts/`** (probado: HTTP 404 "not an operation exposed by this server"; ningún objeto creado). | 11:16 |
 | 9 | Pago con tarjeta de prueba, orden y suscripción de prueba, cancelación | NOT RUN | Depende de #8. | - |
-| 10 | Webhook firmado real desde Polar (firma, idempotencia, orden invertido sobre entregas reales) | NOT RUN | Depende de #8/#9 y exige endpoint webhook remoto y `PUBLIC_URL` HTTPS; crear endpoints no está autorizado. La firma e idempotencia sí están VERIFIED localmente (#4). | - |
+| 10 | Webhook firmado real desde Polar (firma, idempotencia, orden invertido sobre entregas reales) | NOT RUN | Depende de #8/#9 y exige endpoint webhook remoto y `PUBLIC_URL` HTTPS; crear endpoints no está autorizado. La firma e idempotencia están cubiertas por pruebas locales (#4, DESCONOCIDO). | - |
 | 11 | Conciliación `reconcile_billing` contra Customer State real | NOT RUN | Requiere token sandbox en el entorno. | - |
 | 12 | LIVE / producción | NOT RUN | Desactivada por autorización; no usada. | - |
 | 13 | Benefits / meters | NOT RUN (no creados) | No autorizados; el producto tiene 0 y la app no los usa (ver abajo). | - |
