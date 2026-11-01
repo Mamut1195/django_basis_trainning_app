@@ -1,7 +1,8 @@
 """Polar wire contracts use injected requesters and HTTPX MockTransport only."""
 
 from collections.abc import Mapping
-from datetime import timedelta
+from datetime import datetime, timedelta
+from datetime import timezone as datetime_timezone
 from decimal import Decimal
 from unittest.mock import patch
 from uuid import UUID
@@ -112,6 +113,7 @@ class PolarContracts(SimpleTestCase):
         self.assertEqual(gateway.product().trial_days, Decimal(7))
 
     def test_customer_conversion_preserves_raw_period_order_and_trial_history(self) -> None:
+        now = datetime(2026, 10, 20, tzinfo=datetime_timezone.utc)
         end = "2026-11-01T00:00:00+02:00"
         requester = FakeRequester(
             {
@@ -148,7 +150,7 @@ class PolarContracts(SimpleTestCase):
             gateway.customer(self.public_id),
             str(self.public_id),
             "approved",
-            timezone.now(),
+            now,
         )
         self.assertEqual(selected.subscription_id, "later-instant")
         self.assertEqual(
