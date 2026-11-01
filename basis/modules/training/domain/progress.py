@@ -54,6 +54,10 @@ class SportProgress:
     distance_coverage: Coverage = Coverage()
     ascent_coverage: Coverage = Coverage()
     volume_coverage: Coverage = Coverage()
+    rpe_min: Decimal | None = None
+    rpe_max: Decimal | None = None
+    rpe_known: int = 0
+    rpe_missing: int = 0
 
 
 @dataclass(frozen=True)
@@ -135,6 +139,18 @@ def volume_coverage(blocks: list[ProgressBlock]) -> Coverage:
     return Coverage(known, missing, not_applicable, unknown)
 
 
+def intensity_summary(
+    values: tuple[Decimal | None, ...],
+) -> tuple[Decimal | None, Decimal | None, int, int]:
+    known = tuple(value for value in values if value is not None)
+    return (
+        min(known) if known else None,
+        max(known) if known else None,
+        len(known),
+        len(values) - len(known),
+    )
+
+
 def report(
     sessions: tuple[ProgressSession, ...],
     scheduled: tuple[ScheduledProgress, ...],
@@ -145,10 +161,12 @@ def report(
     sport_sessions: dict[str, set[SessionId]] = {}
     sport_blocks: dict[str, list[ProgressBlock]] = {}
     protocol_sessions: dict[DurationProtocol, list[ProgressSession]] = {}
+    sport_efforts: dict[str, dict[SessionId, Decimal | None]] = {}
     for session in completed:
         protocol_sessions.setdefault(session.protocol, []).append(session)
         for block in session.blocks:
             sport_sessions.setdefault(block.sport, set()).add(session.id)
+            sport_efforts.setdefault(block.sport, {}).setdefault(session.id, session.reported_rpe)
             sport_blocks.setdefault(block.sport, []).append(block)
     sports = tuple(
         SportProgress(
@@ -160,6 +178,7 @@ def report(
             metric_coverage(blocks, MetricName.DISTANCE_M),
             metric_coverage(blocks, MetricName.ASCENT_M),
             volume_coverage(blocks),
+            *intensity_summary(tuple(sport_efforts[sport].values())),
         )
         for sport, blocks in sport_blocks.items()
     )

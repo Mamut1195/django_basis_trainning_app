@@ -258,3 +258,18 @@ class ProgressPeriodTests(TestCase):
             (1, 0),
         )
         self.assertRegex(zero.content.decode(), r"0,00 UA\s*·\s*0 sin datos")
+
+    def test_rpe_summary_ui_preserves_zero_and_missing(self) -> None:
+        from basis.modules.training.adapters.models import Block
+
+        Block.objects.bulk_create([Block(session=self.monday, title="Run", sport="running")])
+        params = {"period": "day", "reference": "2026-01-05"}
+        missing = self.client.get("/progress/", params)
+        sport = missing.context["report"]["sports"][0]
+        self.assertEqual((sport["rpe_min"], sport["rpe_known"], sport["rpe_missing"]), (None, 0, 1))
+        self.assertContains(missing, "RPE real de sesión completa")
+        Session.objects.filter(pk=self.monday.pk).update(reported_rpe=0)
+        zero = self.client.get("/progress/", params)
+        sport = zero.context["report"]["sports"][0]
+        self.assertEqual((sport["rpe_min"], sport["rpe_max"], sport["rpe_known"]), (0, 0, 1))
+        self.assertContains(zero, "mínimo 0,0")

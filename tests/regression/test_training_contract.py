@@ -197,6 +197,20 @@ class TrainingContractTests(TestCase):
             self.assert_report(self.week["expected"]["after_reschedule"])
             thursday = ranged_progress_report(self.owner, date(2026, 10, 15), date(2026, 10, 15))
             self.assertEqual((thursday["scheduled_past"], thursday["completed_scheduled"]), (0, 0))
+            old_day = self.client.get("/progress/", {"period": "day", "reference": "2026-10-15"})
+            self.assertFalse(
+                any(
+                    entry["planned"].title == review["session"]
+                    for entry in old_day.context["agenda_entries"]
+                )
+            )
+            new_day = self.client.get("/progress/", {"period": "day", "reference": "2026-10-16"})
+            moved_entry = next(
+                entry
+                for entry in new_day.context["agenda_entries"]
+                if entry["planned"].title == review["session"]
+            )
+            self.assertEqual(moved_entry["exclusion_reason"], "Fecha futura")
             wednesday = ranged_progress_report(self.owner, date(2026, 10, 14), date(2026, 10, 14))
             self.assertEqual(
                 (wednesday["scheduled_past"], wednesday["completed_scheduled"]), (1, 0)
