@@ -137,6 +137,35 @@ def validate_sport_metrics(sport: str, data: tuple[Metric, ...]) -> tuple[Metric
             endpoint = n(name)
             if endpoint is not None and endpoint > altitude:
                 raise InvalidSportMetrics("La altitud máxima debe incluir inicio y final.")
+    if sport == "hiking":
+        start, end = n(MetricName.START_ALTITUDE_M), n(MetricName.END_ALTITUDE_M)
+        ascent, descent = n(MetricName.ASCENT_M), n(MetricName.DESCENT_M)
+        # Only check relationships whose operands were recorded. Unknown is not zero.
+        for accumulated, lower, upper, field in (
+            (ascent, start, end, MetricName.ASCENT_M),
+            (ascent, start, altitude, MetricName.ASCENT_M),
+            (descent, end, start, MetricName.DESCENT_M),
+            (descent, end, altitude, MetricName.DESCENT_M),
+        ):
+            if (
+                accumulated is not None
+                and lower is not None
+                and upper is not None
+                and accumulated < upper - lower
+            ):
+                raise InvalidSportMetrics(
+                    "El desnivel acumulado no cubre las altitudes declaradas.", field.value
+                )
+        if (
+            start is not None
+            and end is not None
+            and ascent is not None
+            and descent is not None
+            and ascent - descent != end - start
+        ):
+            raise InvalidSportMetrics(
+                "Ascenso menos descenso debe coincidir con altitud final menos inicial."
+            )
     hr, maximum = n(MetricName.HEART_RATE_BPM), n(MetricName.MAX_HEART_RATE_BPM)
     if hr is not None and maximum is not None and hr > maximum:
         raise InvalidSportMetrics("La frecuencia media supera la máxima.")
