@@ -224,9 +224,9 @@ Trabajo conservado en `.cache/worktrees/mam820-completion`, base `d0e76d3`, 11 a
 
 [Linear](https://linear.app/mamutsystems/issue/MAM-1011) · Todo · **P1** · padre: MAM-1008.
 
-- [ ] Aplicar la política acordada para un desarrollador: PR y checks requeridos, cero aprobaciones humanas obligatorias; confirmar permisos/excepciones exactos.
+- [x] Política aplicada y leída de nuevo el 2026-11-02: PR, checks `postgres`/`operations` de GitHub Actions, rama actualizada y conversaciones resueltas; cero aprobaciones humanas obligatorias. Administradores incluidos, sin force push ni borrado. [Recibo](MAM1011_VERIFICATION_2026-11-02.md).
 - [ ] Verificar que un candidato con check fallido no integre y que uno válido sí pueda hacerlo.
-- [ ] Evidencia actual: API GitHub devuelve `protected=false` para main el 2026-11-02. Esta auditoría no cambia la política del repositorio.
+- [x] GET independiente devuelve `protected=true`. El `protected=false` del diagnóstico inicial queda como historia; este cambio no cierra automáticamente MAM-1011 ni modifica su estado remoto.
 
 ### MAM-1012 — Conciliar roadmap y retirar worktrees integrados
 
