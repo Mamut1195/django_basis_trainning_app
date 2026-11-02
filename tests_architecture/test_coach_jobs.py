@@ -34,7 +34,7 @@ from basis.shared.identifiers import (
     TrialFundId,
     UsagePeriodId,
 )
-from tests_architecture.coach_jobs_contract import JobsContract
+from tests_architecture.coach_jobs_contract import JobsContract, JobsSettlementContract
 
 NOW = datetime(2026, 10, 19, tzinfo=timezone.utc)
 OWNER, OTHER = AccountId(1), AccountId(2)
@@ -196,7 +196,7 @@ class Locks:
         pass
 
 
-class JobsTests(JobsContract, TestCase):
+class JobsTests(JobsContract, JobsSettlementContract, TestCase):
     def setUp(self) -> None:
         self.memory = Memory()
         self.repository = self.memory

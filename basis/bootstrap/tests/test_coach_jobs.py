@@ -9,22 +9,23 @@ from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, close_old_connections, connections
+from django.db import close_old_connections, connections
 from django.test import TestCase, TransactionTestCase, override_settings, skipUnlessDBFeature
 
 from basis.adapters.django.transactions import DjangoUnitOfWork
 from basis.bootstrap.tests.test_coach_edges import account
+from basis.modules.accounts.adapters.coach import DjangoAccountLocks
 from basis.modules.coach.adapters.actions import enqueue
 from basis.modules.coach.adapters.jobs import DjangoJobsRepository
-from basis.modules.coach.adapters.models import AIJob, UsagePeriod
+from basis.modules.coach.adapters.models import AIJob, TrialFund, UsagePeriod
 from basis.modules.coach.application.jobs import CoachConfiguration, Jobs
 from basis.modules.coach.domain.jobs import Job, ProviderReply, TokenUsage, reservation_for
-from basis.shared.identifiers import AccountId, AIRequestKey, JobId, UsagePeriodId
-from tests_architecture.coach_jobs_contract import JobsContract
+from basis.shared.identifiers import AccountId, AIRequestKey, JobId, TrialFundId, UsagePeriodId
+from tests_architecture.coach_jobs_contract import JobsContract, JobsSettlementContract
 from tests_architecture.test_coach_jobs import CONTEXT, NOW, Locks, Ports, Profiles
 
 
-class DjangoJobsTests(JobsContract, TestCase):
+class DjangoJobsTests(JobsContract, JobsSettlementContract, TestCase):
     def setUp(self) -> None:
         self.owner = AccountId(get_user_model().objects.create_user(username="jobs").pk)
         self.other = AccountId(get_user_model().objects.create_user(username="other-jobs").pk)
@@ -44,35 +45,19 @@ class DjangoJobsTests(JobsContract, TestCase):
             "deepseek-v4-flash",
         )
 
-    def test_null_answer_keeps_legacy_rollback_and_reservation(self) -> None:
-        self.repository.create(self.sample)
-        self.repository.save_job(replace(self.sample, status="running"))
-        UsagePeriod.objects.filter(pk=self.sample.usage_period).update(
-            reserved=self.sample.reservation
-        )
-        ports = Ports()
-        service = Jobs(
+        self.ports = Ports()
+        self.service = Jobs(
             self.repository,
             Locks(),
-            ports,
+            self.ports,
             Profiles(),
-            ports,
-            ports,
-            ports,
-            ports,
+            self.ports,
+            self.ports,
+            self.ports,
+            self.ports,
             DjangoUnitOfWork,
             CoachConfiguration(True, True, "deepseek-v4-flash"),
         )
-        with self.assertRaises(IntegrityError):
-            service.settle(
-                self.sample.id,
-                ProviderReply(TokenUsage(1000, 100), "model", True, None, False, "stop"),
-            )
-        self.assertEqual(self.repository.job(self.sample.id).status, "running")
-        self.assertEqual(
-            self.repository.usage(self.sample.usage_period).reserved, self.sample.reservation
-        )
-        self.assertEqual(self.repository.usage(self.sample.usage_period).spent, Decimal(0))
 
     def test_quarantine_preserves_budget_and_does_not_complete(self) -> None:
         self.repository.create(self.sample)
@@ -104,6 +89,80 @@ class DjangoSelectionTests(TestCase):
 
 @skipUnlessDBFeature("has_select_for_update_skip_locked")
 class DjangoClaimConcurrencyTests(TransactionTestCase):
+    def test_concurrent_null_settlement_never_debits_or_releases_twice(self) -> None:
+        for trial in (False, True):
+            with self.subTest(trial=trial):
+                owner = AccountId(
+                    get_user_model().objects.create_user(username=f"settle-{trial}").pk
+                )
+                reservation = reservation_for("short")
+                usage = UsagePeriod.objects.create(
+                    owner_id=owner, key="settle", reserved=reservation, is_trial=trial
+                )
+                fund = (
+                    TrialFund.objects.create(month="2026-10", reserved=reservation)
+                    if trial
+                    else None
+                )
+                repo = DjangoJobsRepository()
+                job = Job(
+                    JobId(UUID(int=10 + int(trial))),
+                    owner,
+                    AIRequestKey(UUID(int=10)),
+                    "short",
+                    "q",
+                    CONTEXT,
+                    UsagePeriodId(usage.pk),
+                    None,
+                    reservation,
+                    "deepseek-v4-flash",
+                    status="running",
+                )
+                if fund is not None:
+                    job = replace(job, trial_fund=TrialFundId(fund.pk))
+                repo.create(job)
+                repo.save_job(job)
+                barrier = Barrier(2)
+
+                def settle() -> Job:
+                    close_old_connections()
+                    try:
+                        ports = Ports()
+                        service = Jobs(
+                            DjangoJobsRepository(),
+                            DjangoAccountLocks(),
+                            ports,
+                            Profiles(),
+                            ports,
+                            ports,
+                            ports,
+                            ports,
+                            DjangoUnitOfWork,
+                            CoachConfiguration(True, True, "deepseek-v4-flash"),
+                        )
+                        barrier.wait(timeout=10)
+                        return service.settle(
+                            job.id,
+                            ProviderReply(
+                                TokenUsage(1000, 100), "reported", True, None, False, "stop"
+                            ),
+                        )
+                    finally:
+                        connections.close_all()
+
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    futures = [pool.submit(settle) for _ in range(2)]
+                    results = [future.result(timeout=20) for future in futures]
+                self.assertEqual([result.status for result in results], ["failed", "failed"])
+                self.assertEqual(results[0], results[1])
+                usage.refresh_from_db()
+                self.assertEqual(usage.spent, Decimal("0.00042000"))
+                self.assertEqual(usage.reserved, 0)
+                if fund is not None:
+                    fund.refresh_from_db()
+                    self.assertEqual(fund.spent, Decimal("0.00042000"))
+                    self.assertEqual(fund.reserved, 0)
+
     def test_two_workers_claim_different_jobs_without_partial_writes(self) -> None:
         owner = AccountId(get_user_model().objects.create_user(username="claim").pk)
         usage = UsagePeriod.objects.create(owner_id=owner, key="claim")

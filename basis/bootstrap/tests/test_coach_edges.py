@@ -21,7 +21,7 @@ from basis.modules.billing.adapters.models import BillingAccount
 from basis.modules.catalog.adapters.models import Classification, Exercise
 from basis.modules.coach.adapters.actions import enqueue, process_one
 from basis.modules.coach.adapters.context_wire import decode_context, encode_context, mapping, rows
-from basis.modules.coach.adapters.models import PlanProposal
+from basis.modules.coach.adapters.models import AIServiceState, PlanProposal
 from basis.modules.coach.adapters.proposal_actions import (
     accept_proposal,
     edit_and_accept_proposal,
@@ -330,13 +330,82 @@ class CoachEdgeTests(TestCase):
         self.assertTrue(AIServiceState.objects.get().blocked)
         self.assertEqual(client.return_value.__enter__.return_value.post.call_count, 1)
 
-    def test_unexpected_truthy_top_level_provider_payload_retains_legacy_escape(self) -> None:
-        for value in ([1], True, "invalid", 1):
-            with self.subTest(value=value), self.assertRaises(AttributeError):
-                decode_reply(value)
-        empty_values: tuple[object, ...] = ([], {}, False, 0, "")
-        for empty_value in empty_values:
-            self.assertIsNone(decode_reply(empty_value))
+    def test_non_object_provider_payload_is_ambiguous(self) -> None:
+        values: tuple[object, ...] = ([1], True, "invalid", 1, [], {}, False, 0, "", None)
+        for value in values:
+            with self.subTest(value=value):
+                self.assertIsNone(decode_reply(value))
+
+    def test_null_content_is_empty_non_text_with_known_usage(self) -> None:
+        result = decode_reply(
+            {
+                "usage": {"prompt_tokens": 10, "completion_tokens": 2},
+                "model": "reported",
+                "choices": [{"message": {"content": None}, "finish_reason": "stop"}],
+            }
+        )
+        assert result is not None and result.usage is not None
+        self.assertEqual(result.usage.input_tokens, 10)
+        self.assertEqual(result.answer, "")
+        self.assertFalse(result.answer_is_text)
+
+    def test_malformed_http_reply_does_not_stop_worker_or_repeat_paid_request(self) -> None:
+        valid = {
+            "usage": {"prompt_tokens": 10, "completion_tokens": 2},
+            "model": "reported",
+            "choices": [{"message": {"content": "answer"}, "finish_reason": "stop"}],
+        }
+        null_content = copy.deepcopy(valid)
+        null_content["choices"] = [{"message": {"content": None}, "finish_reason": "stop"}]
+        real_client = httpx.Client
+        for value in ([1], True, "invalid", 1, null_content):
+            with self.subTest(value=value):
+                first = enqueue(self.owner, "short", "Malformed", uuid.uuid4())
+                second = enqueue(self.owner, "short", "Valid", uuid.uuid4())
+                first.usage_period.refresh_from_db()
+                reserved_before = first.usage_period.reserved
+                spent_before = first.usage_period.spent
+                requests: list[httpx.Request] = []
+                replies = iter((value, valid))
+
+                def handle(request: httpx.Request) -> httpx.Response:
+                    requests.append(request)
+                    return httpx.Response(200, json=next(replies))
+
+                def client(*, timeout: httpx.Timeout) -> httpx.Client:
+                    return real_client(transport=httpx.MockTransport(handle), timeout=timeout)
+
+                with patch("basis.modules.coach.adapters.actions.httpx.Client", client):
+                    # client() uses an explicit transport and cannot access the network.
+                    self.assertTrue(process_one())
+                    self.assertTrue(process_one())
+                    self.assertFalse(process_one())
+                first.refresh_from_db()
+                second.refresh_from_db()
+                first.usage_period.refresh_from_db()
+                self.assertEqual(len(requests), 2)
+                self.assertEqual(second.status, "succeeded")
+                assert second.cost is not None
+                self.assertEqual(second.answer, "answer")
+                self.assertEqual(first.status, "failed" if isinstance(value, dict) else "uncertain")
+                self.assertEqual(first.answer, "")
+                self.assertIsNotNone(first.completed_at)
+                if isinstance(value, dict):
+                    self.assertEqual(first.input_tokens, 10)
+                    self.assertEqual(first.cost, Decimal("0.00000540"))
+                else:
+                    self.assertIsNone(first.cost)
+                self.assertEqual(
+                    first.usage_period.reserved,
+                    reserved_before
+                    - second.reservation
+                    - (first.reservation if isinstance(value, dict) else 0),
+                )
+                self.assertEqual(
+                    first.usage_period.spent,
+                    spent_before + second.cost + (first.cost or Decimal(0)),
+                )
+                self.assertFalse(AIServiceState.objects.filter(blocked=True).exists())
 
     def test_reject_and_accepted_replay_do_not_revalidate_stored_content(self) -> None:
         row = self._proposal()
