@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db.models import F, Q, Window
 from django.db.models.functions import Coalesce, RowNumber
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -164,6 +165,8 @@ def session_edit(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
             return redirect("session-detail", pk=pk)
         except Conflict:
             form.add_error(None, "La sesión cambió. Recarga para revisar la versión actual.")
+        except ValidationError as error:
+            form.add_error(None, error)
     return render(
         request,
         "shared/form.html",

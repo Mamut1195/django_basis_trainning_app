@@ -33,7 +33,7 @@ from .planning import (
 )
 from .progress import progress
 from .strength import set_edit, set_new
-from .trekking import stage_new, trip_detail, trip_new
+from .trekking import stage_edit, stage_new, trip_detail, trip_new
 
 
 @write_required
@@ -73,6 +73,7 @@ __all__ = [
     "interval_new",
     "progress",
     "trip_detail",
+    "stage_edit",
     "stage_new",
     "owned_new",
 ]

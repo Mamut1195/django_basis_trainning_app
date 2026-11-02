@@ -6,7 +6,7 @@ from datetime import date, datetime
 from basis.modules.training.adapters.models import Session, TrekStage, TrekTrip
 from basis.shared.identifiers import AccountId, SessionId, TrekStageId, TrekTripId
 
-from ..application.progress import AddStage, CreateTrip
+from ..application.progress import AddStage, CreateTrip, EditStage
 from ..domain.execution import DurationProtocol
 from ..domain.progress import ProgressBlock, ProgressSession, ScheduledProgress
 from ..domain.trekking import TrekkingUnavailable
@@ -77,6 +77,9 @@ class DjangoProgressRepository:
         return TrekTripId(row.pk)
 
     def add_stage(self, command: AddStage) -> TrekStageId:
+        from basis.adapters.django.account_locks import lock_account
+
+        lock_account(command.owner, TrekTrip.objects.db)
         try:
             trip = TrekTrip.objects.select_for_update().get(pk=command.trip, owner_id=command.owner)
             session = Session.objects.select_for_update().get(
@@ -93,3 +96,22 @@ class DjangoProgressRepository:
         )
         save_validated(row)
         return TrekStageId(row.pk)
+
+    def edit_stage(self, command: EditStage) -> None:
+        from basis.adapters.django.account_locks import lock_account
+
+        lock_account(command.owner, TrekTrip.objects.db)
+        trip = (
+            TrekTrip.objects.select_for_update()
+            .filter(pk=command.trip, owner_id=command.owner)
+            .first()
+        )
+        if trip is None:
+            raise TrekkingUnavailable("El trekking no existe.")
+        row = TrekStage.objects.select_for_update().filter(pk=command.stage, trip=trip).first()
+        if row is None:
+            raise TrekkingUnavailable("La etapa no existe.")
+        row.order = command.order
+        row.overnight_altitude_m = command.overnight_altitude_m
+        row.recovery_notes = command.recovery_notes
+        save_validated(row)

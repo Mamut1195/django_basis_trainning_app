@@ -5,7 +5,13 @@ from decimal import Decimal
 from unittest import TestCase
 from uuid import UUID
 
-from basis.modules.training.application.progress import AddStage, CreateTrip, Progress, ReadProgress
+from basis.modules.training.application.progress import (
+    AddStage,
+    CreateTrip,
+    EditStage,
+    Progress,
+    ReadProgress,
+)
 from basis.modules.training.domain.execution import DurationProtocol, Metric, MetricName
 from basis.modules.training.domain.progress import (
     ProgressBlock,
@@ -78,6 +84,9 @@ class Memory:
 
     def add_stage(self, command: AddStage) -> TrekStageId:
         return TrekStageId(1)
+
+    def edit_stage(self, command: EditStage) -> None:
+        pass
 
 
 class ProgressTests(ProgressContract, TestCase):
