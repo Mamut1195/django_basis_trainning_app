@@ -1,5 +1,23 @@
 # Arquitectura y límites de operación
 
+## SOLID y facilidad de cambio — revisión 2026-11-02
+
+La arquitectura vigente es un **monolito modular hexagonal**. El código revisado es `69eeb04`; el inventario de trabajo y sus hallazgos están en [tickets/PENDIENTES.md](tickets/PENDIENTES.md). Los conteos de tickets y recibos fechados en las secciones siguientes son históricos, no un estado actual de Linear.
+
+Los principios SOLID se aplican como contratos verificables:
+
+- **S — responsabilidad única:** cada módulo posee sus reglas y persistencia; cada caso de uso debe tener un motivo de cambio. Hay deuda localizada en `coach/application/jobs.py` (cola, reserva, liquidación y procesamiento) y `training/application/progress.py` (lecturas y escrituras de trekking); LOCAL-ARCH-01 propone separarlos progresivamente.
+- **O — abierto a extensión, cerrado a modificación:** proveedores y lectores nuevos implementan puertos y se conectan en bootstrap. Las reglas comerciales variables deben ser políticas explícitas/versionadas; MAM-818 debe hacer que la versión de precio gobierne de verdad la reserva/liquidación.
+- **L — sustitución:** implementaciones falsas y Django deben respetar los mismos resultados, errores, atomicidad e idempotencia. La divergencia con respuestas IA nulas demuestra una brecha concreta: el dominio permite `None`, la columna no; MAM-635/MAM-818 deben cerrar el contrato, no esconder el error.
+- **I — segregación de interfaces:** puertos pequeños por consumidor, sin repositorio universal. Segregar `JobsRepository` y las lecturas/escrituras de `ProgressRepository` cuando se intervengan esos flujos, conservando UoW y orden de locks.
+- **D — inversión de dependencias:** dominio/aplicación dependen de valores y Protocols, no del ORM, HTTP ni proveedores. Los módulos colaboran por `public.py`; `basis/bootstrap/` conecta las implementaciones concretas.
+
+**Regla para cambiar fácilmente:** una nueva regla pura va al dominio y se prueba sin Django; su coordinación va a aplicación; SQL/HTTP/serialización al adaptador propietario; selección de implementaciones a bootstrap. Optimizar lecturas mediante proyecciones explícitas, preservando versiones, ownership y contratos externos. Un cambio de proveedor no debe obligar a editar reglas deportivas ni vistas de otros módulos. Una migración de persistencia debe conservar historial y su evidencia.
+
+**Comprobación de esta revisión:** 229 pruebas de arquitectura, checker de fronteras y ocho contratos de imports pasan. Estos controles acreditan límites concretos; el cumplimiento de S/O/L/I requiere además revisar comportamiento y responsabilidades. La aceptación de cambios exige pruebas de contrato fake/ORM, tipos y, para locks, PostgreSQL. Los hallazgos y criterios pendientes quedan en MAM-818 y LOCAL-ARCH-01.
+
+## Estado histórico y recibos de aceptación
+
 Estado actual al readback de Luna del **2026-10-21 19:47:27.908 UTC**: ARCH-01..10 y la épica BASIS-ARCH/MAM-821 siguen Done. La remediación y presentación se integraron en `main/24484b7c8c5a4c0beb89ee1dc854c91581d7293a`; el [recibo de aceptación](architecture/ARCHITECTURE-ACCEPTANCE-2026-10-20.json) conserva CI PostgreSQL 246/0 omisiones y su alcance arquitectónico. MAM-617/621/637 siguen Done; la cadena **MAM-810/620/622/623 también está Done**, integrada por PR #6–#9 hasta `71751bd2ee10fa7dff9f2c7a9d4f9ccda7c6c2cd`. Luna verificó los estados ya existentes y conservó `completedAt`, sin nuevas transiciones. Quedan **24 funcionales abiertos** y 11 Done, sin bloqueo de arquitectura; MAM-626/MAM-627 siguen In Progress, lector de pantalla NOT RUN y aceptación humana PENDING. El [readback de cierre de cadena](DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623) separa el estado actual de las pruebas históricas. La reapertura de ARCH-09 tras `337f12d` y sus límites originales se conservan en [el registro histórico de ejecución](ARCHITECTURE_EXECUTION.md) y [la remediación](architecture/ARCH-09-REMEDIATION-VERIFICATION.md).
 
 ## Estructura actual y contratos
