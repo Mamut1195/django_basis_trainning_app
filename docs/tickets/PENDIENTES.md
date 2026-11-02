@@ -6,18 +6,17 @@ Fecha: **2026-11-02**. Proyecto: **P-MAM-12**. Código auditado: `69eeb04c624b87
 
 Este archivo es la lista local única de trabajo: reúne el análisis, los pendientes conocidos, las ampliaciones de tickets existentes y los tickets locales nuevos. Las prioridades de esta auditoría no sustituyen las prioridades originales de Linear.
 
-- **Fuente de tickets:** `docs/ROADMAP.json`, corte de Linear del 2026-11-01: 51 IDs únicos, 32 Done y 19 no Done (15 In Progress, 2 In Review, 1 Todo, 1 Backlog). Incluye las 35 tareas funcionales, las 11 de arquitectura y las cinco de estabilización; no solo la lista `issues` del JSON.
-- **Corrección posterior documentada:** MAM-625 consta Done en el handoff local del 1 de noviembre; PR #32 y su integración están presentes. Se conserva abajo para que no desaparezca por discrepancias de fuentes.
-- **Pendientes conservadores:** 18 tickets del corte anterior siguen en seguimiento hasta confirmar sus estados; algunos ya tienen implementación integrada. Se añaden **tres tickets locales**, total **21 entradas de seguimiento pendientes**. Este número no es un conteo actual de Linear.
-- **Linear no disponible:** esta sesión carece de conector Linear. No se pudieron releer todas sus páginas, descripciones, comentarios ni relaciones actuales, ni publicar cambios. Los tickets MAM se actualizan aquí localmente; los IDs `LOCAL-*` todavía no existen en Linear. Podrían existir tickets remotos posteriores que este corte no contiene.
-- GitHub Issues: consulta autenticada de abiertos devolvió cero. No se creó un tracker paralelo en GitHub.
-- Las dependencias indicadas son las del snapshot; son informativas y requieren conciliación. No se inventan criterios originales de aceptación que no estén en los documentos locales.
+- **Readback vigente documentado:** [Linear 2026-11-02](LINEAR_READBACK_2026-11-02.json): 51 IDs únicos, 37 Done y 14 abiertos (12 In Progress, 1 Todo, 1 Backlog). Se leyeron las relaciones de los 14 abiertos; no todos los comentarios ni adjuntos. No se realizó una nueva consulta en esta conciliación.
+- MAM-624, MAM-625, MAM-819, MAM-1009 y MAM-1010 constan Done en ese readback. Sus notas inferiores conservan el historial y tareas locales de preservación, sin reabrirlos. MAM-1012 sigue In Progress.
+- Los tres identificadores `LOCAL-*` son propuestas locales sin ID remoto, adicionales al conteo de Linear. Los checklists no sustituyen los criterios originales ni crean tickets.
+- **Corte histórico:** la auditoría anterior usó 51 IDs, 32 Done y 19 no Done; sus recibos y mediciones se mantienen fechados. GitHub Issues devolvió cero abiertos en aquella consulta.
+- Dependencias y relaciones vigentes del readback están en el snapshot y el [plan](PLAN_PARALELIZACION_2026-11-02.md); las listas anteriores de este documento pueden reflejar el corte histórico.
 
 **Leyenda:** P1 alta (corregir antes de habilitar el flujo afectado), P2 media (escalabilidad/mantenibilidad). «Reproducido» significa prueba local ejecutada; «estático» significa código inspeccionado; «pendiente de medir» no equivale a incidente observado.
 
 ## 2. Dictamen técnico
 
-La estructura modular es una buena base para cambios: dominio puro, casos de uso, adaptadores y composición explícita. Los controles de dependencias pasan. Las prioridades son cerrar la contabilidad/robustez de IA, optimizar rutas concretas de lectura y completar la aceptación comercial/operativa.
+La estructura modular es una buena base para cambios: dominio puro, casos de uso, adaptadores y composición explícita. El checker arquitectónico falló inicialmente el 2026-11-02 por el probe fuera de su inventario. La [tanda 0](WAVE0_VERIFICATION_2026-11-02.md) incorpora la ruta al alcance estricto y registra la reparación local: checker, mypy y 229 pruebas de arquitectura pasan; integración y CI remoto siguen pendientes. Las prioridades son cerrar la contabilidad/robustez de IA, optimizar rutas concretas de lectura y completar la aceptación comercial/operativa.
 
 No se constató un cobro duplicado real ni una pérdida monetaria en producción. Sí hay defectos reproducibles que afectan a reservas, trazabilidad del costo y continuidad del worker. Las pruebas existentes conservan explícitamente algunos comportamientos defectuosos por compatibilidad: una suite verde no significa que estén resueltos.
 
@@ -73,15 +72,15 @@ Resultado: base sólida y comprobable, con deuda localizada; los controles está
 
 ## 3. Tickets abiertos / pendientes conocidos, actualizados localmente
 
-Cada enlace MAM apunta al ticket existente. Estado entre paréntesis = **snapshot 2026-11-01**, no readback actual. Los siguientes checklists son pendientes locales y adiciones propuestas; no reemplazan el alcance original.
+Cada enlace MAM apunta al ticket existente. Los estados indicados se concilian con el readback del 2026-11-02; las dependencias y checklists conservan el análisis histórico y propuestas locales. Las secciones Done se mantienen para preservar evidencia, no como tickets abiertos.
 
 ### MAM-624 — Recuperación, bienestar y respuesta al entrenamiento
 
-[Linear](https://linear.app/mamutsystems/issue/MAM-624) · In Progress · P2 · dependencias: MAM-620, MAM-618.
+[Linear](https://linear.app/mamutsystems/issue/MAM-624) · Done · P2 · dependencias: MAM-620, MAM-618.
 
 Implementación integrada por PR #27 (`5726ad4`); queda un worktree antiguo con 14 archivos modificados y cuatro nuevos.
 
-- [ ] Confirmar aceptación y estado actual del ticket frente a `docs/WELLNESS_VERIFICATION.md`.
+- [x] Estado Done confirmado en el readback del 2026-11-02; conservar `docs/WELLNESS_VERIFICATION.md` como evidencia histórica.
 - [x] Comparar los 18 archivos pendientes con origin/main: 12 blobs idénticos y seis diferentes (`observations.py`, `web/urls.py`, `web/views.py`, `docs/VALIDATION.md`, `test_wellness.py`, plantilla `wellness.html`).
 - [ ] Conciliar esas seis diferencias y preservar evidencia antes de retirar el worktree. Se conserva durante esta limpieza.
 
@@ -138,7 +137,7 @@ Implementación integrada por PR #27 (`5726ad4`); queda un worktree antiguo con 
 
 [Linear](https://linear.app/mamutsystems/issue/MAM-638) · In Progress · **P1**.
 
-Dependencias del snapshot: MAM-818, MAM-815, MAM-816, MAM-820, MAM-817, MAM-637, MAM-632, MAM-625, MAM-629, MAM-630, MAM-628, MAM-636; no todas siguen abiertas.
+Dependencias del corte anterior: MAM-818, MAM-815, MAM-816, MAM-820, MAM-817, MAM-637, MAM-632, MAM-625, MAM-629, MAM-630, MAM-628, MAM-636; no todas siguen abiertas.
 
 - [ ] Candidato único integrado, CI PostgreSQL/operations, recorrido completo y decisiones de producto trazables.
 - [ ] SMTP/TLS, backup externo/restauración, rollback, alertas, salud de workers y supervisión de conciliación.
@@ -180,11 +179,11 @@ Dependencias del snapshot: MAM-818, MAM-815, MAM-816, MAM-820, MAM-817, MAM-637,
 
 ### MAM-819 — Hiking: tiempos, desnivel, altitud, terreno y mochila
 
-[Linear](https://linear.app/mamutsystems/issue/MAM-819) · In Progress · P2 · dependencia: MAM-811.
+[Linear](https://linear.app/mamutsystems/issue/MAM-819) · Done · P2 · dependencia: MAM-811.
 
 Hay implementación integrada por PR #29 (`3b3350e`). La rama antigua conserva **tres commits no ancestros de main**, pero los cinco archivos que modificaron son **idénticos a origin/main**, comprobado con `git diff` (sin diferencias): `domain/sports.py`, `docs/TRAINING_VARIABLES.md`, `test_hiking.py`, `test_hiking_browser.py` y `test_sport_metrics.py`.
 
-- [ ] Conciliar estado/aceptación con `docs/HIKING_VERIFICATION.md` y PR #29.
+- [x] Estado Done confirmado en el readback del 2026-11-02; conservar `docs/HIKING_VERIFICATION.md` y PR #29 como evidencia histórica.
 - [x] Comparar los tres commits antiguos con la integración: equivalencia de los cinco archivos confirmada; conservar la rama mantiene también los SHA originales.
 - [x] Retirar la copia de trabajo con archivo verificado de sus 3.433 archivos ignorados (recibo en sección 6); rama conservada.
 
@@ -209,25 +208,25 @@ Trabajo conservado en `.cache/worktrees/mam820-completion`, base `d0e76d3`, 11 a
 
 ### MAM-1009 — Aislar regresión Polar y rechazar red en pruebas
 
-[Linear](https://linear.app/mamutsystems/issue/MAM-1009) · In Review · P2 · padre: MAM-1008.
+[Linear](https://linear.app/mamutsystems/issue/MAM-1009) · Done · P1 · padre: MAM-1008.
 
 - [x] Corrección integrada en PR #26; prueba usa el símbolo inyectado y barrera de transporte. Suite focal de esta auditoría pasa.
-- [ ] Confirmar cierre en Linear sobre la integración real; el snapshot aún dice In Review.
+- [x] Estado Done confirmado en el readback del 2026-11-02.
 
 ### MAM-1010 — Formato web reproducible en Windows
 
-[Linear](https://linear.app/mamutsystems/issue/MAM-1010) · In Review · P2 · padre: MAM-1008.
+[Linear](https://linear.app/mamutsystems/issue/MAM-1010) · Done · P2 · padre: MAM-1008.
 
 - [x] `.gitattributes` y corrección incluidos en PR #26; CI posterior de main consta success.
-- [ ] Releer aceptación/estado Linear. La presente auditoría no repitió todo el formato web; no atribuirle esa verificación local.
+- [x] Estado Done confirmado en el readback del 2026-11-02. La auditoría histórica no repitió todo el formato web.
 
 ### MAM-1011 — Exigir PR y CI para integrar en main
 
 [Linear](https://linear.app/mamutsystems/issue/MAM-1011) · Todo · **P1** · padre: MAM-1008.
 
-- [ ] Aplicar la política acordada para un desarrollador: PR y checks requeridos, cero aprobaciones humanas obligatorias; confirmar permisos/excepciones exactos.
+- [x] Política aplicada y leída de nuevo el 2026-11-02: PR, checks `postgres`/`operations` de GitHub Actions, rama actualizada y conversaciones resueltas; cero aprobaciones humanas obligatorias. Administradores incluidos, sin force push ni borrado. [Recibo](MAM1011_VERIFICATION_2026-11-02.md).
 - [ ] Verificar que un candidato con check fallido no integre y que uno válido sí pueda hacerlo.
-- [ ] Evidencia actual: API GitHub devuelve `protected=false` para main el 2026-11-02. Esta auditoría no cambia la política del repositorio.
+- [x] GET independiente devuelve `protected=true`. El `protected=false` del diagnóstico inicial queda como historia; este cambio no cierra automáticamente MAM-1011 ni modifica su estado remoto.
 
 ### MAM-1012 — Conciliar roadmap y retirar worktrees integrados
 
@@ -235,7 +234,7 @@ Trabajo conservado en `.cache/worktrees/mam820-completion`, base `d0e76d3`, 11 a
 
 - [x] Reunir los 51 IDs conocidos y los nuevos pendientes en este archivo, sin borrar estados históricos.
 - [x] Fetch y comparación main/remoto sobre `69eeb04`; documentación del SHA/CI real.
-- [ ] Publicar/releer actualizaciones en Linear y regenerar estado vigente de roadmap/README desde esa fuente.
+- [ ] Integrar y verificar la conciliación documental; el readback del 2026-11-02 se utiliza localmente y no implica actualizar ni cerrar Linear.
 - [x] Retirar siete worktrees con respaldo verificado; conservar MAM-624/MAM-820 con trabajo pendiente. Auditoría publicada en main/remoto (`0d17abb`); recibo de limpieza detallado en sección 6.
 
 ### LOCAL-PERF-01 — Acotar lecturas de calendario y eliminar N+1 histórico
@@ -269,7 +268,7 @@ Trabajo conservado en `.cache/worktrees/mam820-completion`, base `d0e76d3`, 11 a
 
 ## 4. Todos los cerrados conocidos y discrepancias resueltas
 
-Los 32 Done del snapshot se enumeran para comprobar cobertura y evitar recrearlos:
+Los 32 Done del corte histórico del 1 de noviembre se enumeran para comprobar cobertura y evitar recrearlos:
 
 | ID | Trabajo | Estado de fuente |
 | --- | --- | --- |
@@ -308,9 +307,11 @@ Los 32 Done del snapshot se enumeran para comprobar cobertura y evitar recrearlo
 
 **MAM-625 — Progreso/adherencia/carga:** In Progress en snapshot, **Done en handoff posterior**. PR #30/#31/#32 integraron períodos, marcas, fuentes y RPE descriptivo. `main=69eeb04`; CI remoto [41359093108](https://github.com/Mamut1195/django_basis_trainning_app/actions/runs/41359093108) leído en esta auditoría: completed/success. No se reabre ni se presenta P01/P02 como fallo ya corregido por ese cierre; el trabajo adicional queda explícito en LOCAL-PERF-01.
 
-Así, están presentes los **51 IDs originales únicos**: 18 en seguimiento + 32 Done del corte + MAM-625 con cierre posterior. Los tres IDs locales son adicionales.
+En ese corte histórico se identificaron 51 IDs: 18 en seguimiento + 32 Done + MAM-625 con cierre posterior. El readback vigente registra 37 Done y 14 abiertos; los tres IDs locales son adicionales.
 
-## 5. Evidencia ejecutada en esta auditoría
+## 5. Evidencia histórica ejecutada en esta auditoría
+
+El checker principal falló en el diagnóstico posterior del 2026-11-02, como se indica arriba; el resultado de la tabla pertenece al corte auditado anterior.
 
 | Comprobación | Resultado |
 | --- | --- |
