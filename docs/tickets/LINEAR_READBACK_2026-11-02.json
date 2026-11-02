@@ -1,0 +1,1173 @@
+{
+  "as_of": "2026-11-02",
+  "source": "Linear list_issues P-MAM-12; hasNextPage=false; get_issue for 14 open items",
+  "project": "P-MAM-12",
+  "git_head": "d3501a78b37050cfc352af175b898a5aa9a4f11b",
+  "total": 51,
+  "counts": {
+    "Done": 37,
+    "In Progress": 12,
+    "Todo": 1,
+    "Backlog": 1
+  },
+  "issues": [
+    {
+      "id": "MAM-820",
+      "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días",
+      "status": "In Progress",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-820/basis-035-trekking-por-etapas-pernoctas-y-recuperacion-entre-dias",
+      "parentId": null,
+      "updatedAt": "2026-11-01T22:55:37.685Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-815",
+            "title": "BASIS-030 — Carga concurrente y analítica multideporte con procedencia"
+          },
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-819",
+            "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila"
+          },
+          {
+            "id": "MAM-624",
+            "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-821",
+            "title": "BASIS-ARCH — Arquitectura hexagonal y tipado estricto"
+          },
+          {
+            "id": "MAM-1008",
+            "title": "BASIS-COR — Estabilización del candidato antes de producción"
+          },
+          {
+            "id": "MAM-630",
+            "title": "BASIS-016 — Construir progreso, recuperación y ajustes del perfil"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-1008",
+      "title": "BASIS-COR — Estabilización del candidato antes de producción",
+      "status": "In Progress",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-1008/basis-cor-estabilizacion-del-candidato-antes-de-produccion",
+      "parentId": null,
+      "updatedAt": "2026-11-01T22:55:37.447Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          }
+        ],
+        "blockedBy": [],
+        "relatedTo": [
+          {
+            "id": "MAM-820",
+            "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días"
+          },
+          {
+            "id": "MAM-632",
+            "title": "BASIS-018 — Implementar registro offline y sincronización idempotente"
+          },
+          {
+            "id": "MAM-625",
+            "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia"
+          },
+          {
+            "id": "MAM-624",
+            "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento"
+          },
+          {
+            "id": "MAM-816",
+            "title": "BASIS-031 — Polar checkout, portal y webhooks conciliados"
+          },
+          {
+            "id": "MAM-819",
+            "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-638",
+      "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA",
+      "status": "In Progress",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-638/basis-024-validar-producto-completo-en-web-movil-offline-e-ia",
+      "parentId": null,
+      "updatedAt": "2026-11-01T22:55:35.868Z",
+      "relations": {
+        "blocks": [],
+        "blockedBy": [
+          {
+            "id": "MAM-1008",
+            "title": "BASIS-COR — Estabilización del candidato antes de producción"
+          },
+          {
+            "id": "MAM-818",
+            "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas"
+          },
+          {
+            "id": "MAM-815",
+            "title": "BASIS-030 — Carga concurrente y analítica multideporte con procedencia"
+          },
+          {
+            "id": "MAM-816",
+            "title": "BASIS-031 — Polar checkout, portal y webhooks conciliados"
+          },
+          {
+            "id": "MAM-820",
+            "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días"
+          },
+          {
+            "id": "MAM-817",
+            "title": "BASIS-032 — Prueba, permisos comerciales y conservación al vencer acceso"
+          },
+          {
+            "id": "MAM-637",
+            "title": "BASIS-023 — Preparar despliegue sencillo, PostgreSQL, backups y CI"
+          },
+          {
+            "id": "MAM-632",
+            "title": "BASIS-018 — Implementar registro offline y sincronización idempotente"
+          },
+          {
+            "id": "MAM-625",
+            "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia"
+          },
+          {
+            "id": "MAM-629",
+            "title": "BASIS-015 — Construir calendario y editor de planes y ciclos"
+          },
+          {
+            "id": "MAM-630",
+            "title": "BASIS-016 — Construir progreso, recuperación y ajustes del perfil"
+          },
+          {
+            "id": "MAM-628",
+            "title": "BASIS-014 — Construir Hoy y reproductor de sesión para registro rápido"
+          },
+          {
+            "id": "MAM-636",
+            "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-624",
+            "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento"
+          },
+          {
+            "id": "MAM-819",
+            "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila"
+          },
+          {
+            "id": "MAM-633",
+            "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos"
+          },
+          {
+            "id": "MAM-821",
+            "title": "BASIS-ARCH — Arquitectura hexagonal y tipado estricto"
+          },
+          {
+            "id": "MAM-1009",
+            "title": "BASIS-COR-01 — Aislar la regresión Polar y rechazar red en sus pruebas"
+          },
+          {
+            "id": "MAM-1011",
+            "title": "BASIS-COR-03 — Exigir PR y CI en main para un desarrollador único"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-630",
+      "title": "BASIS-016 — Construir progreso, recuperación y ajustes del perfil",
+      "status": "In Progress",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-630/basis-016-construir-progreso-recuperacion-y-ajustes-del-perfil",
+      "parentId": null,
+      "updatedAt": "2026-11-01T22:55:33.781Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-620",
+            "title": "BASIS-006 — Construir perfil, objetivos y configuración inicial del atleta"
+          },
+          {
+            "id": "MAM-624",
+            "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento"
+          },
+          {
+            "id": "MAM-625",
+            "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia"
+          },
+          {
+            "id": "MAM-627",
+            "title": "BASIS-013 — Integrar Django Cotton UI y tokens de diseño con HTMX"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-820",
+            "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días"
+          },
+          {
+            "id": "MAM-821",
+            "title": "BASIS-ARCH — Arquitectura hexagonal y tipado estricto"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-625",
+      "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia",
+      "status": "Done",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-625/basis-011-implementar-metricas-de-progreso-adherencia-y-carga-con",
+      "parentId": null,
+      "updatedAt": "2026-11-01T22:55:31.464Z"
+    },
+    {
+      "id": "MAM-821",
+      "title": "BASIS-ARCH — Arquitectura hexagonal y tipado estricto",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-821/basis-arch-arquitectura-hexagonal-y-tipado-estricto",
+      "parentId": null,
+      "updatedAt": "2026-11-01T22:32:16.928Z"
+    },
+    {
+      "id": "MAM-815",
+      "title": "BASIS-030 — Carga concurrente y analítica multideporte con procedencia",
+      "status": "In Progress",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-815/basis-030-carga-concurrente-y-analitica-multideporte-con-procedencia",
+      "parentId": null,
+      "updatedAt": "2026-11-01T21:41:26.808Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          },
+          {
+            "id": "MAM-633",
+            "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-820",
+            "title": "BASIS-035 — Trekking por etapas, pernoctas y recuperación entre días"
+          },
+          {
+            "id": "MAM-625",
+            "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia"
+          },
+          {
+            "id": "MAM-814",
+            "title": "BASIS-029 — Natación manual con piscina, estilos y ritmo por 100 m"
+          },
+          {
+            "id": "MAM-819",
+            "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila"
+          },
+          {
+            "id": "MAM-812",
+            "title": "BASIS-027 — Running manual con ritmo, desnivel y respuesta"
+          },
+          {
+            "id": "MAM-813",
+            "title": "BASIS-028 — Ciclismo manual con potencia y cadencia opcionales"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-821",
+            "title": "BASIS-ARCH — Arquitectura hexagonal y tipado estricto"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-1012",
+      "title": "BASIS-COR-04 — Conciliar roadmap y retirar worktrees integrados sin perder evidencia",
+      "status": "In Progress",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-1012/basis-cor-04-conciliar-roadmap-y-retirar-worktrees-integrados-sin",
+      "parentId": "MAM-1008",
+      "updatedAt": "2026-11-01T21:00:29.739Z",
+      "relations": {
+        "blocks": [],
+        "blockedBy": [],
+        "relatedTo": [
+          {
+            "id": "MAM-816",
+            "title": "BASIS-031 — Polar checkout, portal y webhooks conciliados"
+          },
+          {
+            "id": "MAM-629",
+            "title": "BASIS-015 — Construir calendario y editor de planes y ciclos"
+          },
+          {
+            "id": "MAM-631",
+            "title": "BASIS-017 — Habilitar PWA instalable y recursos disponibles sin conexión"
+          },
+          {
+            "id": "MAM-632",
+            "title": "BASIS-018 — Implementar registro offline y sincronización idempotente"
+          },
+          {
+            "id": "MAM-819",
+            "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila"
+          },
+          {
+            "id": "MAM-624",
+            "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento"
+          },
+          {
+            "id": "MAM-1010",
+            "title": "BASIS-COR-02 — Hacer reproducible el formato web en Windows"
+          },
+          {
+            "id": "MAM-1009",
+            "title": "BASIS-COR-01 — Aislar la regresión Polar y rechazar red en sus pruebas"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-819",
+      "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-819/basis-034-hiking-con-tiempos-desnivel-altitud-terreno-y-mochila",
+      "parentId": null,
+      "updatedAt": "2026-11-01T20:59:00.939Z"
+    },
+    {
+      "id": "MAM-1011",
+      "title": "BASIS-COR-03 — Exigir PR y CI en main para un desarrollador único",
+      "status": "Todo",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-1011/basis-cor-03-exigir-pr-y-ci-en-main-para-un-desarrollador-unico",
+      "parentId": "MAM-1008",
+      "updatedAt": "2026-11-01T20:58:13.991Z",
+      "relations": {
+        "blocks": [],
+        "blockedBy": [],
+        "relatedTo": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          },
+          {
+            "id": "MAM-625",
+            "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-632",
+      "title": "BASIS-018 — Implementar registro offline y sincronización idempotente",
+      "status": "In Progress",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-632/basis-018-implementar-registro-offline-y-sincronizacion-idempotente",
+      "parentId": null,
+      "updatedAt": "2026-11-01T20:33:11.366Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-631",
+            "title": "BASIS-017 — Habilitar PWA instalable y recursos disponibles sin conexión"
+          },
+          {
+            "id": "MAM-623",
+            "title": "BASIS-009 — Separar prescripción, sesión ejecutada y registros por serie"
+          },
+          {
+            "id": "MAM-628",
+            "title": "BASIS-014 — Construir Hoy y reproductor de sesión para registro rápido"
+          },
+          {
+            "id": "MAM-616",
+            "title": "BASIS-002 — Vincular cuenta y atleta y cerrar acceso a datos privados"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-819",
+            "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila"
+          },
+          {
+            "id": "MAM-1012",
+            "title": "BASIS-COR-04 — Conciliar roadmap y retirar worktrees integrados sin perder evidencia"
+          },
+          {
+            "id": "MAM-1008",
+            "title": "BASIS-COR — Estabilización del candidato antes de producción"
+          },
+          {
+            "id": "MAM-831",
+            "title": "ARCH-10 — Aceptación integral"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-624",
+      "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento",
+      "status": "Done",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-624/basis-010-registrar-recuperacion-bienestar-y-respuesta-al",
+      "parentId": null,
+      "updatedAt": "2026-11-01T19:37:50.037Z"
+    },
+    {
+      "id": "MAM-1010",
+      "title": "BASIS-COR-02 — Hacer reproducible el formato web en Windows",
+      "status": "Done",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-1010/basis-cor-02-hacer-reproducible-el-formato-web-en-windows",
+      "parentId": "MAM-1008",
+      "updatedAt": "2026-11-01T19:24:48.773Z"
+    },
+    {
+      "id": "MAM-1009",
+      "title": "BASIS-COR-01 — Aislar la regresión Polar y rechazar red en sus pruebas",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-1009/basis-cor-01-aislar-la-regresion-polar-y-rechazar-red-en-sus-pruebas",
+      "parentId": "MAM-1008",
+      "updatedAt": "2026-11-01T19:24:47.018Z"
+    },
+    {
+      "id": "MAM-633",
+      "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos",
+      "status": "In Progress",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-633/basis-019-crear-contexto-y-herramientas-de-ia-sobre-servicios",
+      "parentId": null,
+      "updatedAt": "2026-11-01T17:23:32.800Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-818",
+            "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas"
+          },
+          {
+            "id": "MAM-636",
+            "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación"
+          },
+          {
+            "id": "MAM-635",
+            "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas"
+          },
+          {
+            "id": "MAM-634",
+            "title": "BASIS-020 — Generar propuestas de entrenamiento y ciclos con validación y versiones"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-810",
+            "title": "BASIS-025 — Registro, verificación, recuperación y acceso multiusuario"
+          },
+          {
+            "id": "MAM-815",
+            "title": "BASIS-030 — Carga concurrente y analítica multideporte con procedencia"
+          },
+          {
+            "id": "MAM-625",
+            "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia"
+          },
+          {
+            "id": "MAM-624",
+            "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento"
+          },
+          {
+            "id": "MAM-623",
+            "title": "BASIS-009 — Separar prescripción, sesión ejecutada y registros por serie"
+          },
+          {
+            "id": "MAM-616",
+            "title": "BASIS-002 — Vincular cuenta y atleta y cerrar acceso a datos privados"
+          },
+          {
+            "id": "MAM-622",
+            "title": "BASIS-008 — Modelar objetivos, ciclos y calendario versionado de entrenamiento"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-816",
+      "title": "BASIS-031 — Polar checkout, portal y webhooks conciliados",
+      "status": "In Progress",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-816/basis-031-polar-checkout-portal-y-webhooks-conciliados",
+      "parentId": null,
+      "updatedAt": "2026-11-01T17:23:29.264Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-817",
+            "title": "BASIS-032 — Prueba, permisos comerciales y conservación al vencer acceso"
+          },
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-810",
+            "title": "BASIS-025 — Registro, verificación, recuperación y acceso multiusuario"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-1009",
+            "title": "BASIS-COR-01 — Aislar la regresión Polar y rechazar red en sus pruebas"
+          },
+          {
+            "id": "MAM-821",
+            "title": "BASIS-ARCH — Arquitectura hexagonal y tipado estricto"
+          },
+          {
+            "id": "MAM-620",
+            "title": "BASIS-006 — Construir perfil, objetivos y configuración inicial del atleta"
+          },
+          {
+            "id": "MAM-1012",
+            "title": "BASIS-COR-04 — Conciliar roadmap y retirar worktrees integrados sin perder evidencia"
+          },
+          {
+            "id": "MAM-1008",
+            "title": "BASIS-COR — Estabilización del candidato antes de producción"
+          },
+          {
+            "id": "MAM-811",
+            "title": "BASIS-026 — Bloques de resistencia, intervalos y umbrales por disciplina"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-629",
+      "title": "BASIS-015 — Construir calendario y editor de planes y ciclos",
+      "status": "Done",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-629/basis-015-construir-calendario-y-editor-de-planes-y-ciclos",
+      "parentId": null,
+      "updatedAt": "2026-11-01T17:22:53.995Z"
+    },
+    {
+      "id": "MAM-631",
+      "title": "BASIS-017 — Habilitar PWA instalable y recursos disponibles sin conexión",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-631/basis-017-habilitar-pwa-instalable-y-recursos-disponibles-sin-conexion",
+      "parentId": null,
+      "updatedAt": "2026-11-01T17:22:53.995Z"
+    },
+    {
+      "id": "MAM-628",
+      "title": "BASIS-014 — Construir Hoy y reproductor de sesión para registro rápido",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-628/basis-014-construir-hoy-y-reproductor-de-sesion-para-registro-rapido",
+      "parentId": null,
+      "updatedAt": "2026-10-28T00:01:25.534Z"
+    },
+    {
+      "id": "MAM-814",
+      "title": "BASIS-029 — Natación manual con piscina, estilos y ritmo por 100 m",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-814/basis-029-natacion-manual-con-piscina-estilos-y-ritmo-por-100-m",
+      "parentId": null,
+      "updatedAt": "2026-10-27T03:18:39.940Z"
+    },
+    {
+      "id": "MAM-627",
+      "title": "BASIS-013 — Integrar Django Cotton UI y tokens de diseño con HTMX",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-627/basis-013-integrar-django-cotton-ui-y-tokens-de-diseno-con-htmx",
+      "parentId": null,
+      "updatedAt": "2026-10-26T17:38:44.796Z"
+    },
+    {
+      "id": "MAM-626",
+      "title": "BASIS-012 — Diseñar flujos UI UX y contrato visual basado en tokens",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-626/basis-012-disenar-flujos-ui-ux-y-contrato-visual-basado-en-tokens",
+      "parentId": null,
+      "updatedAt": "2026-10-26T12:59:58.179Z"
+    },
+    {
+      "id": "MAM-817",
+      "title": "BASIS-032 — Prueba, permisos comerciales y conservación al vencer acceso",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-817/basis-032-prueba-permisos-comerciales-y-conservacion-al-vencer-acceso",
+      "parentId": null,
+      "updatedAt": "2026-10-23T18:00:15.015Z"
+    },
+    {
+      "id": "MAM-813",
+      "title": "BASIS-028 — Ciclismo manual con potencia y cadencia opcionales",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-813/basis-028-ciclismo-manual-con-potencia-y-cadencia-opcionales",
+      "parentId": null,
+      "updatedAt": "2026-10-23T16:02:05.996Z"
+    },
+    {
+      "id": "MAM-812",
+      "title": "BASIS-027 — Running manual con ritmo, desnivel y respuesta",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-812/basis-027-running-manual-con-ritmo-desnivel-y-respuesta",
+      "parentId": null,
+      "updatedAt": "2026-10-23T15:13:37.625Z"
+    },
+    {
+      "id": "MAM-811",
+      "title": "BASIS-026 — Bloques de resistencia, intervalos y umbrales por disciplina",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-811/basis-026-bloques-de-resistencia-intervalos-y-umbrales-por-disciplina",
+      "parentId": null,
+      "updatedAt": "2026-10-22T04:32:53.448Z"
+    },
+    {
+      "id": "MAM-620",
+      "title": "BASIS-006 — Construir perfil, objetivos y configuración inicial del atleta",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-620/basis-006-construir-perfil-objetivos-y-configuracion-inicial-del",
+      "parentId": null,
+      "updatedAt": "2026-10-21T22:28:04.319Z"
+    },
+    {
+      "id": "MAM-623",
+      "title": "BASIS-009 — Separar prescripción, sesión ejecutada y registros por serie",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-623/basis-009-separar-prescripcion-sesion-ejecutada-y-registros-por-serie",
+      "parentId": null,
+      "updatedAt": "2026-10-21T19:47:08.184Z"
+    },
+    {
+      "id": "MAM-622",
+      "title": "BASIS-008 — Modelar objetivos, ciclos y calendario versionado de entrenamiento",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-622/basis-008-modelar-objetivos-ciclos-y-calendario-versionado-de",
+      "parentId": null,
+      "updatedAt": "2026-10-21T15:45:52.225Z"
+    },
+    {
+      "id": "MAM-810",
+      "title": "BASIS-025 — Registro, verificación, recuperación y acceso multiusuario",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-810/basis-025-registro-verificacion-recuperacion-y-acceso-multiusuario",
+      "parentId": null,
+      "updatedAt": "2026-10-21T12:47:11.190Z"
+    },
+    {
+      "id": "MAM-637",
+      "title": "BASIS-023 — Preparar despliegue sencillo, PostgreSQL, backups y CI",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-637/basis-023-preparar-despliegue-sencillo-postgresql-backups-y-ci",
+      "parentId": null,
+      "updatedAt": "2026-10-21T02:10:18.195Z"
+    },
+    {
+      "id": "MAM-621",
+      "title": "BASIS-007 — Ampliar catálogo de ejercicios y variantes para prescripción real",
+      "status": "Done",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-621/basis-007-ampliar-catalogo-de-ejercicios-y-variantes-para-prescripcion",
+      "parentId": null,
+      "updatedAt": "2026-10-21T02:10:18.123Z"
+    },
+    {
+      "id": "MAM-617",
+      "title": "BASIS-004 — Proteger historial y endurecer integridad y datos de ejemplo",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-617/basis-004-proteger-historial-y-endurecer-integridad-y-datos-de-ejemplo",
+      "parentId": null,
+      "updatedAt": "2026-10-20T23:01:47.844Z"
+    },
+    {
+      "id": "MAM-831",
+      "title": "ARCH-10 — Aceptación integral",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-831/arch-10-aceptacion-integral",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-20T20:09:15.787Z"
+    },
+    {
+      "id": "MAM-830",
+      "title": "ARCH-09 — Integración y retiro del legado",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-830/arch-09-integracion-y-retiro-del-legado",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-20T20:09:13.923Z"
+    },
+    {
+      "id": "MAM-636",
+      "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación",
+      "status": "Backlog",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-636/basis-022-evaluar-entrenador-ia-antes-de-habilitar-programacion-y",
+      "parentId": null,
+      "updatedAt": "2026-10-20T20:07:45.840Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-635",
+            "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas"
+          },
+          {
+            "id": "MAM-633",
+            "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos"
+          },
+          {
+            "id": "MAM-634",
+            "title": "BASIS-020 — Generar propuestas de entrenamiento y ciclos con validación y versiones"
+          }
+        ],
+        "relatedTo": [],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-634",
+      "title": "BASIS-020 — Generar propuestas de entrenamiento y ciclos con validación y versiones",
+      "status": "In Progress",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-634/basis-020-generar-propuestas-de-entrenamiento-y-ciclos-con-validacion",
+      "parentId": null,
+      "updatedAt": "2026-10-20T20:07:02.233Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-636",
+            "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación"
+          },
+          {
+            "id": "MAM-635",
+            "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-633",
+            "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos"
+          }
+        ],
+        "relatedTo": [],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-635",
+      "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas",
+      "status": "In Progress",
+      "priority": {
+        "value": 3,
+        "name": "Medium"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-635/basis-021-construir-entrenador-ia-y-adaptacion-del-plan-con-tareas",
+      "parentId": null,
+      "updatedAt": "2026-10-20T20:06:21.208Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-636",
+            "title": "BASIS-022 — Evaluar entrenador IA antes de habilitar programación y adaptación"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-818",
+            "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas"
+          },
+          {
+            "id": "MAM-633",
+            "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos"
+          },
+          {
+            "id": "MAM-634",
+            "title": "BASIS-020 — Generar propuestas de entrenamiento y ciclos con validación y versiones"
+          },
+          {
+            "id": "MAM-627",
+            "title": "BASIS-013 — Integrar Django Cotton UI y tokens de diseño con HTMX"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-828",
+            "title": "ARCH-07 — Entrenador IA"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-818",
+      "title": "BASIS-033 — Cuotas IA y libro de costo con reservas atómicas",
+      "status": "In Progress",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-818/basis-033-cuotas-ia-y-libro-de-costo-con-reservas-atomicas",
+      "parentId": null,
+      "updatedAt": "2026-10-20T20:06:17.426Z",
+      "relations": {
+        "blocks": [
+          {
+            "id": "MAM-638",
+            "title": "BASIS-024 — Validar producto completo en web, móvil, offline e IA"
+          },
+          {
+            "id": "MAM-635",
+            "title": "BASIS-021 — Construir entrenador IA y adaptación del plan con tareas controladas"
+          }
+        ],
+        "blockedBy": [
+          {
+            "id": "MAM-633",
+            "title": "BASIS-019 — Crear contexto y herramientas de IA sobre servicios deportivos"
+          },
+          {
+            "id": "MAM-817",
+            "title": "BASIS-032 — Prueba, permisos comerciales y conservación al vencer acceso"
+          }
+        ],
+        "relatedTo": [
+          {
+            "id": "MAM-828",
+            "title": "ARCH-07 — Entrenador IA"
+          }
+        ],
+        "duplicateOf": null
+      }
+    },
+    {
+      "id": "MAM-829",
+      "title": "ARCH-08 — Sincronización offline",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-829/arch-08-sincronizacion-offline",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-20T00:15:51.425Z"
+    },
+    {
+      "id": "MAM-828",
+      "title": "ARCH-07 — Entrenador IA",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-828/arch-07-entrenador-ia",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-19T23:23:05.187Z"
+    },
+    {
+      "id": "MAM-827",
+      "title": "ARCH-06 — Facturación",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-827/arch-06-facturacion",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-19T22:55:49.263Z"
+    },
+    {
+      "id": "MAM-826",
+      "title": "ARCH-05 — Métricas y multideporte",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-826/arch-05-metricas-y-multideporte",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-19T20:20:09.024Z"
+    },
+    {
+      "id": "MAM-825",
+      "title": "ARCH-04 — Planificación y versiones",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-825/arch-04-planificacion-y-versiones",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-19T19:56:34.594Z"
+    },
+    {
+      "id": "MAM-824",
+      "title": "ARCH-03 — Identidad, atleta y catálogo",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-824/arch-03-identidad-atleta-y-catalogo",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-19T19:36:55.508Z"
+    },
+    {
+      "id": "MAM-823",
+      "title": "ARCH-02 — Primer flujo de entrenamiento",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-823/arch-02-primer-flujo-de-entrenamiento",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-19T19:03:13.690Z"
+    },
+    {
+      "id": "MAM-822",
+      "title": "ARCH-01 — Contratos y controles",
+      "status": "Done",
+      "priority": {
+        "value": 0,
+        "name": "No priority"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-822/arch-01-contratos-y-controles",
+      "parentId": "MAM-821",
+      "updatedAt": "2026-10-19T17:57:45.162Z"
+    },
+    {
+      "id": "MAM-616",
+      "title": "BASIS-002 — Vincular cuenta y atleta y cerrar acceso a datos privados",
+      "status": "Done",
+      "priority": {
+        "value": 1,
+        "name": "Urgent"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-616/basis-002-vincular-cuenta-y-atleta-y-cerrar-acceso-a-datos-privados",
+      "parentId": null,
+      "updatedAt": "2026-10-19T17:01:16.741Z"
+    },
+    {
+      "id": "MAM-619",
+      "title": "BASIS-003 — Corregir métricas de fuerza y separar RPE objetivo, real y estimado",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-619/basis-003-corregir-metricas-de-fuerza-y-separar-rpe-objetivo-real-y",
+      "parentId": null,
+      "updatedAt": "2026-10-17T20:38:06.331Z"
+    },
+    {
+      "id": "MAM-615",
+      "title": "BASIS-001 — Restablecer arranque y entorno reproducible de Django",
+      "status": "Done",
+      "priority": {
+        "value": 1,
+        "name": "Urgent"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-615/basis-001-restablecer-arranque-y-entorno-reproducible-de-django",
+      "parentId": null,
+      "updatedAt": "2026-10-17T20:37:45.539Z"
+    },
+    {
+      "id": "MAM-618",
+      "title": "BASIS-005 — Definir contrato deportivo para uso multiusuario y diccionario de variables",
+      "status": "Done",
+      "priority": {
+        "value": 2,
+        "name": "High"
+      },
+      "url": "https://linear.app/mamutsystems/issue/MAM-618/basis-005-definir-contrato-deportivo-para-uso-multiusuario-y",
+      "parentId": null,
+      "updatedAt": "2026-10-17T20:36:39.628Z"
+    }
+  ]
+}

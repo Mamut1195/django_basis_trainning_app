@@ -60,3 +60,55 @@ class ProgressCoverageTests(TestCase):
                 (),
                 date(2026, 1, 1),
             )
+
+    def test_session_rpe_deduplicates_blocks_preserves_zero_and_missing(self) -> None:
+        first = ProgressSession(
+            SessionId(UUID(int=10)),
+            True,
+            DurationProtocol.ELAPSED,
+            reported_rpe=Decimal(0),
+            blocks=(ProgressBlock("running"), ProgressBlock("running"), ProgressBlock("cycling")),
+        )
+        second = ProgressSession(
+            SessionId(UUID(int=11)),
+            True,
+            DurationProtocol.ELAPSED,
+            reported_rpe=None,
+            blocks=(ProgressBlock("running"),),
+        )
+        third = ProgressSession(
+            SessionId(UUID(int=12)),
+            True,
+            DurationProtocol.ELAPSED,
+            reported_rpe=Decimal(8),
+            blocks=(ProgressBlock("running"),),
+        )
+        partial = ProgressSession(
+            SessionId(UUID(int=13)),
+            False,
+            DurationProtocol.ELAPSED,
+            reported_rpe=Decimal(10),
+            blocks=(ProgressBlock("running"),),
+        )
+        sports = {
+            x.sport: x for x in report((first, second, third, partial), (), date(2026, 1, 1)).sports
+        }
+        self.assertEqual(
+            (
+                sports["running"].sessions,
+                sports["running"].rpe_min,
+                sports["running"].rpe_max,
+                sports["running"].rpe_known,
+                sports["running"].rpe_missing,
+            ),
+            (3, Decimal(0), Decimal(8), 2, 1),
+        )
+        self.assertEqual(
+            (sports["cycling"].rpe_min, sports["cycling"].rpe_max, sports["cycling"].rpe_known),
+            (Decimal(0), Decimal(0), 1),
+        )
+        unknown = report((second,), (), date(2026, 1, 1)).sports[0]
+        self.assertEqual(
+            (unknown.rpe_min, unknown.rpe_max, unknown.rpe_known, unknown.rpe_missing),
+            (None, None, 0, 1),
+        )

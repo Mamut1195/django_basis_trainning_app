@@ -1,6 +1,6 @@
 {
   "project": "P-MAM-12",
-  "verified_at": "2026-11-01",
+  "verified_at": "2026-11-02",
   "rule": "Done requires complete acceptance, verification and a committed integration in main.",
   "issues": [
     {
@@ -166,13 +166,13 @@
       "code": "BASIS-010",
       "id": "MAM-624",
       "title": "BASIS-010 — Registrar recuperación, bienestar y respuesta al entrenamiento",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-624/basis-010-registrar-recuperacion-bienestar-y-respuesta-al",
       "deps": [
         "MAM-620",
         "MAM-618"
       ],
-      "complete": false,
+      "complete": true,
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-006",
@@ -184,14 +184,14 @@
       "code": "BASIS-011",
       "id": "MAM-625",
       "title": "BASIS-011 — Implementar métricas de progreso, adherencia y carga con procedencia",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-625/basis-011-implementar-metricas-de-progreso-adherencia-y-carga-con",
       "deps": [
         "MAM-619",
         "MAM-624",
         "MAM-623"
       ],
-      "complete": false,
+      "complete": true,
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-003",
@@ -638,12 +638,12 @@
       "code": "BASIS-034",
       "id": "MAM-819",
       "title": "BASIS-034 — Hiking con tiempos, desnivel, altitud, terreno y mochila",
-      "status": "In Progress",
+      "status": "Done",
       "url": "https://linear.app/mamutsystems/issue/MAM-819/basis-034-hiking-con-tiempos-desnivel-altitud-terreno-y-mochila",
       "deps": [
         "MAM-811"
       ],
-      "complete": false,
+      "complete": true,
       "dependenciesMatch": true,
       "depends_on": [
         "BASIS-026"
@@ -671,9 +671,9 @@
   ],
   "nodes": 35,
   "edges": 86,
-  "done": 21,
-  "open": 14,
-  "in_progress": 13,
+  "done": 24,
+  "open": 11,
+  "in_progress": 10,
   "backlog": 1,
   "current_readback": {
     "source_kind": "Documentation-only reconciliation of supplied Luna native exports; no Linear/Notion operations or new ticket started by this executor.",
@@ -871,7 +871,8 @@
       "docs/EXECUTION_VERIFICATION.md",
       "docs/DEVELOPMENT_2026-10-21.md#cierre-de-la-cadena-mam-810--620--622--623"
     ],
-    "previous_readbacks": "catalog_operations_readback and postmerge_readback preserve their historical source, states, counts and next chains; architecture snapshot unchanged."
+    "previous_readbacks": "catalog_operations_readback and postmerge_readback preserve their historical source, states, counts and next chains; architecture snapshot unchanged.",
+    "historical_notice": "Historical readback 2026-10-21; see linear_snapshot_2026_11_02 for the latest supplied project readback."
   },
   "catalog_operations_readback": {
     "source_kind": "Local reconciliation of supplied Luna final readbacks; no Linear/Notion access by this documentation executor.",
@@ -1397,6 +1398,176 @@
         "url": "https://linear.app/mamutsystems/issue/MAM-1012/basis-cor-04-conciliar-roadmap-y-retirar-worktrees-integrados-sin",
         "parentId": "MAM-1008"
       }
+    ]
+  },
+  "linear_snapshot_2026_11_02": {
+    "source": "docs/tickets/LINEAR_READBACK_2026-11-02.json",
+    "as_of": "2026-11-02",
+    "git_head": "d3501a78b37050cfc352af175b898a5aa9a4f11b",
+    "scope": "Linear list_issues P-MAM-12; hasNextPage=false; get_issue for 14 open items",
+    "counts": {
+      "Done": 37,
+      "In Progress": 12,
+      "Todo": 1,
+      "Backlog": 1
+    },
+    "total": 51,
+    "functional_counts": {
+      "total": 35,
+      "Done": 24,
+      "In Progress": 10,
+      "Backlog": 1,
+      "open": 11
+    },
+    "open_issues": [
+      {
+        "id": "MAM-820",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-819",
+          "MAM-624"
+        ]
+      },
+      {
+        "id": "MAM-1008",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": []
+      },
+      {
+        "id": "MAM-638",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-1008",
+          "MAM-818",
+          "MAM-815",
+          "MAM-816",
+          "MAM-820",
+          "MAM-817",
+          "MAM-637",
+          "MAM-632",
+          "MAM-625",
+          "MAM-629",
+          "MAM-630",
+          "MAM-628",
+          "MAM-636"
+        ]
+      },
+      {
+        "id": "MAM-630",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-620",
+          "MAM-624",
+          "MAM-625",
+          "MAM-627"
+        ]
+      },
+      {
+        "id": "MAM-815",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-820",
+          "MAM-625",
+          "MAM-814",
+          "MAM-819",
+          "MAM-812",
+          "MAM-813"
+        ]
+      },
+      {
+        "id": "MAM-1012",
+        "status": "In Progress",
+        "parentId": "MAM-1008",
+        "blockedBy": []
+      },
+      {
+        "id": "MAM-1011",
+        "status": "Todo",
+        "parentId": "MAM-1008",
+        "blockedBy": []
+      },
+      {
+        "id": "MAM-632",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-631",
+          "MAM-623",
+          "MAM-628",
+          "MAM-616"
+        ]
+      },
+      {
+        "id": "MAM-633",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-810",
+          "MAM-815",
+          "MAM-625",
+          "MAM-624",
+          "MAM-623",
+          "MAM-616",
+          "MAM-622"
+        ]
+      },
+      {
+        "id": "MAM-816",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-810"
+        ]
+      },
+      {
+        "id": "MAM-636",
+        "status": "Backlog",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-635",
+          "MAM-633",
+          "MAM-634"
+        ]
+      },
+      {
+        "id": "MAM-634",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-633"
+        ]
+      },
+      {
+        "id": "MAM-635",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-818",
+          "MAM-633",
+          "MAM-634",
+          "MAM-627"
+        ]
+      },
+      {
+        "id": "MAM-818",
+        "status": "In Progress",
+        "parentId": null,
+        "blockedBy": [
+          "MAM-633",
+          "MAM-817"
+        ]
+      }
+    ],
+    "relations_note": "Open-issue blockedBy and parent relationships reflect the supplied snapshot; the older functional dependency graph and readbacks remain historical. Consult the source for all relation types.",
+    "local_proposals": [
+      "LOCAL-PERF-01",
+      "LOCAL-PERF-02",
+      "LOCAL-ARCH-01"
     ]
   }
 }

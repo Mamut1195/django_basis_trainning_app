@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -15,7 +16,8 @@ from basis.bootstrap.training_dates import owner_date
 from basis.shared.identifiers import AccountId
 
 from ..actions import progress_report
-from ..models import Session, TrekTrip
+from ..calendar import calendar_status, effective_sessions
+from ..models import PlannedSession, Session, TrekTrip
 
 
 class ProgressPeriodForm(forms.Form):
@@ -42,6 +44,41 @@ class ProgressPeriodForm(forms.Form):
             if start > end:
                 raise forms.ValidationError("La fecha inicial no puede superar la final.")
         return data
+
+
+def agenda_rows(
+    account: AccountId, rows: list[PlannedSession], today: date
+) -> list[dict[str, object]]:
+    roots = {row.origin_id or row.pk for row in rows}
+    by_root: dict[int, list[Session]] = {root: [] for root in roots}
+    if roots:
+        executions = (
+            Session.objects.filter(owner_id=account)
+            .filter(Q(planned_id__in=roots) | Q(planned__origin_id__in=roots))
+            .select_related("planned")
+            .order_by("date", "pk")
+        )
+        for execution in executions:
+            planned = execution.planned
+            if planned is not None:
+                by_root[planned.origin_id or planned.pk].append(execution)
+    return [
+        {
+            "planned": row,
+            "state": calendar_status(row, today),
+            "exclusion_reason": (
+                "Cancelada y futura"
+                if row.status == "cancelled" and row.date > today
+                else "Cancelada"
+                if row.status == "cancelled"
+                else "Fecha futura"
+                if row.date > today
+                else ""
+            ),
+            "executions": by_root[row.origin_id or row.pk],
+        }
+        for row in rows
+    ]
 
 
 @login_required
@@ -84,6 +121,16 @@ def progress(request: HttpRequest) -> HttpResponse:
     sessions = Session.objects.filter(owner_id=account.pk).order_by("-date", "-created_at", "-pk")
     if start is not None and end is not None:
         sessions = sessions.filter(date__range=(start, end))
+    effective = effective_sessions(AccountId(account.pk), owner_date)
+    selected = [
+        row
+        for row in effective
+        if (start is None or row.date >= start) and (end is None or row.date <= end)
+    ]
+    agenda_page = Paginator(selected, 20).get_page(request.GET.get("agenda_page"))
+    entries = agenda_rows(AccountId(account.pk), list(agenda_page.object_list), today)
+    agenda_params = params.copy()
+    agenda_params.pop("agenda_page", None)
     params.pop("page", None)
     return render(
         request,
@@ -94,6 +141,9 @@ def progress(request: HttpRequest) -> HttpResponse:
             "period_start": start,
             "period_end": end,
             "detail_query": params.urlencode(),
+            "agenda_query": agenda_params.urlencode(),
+            "agenda_page": agenda_page,
+            "agenda_entries": entries,
             "source_sessions": Paginator(sessions, 20).get_page(request.GET.get("page")),
             "report": progress_report(account, start, end),
             **presentation.progress_history(account.pk),
