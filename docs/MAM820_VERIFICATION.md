@@ -1,5 +1,7 @@
 # MAM-820 — verificación local provisional
 
+Coordinación inspeccionó las dos capturas finales de `.cache/mam820-combined-fd2a1fc/` el 2026-11-02: detalle y etapa a 390×844 legibles, sin desbordamiento observado. El aviso de modo sin conexión corresponde al bloqueo deliberado de service workers en ese smoke. La revisión se vincula al código combinado `fd2a1fc`; no acredita PWA ni dispositivos físicos.
+
 Base d0e76d3888e3bb984978006a99801e186952630e. Candidato sin commit; integración final con main y CI pendientes. Variables Django: config.test_settings, SQLite temporal en memoria, DEBUG=1, clave sintética, AI_ENABLED=0. Comandos desde este worktree usando Python de .venv-win del proyecto raíz.
 
 | Criterio | Evidencia | Estado |
@@ -33,3 +35,13 @@ Candidato conservado sobre `d0e76d3888e3bb984978006a99801e186952630e`, sin incor
 **VERIFIED:** la misma batería focal (`tests.regression.test_trekking_820 basis.bootstrap.tests.test_progress tests.regression.test_training_contract`) ejecutó 25 pruebas en PostgreSQL 18.4 desechable, OK sin omisiones. Incluye `TrekkingConcurrencyTests`: dos escrituras concurrentes dan 200 y 400, mantienen orden válido y un recibo. Se utilizó la instancia aislada de coordinación en localhost, base dedicada de prueba, `config.test_settings`, IA deshabilitada y clave sintética; Django creó y destruyó su base de test. Esta ejecución sustituye únicamente el estado NOT RUN de concurrencia PostgreSQL indicado arriba; siguen pendientes árbol combinado y CI remoto.
 
 **VERIFIED:** `manage.py makemigrations --check --dry-run` no detectó cambios en SQLite.
+
+## Validación del árbol combinado — 2026-11-02
+
+Código probado: merge local `fd2a1fc2a8bc297e855716800006c9271974b8ad`, con candidato `1f27e1d`, MAM-625 y base `2b9ed1c`. Las líneas de esta sección son documentación añadida después de las pruebas y no cambian el código probado. PostgreSQL 18.4 desechable en localhost, base de prueba dedicada, `config.test_settings`, IA deshabilitada y clave sintética.
+
+- **VERIFIED:** selección Django exacta de `.github/workflows/checks.yml`: 614 pruebas OK, cinco omitidas, 273.538 s. Las omisiones son los cinco smokes opt-in de `test_hiking_browser`, `test_pwa_browser`, `test_running_browser`, `test_swimming_browser` y `test_trekking_820_browser`; sus razones se confirmaron con una ejecución separada detallada de esos cinco módulos. La carrera PostgreSQL de MAM-820 no se omitió.
+- **VERIFIED:** benchmark PostgreSQL `benchmark_calendar_queries`: una prueba OK. Para 10, 100 y 1.000 filas: selection=2, statuses=0, scheduled=2, today=11 consultas. No mide memoria ni constituye aceptación de capacidad.
+- **VERIFIED:** arquitectura 229 pruebas; checker de capas; ocho contratos Import Linter; mypy core 130 y Django 413 archivos; Ruff check y format 421 archivos; djLint 51 plantillas; Prettier 3.9.10 con globs exactos de package.json; Django check y makemigrations --check --dry-run.
+- **VERIFIED:** smoke opt-in trekking en PostgreSQL y Chromium: una prueba OK, recursos estáticos 200 y sin errores JS. Capturas finales inspeccionadas en `.cache/mam820-combined-fd2a1fc/trekking-mobile.png` y `trekking-stage-mobile.png`, viewport 390×844. El aviso offline refleja bloqueo deliberado de service workers; no acredita aceptación PWA.
+- **NOT RUN:** CI remoto, build/operaciones Docker del workflow, aceptación PWA y dispositivos físicos. El resultado local no declara el ticket cerrado.
