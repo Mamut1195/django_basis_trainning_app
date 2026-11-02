@@ -236,7 +236,7 @@ Trabajo conservado en `.cache/worktrees/mam820-completion`, base `d0e76d3`, 11 a
 - [x] Reunir los 51 IDs conocidos y los nuevos pendientes en este archivo, sin borrar estados históricos.
 - [x] Fetch y comparación main/remoto sobre `69eeb04`; documentación del SHA/CI real.
 - [ ] Publicar/releer actualizaciones en Linear y regenerar estado vigente de roadmap/README desde esa fuente.
-- [ ] Completar cierre de limpieza/sincronización según recibo Git al final de este documento; conservar los worktrees con trabajo pendiente hasta conciliarlos.
+- [x] Retirar siete worktrees con respaldo verificado; conservar MAM-624/MAM-820 con trabajo pendiente. Auditoría publicada en main/remoto (`0d17abb`); recibo de limpieza detallado en sección 6.
 
 ### LOCAL-PERF-01 — Acotar lecturas de calendario y eliminar N+1 histórico
 
@@ -350,11 +350,27 @@ No ejecutados en esta auditoría: PostgreSQL local/concurrencia, carga sostenida
 El usuario confirmó que «WordPress» significaba **worktrees**, y autorizó retirar los integrados conservando antes los datos locales ignorados.
 
 - Inicial: main y origin/main iguales; tres documentos ajenos no rastreados en `docs/` conservados.
-- Retirada seleccionada: MAM-629, MAM-631, MAM-632, MAM-816-sandbox, MAM-test-polar-clock y main-postmerge-20261031; todos sin cambios rastreados/no rastreados y HEAD ancestro de origin/main.
+- Retirada **completada**: MAM-629, MAM-631, MAM-632, MAM-816-sandbox, MAM-test-polar-clock y main-postmerge-20261031; todos sin cambios rastreados/no rastreados y HEAD ancestro de origin/main.
 - Archivo de preservación: `.cache/worktree-archives-2026-11-02/`, un tar.gz y un manifiesto SHA-256 por worktree; incluye bases, evidencias, entornos y demás archivos ignorados. Se comprueba contenido archivado y original antes de la retirada. Datos privados locales, fuera de Git.
 - MAM-819 **retirado** tras comprobar equivalencia exacta de los cinco archivos modificados por sus tres commits; rama conservada, 3.433 archivos ignorados preservados en archivo de 7.074.508 bytes. Recibo: `.cache/worktree-archives-2026-11-02/receipt-MAM-819.json`.
 - Conservar MAM-624 (18 archivos pendientes, seis diferentes de main) y MAM-820 (14 archivos pendientes). MAM-820 requirió excepción `safe.directory` **solo por comando**, con ruta exacta del worktree conocido; no se cambió configuración global ni propietario.
-- Recibo final de retirada/publicación: pendiente de completar al terminar las operaciones de esta sesión.
+- `git worktree list --porcelain` final: únicamente el checkout principal, MAM-624 y MAM-820. No se borraron ramas ni se forzó ninguna retirada.
+- Auditoría publicada como `0d17abb09516e0cdae23fc45e5441120cd5bfe97`; HEAD, origin/main y API GitHub coincidieron tras push. Este recibo se incorpora en un commit documental posterior. El CI citado arriba pertenece al código auditado `69eeb04`, no es una ejecución del commit documental final.
+
+**Recibo final de limpieza — VERIFIED:** los siete directorios retirados ya no existen, los manifiestos coinciden con los tamaños/cantidades y todos los objetos de commit originales siguen disponibles. La rutina comprobó SHA-256 de cada archivo original y de su copia en el tar antes de retirar el worktree.
+
+| Worktree retirado | Archivos ignorados preservados | Archivo tar.gz (bytes) |
+| --- | --- | --- |
+| MAM-629 | 22.998 | 110.635.781 |
+| MAM-631 | 23.615 | 115.075.520 |
+| MAM-632 | 0 | 92 |
+| MAM-816-sandbox | 1 | 296 |
+| MAM-test-polar-clock | 3.390 | 7.006.697 |
+| main-postmerge-20261031 | 225 | 733.607 |
+| MAM-819 | 3.433 | 7.074.508 |
+| **Total** | **53.662** | **240.526.501** |
+
+Recibos locales: `.cache/worktree-archives-2026-11-02/receipt.json` y `receipt-MAM-819.json`. Conservar esa carpeta: contiene las bases/evidencias archivadas, no solo caché regenerable. Los respaldos no se publicaron en Git. Los tres documentos previos no rastreados y los cambios de MAM-624/MAM-820 también permanecen locales; sincronizar main no significa haber integrado ese trabajo pendiente.
 
 ## 7. Orden recomendado
 
