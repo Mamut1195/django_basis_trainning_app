@@ -15,9 +15,9 @@ class DjangoAthleteCoachContexts:
     def read_for_acceptance(self, owner: AccountId) -> AthleteCoachContext:
         """Caller holds account before aggregate locks; never open an inner UoW.
 
-        The profile anchors official profile/sport/wellness writes, including
-        sport inserts. Existing preferences need their own row lock because
-        their official free editor does not take either anchor.
+        Official personal and commercial writers take the account first. The
+        profile also anchors profile/sport writes, including sport inserts.
+        Preferences and existing sports retain row locks against direct updates.
         """
         if not transaction.get_connection(Athlete.objects.db).in_atomic_block:
             raise TransactionManagementError("Acceptance context requires an open unit of work")
