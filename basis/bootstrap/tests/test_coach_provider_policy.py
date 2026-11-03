@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import replace
+from datetime import timedelta
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -26,7 +27,7 @@ from basis.modules.coach.domain.jobs import (
     TokenUsage,
 )
 from basis.shared.identifiers import AccountId, AIRequestKey
-from tests_architecture.test_coach_jobs import CONTEXT, Ports, Profiles
+from tests_architecture.test_coach_jobs import CONTEXT, NOW, Ports, Profiles
 
 MODEL = "deepseek-v4-flash"
 
@@ -74,6 +75,64 @@ class FrozenProviderPolicyTests(TestCase):
             version="synthetic-frozen-transport",
             short_limits=(input_bound, 100),
         )
+
+    def test_quarantined_worker_response_cannot_follow_a_released_reconciliation(self) -> None:
+        job = self.service.enqueue(Enqueue(self.owner, "short", "question", AIRequestKey(uuid4())))
+        command = Reconcile(
+            job.id, "late-response", "admin:test", "ledger:fixture", "synthetic", "no_charge", True
+        )
+        outcomes: list[str] = []
+
+        def respond(request: httpx.Request) -> httpx.Response:
+            AIJob.objects.filter(pk=job.id).update(started_at=NOW - timedelta(minutes=11))
+            self.service.quarantine_stale_jobs()
+            outcomes.append(self.service.reconcile(command, apply=True).outcome)
+            return httpx.Response(
+                200,
+                json={
+                    "model": MODEL,
+                    "usage": {"prompt_tokens": 10**40, "completion_tokens": False},
+                    "choices": [{"finish_reason": "stop", "message": {"content": "fixture"}}],
+                },
+            )
+
+        def client(*, timeout: httpx.Timeout) -> httpx.Client:
+            return httpx.Client(transport=httpx.MockTransport(respond), timeout=timeout)
+
+        self.service.provider = DeepSeekProvider("synthetic", client)
+        self.assertTrue(self.service.process_one())
+        row = AIJob.objects.get(pk=job.id)
+        with self.subTest("reconciliation before response"):
+            self.assertEqual(outcomes, ["retained"])
+        with self.subTest("late evidence and block"):
+            self.assertEqual(row.status, "uncertain")
+            self.assertIs(row.invalid_usage_observed, True)
+            self.assertTrue(self.service.repo.blocked())
+
+    def test_quarantined_worker_records_malformed_response_before_reconciliation(self) -> None:
+        job = self.service.enqueue(Enqueue(self.owner, "short", "question", AIRequestKey(uuid4())))
+
+        def respond(request: httpx.Request) -> httpx.Response:
+            AIJob.objects.filter(pk=job.id).update(started_at=NOW - timedelta(minutes=11))
+            self.service.quarantine_stale_jobs()
+            return httpx.Response(
+                200,
+                json={
+                    "model": MODEL,
+                    "usage": {"prompt_tokens": 10**40, "completion_tokens": False},
+                    "choices": [{"finish_reason": "stop", "message": {"content": "fixture"}}],
+                },
+            )
+
+        def client(*, timeout: httpx.Timeout) -> httpx.Client:
+            return httpx.Client(transport=httpx.MockTransport(respond), timeout=timeout)
+
+        self.service.provider = DeepSeekProvider("synthetic", client)
+        self.assertTrue(self.service.process_one())
+        row = AIJob.objects.get(pk=job.id)
+        self.assertEqual(row.status, "uncertain")
+        self.assertIs(row.invalid_usage_observed, True)
+        self.assertTrue(self.service.repo.blocked())
 
     def test_worker_decodes_mixed_invalid_usage_and_reconciliation_retains_it(self) -> None:
         calls: list[int] = []
