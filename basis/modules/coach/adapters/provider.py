@@ -15,7 +15,7 @@ from ..domain.jobs import (
     ProviderReply,
     TokenUsage,
 )
-from ..domain.prompts import PLAN_FORMAT, SYSTEM
+from ..domain.prompts import INSTRUCTIONS_VERSION, PLAN_FORMAT, SYSTEM, instructions_digest
 from .context_wire import encode_context, mapping, rows
 
 
@@ -26,6 +26,14 @@ class ClientFactory(Protocol):
 def request_body(
     kind: JobKind, prompt: str, context: CoachContext, model: str
 ) -> dict[str, object]:
+    if context.schema_version >= 2 and (
+        context.instructions_version != INSTRUCTIONS_VERSION
+        or context.system_sha256 != instructions_digest(SYSTEM)
+        or (kind == "plan" and context.plan_sha256 != instructions_digest(PLAN_FORMAT))
+    ):
+        raise CoachInvalid(
+            "Las instrucciones cambiaron desde la captura. Solicita una nueva revisión."
+        )
     message = json.dumps(
         {"context": encode_context(context), "request": prompt},
         ensure_ascii=False,

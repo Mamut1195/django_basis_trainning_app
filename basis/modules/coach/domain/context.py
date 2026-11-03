@@ -16,3 +16,12 @@ class CoachContext:
     exercises: tuple[CoachExercise, ...] | None = None
     variables: tuple[CoachVariables, ...] | None = None
     base_plan: CoachBasePlan | None = None
+    # Defaults preserve old constructors and saved, unversioned snapshots.
+    schema_version: int = 1
+    missing: tuple[str, ...] = ()
+    instructions_version: str | None = None
+    system_sha256: str | None = None
+    plan_sha256: str | None = None
+    tools: tuple[str, ...] = ()
+    legacy_omissions: tuple[str, ...] = ()
+    progress_method: str = "session-rpe-v1; total de bloque; sin suma entre deportes"
