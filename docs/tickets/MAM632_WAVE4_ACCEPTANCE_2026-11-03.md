@@ -49,3 +49,19 @@ Evidencia local ignorada por Git, conservar junto al handoff; hashes SHA-256:
 | `mypy.log` | `19c7b299b152965f5d14f84ce7a6a765dfa4ff9c0b653301ab88bfad8675388a` |
 
 Captura T3: `C:/Users/Jonnathan/.t3/userdata/browser-artifacts/browser-screenshot-127-0-0-1-mw09tfqa-eb43b3cd.png`, SHA-256 `ce2c3d2505aca18219fbfa0ee54f14aeabef79f8ab6d7d505b0ddae963b60f4d`. El runner local deriva del guard de Wave 4, con nombres exclusivos, loopback permitido y configuración de Chromium; no se ejecutó ni editó el runner de otra base. El servidor T3 usa esa misma configuración, datos sintéticos y origen propio. No se alteró la candidata congelada 633/634.
+
+## Revisión e integración de coordinación
+
+Coordinación revisó `e570dc603a1e83bc34b5984452e57b2f44211d5b` y lo incorporó como `eb21716`: solo este recibo y las aserciones de `test_pwa_browser.py`, sin código de producción. Los hashes de `focal.log`, `pwa-retest.log`, `pwa/browser-report.json` y `run.py` del ejecutor coinciden con la tabla anterior.
+
+**VERIFIED por coordinación sobre eb21716:** recorrido PWA opt-in completo con las nuevas aserciones, una prueba, cero omisiones, 51.407 s, salida 0. El test comprobó tanto la respuesta POST/logout como la pérdida de autenticación del servidor mediante `/api/csrf/`, además del aislamiento y purga locales. Ruff check, Ruff format, mypy Django focal (un archivo) y diff check satisfactorios. No se ejecutó una suite global nueva por este cambio exclusivo de pruebas y documentación.
+
+Comando desde el checkout raíz: `.venv-win/Scripts/python.exe -u .cache/wave4-632-integration/run.py test tests.regression.test_pwa_browser --noinput -v 2`. La copia del runner se adaptó a `basis_wave3_integration`/`test_basis_wave3_integration` y salida propia, preservando los guards; no se accedió a la base del ejecutor. Evidencia local ignorada:
+
+| Artefacto | SHA-256 |
+| --- | --- |
+| `.cache/wave4-632-integration/run.py` | `C8C1D6A56434D8C49B082980E693910DEC9807E98CF8EE28B932CB38C001610B` |
+| `.cache/wave4-632-integration/pwa.log` | `49BCC9131C22C07A7D501D6B015A9DF41317076A6480DE3C86A895597DF8275E` |
+| `.cache/wave4-632-integration/pwa/browser-report.json` | `1E858B66B2542175F1A8E004E98FB424FA1B0DC53E1571802B39C1AE395B4C37` |
+
+Las 28 focales del ejecutor siguen atribuidas a su ejecución, no a coordinación. No se repitió su recorrido manual T3. Se mantiene **NOT RUN** el cierre/reapertura física, dispositivos, instalación real, HTTPS desplegado, cuota/evicción, lector, CI y recepción en main. La recuperación de campos/series de todos los deportes todavía necesita cobertura local adicional; se abre una continuación acotada para ese vacío alcanzable. MAM-632 permanece abierto; la congelación633/634 no cambia.
