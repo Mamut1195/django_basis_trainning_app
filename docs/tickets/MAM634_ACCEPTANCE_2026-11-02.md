@@ -266,3 +266,50 @@ Logs: `.cache/mam634-rm-before.log`, `.cache/mam634-rm-validated.log`,
 `.cache/mam634-rm-validated-files.json`. **P1/P2 de 633 y aceptación integrada
 siguen PENDING.** Esta corrección de procedencia no acredita calidad del modelo,
 seguridad deportiva, IA LIVE ni cierre de MAM-634 o sus dependencias.
+
+## Seguimiento 634 — respuesta a revisión independiente de ef6e5ee
+
+Se atendieron los tres hallazgos P2 del reviewer sobre `ef6e5ee`: RM en el commit
+separado `a4254d689ce7c3049df2ead7b06b09826d5a040c`; frontera numérica y estado
+visible en este seguimiento. El dictamen independiente usó reproducciones en
+memoria, sin PostgreSQL ni navegador; las pruebas siguientes son del executor 634.
+
+- **NaN/finitud:** la nueva regresión PG reprodujo una excepción decimal no
+  controlada en sink/revisión/aceptación. Se amplió a NaN, sNaN, ±Infinity y
+  exponentes extremos ±1E9999999; el caso extremo también reprodujo Overflow.
+  El guard ahora llama a **`training.public.validate_sport_metrics`** para cada
+  target de bloque antes de sumar/comparar. Se reutiliza la regla vigente de
+  finitud/rangos y se traduce `InvalidSportMetrics` a `CoachInvalid`; no se añadió
+  una fórmula, regla deportiva ni excepción amplia en jobs/worker.
+- **Estado oculto:** una cancelación realizada mediante `Planning.change_session`
+  producía una comparación sin diferencias frente a una propuesta programada.
+  Ahora se muestra `Estado: Cancelada / Omitida / Programada` por sesión. La
+  regresión verifica Cancelada → Programada, que el texto difiere y que revisar
+  todavía no crea un sucesor. La prueba numérica adicional conserva duración cero
+  como cero, sin convertirla en dato faltante.
+
+Reproducción anterior: 4 tests, 1 fallo de estado y 5 errores numéricos (incluye
+subcasos), `.cache/mam634-review-before.log`. Después: **36 PG / 0 skips /
+13.331 s**, 255 puras, mypy 133/423, checker/imports 8/0, Ruff check repo y format
+de los cuatro Python afectados verdes. Comandos de la misma configuración aislada:
+
+```powershell
+python .cache/mam634_run.py manage.py test basis.bootstrap.tests.test_mam634_review_regressions basis.bootstrap.tests.test_mam634_rm_provenance basis.bootstrap.tests.test_mam634_proposals --noinput -v 1
+python .cache/mam634_run.py -m unittest discover -s tests_architecture
+python .cache/mam634_run.py -m mypy --config-file mypy-core.ini
+python .cache/mam634_run.py -m mypy --config-file mypy-django.ini
+python .cache/mam634_run.py scripts/architecture_check.py
+lint-imports
+python -m ruff check .
+python -m ruff format --check basis/modules/coach/domain/proposals.py basis/modules/coach/adapters/proposal_actions.py basis/bootstrap/tests/test_mam634_review_regressions.py tests_architecture/test_mam634_proposals.py
+git diff --check
+```
+
+Logs: `.cache/mam634-review-after.log` y `.cache/mam634-review-pure.log`.
+Se repitió el recorrido T3 en 1280×800 y 390×844, sobre servidor propio reiniciado
+y datos sintéticos: la comparación muestra Cancelada → Programada sin marca
+«sin cambios» para esa fila; `scrollWidth == innerWidth`. Capturas inspeccionadas:
+`browser-screenshot-127-0-0-1-mw02qmq4-a2d6c309.png` y
+`browser-screenshot-127-0-0-1-mw02qwsp-843173ed.png`, en el mismo directorio T3
+indicado arriba. No se aceptó esta propuesta de demostración ni se llamó al
+proveedor. **P1/P2 de 633 y aceptación integrada continúan PENDING.**

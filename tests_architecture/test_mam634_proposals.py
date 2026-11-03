@@ -68,6 +68,17 @@ def definition() -> PlanDefinition:
 
 
 class DeclaredConstraints634Tests(TestCase):
+    def test_nonfinite_and_extreme_durations_are_controlled_before_arithmetic(self) -> None:
+        frozen, data = context(), definition()
+        for value in ("NaN", "sNaN", "Infinity", "-Infinity", "1E9999999", "-1E9999999"):
+            with self.subTest(value=value):
+                block = BlockData(
+                    "running", target=(Metric(MetricName.DURATION_SECONDS, Decimal(value)),)
+                )
+                candidate = replace(data, sessions=(replace(data.sessions[0], blocks=(block,)),))
+                with self.assertRaises(CoachInvalid):
+                    validate_context(candidate, frozen, frozen)
+
     def test_unconsulted_rm_is_rejected_by_presence_including_zero(self) -> None:
         frozen, data = context(), definition()
         for row in (

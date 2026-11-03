@@ -17,6 +17,7 @@ from basis.modules.training.public import (
     PlanDefinition,
     PlanningUnavailable,
     PlanSummary,
+    ScheduleStatus,
     StrengthData,
 )
 from basis.shared.identifiers import AccountId, ExerciseId, PlanId, ProposalId
@@ -104,6 +105,11 @@ def comparison(
     )
     names = {e.id: e.name for e in context.exercises or ()}
     goals = {g.id: g.title for g in context.training.goals}
+    statuses = {
+        ScheduleStatus.SCHEDULED: "Programada",
+        ScheduleStatus.CANCELLED: "Cancelada",
+        ScheduleStatus.SKIPPED: "Omitida",
+    }
 
     def describe_set(item: StrengthData) -> str:
         labels = (
@@ -171,7 +177,8 @@ def comparison(
                     + (f" · {block.notes}" if block.notes else "")
                 )
             sessions.append(
-                f"{session.date} · {session.title} · {cycle_names.get(session.cycle_key, session.cycle_key)} · "
+                f"{session.date} · {session.title} · Estado: {statuses[session.status]} · "
+                f"{cycle_names.get(session.cycle_key, session.cycle_key)} · "
                 + " / ".join(blocks)
                 + (f" · {session.notes}" if session.notes else "")
             )

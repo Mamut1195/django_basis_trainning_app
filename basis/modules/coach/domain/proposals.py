@@ -3,7 +3,12 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
-from basis.modules.training.public import MetricName, PlanDefinition
+from basis.modules.training.public import (
+    InvalidSportMetrics,
+    MetricName,
+    PlanDefinition,
+    validate_sport_metrics,
+)
 from basis.shared.identifiers import AccountId, JobId, PlanId, ProposalId
 
 from .context import CoachContext
@@ -71,6 +76,13 @@ def validate_context(
     for session in definition.sessions:
         if session.date.isoweekday() not in preferences.availability:
             raise CoachInvalid("Una sesión queda fuera de tus días disponibles.")
+        # The shared validator checks finiteness/ranges before Decimal arithmetic;
+        # NaN/sNaN and extreme exponents must remain controlled proposal failures.
+        for block in session.blocks:
+            try:
+                validate_sport_metrics(block.sport, block.target)
+            except InvalidSportMetrics as error:
+                raise CoachInvalid(str(error)) from error
         # Block totals are authoritative. Do not add interval durations again or
         # manufacture missing duration from distance, repetitions or intensity.
         seconds = sum(
