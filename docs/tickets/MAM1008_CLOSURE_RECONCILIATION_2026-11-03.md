@@ -31,3 +31,9 @@ Se leyeron las cuatro descripciones completas y la lista de comentarios de la é
 **NOT RUN en esta conciliación:** pruebas de implementación repetidas, CI nuevo, producción, pagos/IA LIVE, nueva limpieza de worktrees o aceptación integral. Las pruebas de los hijos y el CI histórico se atribuyen a sus recibos; aquí solo se releyeron estado, SHA, checks y política.
 
 Los tres documentos ajenos untracked se mantienen intactos. La rama633/634 sigue en `f42b86160c0afe3a545488fd07f0e5dd8a61a15f`; esta conciliación no publica ese código ni cierra los tickets funcionales que aún requieren aceptación.
+
+## Cierre remoto confirmado
+
+Se antepuso el recibo de conciliación a la descripción de MAM-1008, conservando todo el historial, y se cambió únicamente su estado a **Done**. GET posterior independiente confirmó Done y `completedAt=2026-11-03T05:51:17.381Z`. Los dos enlaces de evidencia de main se comprobaron también con `git cat-file -e`: `docs/CORRECTIONS_2026-11-01.md` y `docs/tickets/PR35_ORDERING_VERIFICATION_2026-11-02.md`. La referencia inicial a un recibo posterior al merge se corrigió antes del readback final; no se presenta ese documento local como contenido de main.
+
+Readback completo del proyecto, sin más páginas: **51 tickets, 43 Done, siete In Progress y uno Backlog; ocho abiertos**. No se cerró ningún otro ticket ni se modificaron dependencias, identidades o fechas de los subtickets.
