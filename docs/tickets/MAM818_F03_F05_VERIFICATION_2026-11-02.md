@@ -1,5 +1,43 @@
 # MAM-818 — F03/F04/F05, verificación local 2026-11-02
 
+## Continuación tras tercera revisión: uso inválido en frontera JSON
+
+Base documental limpia `1639fd6d8fbb301aaed8a959b7dfe6d055fffd86`, código previo `129ff4c8d8c9bfdb9fa34f3b0debddf6bf16eabc`. Plan específico escrito antes de editar pruebas y código en el plan 818. Código y plan de esta ronda: `fa4f2ef2cabaccb028194e4936e5acc0d0350d5c`. No se reescribieron commits ni se modificó el checkout padre.
+
+### Red → green y alcance
+
+- **FAILED antes del fix:** contrato desde `decode_reply` hasta settlement y reconcile en fake y PostgreSQL: 32 subcasos fallaron por `released` frente a `retained`; hubo además 10 errores por reutilización de la clave de prueba, corregida antes de la pasada verde. Logs `review3-red-fake.log` y `review3-red-pg.log`. Las decisiones fueron sintéticas.
+- **FAILED antes del fix:** worker real con `DeepSeekProvider`, `httpx.MockTransport` y ORM recibió `prompt_tokens=10**40` con `completion_tokens=false`; la conciliación no_charge devolvió `released` en vez de `retained` (`review3-red-worker.log`). No hubo HTTP real.
+- **VERIFIED tras el fix:** el decoder marca explícitamente uso presente malformado, incluidos campos obligatorios ausentes, objeto no válido y tipos bool/string/null/float/lista para cada conteo. La ausencia completa de `usage` y JSON superior no objeto permanecen sin observación inventada; el campo opcional de cache ausente mantiene su comportamiento anterior. Settlement persiste True en la marca irreversible existente aun si `usage=None`; conciliaciones no_charge y uso pequeño producen recibos retained idempotentes, sin reenviar ni alterar reserva/gasto paid/trial. El worker conserva el bloqueo existente y deja el siguiente trabajo pendiente.
+- La marca conserva únicamente el hecho de que hubo uso inválido, no el contenido ni qué campo falló. Cuando el decoder no puede tipar el conjunto, omite todos los conteos de las columnas enteras, incluso los que individualmente parecían válidos o eran demasiado grandes; no calcula costo. La historia desconocida sigue siendo None y no se reconstruye. Las pruebas compartidas fake/ORM comprueban columnas omitidas, fondos, auditoría, replay y no reenvío.
+
+### Comandos y resultados de esta ronda
+
+Desde el worktree, `$python = 'C:/Users/Jonnathan/Mamut system/django-basis-trainning-app/.venv-win/Scripts/python.exe'`; runner `.cache/mam818/run_guarded.py` conservado, config.test_settings, secreto sintético, AI_ENABLED=0, base `basis_wave2_818` y solo `test_basis_wave2_818` temporal. Barrera HTTP y sockets externos verificada (`review3-guard.log`).
+
+```powershell
+& $python .cache/mam818/run_guarded.py unittest tests_architecture.test_coach_jobs.JobsTests.test_contract_decoded_malformed_usage_retains_evidence_and_reservations -q # red
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_jobs.DjangoJobsTests.test_contract_decoded_malformed_usage_retains_evidence_and_reservations --noinput -v 1 # red
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_provider_policy.FrozenProviderPolicyTests.test_worker_decodes_mixed_invalid_usage_and_reconciliation_retains_it --noinput -v 1 # red
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_jobs basis.bootstrap.tests.test_coach_edges basis.bootstrap.tests.test_coach_provider_policy basis.bootstrap.tests.test_coach_reconciliation basis.bootstrap.tests.test_coach_pricing_migration --noinput -v 1
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_jobs.DjangoJobsTests.test_contract_decoded_malformed_usage_retains_evidence_and_reservations basis.bootstrap.tests.test_coach_jobs.DjangoJobsTests.test_contract_missing_usage_does_not_invent_historical_observation basis.bootstrap.tests.test_coach_jobs.DjangoJobsTests.test_contract_worker_decodes_malformed_usage_without_resending basis.bootstrap.tests.test_coach_provider_policy.FrozenProviderPolicyTests.test_worker_decodes_mixed_invalid_usage_and_reconciliation_retains_it --noinput -v 1
+& $python .cache/mam818/run_guarded.py unittest discover -s tests_architecture -q
+& $python .cache/mam818/run_guarded.py mypy --config-file mypy-core.ini
+& $python .cache/mam818/run_guarded.py mypy --config-file mypy-django.ini
+& $python .cache/mam818/run_guarded.py script scripts/architecture_check.py
+& $python .cache/mam818/run_guarded.py script .cache/mam818/check_imports.py
+& $python .cache/mam818/run_guarded.py ruff check .
+& $python .cache/mam818/run_guarded.py ruff format --check basis/modules/coach/adapters/provider.py basis/modules/coach/application/jobs.py basis/modules/coach/domain/jobs.py basis/bootstrap/tests/test_coach_provider_policy.py tests_architecture/coach_jobs_contract.py
+& $python .cache/mam818/run_guarded.py manage check
+& $python .cache/mam818/run_guarded.py manage makemigrations --check --dry-run
+& $python .cache/mam818/run_guarded.py script .cache/mam818/verify_guard.py
+git diff --check
+```
+
+**VERIFIED:** focal PG 75 pruebas OK, sin omisiones (`review3-pg.log`); posteriormente se añadieron solo aserciones sobre columnas y anotaciones de tipos, y la focal de cuatro pruebas de regresión volvió a pasar (`review3-focused.log`). Puras 258 OK (`review3-pure-final.log`); mypy core 130 y Django 418, arquitectura e imports ocho contratos, Ruff, formato, Django check y migraciones sin cambios. Mypy falló inicialmente por tres anotaciones de la prueba nueva, corregidas sin suprimir errores. Los logs locales están en `.cache/mam818/` y no forman parte del commit.
+
+**NOT RUN:** suite completa en este candidato (coordinación ejecutará la integrada), revisión independiente nueva, integración, CI remoto, push, Linear, proveedor/precios LIVE, pagos, producción y conciliación de datos existentes. Este fix es un candidato local, no aprobación de integración ni cierre de MAM-818.
+
 ## Correcciones tras segunda revisión de 216d54f
 
 Base `cd9fa8829ced9ffd72bf5433212d1b3afd707f02`, commits anteriores preservados, código aún no integrado. Commit correctivo de esta ronda: `129ff4c8d8c9bfdb9fa34f3b0debddf6bf16eabc`. Suite completa nueva: 922 pruebas OK, cinco omisiones. El transporte congelado aprobado en la segunda revisión no se modifica; tampoco source codec/contexto/prompts 633 ni guard/bootstrap 634.
