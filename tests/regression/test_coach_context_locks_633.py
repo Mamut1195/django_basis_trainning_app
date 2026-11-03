@@ -16,7 +16,7 @@ from basis.bootstrap.athletes import athletes
 from basis.modules.athletes.adapters.coach import DjangoAthleteCoachContexts
 from basis.modules.athletes.adapters.django import DjangoAthleteRecords
 from basis.modules.athletes.adapters.models import AthleteSettings, SportProfile
-from basis.modules.athletes.public import EditPreferences, EditProfile, RecordSport, SportData
+from basis.modules.athletes.public import EditProfile, RecordSport, SportData
 from basis.modules.catalog.adapters.coach import DjangoCoachExercises
 from basis.modules.catalog.adapters.models import Exercise
 from basis.modules.coach.application.context import Contexts
@@ -97,11 +97,9 @@ class AcceptanceContextLock633Tests(TransactionTestCase):
             future.result(timeout=10)
         self.assertTrue(done.is_set())
 
-    def test_official_free_preferences_update_waits_on_settings_row(self) -> None:
-        data = replace(DjangoAthleteRecords().preferences(self.owner_id), minutes_per_session=45)
-
+    def test_preferences_row_itself_is_locked(self) -> None:
         def write() -> None:
-            athletes().edit_preferences(EditPreferences(self.owner_id, data))
+            AthleteSettings.objects.filter(owner_id=self.owner_id).update(minutes_per_session=45)
 
         self.assert_writer_waits(write, 'UPDATE "basis_athletes_athletesettings"')
         self.assertEqual(AthleteSettings.objects.get(owner=self.owner).minutes_per_session, 45)
@@ -114,7 +112,7 @@ class AcceptanceContextLock633Tests(TransactionTestCase):
         def write() -> None:
             athletes().edit_profile(EditProfile(self.owner_id, data))
 
-        self.assert_writer_waits(write, '"basis_athletes_user"')
+        self.assert_writer_waits(write, 'FROM "auth_user"')
         self.assertEqual(DjangoAthleteRecords().profile(self.owner_id).objetivos, data.objetivos)
 
     def test_official_sport_insert_waits_on_profile_anchor(self) -> None:
@@ -126,7 +124,7 @@ class AcceptanceContextLock633Tests(TransactionTestCase):
                 )
             )
 
-        self.assert_writer_waits(write, '"basis_athletes_user"')
+        self.assert_writer_waits(write, 'FROM "auth_user"')
         self.assertTrue(SportProfile.objects.filter(owner=self.owner, sport="cycling").exists())
 
     def test_official_sport_edit_waits_on_profile_anchor(self) -> None:
@@ -139,7 +137,7 @@ class AcceptanceContextLock633Tests(TransactionTestCase):
                 )
             )
 
-        self.assert_writer_waits(write, '"basis_athletes_user"')
+        self.assert_writer_waits(write, 'FROM "auth_user"')
         self.sport.refresh_from_db()
         self.assertEqual(self.sport.experience, "intermediate")
 

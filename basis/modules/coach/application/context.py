@@ -9,7 +9,7 @@ from basis.modules.training.public import TrainingCoachContexts
 from basis.shared.identifiers import AccountId, ExerciseId, PlanId
 from basis.shared.ports import Clock
 
-from ..domain.context import CoachContext
+from ..domain.context import CoachContext, owner_snapshot_date
 from ..domain.jobs import CoachInvalid, JobKind
 from ..domain.prompts import INSTRUCTIONS_VERSION, PLAN_FORMAT, SYSTEM, instructions_digest
 
@@ -62,18 +62,34 @@ class Contexts:
         for_acceptance: bool = False,
         exercise_ids: tuple[ExerciseId, ...] = (),
     ) -> CoachContext:
-        now, today = self.clock.now(), self.clock.today()
+        now = self.clock.now()
         if for_acceptance:
             athlete = self.athletes.read_for_acceptance(owner)
             if athlete.preferences is None:
                 raise CoachInvalid("Completa tus preferencias antes de aceptar una propuesta.")
-            training = self.training.read_for_acceptance(owner, today, base_plan_id)
-        base = self.training.selected(owner, base_plan_id) if base_plan_id is not None else None
-        if base_plan_id is not None and (kind != "plan" or base is None):
+        base = (
+            self.training.selected(owner, base_plan_id)
+            if base_plan_id is not None and not for_acceptance
+            else None
+        )
+        if not for_acceptance and base_plan_id is not None and (kind != "plan" or base is None):
             raise CoachInvalid("El plan seleccionado no est\u00e1 disponible.")
         if not for_acceptance:
             athlete = self.athletes.read(owner)
-            training = self.training.read(owner, today)
+        owner_zone = athlete.preferences.timezone_name if athlete.preferences else None
+        try:
+            today = owner_snapshot_date(now, owner_zone)
+        except ValueError as error:
+            raise CoachInvalid(str(error)) from error
+        training = (
+            self.training.read_for_acceptance(owner, today, base_plan_id)
+            if for_acceptance
+            else self.training.read(owner, today)
+        )
+        if for_acceptance and base_plan_id is not None:
+            base = self.training.selected(owner, base_plan_id)
+            if base is None:
+                raise CoachInvalid("El plan seleccionado no está disponible.")
         start = training.scope.start if training.scope else today - timedelta(days=13)
         # Future or stale declarations are not current recovery evidence. Their
         # absence is explicit; nothing is inferred from gaps between sessions.
@@ -125,6 +141,7 @@ class Contexts:
                 ("structured_goals", not training.goals),
                 ("availability", p is None or not p.availability),
                 ("minutes_per_session", p is None),
+                ("timezone_missing_utc_fallback", not owner_zone),
                 ("equipment", p is None or not p.equipment.strip()),
                 ("history_in_selection", not training.recent),
                 ("wellness_in_period", wellness is None),

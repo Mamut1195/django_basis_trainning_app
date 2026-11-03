@@ -2,6 +2,69 @@
 
 Fecha: 2026-11-02, America/Guayaquil. Resultado: **VERIFIED en el alcance local; LIVE e integración final NOT RUN**. No declara Done de MAM-633 ni de sus dependencias.
 
+## Revisión independiente posterior — corrección P1/P2 y evidencia vigente
+
+**Esta sección sustituye el veredicto local anterior para los dos hallazgos revisados.** Los registros de 89 pruebas PG y 247 puras de las secciones siguientes son históricos: no habían demostrado el orden inverso de writers ni la fecha del propietario. La revisión se ejecutó en este mismo worktree, limpio al inicio en `4136170a9efd0efee48dee8b9fa6ac8f911cff2b`, sin integrar todavía en main. El commit portador de esta actualización contiene el arreglo, sus regresiones y este recibo; su SHA se obtiene con `git log -1 --format=%H -- docs/tickets/MAM633_ACCEPTANCE_2026-11-02.md` y se comunica a coordinación/634.
+
+### P1 — reproducción antes de modificar producción
+
+El hallazgo llegó como **estático**. Se añadió primero `tests/regression/test_coach_context_review_633.py` y se ejecutó sobre producción todavía en `4136170`, antes de modificar autorización/contexto. El arnés ejecuta los casos de uso oficiales sin mocks, dentro de una UoW exterior: una barrera detiene la primera operación después de sus escrituras/lectura y antes del commit, para iniciar la segunda de forma controlada. Dos workers usan conexiones PG distintas y un tercero observa `pg_blocking_pids`; los gates se liberan siempre y se comprueba terminación.
+
+Se ejecutaron **cuatro operaciones × dos órdenes**: preferencias, perfil que archiva el peso anterior en Measurement, inserción de SportProfile y edición de SportProfile. Resultado anterior al arreglo:
+
+- Writer primero, **sport_insert**: espera inicial de aceptación por el perfil del writer; tras liberar el writer se observó ciclo bilateral de PIDs, writer en **COMMIT** y aceptación en **SELECT del perfil**, seguido de **SQLSTATE 40P01**.
+- Writer primero, **profile_archive**: mismo ciclo bilateral COMMIT/perfil y **40P01**. Por ello el arreglo no se limitó a SportProfile.
+- Aceptación primero: terminaron las cuatro operaciones, pero el writer esperaba perfil o UPDATE de preferencias, sin tomar previamente cuenta.
+- Los otros dos casos writer primero terminaron, pero tampoco acreditaban cuenta como primer lock contencioso. La prueba exige ahora ese orden.
+
+Ejemplos exactos de los PIDs del log RED: sport_insert writer `44624`, aceptación `8228`; profile_archive writer `65148`, aceptación `65348`. Los valores concretos dependen de la ejecución. El grafo de espera, COMMIT/SELECT y 40P01 son evidencia dinámica; la relación con los FK diferidos procede además de revisar las escrituras oficiales. No se midió de manera independiente el modo interno KEY SHARE de cada comprobación FK.
+
+Corrección mínima autorizada: `athletes/adapters/personal_access.py` toma `lock_account(owner)` **solo si ya existe una transacción abierta y la cuenta existe**, antes de ejecutar la misma autorización personal anterior. Mantiene el patrón de DjangoWriteAuthorization sin modificar billing. Los writers oficiales entran así por **cuenta → perfil/preferencias → filas dependientes**, incluido el archivado de peso. Se revisaron los endpoints de perfil/preferencias/deporte y `record_actions`/casos de uso para comprobar que comparten esta autorización; no se cambiaron dichos endpoints ni sus reglas.
+
+En autocommit el preflight conserva solo lecturas; no se abre una UoW ni se añaden locks. Las pruebas usan también una cuenta con billing canceled: las operaciones personales siguen gratuitas, mientras los tests existentes conservan las restricciones de entrenamiento/IA, verificación, actividad y aislamiento. El lector de aceptación sigue bloqueando la fila existente de preferencias; su protección se comprueba mediante UPDATE directo, y los writers oficiales ahora esperan primero en cuenta.
+
+### P2 — reproducción y fecha desde una captura única
+
+Con DjangoClock real y `timezone.now` fijado únicamente para reproducibilidad, antes del arreglo se observó:
+
+| Zona del propietario | Instante capturado UTC | Día esperado | scope.end anterior | Bienestar anterior | Llamadas now anteriores |
+| --- | --- | --- | --- | --- | --- |
+| Asia/Tokyo | 2026-11-02T02:30:00Z | 2026-11-02 | 2026-11-01 | ausente pese a declaración del día | 2 |
+| Pacific/Honolulu | 2026-11-02T07:30:00Z | 2026-11-01 | 2026-11-02 | 2026-11-01 | 2 |
+
+`Contexts` captura ahora **una sola vez `clock.now()`**. Después de leer las preferencias autorizadas —bloqueadas en aceptación— deriva el día de ese mismo instante con su zona IANA, mediante `owner_snapshot_date`. No usa `clock.today()` ni hace otra captura para fechar el contexto. Mantiene el orden de locks de training y lee/valida el plan base después de sus locks en aceptación.
+
+Sin preferencias/zona, la lectura normal deriva explícitamente **UTC** de ese mismo instante y registra `timezone_missing_utc_fallback` en los faltantes de la captura nueva. Preferencias ausentes continúan impidiendo aceptación; no se crean defaults. Zona inválida o instante naive se rechazan. La representación y semántica del codec histórico no cambian: el decode/encode de snapshots antiguos no añade el nuevo faltante ni deriva/recalcula su período.
+
+### Matriz vigente RED → GREEN
+
+| Criterio revisado | RED comprobado antes del arreglo | GREEN ejecutado después |
+| --- | --- | --- |
+| Orden inverso y terminación | Dos ciclos bilaterales/40P01 con inserción de deporte y archivado de perfil; otros órdenes sin cuenta como primer lock contencioso. | Ocho órdenes: espera inicial comprobada por `pg_blocking_pids` en SELECT FOR UPDATE de auth_user, ambos workers terminan sin error, sin ciclo observado ni 40P01. |
+| Prefs, perfil y deporte oficiales | Los doce tests anteriores solo iniciaban aceptación primero; no cerraban P1. | Inserción/edición de deporte, edición de perfil con Measurement y preferencias, writer primero y aceptación primero, cuenta canceled; fila de preferencias y demás locks existentes vuelven a pasar. |
+| Acceso y autocommit | No se atribuye un fallo de política comercial a P1. | Preflight fuera de atomic sin FOR UPDATE; dentro de atomic toma cuenta; se conservan denegaciones a cuenta inactiva/no verificada/inexistente y la matriz HTTP gratuita/privada existente. |
+| Fecha por propietario | Tokio/Honolulu muestran día global incorrecto y dos now. | Ambos con scope.end/bienestar correctos, una llamada now, sesiones del día y de hoy−13 incluidas; futuro/hoy−14 excluidos. Se repite con preferencias bloqueadas en snapshot_for_acceptance. |
+| DST, ausencia y límites | No se atribuyen otros escenarios a la reproducción RED. | Puras comprueban Nueva York antes/después del cambio de marzo y después del de noviembre; reloj today que falla si se invoca; UTC explícito sin prefs/zona; zona inválida/naive rechazados. PG comprueba bienestar futuro/antiguo como ausente. |
+| Contratos conservados | Capturas históricas y contabilidad no se editan. | Regresiones de codec legado/nuevo, permisos, contexto, jobs/edges y bienestar pasan; callback conserva exactamente su firma. Sin cambios a provider.py, billing, bootstrap634 ni planning.py en esta vuelta. |
+
+Comando RED ejecutado antes de modificar producción: `manage.py test tests.regression.test_coach_context_review_633 --noinput --verbosity 1`. Resultado **FAILED esperado: 3 tests, 10 fallos de subcasos, 4.438 s** —dos fechas y ocho comprobaciones de orden/terminación—. No se presenta este resultado fallido como validación del arreglo.
+
+Comando GREEN focal ampliado, usando exactamente el entorno sintético/DB exclusiva de este recibo:
+
+```powershell
+& $python633 manage.py test tests.regression.test_coach_context_review_633 tests.regression.test_coach_context_locks_633 tests.regression.test_coach_context_633 tests.regression.test_multisport_815 tests.regression.test_training_contract tests.regression.test_private_access tests.regression.test_execution_records tests.regression.test_profile_onboarding basis.bootstrap.tests.test_identity basis.bootstrap.tests.test_wellness basis.bootstrap.tests.test_coach_jobs basis.bootstrap.tests.test_coach_edges --noinput --verbosity 2
+& $python633 -m unittest discover -s tests_architecture
+& $python633 -m mypy --config-file mypy-core.ini
+& $python633 -m mypy --config-file mypy-django.ini
+```
+
+- **VERIFIED GREEN:** PostgreSQL **157 pruebas OK / 0 omitidas / 28.814 s**, con las ocho combinaciones concurrentes como subcasos, doce pruebas de locks y regresiones de acceso personal/identidad/bienestar/contexto/training/jobs.
+- **VERIFIED:** puras **249 OK / 3.446 s**; mypy **132 core / 418 Django**, checker de arquitectura, Import Linter **8 kept / 0 broken**, Django check y dry-run de migraciones sin cambios; Ruff check y formato de los seis Python modificados; diff acotado y limpio. La primera pasada de mypy detectó una variable de fixture reutilizada para dos DTO distintos; se separó antes de los checks finales.
+- Logs locales ignorados por Git: `.cache/mam633-evidence/review-before.log`, SHA-256 `39f0448028e31a1fdcb9d915b30cff5f68bdddc18fde613f69bff424dd1f67ac`; `review-after.log`, SHA-256 `8d2898ff895f097a1f3b14d5befb237ef0fa8cdc20f2451f6123637669fcc9b9`; `review-pure.log`, SHA-256 `253a82ebf51f89b06a5faa3136845786ca436a95152bc4c616083b9d6ce67122`.
+- **NOT RUN:** integración 634/main, suite Django completa, CI remoto, UI/dispositivos y proveedor LIVE. La ausencia de deadlock observada corresponde a estos escenarios y rutas oficiales; no certifica toda escritura administrativa posible ni el producto integrado. MAM-633/815 siguen abiertos.
+
+634 y coordinación reciben firma sin cambios, efectos, SHA correctivo y comandos/resultados; no deben consumir WIP ni considerar corregidos por sí solos los commits anteriores.
+
 ## 1. Goal
 
 Completar la proyección mínima y privada del entrenador, con procedencia determinista, faltantes, límites y snapshots compatibles; comprobar preparación/envío mediante transporte simulado. La extensión autorizada proporciona una lectura con locks para el guard de propuestas de MAM-634, sin implementar ese guard ni su composición.
@@ -87,7 +150,7 @@ Estos lectores no implementan el guard de propuesta, no conceden autorización d
 
 Se aplicaron task-planning, safe-git-workflow y verify-before-complete: plan previo específico, límites de propiedad, revisión del árbol/diff y estados sustentados en ejecuciones. No se delegó trabajo.
 
-## 7. Validation — matriz criterio/evidencia
+## 7. Validation histórica de la primera entrega — matriz criterio/evidencia
 
 | Criterio | Evidencia ejecutada | Estado/límite |
 | --- | --- | --- |

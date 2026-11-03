@@ -42,6 +42,19 @@ class Clock:
         return datetime(2026, 11, 2, 12, tzinfo=timezone.utc)
 
 
+class CapturedClock(Clock):
+    def __init__(self, instant: datetime) -> None:
+        self.instant = instant
+        self.calls = 0
+
+    def today(self) -> date:
+        raise AssertionError("Owner date must not use a global today or another now")
+
+    def now(self) -> datetime:
+        self.calls += 1
+        return self.instant + timedelta(days=self.calls - 1)
+
+
 class Athletes:
     def __init__(self) -> None:
         self.data = AthleteCoachContext(None, "", None, (), None)
@@ -131,6 +144,82 @@ class CoachContext633Tests(TestCase):
         self.assertEqual(self.training.reads, [])
         with self.assertRaises(CoachInvalid):
             self.service.snapshot_for_acceptance(OWNER, "short", None)
+
+    def test_owner_dates_use_one_captured_instant_including_dst_boundaries(self) -> None:
+        cases = (
+            ("Asia/Tokyo", datetime(2026, 11, 2, 2, 30, tzinfo=timezone.utc), date(2026, 11, 2)),
+            (
+                "Pacific/Honolulu",
+                datetime(2026, 11, 2, 7, 30, tzinfo=timezone.utc),
+                date(2026, 11, 1),
+            ),
+            (
+                "America/New_York",
+                datetime(2026, 3, 8, 4, 30, tzinfo=timezone.utc),
+                date(2026, 3, 7),
+            ),
+            (
+                "America/New_York",
+                datetime(2026, 3, 9, 4, 30, tzinfo=timezone.utc),
+                date(2026, 3, 9),
+            ),
+            (
+                "America/New_York",
+                datetime(2026, 11, 2, 4, 30, tzinfo=timezone.utc),
+                date(2026, 11, 1),
+            ),
+        )
+        for zone, instant, expected in cases:
+            with self.subTest(zone=zone, instant=instant):
+                clock = CapturedClock(instant)
+                self.athletes.data = replace(
+                    self.athletes.data,
+                    preferences=PreferencesData(
+                        (1,),
+                        30,
+                        "Declared",
+                        "",
+                        zone,
+                    ),
+                )
+                service = Contexts(self.athletes, self.training, self.catalog, clock)
+                for locked in (False, True):
+                    clock.calls = 0
+                    context = (
+                        service.snapshot_for_acceptance(OWNER, "plan", None)
+                        if locked
+                        else service.snapshot(OWNER, "short", None)
+                    )
+                    self.assertEqual(context.snapshot_at, instant)
+                    self.assertEqual(clock.calls, 1)
+                    assert context.training.scope is not None
+                    self.assertEqual(context.training.scope.end, expected)
+                    self.assertNotIn("timezone_missing_utc_fallback", context.missing)
+
+    def test_missing_zone_fallback_is_explicit_utc_and_invalid_zone_is_rejected(self) -> None:
+        instant = datetime(2026, 11, 2, 2, 30, tzinfo=timezone.utc)
+        for preferences in (None, PreferencesData((1,), 30, "", "", "")):
+            clock = CapturedClock(instant)
+            self.athletes.data = replace(self.athletes.data, preferences=preferences)
+            context = Contexts(self.athletes, self.training, self.catalog, clock).snapshot(
+                OWNER, "short", None
+            )
+            assert context.training.scope is not None
+            self.assertEqual(context.training.scope.end, date(2026, 11, 2))
+            self.assertIn("timezone_missing_utc_fallback", context.missing)
+            self.assertEqual(clock.calls, 1)
+        self.athletes.data = replace(
+            self.athletes.data, preferences=PreferencesData((1,), 30, "", "", "Invalid/Zone")
+        )
+        with self.assertRaises(CoachInvalid):
+            self.service.snapshot(OWNER, "short", None)
+        self.athletes.data = replace(
+            self.athletes.data, preferences=PreferencesData((1,), 30, "", "", "Asia/Tokyo")
+        )
+        with self.assertRaises(CoachInvalid):
+            Contexts(
+                self.athletes, self.training, self.catalog, CapturedClock(datetime(2026, 11, 2))
+            ).snapshot(OWNER, "short", None)
 
     def test_other_owner_and_foreign_base_are_rejected_before_reading_context(self) -> None:
         cases: tuple[tuple[JobKind, PlanId], ...] = (("plan", PlanId(2)), ("short", PlanId(1)))
