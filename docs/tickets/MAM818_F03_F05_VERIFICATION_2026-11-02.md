@@ -82,9 +82,9 @@ Decisión administrativa requiere `--decision no_charge|usage --key CLAVE --acto
 - La migración falla ante agregados históricos que incumplan las nuevas restricciones, en vez de corregirlos silenciosamente. Solo se probó con datos sintéticos en bases de prueba.
 - MAM-818 permanece **In Progress** hasta integración y aceptación completa, incluidos sus demás criterios y evidencia LIVE pertinente. Este recibo acredita los alcances locales F03/F04/F05, no el cierre del ticket.
 
-## Runner reproducible de esta verificaci?n
+## Runner reproducible de esta verificación
 
-Guardar el siguiente contenido en `.cache/mam818/run_guarded.py` permite repetir los comandos. Es infraestructura local de prueba, no una configuraci?n de despliegue. El runner SQLite sustituye ?nicamente la URL por `sqlite:///:memory:`. Los auxiliares verify_guard/check_imports descritos arriba se conservan en la misma carpeta local.
+Guardar el siguiente contenido en `.cache/mam818/run_guarded.py` permite repetir los comandos. Es infraestructura local de prueba, no una configuración de despliegue. El runner SQLite sustituye únicamente la URL por `sqlite:///:memory:`. Los auxiliares verify_guard/check_imports descritos arriba se conservan en la misma carpeta local.
 
 ```python
 import os
