@@ -3,6 +3,7 @@
 import json
 import uuid
 from datetime import timedelta
+from decimal import Decimal
 from unittest.mock import patch
 
 import httpx
@@ -14,7 +15,7 @@ from django.utils import timezone
 from basis.bootstrap.tests.test_coach_edges import account, proposal
 from basis.modules.coach.adapters.models import AIJob, PlanProposal, UsagePeriod
 from basis.modules.coach.adapters.web.forms import ProposalReviewForm
-from basis.modules.training.adapters.models import Session, TrainingPlan
+from basis.modules.training.adapters.models import Block, PlannedSession, Session, TrainingPlan
 from basis.modules.training.adapters.planning_actions import build_proposal
 
 
@@ -191,3 +192,90 @@ class CoachAcceptance635Tests(TestCase):
         row.refresh_from_db()
         self.assertEqual(row.status, "accepted")
         self.assertIsNotNone(row.accepted_plan_id)
+
+    def test_adaptation_of_existing_plan_preserves_history(self) -> None:
+        content = proposal(self.owner)
+        base = build_proposal(self.owner.pk, content)
+        assert base is not None
+        scheduled = PlannedSession.objects.get(plan=base)
+        execution = Session.objects.create(
+            owner=self.owner,
+            planned=scheduled,
+            title="Histórico sintético",
+            date=scheduled.date,
+            status="completed",
+            duration_seconds=1400,
+        )
+        Block.objects.create(
+            session=execution,
+            order=1,
+            sport="running",
+            title="Resultado sintético",
+            actual={"duration_seconds": 1400},
+        )
+        before_plan = list(TrainingPlan.objects.filter(pk=base.pk).values())
+        before_scheduled = list(PlannedSession.objects.filter(pk=scheduled.pk).values())
+        before_execution = list(Session.objects.filter(pk=execution.pk).values())
+        before_blocks = list(Block.objects.filter(session=execution).values())
+        content["title"] = "Adaptación sintética"
+        job = self.enqueue("plan", base=base)
+        self.worker(self.reply(json.dumps(content)))
+        row = PlanProposal.objects.get(job=job, base_plan=base)
+        url = reverse("proposal-review", args=[row.pk])
+        self.assertContains(
+            self.client.get(reverse("job-detail", args=[job.pk])), "Revisar propuesta"
+        )
+        page = self.client.get(url)
+        self.assertContains(page, "Qué cambia")
+        form = ProposalReviewForm(content=content, owner=self.owner)
+        fields = {key: value if value is not None else "" for key, value in form.initial.items()}
+        fields.update(decision="preview", constraints_reviewed="on")
+        preview = self.client.post(url, fields)
+        self.assertContains(preview, "Aceptar esta comparación")
+        fields.update(decision="accept", review_token=preview.context["review_token"])
+        self.assertEqual(self.client.post(url, fields).status_code, 302)
+        row.refresh_from_db()
+        self.assertEqual(row.status, "accepted")
+        assert row.accepted_plan_id is not None
+        successor = TrainingPlan.objects.get(pk=row.accepted_plan_id)
+        self.assertEqual(
+            (successor.title, successor.version), ("Adaptación sintética", base.version + 1)
+        )
+        self.assertEqual(list(TrainingPlan.objects.filter(pk=base.pk).values()), before_plan)
+        self.assertEqual(
+            list(PlannedSession.objects.filter(pk=scheduled.pk).values()), before_scheduled
+        )
+        self.assertEqual(list(Session.objects.filter(pk=execution.pk).values()), before_execution)
+        self.assertEqual(list(Block.objects.filter(session=execution).values()), before_blocks)
+        self.assertEqual(len(self.calls), 1)
+
+    def test_per_job_usage_distinguishes_unknown_reserved_and_zero(self) -> None:
+        job = self.enqueue()
+        url = reverse("job-detail", args=[job.pk])
+        pending = self.client.get(url)
+        self.assertContains(pending, "Costo aún no disponible")
+        self.assertContains(pending, "Reserva pendiente:")
+        self.assertNotContains(pending, "Costo calculado:")
+        self.assertNotContains(pending, "Tokens de entrada:")
+        self.worker(self.reply("Respuesta sintética"))
+        page = self.client.get(url, HTTP_HX_REQUEST="true")
+        self.assertContains(page, "Costo calculado: USD")
+        self.assertContains(page, "Tokens de entrada: 20")
+        self.assertContains(page, "Tokens de salida: 10")
+        self.assertNotContains(page, "Reserva pendiente:")
+        AIJob.objects.filter(pk=job.pk).update(cost=Decimal(0), input_tokens=0, output_tokens=0)
+        zero = self.client.get(url)
+        self.assertContains(zero, "Costo calculado: USD 0,00000000")
+        self.assertContains(zero, "Tokens de entrada: 0")
+        self.assertContains(zero, "Tokens de salida: 0")
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_ambiguous_usage_shows_retained_reservation_not_zero_cost(self) -> None:
+        job = self.enqueue()
+        self.worker(httpx.Response(500, text="PRIVATE-PROVIDER-DETAIL"))
+        page = self.client.get(reverse("job-detail", args=[job.pk]))
+        self.assertContains(page, "Costo aún no disponible")
+        self.assertContains(page, "Reserva retenida:")
+        self.assertNotContains(page, "Costo calculado:")
+        self.assertNotContains(page, "PRIVATE-PROVIDER-DETAIL")

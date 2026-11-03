@@ -11,6 +11,22 @@
         <p role="status">Preparando tu respuesta… Puedes volver después sin perder la consulta.</p>
       {% endif %}
       {% if job.error %}<p class="notice error">{{ job.error }}</p>{% endif %}
+      <section aria-label="Consumo de esta consulta" class="stack-sm">
+        <h3>Consumo de esta consulta</h3>
+        {% if job.cost is not None %}
+          <p>Costo calculado: USD {{ job.cost }}</p>
+        {% elif job.status == 'pending' or job.status == 'running' %}
+          <p>Costo aún no disponible. Reserva pendiente: USD {{ job.reservation }}</p>
+        {% elif job.status == 'uncertain' %}
+          <p>Costo aún no disponible. Reserva retenida: USD {{ job.reservation }}</p>
+        {% else %}
+          <p>
+            Costo aún no disponible. Reserva registrada: USD {{ job.reservation }}; estado por confirmar.
+          </p>
+        {% endif %}
+        {% if job.input_tokens is not None %}<p>Tokens de entrada: {{ job.input_tokens }}</p>{% endif %}
+        {% if job.output_tokens is not None %}<p>Tokens de salida: {{ job.output_tokens }}</p>{% endif %}
+      </section>
       {% if proposal %}
         <c-ui.button href="{% url 'proposal-review' proposal.pk %}" variant="primary">
           Revisar propuesta

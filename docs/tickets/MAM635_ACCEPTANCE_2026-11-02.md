@@ -39,3 +39,21 @@ $taskPython='C:/Users/Jonnathan/Mamut system/django-basis-trainning-app/.venv-wi
 ```
 
 **NOT RUN**: suite completa, CI, navegador y dispositivos, HTTP o IA LIVE, calidad deportiva, pagos, y validación posterior a la integración de MAM-818. El bloqueo indicado cubre el transporte HTTPX estándar de estas pruebas; no constituye un cortafuegos general del sistema. Sin commit, push ni PR.
+
+## Continuación de implementación — 2026-11-02
+
+El corte anterior se guardó en `36d6968`. Este corte amplía la prueba y `_result.html`, sin cambiar procesamiento, modelos, revisión 634 ni ledger 818. La matriz anterior conserva el resultado de su momento; estas filas lo actualizan para el candidato nuevo:
+
+| Criterio | Evidencia nueva |
+| --- | --- |
+| Adaptación de base | **VERIFIED LOCAL_SIMULATED**: POST con plan existente, worker con MockTransport, revisión, comparación y aceptación crean versión sucesora; se comparan íntegramente los campos del plan y sesión programada originales, la ejecución completada y su bloque. Una llamada sintética. |
+| Consumo por job | **VERIFIED LOCAL_SIMULATED**: la pantalla distingue costo calculado, reserva pendiente y reserva retenida cuando el costo es desconocido; expone tokens presentes, incluso cero, y un costo conocido cero sin convertir `None` a cero. No calcula saldo ni muestra precios globales. Owner ajeno recibe 404. El valor calculado usa el código de la base, no demuestra una tarifa o factura vigente. |
+| Recuperación | **VERIFIED LOCAL_SIMULATED / NAVEGADOR**: T3, pestaña propia incógnita, servidor `127.0.0.1:18765`, cuenta y base sintéticas. En 1280×800 se escribió la consulta y mediante tres Tab y Enter se hizo un POST. En 390×844 se recargó el job pending; ancho de documento 390. Se detuvo solo el servidor Django: polling GET registró `net::ERR_CONNECTION_REFUSED`; al reiniciarlo volvió a recibir 200. El comando real del worker, con MockTransport, produjo succeeded, una respuesta y un costo visible; base: un job, una llamada mock. En 1280×800 se recargó terminal, sin atributo de polling y ancho de documento 1280; se reabrió desde «Tus consultas». El registro de red observó un POST de consulta inicial; la cuenta final de jobs fue uno. No se hizo un segundo POST. |
+| Caída de red | **GAP**: durante la caída del servidor el indicador general seguía «En línea» y la tarjeta conservó pending; `navigator.onLine` no detecta que el servidor está inaccesible. La prueba interrumpió el servidor, no emuló modo avión ni un dispositivo físico; aviso específico de conexión con servidor sigue pendiente. |
+| Cancelación | **GAP** sin cambios: serializada con MAM-818; no se presenta botón ni se inventa contrato. La carrera de respuesta HTTP tardía después de cuarentena sigue en corrección de 818 y no fue consumida aquí. |
+
+Los dos viewports son tamaños CSS de navegador de escritorio; no prueban tacto, lector de pantalla ni dispositivo físico. Los valores y cuentas son sintéticos; no hay IA o pagos LIVE. El servidor del ensayo bloqueó `httpx.HTTPTransport` y se procesó la respuesta exclusivamente por MockTransport. El ensayo creó y eliminó solo `test_basis_wave3_635`, sin detener PostgreSQL; se comprobó versión 18.4 y cero conexiones activas antes de eliminarla. El entorno de la prueba automatizada mantiene `AI_ENABLED=0` con override solo en la clase; el servidor local de navegador lo habilitó exclusivamente con credencial sintética y transporte HTTPX estándar bloqueado.
+
+La focal ampliada ejecutó **10 pruebas, cero omisiones** en PostgreSQL, con system check correcto; mypy focal, Ruff y djLint se ejecutan según los comandos anteriores y el control adicional `python -m djlint basis/modules/coach/adapters/templates/coach/jobs/_result.html --lint` y `--check`. Una ejecución intermedia detectó aserción con separador decimal incorrecto y tipo opcional; otra comprobación detectó formato djLint. Se corrigieron antes de la validación final. La advertencia sobre `staticfiles` corresponde al cliente de tests; el servidor local sirvió los activos con `--insecure`.
+
+**NOT RUN**: suite completa, CI, pagos o IA LIVE, dispositivo real, modo avión, lector de pantalla y prueba con la futura integración 818. El ticket continúa parcial y no se marca Done.
