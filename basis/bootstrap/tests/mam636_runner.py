@@ -22,7 +22,7 @@ from psycopg.abc import AdaptContext
 from psycopg.rows import RowFactory
 
 ROOT = Path(__file__).resolve().parents[3]
-DATABASE = "basis_wave4_636_eval"
+DATABASE = "basis_wave4_636_fix3"
 TEST_DATABASE = "test_" + DATABASE
 CONNECT = {"host": "127.0.0.1", "port": "55482", "user": "basis_wave0", "password": ""}
 original_connect = socket.socket.connect

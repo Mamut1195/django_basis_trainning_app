@@ -11,6 +11,7 @@ from typing import Literal, cast
 Status = Literal["PASS", "FAIL", "INCONCLUSIVE", "NOT_RUN"]
 Dimension = Literal["numeric", "structure", "sport", "operation"]
 DIMENSIONS: tuple[Dimension, ...] = ("numeric", "structure", "sport", "operation")
+STATUSES: tuple[Status, ...] = ("PASS", "FAIL", "INCONCLUSIVE", "NOT_RUN")
 
 
 def digest(value: object) -> str:
@@ -18,6 +19,9 @@ def digest(value: object) -> str:
 
 
 def aggregate(statuses: list[Status]) -> Status:
+    for status in statuses:
+        if type(status) is not str or status not in STATUSES:
+            raise ValueError("Unknown evidence status")
     if "FAIL" in statuses:
         return "FAIL"
     if not statuses or all(s == "NOT_RUN" for s in statuses):
@@ -25,6 +29,25 @@ def aggregate(statuses: list[Status]) -> Status:
     if "INCONCLUSIVE" in statuses or "NOT_RUN" in statuses:
         return "INCONCLUSIVE"
     return "PASS"
+
+
+def same_evidence(actual: object, expected: object) -> bool:
+    """Exact structural equality; no cross-type numeric equivalence is authorized."""
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(actual, dict) and isinstance(expected, dict):
+        return len(actual) == len(expected) and all(
+            any(
+                same_evidence(key, other) and same_evidence(value, expected[other])
+                for other in expected
+            )
+            for key, value in actual.items()
+        )
+    if isinstance(actual, (list, tuple)) and isinstance(expected, (list, tuple)):
+        return len(actual) == len(expected) and all(
+            same_evidence(a, e) for a, e in zip(actual, expected, strict=True)
+        )
+    return bool(actual == expected)
 
 
 @dataclass(frozen=True)
@@ -85,7 +108,7 @@ class CaseResult:
             expectation,
             dimension,
             name,
-            "PASS" if actual == expected else "FAIL",
+            "PASS" if same_evidence(actual, expected) else "FAIL",
             actual,
             expected,
             "Observed through the executed service/ORM/HTTP path; SIMULATED transport only.",
@@ -101,15 +124,27 @@ class CaseResult:
         expected: object = None,
         reason: str = "",
     ) -> None:
-        if not 1 <= expectation <= len(self.case.expected):
+        observation = Observation(expectation, dimension, name, status, actual, expected, reason)
+        self.validate_observation(observation)
+        self.observations.append(observation)
+
+    def validate_observation(self, observation: Observation) -> None:
+        if type(observation.expectation) is not int or not 1 <= observation.expectation <= len(
+            self.case.expected
+        ):
             raise ValueError("Unknown expectation")
-        if status == "PASS" and (actual is None or not reason):
+        if type(observation.dimension) is not str or observation.dimension not in DIMENSIONS:
+            raise ValueError("Unknown evidence dimension")
+        aggregate([observation.status])
+        if observation.status == "PASS" and (observation.actual is None or not observation.reason):
             raise ValueError("PASS requires located evidence and a reason")
-        self.observations.append(
-            Observation(expectation, dimension, name, status, actual, expected, reason)
-        )
+
+    def validate(self) -> None:
+        for observation in self.observations:
+            self.validate_observation(observation)
 
     def export(self) -> dict[str, object]:
+        self.validate()
         expectations: list[dict[str, object]] = []
         for i, text in enumerate(self.case.expected, 1):
             observations = [o for o in self.observations if o.expectation == i]
@@ -158,6 +193,8 @@ class CaseResult:
 
 
 def require_technical_success(results: list[CaseResult]) -> None:
+    for result in results:
+        result.validate()
     failures = [
         f"{r.case.id}/{o.name}" for r in results for o in r.observations if o.status == "FAIL"
     ]

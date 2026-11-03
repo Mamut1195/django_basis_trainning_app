@@ -30,11 +30,12 @@ from basis.modules.athletes.adapters.models import AthleteSettings
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.billing.adapters.models import BillingAccount
 from basis.modules.coach.adapters.context_wire import decode_context, encode_context
-from basis.modules.coach.adapters.models import AIJob, PlanProposal, UsagePeriod
+from basis.modules.coach.adapters.models import AIJob, PlanProposal, TrialFund, UsagePeriod
 from basis.modules.coach.adapters.proposal_actions import accept_proposal, review_proposal
 from basis.modules.coach.domain.prompts import INSTRUCTIONS_VERSION, PLAN_FORMAT, SYSTEM
 from basis.modules.training.adapters.models import (
     Block,
+    Cycle,
     Goal,
     PlannedSession,
     Session,
@@ -172,7 +173,22 @@ class SimulatedHarness:
         def handle(request: httpx.Request) -> httpx.Response:
             # Intentionally omit headers; never persist credentials, even synthetic ones.
             body: object = json.loads(request.content)
-            self.calls.append({"body": body, "body_sha256": digest(body), "mode": mode})
+            # Correlate at the receiving boundary using the real claimed ORM job,
+            # independently of the (potentially divergent) serialized request body.
+            active = list(AIJob.objects.filter(status="running", attempt_id__isnull=False))
+            claimed = active[0] if len(active) == 1 else None
+            self.calls.append(
+                {
+                    "body": body,
+                    "body_sha256": digest(body),
+                    "mode": mode,
+                    "active_job_ids": [str(row.pk) for row in active],
+                    "job_id": str(claimed.pk) if claimed else None,
+                    "owner_id": claimed.owner_id if claimed else None,
+                    "attempt_id": str(claimed.attempt_id) if claimed else None,
+                    "request_key": str(claimed.request_key) if claimed else None,
+                }
+            )
             if mode == "timeout":
                 raise httpx.ReadTimeout("synthetic-after-dispatch", request=request)
             if mode == "invalid_json":
@@ -230,6 +246,12 @@ class SimulatedHarness:
             "short_count": usage.short_count,
             "plan_count": usage.plan_count,
             "answer": job.answer,
+            "usage_period": normalized(list(UsagePeriod.objects.filter(pk=usage.pk).values())),
+            "trial_fund": normalized(
+                list(TrialFund.objects.filter(pk=job.trial_fund_id).values())
+                if job.trial_fund_id is not None
+                else []
+            ),
         }
 
     @staticmethod
@@ -237,6 +259,7 @@ class SimulatedHarness:
         return normalized(
             {
                 "plans": list(TrainingPlan.objects.order_by("pk").values()),
+                "cycles": list(Cycle.objects.order_by("pk").values()),
                 "scheduled": list(PlannedSession.objects.order_by("pk").values()),
                 "executions": list(Session.objects.order_by("pk").values()),
                 "blocks": list(Block.objects.order_by("pk").values()),
@@ -262,11 +285,23 @@ class SimulatedHarness:
             foreign_proposal=b_proposal.pk,
             private_sentinel=PRIVATE_B,
         )
+        offset = len(self.calls)
         self.worker(
             result, PRIVATE_B if self.leak_response else "Respuesta controlada sin historial B"
         )
         state = self.state(job)
         result.artifacts["job_state"] = state
+        dispatched = self.calls[offset:]
+        result.check(1, "operation", "A_dispatch_count", len(dispatched), 1)
+        dispatch = dispatched[0] if len(dispatched) == 1 else None
+        result.artifacts["A_dispatch"] = dispatch
+        associated = (
+            dispatch is not None
+            and dispatch["job_id"] == str(job.pk)
+            and dispatch["owner_id"] == a.pk
+        )
+        result.check(1, "operation", "A_dispatch_identity", associated, True)
+        result.check(1, "operation", "A_response_succeeded", state["status"], "succeeded")
         result.check(
             1,
             "operation",
@@ -274,9 +309,79 @@ class SimulatedHarness:
             PRIVATE_B in json.dumps(job.context),
             False,
         )
-        result.check(
-            1, "operation", "controlled_response_excludes_B", PRIVATE_B in job.answer, False
-        )
+        if dispatch is not None:
+            result.check(
+                1,
+                "operation",
+                "dispatched_payload_excludes_B",
+                PRIVATE_B in json.dumps(dispatch["body"]),
+                False,
+            )
+            body = dispatch["body"]
+            if not isinstance(body, dict) or not isinstance(body.get("messages"), list):
+                raise AssertionError("A dispatch body missing messages")
+            messages = body["messages"]
+            # Exact roles/context/request tie the effective payload to the frozen A job.
+            result.check(1, "operation", "A_dispatch_model", body.get("model"), job.requested_model)
+            expected_user = {"context": job.context, "request": job.prompt}
+            user_payload: object = None
+            if len(messages) == 2 and isinstance(messages[1], dict):
+                content = messages[1].get("content")
+                if isinstance(content, str):
+                    user_payload = json.loads(content)
+            result.check(
+                1,
+                "operation",
+                "A_dispatched_user_payload",
+                {"user": user_payload},
+                {"user": expected_user},
+            )
+            result.check(
+                1,
+                "operation",
+                "A_dispatch_roles",
+                [m.get("role") if isinstance(m, dict) else None for m in messages],
+                ["system", "user"],
+            )
+        else:
+            result.observe(
+                1,
+                "operation",
+                "dispatched_payload_excludes_B",
+                "INCONCLUSIVE",
+                reason="No corresponding A dispatch was received; B's request is not A evidence.",
+            )
+        if (
+            associated
+            and dispatch is not None
+            and state["status"] == "succeeded"
+            and "controlled_reply" in dispatch
+        ):
+            result.check(
+                1,
+                "operation",
+                "A_controlled_reply_matches_persisted_answer",
+                dispatch["controlled_reply"],
+                {
+                    "model": job.reported_model,
+                    "usage": {
+                        "prompt_tokens": job.input_tokens,
+                        "completion_tokens": job.output_tokens,
+                    },
+                    "choices": [{"message": {"content": job.answer}, "finish_reason": "stop"}],
+                },
+            )
+            result.check(
+                1, "operation", "controlled_response_excludes_B", PRIVATE_B in job.answer, False
+            )
+        else:
+            result.observe(
+                1,
+                "operation",
+                "controlled_response_excludes_B",
+                "INCONCLUSIVE",
+                reason="A dispatch, corresponding controlled reply and succeeded job are required before checking output; empty/missing output is not evidence.",
+            )
         result.observe(
             1,
             "operation",
@@ -478,17 +583,24 @@ class SimulatedHarness:
         self.worker(result, mode="timeout")
         after = self.state(job)
         self.worker(result)
+        after_second = self.state(job)
         result.fixture.update(
             owner=owner.pk,
             job=str(job.pk),
             condition="ReadTimeout after MockTransport receives request",
         )
-        result.artifacts.update(before=before, after=after, after_second_worker=self.state(job))
+        result.artifacts.update(before=before, after=after, after_second_worker=after_second)
+        result.check(2, "operation", "second_worker_preserves_state", after_second, after)
+        result.check(
+            1, "operation", "second_worker_still_uncertain", after_second["status"], "uncertain"
+        )
         result.check(1, "operation", "timeout_is_uncertain", after["status"], "uncertain")
         result.check(1, "operation", "second_worker_no_retry", len(self.calls) - count, 1)
-        result.check(2, "operation", "reservation_retained", after["reserved"], before["reserved"])
-        result.check(2, "operation", "cost_stays_unknown", after["cost"] is None, True)
-        result.check(2, "operation", "spent_not_invented", after["spent"], before["spent"])
+        result.check(
+            2, "operation", "reservation_retained", after_second["reserved"], before["reserved"]
+        )
+        result.check(2, "operation", "cost_stays_unknown", after_second["cost"] is None, True)
+        result.check(2, "operation", "spent_not_invented", after_second["spent"], before["spent"])
         result.check(2, "operation", "error_recorded", bool(after["error"]), True)
         result.check(2, "operation", "no_active_attempt_after_return", after["attempt_open"], False)
 
@@ -530,25 +642,35 @@ class SimulatedHarness:
             self.worker(result, mode=mode)
             after = self.state(job)
             self.worker(result)
+            after_second = self.state(job)
             result.artifacts[mode] = {
                 "owner": other.pk,
                 "before": before,
                 "after": after,
-                "after_second_worker": self.state(job),
+                "after_second_worker": after_second,
             }
+            result.check(
+                2, "operation", mode + "_second_worker_preserves_state", after_second, after
+            )
             expected_status = "failed" if mode == "null_content" else "uncertain"
-            result.check(2, "operation", mode + "_not_success", after["status"], expected_status)
+            result.check(
+                2, "operation", mode + "_not_success", after_second["status"], expected_status
+            )
             result.check(2, "operation", mode + "_no_retry", len(self.calls) - count, 1)
             result.check(2, "operation", mode + "_error_recorded", bool(after["error"]), True)
             if mode == "null_content":
                 result.check(
-                    2, "operation", "known_usage_cost_recorded", after["cost"] is not None, True
+                    2,
+                    "operation",
+                    "known_usage_cost_recorded",
+                    after_second["cost"] is not None,
+                    True,
                 )
                 result.check(
                     2,
                     "operation",
                     "known_usage_releases_reserve",
-                    float(str(after["reserved"])),
+                    float(str(after_second["reserved"])),
                     0.0,
                 )
             else:
@@ -556,10 +678,19 @@ class SimulatedHarness:
                     2,
                     "operation",
                     mode + "_reserve_retained",
-                    after["reserved"],
+                    after_second["reserved"],
                     before["reserved"],
                 )
-                result.check(2, "operation", mode + "_cost_unknown", after["cost"] is None, True)
+                result.check(
+                    2, "operation", mode + "_cost_unknown", after_second["cost"] is None, True
+                )
+                result.check(
+                    2,
+                    "operation",
+                    mode + "_spent_not_invented",
+                    after_second["spent"],
+                    before["spent"],
+                )
 
     def run(self) -> list[CaseResult]:
         scenarios = {
