@@ -423,6 +423,12 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                         page.evaluate("keys => keys.map(key => localStorage.getItem(key))", timers),
                         timer_values,
                     )
+                    self.assertEqual(
+                        context.request.get(
+                            self.live_server_url + "/api/csrf/", max_redirects=0
+                        ).status,
+                        200,
+                    )
                     checks.append(
                         "Failed logout preserves sessions/outbox/archive, identity and timers"
                     )
@@ -438,9 +444,22 @@ class PwaBrowserTests(StaticLiveServerTestCase):
                         stale.evaluate("localStorage.getItem('basis-account')"), identity
                     )
                     page.once("dialog", lambda dialog: dialog.accept())
-                    page.locator("[data-logout] button").click()
+                    with page.expect_response(
+                        lambda response: (
+                            response.url.endswith("/accounts/logout/")
+                            and response.request.method == "POST"
+                        )
+                    ) as logout_response:
+                        page.locator("[data-logout] button").click()
+                    self.assertEqual(logout_response.value.status, 302)
                     page.wait_for_url("**/accounts/login/")
                     page.evaluate("() => window.basisOfflineReady")
+                    self.assertEqual(
+                        context.request.get(
+                            self.live_server_url + "/api/csrf/", max_redirects=0
+                        ).status,
+                        302,
+                    )
                     self.assertIsNone(page.evaluate("localStorage.getItem('basis-account')"))
                     stale.wait_for_url("**/accounts/login/")
                     self.assertIsNone(stale.evaluate("localStorage.getItem('basis-account')"))
