@@ -1,27 +1,107 @@
 """Training-owned projections and common planning gateway for the coach."""
 
+from dataclasses import replace
 from datetime import date, timedelta
 
-from basis.modules.training.adapters.models import Goal, Session, TrainingPlan
+from django.db import transaction
+from django.db.models import Exists, OuterRef
+from django.db.transaction import TransactionManagementError
+
+from basis.modules.training.adapters.models import Goal, PlannedSession, Session, TrainingPlan
 from basis.shared.identifiers import AccountId, GoalId, PlanId
 
 from ..application.coach import (
     CoachBasePlan,
     CoachGoal,
     CoachRecentSession,
+    CoachScope,
+    CoachSessionEvidence,
     CoachVariables,
     TrainingCoachContext,
 )
 from ..application.planning import CreatePlan, Planning
 from ..domain.planning import PlanDefinition
 from ..domain.progress import report
-from ..domain.sports import VARIABLES
-from .progress import DjangoProgressRepository
+from ..domain.sports import VARIABLES, internal_load
+from .progress import progress_session
 
 
 class DjangoTrainingCoachContexts:
+    def read_for_acceptance(
+        self, owner: AccountId, today: date, base_plan: PlanId | None
+    ) -> TrainingCoachContext:
+        if not transaction.get_connection(Goal.objects.db).in_atomic_block:
+            raise TransactionManagementError("Acceptance context requires an open unit of work")
+        # The caller already holds lock_account, the anchor taken by official
+        # goal/create/lineage writers. Lock the projected existing goals first.
+        goals = set(
+            Goal.objects.filter(owner_id=owner)
+            .order_by("priority", "pk")
+            .values_list("pk", flat=True)[:8]
+        )
+        if base_plan is not None:
+            goal = (
+                TrainingPlan.objects.filter(owner_id=owner, pk=base_plan)
+                .values_list("goal_id", flat=True)
+                .first()
+            )
+            if goal is not None:
+                goals.add(goal)
+        tuple(
+            Goal.objects.select_for_update()
+            .filter(owner_id=owner, pk__in=goals)
+            .order_by("pk")
+            .values_list("pk", flat=True)
+        )
+        if base_plan is not None:
+            tuple(
+                TrainingPlan.objects.select_for_update()
+                .filter(owner_id=owner, pk=base_plan)
+                .order_by("pk")
+                .values_list("pk", flat=True)
+            )
+        return self.read(owner, today)
+
     def read(self, owner: AccountId, today: date) -> TrainingCoachContext:
-        repo = DjangoProgressRepository()
+        start, session_limit, goal_limit = today - timedelta(days=13), 14, 8
+        goals = tuple(
+            Goal.objects.filter(owner_id=owner).order_by("priority", "pk")[: goal_limit + 1]
+        )
+        selected = tuple(
+            Session.objects.filter(owner_id=owner, date__range=(start, today))
+            .order_by("-date", "-created_at", "-pk")
+            .annotate(
+                _coach_owned_planned=Exists(
+                    PlannedSession.objects.filter(pk=OuterRef("planned_id"), owner_id=owner)
+                )
+            )
+            .select_related("trek_stage__trip")
+            .prefetch_related("blocks__sets")[: session_limit + 1]
+        )
+        sessions = selected[:session_limit]
+        progress = report(tuple(progress_session(s) for s in sessions), (), today)
+        evidence = tuple(
+            CoachSessionEvidence(
+                str(c.session.id),
+                c.session.date,
+                tuple(sorted({b.sport for b in c.session.blocks})),
+                c.session.protocol.value,
+                c.session.duration_seconds,
+                c.session.reported_rpe,
+                internal_load(c.session.duration_seconds, c.session.reported_rpe),
+                c.previous_date,
+                c.days_since_previous,
+                c.consecutive_days,
+                c.sessions_on_date,
+                replace(
+                    c.session.stage_recovery,
+                    recovery_notes=c.session.stage_recovery.recovery_notes[:300],
+                )
+                if c.session.stage_recovery
+                else None,
+            )
+            for c in progress.context
+        )
         return TrainingCoachContext(
             tuple(
                 CoachGoal(
@@ -35,7 +115,7 @@ class DjangoTrainingCoachContexts:
                     g.baseline_date,
                     g.priority,
                 )
-                for g in Goal.objects.filter(owner_id=owner)
+                for g in goals[:goal_limit]
             ),
             tuple(
                 CoachRecentSession(
@@ -46,18 +126,25 @@ class DjangoTrainingCoachContexts:
                     tuple(sorted({b.sport for b in s.blocks.all()})),
                     str(s.pk),
                     s.status,
-                    s.planned_id,
+                    s.planned_id if getattr(s, "_coach_owned_planned") else None,
                 )
-                for s in Session.objects.filter(
-                    owner_id=owner, date__gte=today - timedelta(days=14)
-                ).prefetch_related("blocks")[:14]
+                for s in sessions
             ),
-            report(repo.sessions(owner), repo.scheduled(owner, today), today),
+            replace(progress, context=()),
+            CoachScope(
+                start,
+                today,
+                session_limit,
+                goal_limit,
+                len(selected) > session_limit,
+                len(goals) > goal_limit,
+            ),
+            evidence,
         )
 
     def selected(self, owner: AccountId, plan: PlanId) -> CoachBasePlan | None:
         row = TrainingPlan.objects.filter(
-            pk=plan, owner_id=owner, next_version__isnull=True
+            pk=plan, owner_id=owner, goal__owner_id=owner, next_version__isnull=True
         ).first()
         return (
             CoachBasePlan(

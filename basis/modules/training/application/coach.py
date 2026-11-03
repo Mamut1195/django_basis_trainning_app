@@ -1,14 +1,42 @@
 """Owner-scoped training context and planning gateway for coach proposals."""
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date as Date
 from decimal import Decimal
 from typing import Protocol
 
 from basis.shared.identifiers import AccountId, GoalId, PlanId
 
 from ..domain.planning import PlanDefinition
-from ..domain.progress import ProgressReport
+from ..domain.progress import ProgressReport, StageRecovery
+
+
+@dataclass(frozen=True)
+class CoachScope:
+    start: Date
+    end: Date
+    session_limit: int
+    goal_limit: int
+    sessions_truncated: bool = False
+    goals_truncated: bool = False
+    # The minimal projection does not consult the unbounded effective calendar.
+    adherence_included: bool = False
+
+
+@dataclass(frozen=True)
+class CoachSessionEvidence:
+    id: str
+    date: Date | None
+    sports: tuple[str, ...]
+    protocol: str
+    duration_seconds: int | None
+    reported_rpe: Decimal | None
+    internal_load: Decimal | None
+    previous_date: Date | None
+    days_since_previous: int | None
+    consecutive_days: int | None
+    sessions_on_date: int | None
+    stage_recovery: StageRecovery | None = None
 
 
 @dataclass(frozen=True)
@@ -16,17 +44,17 @@ class CoachGoal:
     id: GoalId
     title: str
     sport: str
-    target_date: date | None
+    target_date: Date | None
     target_value: Decimal | None
     target_unit: str
     baseline_value: Decimal | None
-    baseline_date: date | None
+    baseline_date: Date | None
     priority: str
 
 
 @dataclass(frozen=True)
 class CoachRecentSession:
-    date: date
+    date: Date
     duration_seconds: int | None
     duration_protocol: str
     rpe: Decimal | None
@@ -42,8 +70,8 @@ class CoachBasePlan:
     title: str
     version: int
     goal_id: GoalId
-    start_date: date
-    end_date: date
+    start_date: Date
+    end_date: Date
 
 
 @dataclass(frozen=True)
@@ -51,6 +79,8 @@ class TrainingCoachContext:
     goals: tuple[CoachGoal, ...]
     recent: tuple[CoachRecentSession, ...]
     progress: ProgressReport
+    scope: CoachScope | None = None
+    evidence: tuple[CoachSessionEvidence, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -60,7 +90,13 @@ class CoachVariables:
 
 
 class TrainingCoachContexts(Protocol):
-    def read(self, owner: AccountId, today: date) -> TrainingCoachContext: ...
+    def read(self, owner: AccountId, today: Date) -> TrainingCoachContext: ...
+    def read_for_acceptance(
+        self, owner: AccountId, today: Date, base_plan: PlanId | None
+    ) -> TrainingCoachContext:
+        """Caller holds account/UoW and athlete locks; lock goals before base plan."""
+        ...
+
     def selected(self, owner: AccountId, plan: PlanId) -> CoachBasePlan | None: ...
     def variables(self) -> tuple[CoachVariables, ...]: ...
 

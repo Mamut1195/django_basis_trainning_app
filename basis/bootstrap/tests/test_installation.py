@@ -33,14 +33,21 @@ MODEL_OWNERS: dict[str, tuple[str, ...]] = {
         "TrekStage",
     ),
     "billing": ("BillingAccount", "WebhookReceipt"),
-    "coach": ("UsagePeriod", "TrialFund", "AIJob", "PlanProposal", "AIServiceState"),
+    "coach": (
+        "UsagePeriod",
+        "TrialFund",
+        "AIJob",
+        "PlanProposal",
+        "AIServiceState",
+        "AIReconciliation",
+    ),
     "sync": ("SyncReceipt",),
 }
 
 
 class FinalInstallationTests(TestCase):
     def test_all_concrete_models_have_their_final_module_owner(self) -> None:
-        self.assertEqual(sum(map(len, MODEL_OWNERS.values())), 29)
+        self.assertEqual(sum(map(len, MODEL_OWNERS.values())), 30)
         self.assertFalse(apps.is_installed("daily_trainning_app"))
         self.assertFalse(apps.is_installed("training"))
         for area, expected in MODEL_OWNERS.items():
@@ -94,6 +101,7 @@ class FinalInstallationTests(TestCase):
             "link_legacy_profile": "basis.modules.accounts.adapters",
             "seed_demo": "basis.modules.accounts.adapters",
             "process_ai_jobs": "basis.modules.coach.adapters",
+            "reconcile_ai_job": "basis.modules.coach.adapters",
             "reconcile_billing": "basis.modules.billing.adapters",
         }
         for name, app_name in expected.items():

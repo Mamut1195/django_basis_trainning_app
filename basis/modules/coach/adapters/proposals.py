@@ -1,17 +1,82 @@
 """Proposal persistence and model-answer decoding at the JSON boundary."""
 
 import json
-from typing import Callable
+from hashlib import sha256
+from typing import Callable, Protocol
 
 from django.core.exceptions import ValidationError
 
-from basis.modules.coach.adapters.models import PlanProposal
+from basis.adapters.django.account_locks import lock_account
+from basis.modules.coach.adapters.models import AIJob, PlanProposal
 from basis.modules.training.public import InvalidPlanning, PlanDefinition, PlanningUnavailable
-from basis.shared.identifiers import AccountId, JobId, PlanId, ProposalId
+from basis.shared.identifiers import AccountId, ExerciseId, JobId, PlanId, ProposalId
 
 from ..application.proposals import CreateProposal, Proposals
-from ..domain.jobs import CoachInvalid, Job
-from ..domain.proposals import Proposal, ProposalUnavailable
+from ..domain.context import CoachContext
+from ..domain.jobs import CoachInvalid, Job, JobKind
+from ..domain.proposals import Proposal, ProposalUnavailable, validate_context
+from .context_wire import decode_context, encode_context
+
+
+def review_key(row: PlanProposal) -> str:
+    """Bind a displayed draft to its exact persisted source without a schema change."""
+    return sha256(
+        json.dumps(
+            [row.owner_id, str(row.job_id), row.base_plan_id, row.content],
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode()
+    ).hexdigest()
+
+
+class AcceptanceSnapshot(Protocol):
+    def __call__(
+        self,
+        owner: AccountId,
+        kind: JobKind,
+        base_plan_id: PlanId | None,
+        *,
+        exercise_ids: tuple[ExerciseId, ...] = (),
+    ) -> CoachContext: ...
+
+
+class DjangoProposalChecks:
+    def __init__(self, snapshot: AcceptanceSnapshot) -> None:
+        self.snapshot = snapshot
+
+    def validate(
+        self, owner: AccountId, job: JobId, definition: PlanDefinition, base: PlanId | None
+    ) -> None:
+        # Acquired in the outer proposal UoW, before aggregate locks/preview.
+        lock_account(owner)
+        row = AIJob.objects.filter(pk=job, owner_id=owner, kind="plan", base_plan_id=base).first()
+        if row is None:
+            raise CoachInvalid("La fuente de la propuesta no está autorizada.")
+        try:
+            frozen = decode_context(row.context)
+            # Compare the same authorized projection, including existing truncation;
+            # clocks/progress/recent sessions/wellness are not equality constraints.
+            exercise_ids = tuple(
+                sorted(
+                    {
+                        ExerciseId(s.exercise)
+                        for item in definition.sessions
+                        for b in item.blocks
+                        for s in b.sets
+                    }
+                )
+            )
+            current = decode_context(
+                encode_context(self.snapshot(owner, "plan", base, exercise_ids=exercise_ids))
+            )
+        except (KeyError, TypeError, ValueError) as error:
+            raise CoachInvalid(
+                "El contexto de la propuesta está incompleto. Pide otra propuesta."
+            ) from error
+        if (frozen.base_plan.id if frozen.base_plan else None) != base:
+            raise CoachInvalid("La versión base no coincide con el contexto autorizado.")
+        validate_context(definition, frozen, current)
 
 
 class DjangoProposalRepository:
@@ -31,6 +96,7 @@ class DjangoProposalRepository:
             PlanId(row.base_plan_id) if row.base_plan_id else None,
             row.status,
             PlanId(row.accepted_plan_id) if row.accepted_plan_id else None,
+            review_key(row),
         )
 
     def _source(self, definition: PlanDefinition) -> object:

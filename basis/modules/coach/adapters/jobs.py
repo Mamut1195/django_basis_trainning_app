@@ -1,11 +1,19 @@
 """Existing durable coach tables behind explicit job repository operations."""
 
 from datetime import datetime
-from typing import cast
+from decimal import Decimal, InvalidOperation
+from typing import Literal, cast
+from uuid import uuid4
 
 from django.db import connection
 
-from basis.modules.coach.adapters.models import AIJob, AIServiceState, TrialFund, UsagePeriod
+from basis.modules.coach.adapters.models import (
+    AIJob,
+    AIReconciliation,
+    AIServiceState,
+    TrialFund,
+    UsagePeriod,
+)
 from basis.shared.identifiers import (
     AccountId,
     AIRequestKey,
@@ -15,8 +23,66 @@ from basis.shared.identifiers import (
     UsagePeriodId,
 )
 
-from ..domain.jobs import Fund, Job, JobKind, Usage
+from ..domain.jobs import (
+    CoachInvalid,
+    Fund,
+    Job,
+    JobKind,
+    JobNotFound,
+    PricingSnapshot,
+    Reconcile,
+    Reconciliation,
+    TokenUsage,
+    Usage,
+)
 from .context_wire import decode_context, encode_context
+
+
+def encode_pricing(pricing: PricingSnapshot | None) -> dict[str, object] | None:
+    if pricing is None:
+        return None
+    return {
+        "version": pricing.version,
+        "input_rate": str(pricing.input_rate),
+        "hit_rate": str(pricing.hit_rate),
+        "output_rate": str(pricing.output_rate),
+        "input_limit": pricing.input_limit,
+        "output_limit": pricing.output_limit,
+        "allowed_models": list(pricing.allowed_models),
+    }
+
+
+def decode_pricing(data: object) -> PricingSnapshot | None:
+    if not isinstance(data, dict):
+        return None
+    try:
+        version, inputs, hits, outputs = (
+            data[key] for key in ("version", "input_rate", "hit_rate", "output_rate")
+        )
+        input_limit, output_limit, models = (
+            data[key] for key in ("input_limit", "output_limit", "allowed_models")
+        )
+        if (
+            not all(isinstance(value, str) for value in (version, inputs, hits, outputs))
+            or type(input_limit) is not int
+            or type(output_limit) is not int
+            or not isinstance(models, list)
+            or any(not isinstance(model, str) for model in models)
+        ):
+            return None
+        pricing = PricingSnapshot(
+            version,
+            Decimal(inputs),
+            Decimal(hits),
+            Decimal(outputs),
+            input_limit,
+            output_limit,
+            tuple(models),
+        )
+        pricing.validate()
+        return pricing
+    except (KeyError, InvalidOperation, CoachInvalid):
+        return None
 
 
 def job_state(row: AIJob) -> Job:
@@ -42,6 +108,10 @@ def job_state(row: AIJob) -> Job:
         row.error,
         row.started_at,
         row.completed_at,
+        row.pricing_version,
+        decode_pricing(cast(object, row.pricing_snapshot)),
+        row.invalid_usage_observed,
+        row.attempt_id,
     )
 
 
@@ -113,10 +183,16 @@ class DjangoJobsRepository:
         )
 
     def job(self, job: JobId) -> Job:
-        return job_state(AIJob.objects.get(pk=job))
+        try:
+            return job_state(AIJob.objects.get(pk=job))
+        except AIJob.DoesNotExist:
+            raise JobNotFound from None
 
     def lock_job(self, job: JobId) -> Job:
-        return job_state(AIJob.objects.select_for_update().get(pk=job))
+        try:
+            return job_state(AIJob.objects.select_for_update().get(pk=job))
+        except AIJob.DoesNotExist:
+            raise JobNotFound from None
 
     def create(self, job: Job) -> None:
         AIJob.objects.create(
@@ -131,6 +207,10 @@ class DjangoJobsRepository:
             reservation=job.reservation,
             requested_model=job.requested_model,
             base_plan_id=job.base_plan,
+            pricing_version=job.pricing_version,
+            pricing_snapshot=encode_pricing(job.pricing),
+            invalid_usage_observed=job.invalid_usage_observed,
+            attempt_id=job.attempt_id,
         )
 
     def save_job(self, job: Job) -> None:
@@ -145,6 +225,8 @@ class DjangoJobsRepository:
             error=job.error,
             started_at=job.started_at,
             completed_at=job.completed_at,
+            invalid_usage_observed=job.invalid_usage_observed,
+            attempt_id=job.attempt_id,
         )
 
     def claim(self, now: datetime) -> Job | None:
@@ -157,12 +239,61 @@ class DjangoJobsRepository:
         row = rows.first()
         if row is None:
             return None
-        AIJob.objects.filter(pk=row.pk).update(status="running", started_at=now)
-        row.status, row.started_at = "running", now
+        attempt_id = uuid4()
+        AIJob.objects.filter(pk=row.pk).update(
+            status="running", started_at=now, attempt_id=attempt_id
+        )
+        row.status, row.started_at, row.attempt_id = "running", now, attempt_id
         return job_state(row)
 
     def quarantine(self, before: datetime) -> None:
         AIJob.objects.filter(status="running", started_at__lt=before).update(
             status="uncertain",
             error="El proceso se interrumpió; reserva retenida.",
+        )
+
+    def reconciliation(self, job: JobId, key: str) -> Reconciliation | None:
+        row = AIReconciliation.objects.filter(job_id=job, key=key).first()
+        if row is None:
+            return None
+        tokens = cast(dict[str, int] | None, row.token_usage)
+        command = Reconcile(
+            job,
+            row.key,
+            row.actor,
+            row.reference,
+            row.evidence,
+            cast("Literal['no_charge', 'usage']", row.decision),
+            row.confirmed_no_charge,
+            row.reported_model,
+            TokenUsage(**tokens) if tokens is not None else None,
+        )
+        return Reconciliation(
+            command, row.outcome, row.reason, row.cost, row.job_status, row.created_at
+        )
+
+    def add_reconciliation(self, record: Reconciliation) -> None:
+        command = record.command
+        tokens = command.usage
+        AIReconciliation.objects.create(
+            job_id=command.job_id,
+            key=command.key,
+            actor=command.actor,
+            reference=command.reference,
+            evidence=command.evidence,
+            decision=command.decision,
+            confirmed_no_charge=command.confirmed_no_charge,
+            reported_model=command.reported_model,
+            token_usage={
+                "input_tokens": tokens.input_tokens,
+                "output_tokens": tokens.output_tokens,
+                "cache_hits": tokens.cache_hits,
+            }
+            if tokens is not None
+            else None,
+            outcome=record.outcome,
+            reason=record.reason,
+            cost=record.cost,
+            job_status=record.job_status,
+            created_at=record.created_at,
         )

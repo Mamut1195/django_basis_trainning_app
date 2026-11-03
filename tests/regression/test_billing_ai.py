@@ -285,12 +285,12 @@ class AIBudgetTests(TestCase):
                 "completion_tokens": 100,
                 "prompt_cache_hit_tokens": 200,
             },
-            "model": "reported-flash-version",
+            "model": "deepseek-v4-flash",
             "choices": [{"finish_reason": "stop", "message": {"content": "Respuesta"}}],
         }
         job = settle(job.pk, payload)
         self.assertEqual(job.status, "succeeded")
-        self.assertEqual(job.reported_model, "reported-flash-version")
+        self.assertEqual(job.reported_model, "deepseek-v4-flash")
         job.usage_period.refresh_from_db()
         self.assertEqual(job.usage_period.reserved, 0)
         self.assertEqual(job.usage_period.spent, Decimal("0.00036120"))

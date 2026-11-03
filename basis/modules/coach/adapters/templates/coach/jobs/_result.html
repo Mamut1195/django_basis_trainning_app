@@ -3,14 +3,53 @@
      {% if job.status == 'pending' or job.status == 'running' %}hx-get="{% url 'job-detail' job.pk %}" hx-trigger="every 3s" hx-swap="outerHTML"{% endif %}>
   <c-basis.card>
     <div class="stack-sm">
-      <p class="eyebrow">{{ job.get_kind_display }} · {{ job.status }}</p>
+      <p class="eyebrow">
+        {{ job.get_kind_display }} ·
+        {% if job.status == 'cancelled' %}
+          Cancelada
+        {% else %}
+          {{ job.status }}
+        {% endif %}
+      </p>
       <h2>{{ job.prompt }}</h2>
+      {% if cancellation_conflict %}
+        <p class="notice error" role="alert">{{ cancellation_conflict }}</p>
+      {% endif %}
+      {% if job.status == 'cancelled' %}
+        <p role="status">Consulta cancelada. Recuperaste la reserva y la acción IA sin usar.</p>
+      {% endif %}
       {% if display_answer %}
         <p class="prose">{{ display_answer }}</p>
       {% elif job.status == 'pending' or job.status == 'running' %}
         <p role="status">Preparando tu respuesta… Puedes volver después sin perder la consulta.</p>
       {% endif %}
       {% if job.error %}<p class="notice error">{{ job.error }}</p>{% endif %}
+      {% if job.status == 'pending' and not job.attempt_id and not job.started_at %}
+        <form method="post" action="{% url 'job-cancel' job.pk %}">
+          {% csrf_token %}
+          <c-ui.button type="submit" variant="secondary">
+            Cancelar consulta
+          </c-ui.button>
+        </form>
+      {% elif job.status == 'running' or job.status == 'uncertain' or job.attempt_id %}
+        <p>La consulta ya comenzó. No se puede cancelar; conservamos su estado y reserva.</p>
+      {% endif %}
+      <section aria-label="Consumo de esta consulta" class="stack-sm">
+        <h3>Consumo de esta consulta</h3>
+        {% if job.cost is not None %}
+          <p>Costo calculado: USD {{ job.cost }}</p>
+        {% elif job.status == 'pending' or job.status == 'running' %}
+          <p>Costo aún no disponible. Reserva pendiente: USD {{ job.reservation }}</p>
+        {% elif job.status == 'uncertain' %}
+          <p>Costo aún no disponible. Reserva retenida: USD {{ job.reservation }}</p>
+        {% else %}
+          <p>
+            Costo aún no disponible. Reserva registrada: USD {{ job.reservation }}; estado por confirmar.
+          </p>
+        {% endif %}
+        {% if job.input_tokens is not None %}<p>Tokens de entrada: {{ job.input_tokens }}</p>{% endif %}
+        {% if job.output_tokens is not None %}<p>Tokens de salida: {{ job.output_tokens }}</p>{% endif %}
+      </section>
       {% if proposal %}
         <c-ui.button href="{% url 'proposal-review' proposal.pk %}" variant="primary">
           Revisar propuesta

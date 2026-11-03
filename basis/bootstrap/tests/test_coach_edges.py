@@ -29,10 +29,12 @@ from basis.modules.coach.adapters.proposal_actions import (
 )
 from basis.modules.coach.adapters.provider import DeepSeekProvider, decode_reply, request_body
 from basis.modules.coach.application.proposals import CreateProposal
-from basis.modules.coach.domain.jobs import ProviderAmbiguous, ProviderRejected
+from basis.modules.coach.domain.jobs import HISTORICAL_PRICING, ProviderAmbiguous, ProviderRejected
 from basis.modules.training.adapters.models import Goal, TrainingPlan
 from basis.modules.training.adapters.planning_actions import build_proposal, revise
 from basis.shared.identifiers import AccountId, JobId
+
+AVAILABLE_DAYS = (1, 3, 5)
 
 
 def account(name: str = "athlete") -> User:
@@ -47,7 +49,7 @@ def account(name: str = "athlete") -> User:
         email_verified=True,
         edad=25,
     )
-    AthleteSettings.objects.create(owner=user, availability=[1, 3, 5])
+    AthleteSettings.objects.create(owner=user, availability=list(AVAILABLE_DAYS))
     BillingAccount.objects.create(
         owner=user,
         polar_customer_id="customer-" + name,
@@ -65,9 +67,16 @@ def exercise() -> Exercise:
 
 def proposal(owner: User) -> dict[str, object]:
     goal = Goal.objects.create(owner=owner, title="Consistency", sport="running")
+    today = timezone.localdate()
+    # Keep the fixture valid without widening the athlete's declared availability.
+    session_date = next(
+        today + timedelta(days=offset)
+        for offset in range(7)
+        if (today + timedelta(days=offset)).isoweekday() in AVAILABLE_DAYS
+    )
     start, end = (
-        timezone.localdate().isoformat(),
-        (timezone.localdate() + timedelta(days=6)).isoformat(),
+        today.isoformat(),
+        (today + timedelta(days=6)).isoformat(),
     )
     return {
         "title": "Week",
@@ -92,7 +101,7 @@ def proposal(owner: User) -> dict[str, object]:
         "sessions": [
             {
                 "title": "Run",
-                "date": start,
+                "date": session_date.isoformat(),
                 "cycle_key": "mi",
                 "blocks": [
                     {"sport": "running", "title": "Easy", "target": {"duration_seconds": 1800}}
@@ -156,7 +165,7 @@ class CoachEdgeTests(TestCase):
                 200,
                 json={
                     "usage": {"prompt_tokens": 10, "completion_tokens": 2},
-                    "model": "reported",
+                    "model": "deepseek-v4-flash",
                     "choices": [{"message": {"content": "answer"}, "finish_reason": "stop"}],
                 },
             )
@@ -165,14 +174,17 @@ class CoachEdgeTests(TestCase):
             return httpx.Client(transport=httpx.MockTransport(handle), timeout=timeout)
 
         result = DeepSeekProvider("test-not-a-credential", client).call(
-            "short", "Hi", context, "deepseek-flash"
+            "short", "Hi", context, "deepseek-flash", HISTORICAL_PRICING.freeze("short")
         )
         self.assertEqual(len(requests), 1)
         self.assertIsNotNone(result)
         assert result is not None
         self.assertEqual(result.answer, "answer")
         self.assertEqual(
-            json.loads(requests[0].content), request_body("short", "Hi", context, "deepseek-flash")
+            json.loads(requests[0].content),
+            request_body(
+                "short", "Hi", context, "deepseek-flash", HISTORICAL_PRICING.freeze("short")
+            ),
         )
 
     def test_timeout_is_ambiguous_and_provider_rejection_definitive(self) -> None:
@@ -190,7 +202,7 @@ class CoachEdgeTests(TestCase):
                     ProviderRejected if code == 429 else ProviderAmbiguous
                 ) as caught:
                     DeepSeekProvider("secret-test", client).call(
-                        "short", "Hi", context, "deepseek-flash"
+                        "short", "Hi", context, "deepseek-flash", HISTORICAL_PRICING.freeze("short")
                     )
                 self.assertNotIn("private", str(caught.exception))
                 self.assertNotIn("secret", str(caught.exception))
@@ -259,6 +271,7 @@ class CoachEdgeTests(TestCase):
         response = client.return_value.__enter__.return_value.post.return_value
         response.status_code = 200
         response.json.return_value = {
+            "model": "deepseek-v4-flash",
             "usage": {"prompt_tokens": 10, "completion_tokens": 10},
             "choices": [{"finish_reason": "stop", "message": {"content": '{"question":"Goal?"}'}}],
         }
@@ -299,6 +312,7 @@ class CoachEdgeTests(TestCase):
         response = client.return_value.__enter__.return_value.post.return_value
         response.status_code = 200
         response.json.return_value = {
+            "model": "deepseek-v4-flash",
             "usage": {"prompt_tokens": 10, "completion_tokens": 10},
             "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(source)}}],
         }
@@ -340,7 +354,7 @@ class CoachEdgeTests(TestCase):
         result = decode_reply(
             {
                 "usage": {"prompt_tokens": 10, "completion_tokens": 2},
-                "model": "reported",
+                "model": "deepseek-v4-flash",
                 "choices": [{"message": {"content": None}, "finish_reason": "stop"}],
             }
         )
@@ -352,7 +366,7 @@ class CoachEdgeTests(TestCase):
     def test_malformed_http_reply_does_not_stop_worker_or_repeat_paid_request(self) -> None:
         valid = {
             "usage": {"prompt_tokens": 10, "completion_tokens": 2},
-            "model": "reported",
+            "model": "deepseek-v4-flash",
             "choices": [{"message": {"content": "answer"}, "finish_reason": "stop"}],
         }
         null_content = copy.deepcopy(valid)

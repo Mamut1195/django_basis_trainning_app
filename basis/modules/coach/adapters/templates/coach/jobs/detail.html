@@ -1,5 +1,10 @@
-{% extends 'shared/base.html' %}
+{% extends "shared/base.html" %}
+{% load static %}
 {% block content %}
   <c-basis.page-heading title="Tu consulta" />
-  {% include 'coach/jobs/_result.html' %}
-{% endblock %}
+  <div id="coach-job" class="stack">
+    <p id="coach-job-update-status" role="status" aria-live="polite"></p>
+    {% include "coach/jobs/_result.html" %}
+  </div>
+  <script defer src="{% static 'basis/js/coach-job.js' %}"></script>
+{% endblock content %}

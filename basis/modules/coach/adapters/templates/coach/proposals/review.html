@@ -3,46 +3,110 @@
   <c-basis.page-heading title="Revisa antes de incorporar."
                         eyebrow="Propuesta de entrenamiento"
                         subtitle="Aceptar crea un plan nuevo o una versión nueva; tu historial se conserva." />
-  <form method="post" class="stack" data-form-submit>
-    {% csrf_token %}
-    <c-basis.error-summary :form="form" />
+  {% if proposal.status == 'accepted' %}
     <c-basis.card>
-      <div class="stack-sm">
-        <h2>{{ proposal.content.title }}</h2>
-        <p>{{ proposal.content.notes }}</p>
-        <p>
-          {{ proposal.content.cycles|length }} ciclos · {{ proposal.content.sessions|length }} sesiones detalladas
-        </p>
-        {% if proposal.base_plan %}
-          <p>
-            Se creará la versión {{ proposal.base_plan.version|add:'1' }} de <a href="{% url 'plan-detail' proposal.base_plan_id %}">{{ proposal.base_plan.title }}</a>. Las ejecuciones anteriores conservan su prescripción original.
-          </p>
-        {% else %}
-          <p>Se creará un plan nuevo con esta estructura.</p>
-        {% endif %}
-        {{ form.non_field_errors }}
-      </div>
+      <h2>Propuesta aceptada</h2>
+      <p>La decisión ya está guardada.</p>
+      <a href="{% url 'plan-detail' proposal.accepted_plan_id %}">Ver el plan aceptado</a>
     </c-basis.card>
-    {% for group in form.groups %}
-      <c-basis.card>
-        <details {% if forloop.first %}open{% endif %}>
-          <summary>{{ group.title }}</summary>
-          <div class="form-fields">
-            {% for field in group.fields %}
-              <div>{{ field.errors }}{{ field.label_tag }}{{ field }}</div>
-            {% endfor %}
-          </div>
-        </details>
-      </c-basis.card>
-    {% endfor %}
-    <div class="offline-controls actions">
-      <c-ui.button type="submit" name="decision" value="accept" variant="primary">
-        Aceptar propuesta revisada
-      </c-ui.button>
-      <c-ui.button type="submit" name="decision" value="reject">
-        Rechazar
-      </c-ui.button>
+  {% elif proposal.status == 'rejected' %}
+    <c-basis.card>
+      <h2>Propuesta descartada</h2>
+      <p>Esta propuesta no se incorporó al calendario.</p>
+      <a href="{% url 'coach' %}">Volver al entrenador</a>
+    </c-basis.card>
+  {% endif %}
+  {% if review_error %}
+    <div role="alert" class="card">
+      <h2>No se aplicó ningún cambio</h2>
+      <p>{{ review_error }}</p>
+      <a href="{% url 'proposal-review' proposal.pk %}">Recargar la revisión</a>
     </div>
-    <c-basis.submit-status />
-  </form>
+  {% endif %}
+  {% if proposal.status == 'pending' %}
+    <form method="post" class="stack" data-form-submit>
+      {% csrf_token %}
+      <input type="hidden" name="review_token" value="{{ review_token }}">
+      {% if form %}
+        <c-basis.error-summary :form="form" />
+        <c-basis.card>
+          <h2>Qué cambia</h2>
+          {% if proposal.base_plan %}
+            <p>
+              Se creará la versión {{ proposal.base_plan.version|add:'1' }} de <a href="{% url 'plan-detail' proposal.base_plan_id %}">{{ proposal.base_plan.title }}</a>.
+              Las ejecuciones anteriores conservan su prescripción original.
+            </p>
+          {% else %}
+            <p>Se creará un plan nuevo. Los demás planes se conservan.</p>
+          {% endif %}
+          <p>
+            La comparación incluye toda la estructura propuesta. El motivo y los supuestos son los declarados en las notas; revisa cualquier dato faltante.
+          </p>
+          {% for label, before, after in changes %}
+            <section class="stack-sm">
+              <h3>{{ label }}</h3>
+              <dl>
+                <dt>Plan base</dt>
+                <dd>
+                  {{ before|linebreaksbr }}
+                </dd>
+                <dt>
+                  Propuesta revisada
+                  {% if before == after %}· sin cambios{% endif %}
+                </dt>
+                <dd>
+                  {{ after|linebreaksbr }}
+                </dd>
+              </dl>
+            </section>
+          {% endfor %}
+        </c-basis.card>
+        <c-basis.card>
+          <h2>Condiciones que debes revisar</h2>
+          <p>
+            Días ISO disponibles: {{ preferences.availability|join:', ' }}. Límite declarado: {{ preferences.minutes_per_session }} minutos por sesión.
+          </p>
+          <p>Equipo registrado: {{ preferences.equipment|default:'Sin registrar' }}</p>
+          <p>Limitaciones registradas: {{ preferences.limitations|default:'Sin registrar' }}</p>
+          <p>
+            Se comprueban estructura, referencias, unidades, días y duración total declarada. Equipo y limitaciones son texto libre y necesitan tu revisión. Una duración ausente sigue siendo desconocida. La propuesta no acredita seguridad deportiva ni resultados del modelo.
+          </p>
+          {{ form.constraints_reviewed.errors }}
+          {{ form.constraints_reviewed }} {{ form.constraints_reviewed.label_tag }}
+          {{ form.non_field_errors }}
+        </c-basis.card>
+        {% for group in form.groups %}
+          <c-basis.card>
+            <details {% if forloop.first %}open{% endif %}>
+              <summary>{{ group.title }}</summary>
+              <div class="form-fields">
+                {% for field in group.fields %}
+                  <div>{{ field.errors }}{{ field.label_tag }}{{ field }}</div>
+                {% endfor %}
+              </div>
+            </details>
+          </c-basis.card>
+        {% endfor %}
+      {% endif %}
+      <div class="actions">
+        {% if form %}
+          <c-ui.button type="submit" name="decision" value="preview" variant="primary">
+            Comparar campos revisados
+          </c-ui.button>
+          {% if compared %}
+            <c-ui.button type="submit" name="decision" value="accept" variant="primary">
+              Aceptar esta comparación
+            </c-ui.button>
+          {% endif %}
+        {% endif %}
+        <c-ui.button type="submit" name="decision" value="reject" formnovalidate>
+          Descartar propuesta
+        </c-ui.button>
+      </div>
+      <p>
+        Para revertir una aceptación, abre el plan y restaura una versión con motivo. Se crea otro sucesor y se mantienen los resultados anteriores.
+      </p>
+      <c-basis.submit-status />
+    </form>
+  {% endif %}
 {% endblock %}

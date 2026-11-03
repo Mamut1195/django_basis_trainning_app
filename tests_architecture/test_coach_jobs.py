@@ -6,19 +6,22 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from types import TracebackType
 from unittest import TestCase
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from basis.modules.athletes.public import AthleteCoachContext, BillingProfile
 from basis.modules.billing.public import BillingState
 from basis.modules.coach.application.jobs import CoachConfiguration, Enqueue, Jobs
 from basis.modules.coach.domain.context import CoachContext
 from basis.modules.coach.domain.jobs import (
+    HISTORICAL_PRICING,
     CoachInvalid,
     Fund,
     Job,
     JobKind,
+    PricingSnapshot,
     ProviderAmbiguous,
     ProviderReply,
+    Reconciliation,
     TokenUsage,
     Usage,
     require_budget,
@@ -52,9 +55,12 @@ class Memory:
         self.funds: dict[TrialFundId, Fund] = {}
         self.is_blocked = False
         self.committed = False
+        self.reconciliations: dict[tuple[JobId, str], Reconciliation] = {}
 
     def __enter__(self) -> "Memory":
-        self.before = deepcopy((self.jobs, self.usages, self.funds, self.is_blocked))
+        self.before = deepcopy(
+            (self.jobs, self.usages, self.funds, self.is_blocked, self.reconciliations)
+        )
         self.committed = False
         return self
 
@@ -65,13 +71,22 @@ class Memory:
         traceback: TracebackType | None,
     ) -> None:
         if not self.committed or exc_type is not None:
-            self.jobs, self.usages, self.funds, self.is_blocked = self.before
+            self.jobs, self.usages, self.funds, self.is_blocked, self.reconciliations = self.before
 
     def commit(self) -> None:
         self.committed = True
 
     def blocked(self) -> bool:
         return self.is_blocked
+
+    def reconciliation(self, job: JobId, key: str) -> Reconciliation | None:
+        return self.reconciliations.get((job, key))
+
+    def add_reconciliation(self, record: Reconciliation) -> None:
+        key = record.command.job_id, record.command.key
+        if key in self.reconciliations:
+            raise ValueError("immutable reconciliation")
+        self.reconciliations[key] = record
 
     def block(self) -> None:
         self.is_blocked = True
@@ -126,12 +141,15 @@ class Memory:
         self.jobs[job.id] = replace(job)
 
     def save_job(self, job: Job) -> None:
+        previous = self.jobs[job.id]
+        if previous.invalid_usage_observed is True and job.invalid_usage_observed is not True:
+            raise ValueError("invalid usage evidence is immutable")
         self.jobs[job.id] = replace(job)
 
     def claim(self, now: datetime) -> Job | None:
         for job in self.jobs.values():
             if job.status == "pending":
-                job.status, job.started_at = "running", now
+                job.status, job.started_at, job.attempt_id = "running", now, uuid4()
                 return replace(job)
         return None
 
@@ -164,14 +182,30 @@ class Ports:
     ) -> CoachContext:
         return CONTEXT
 
-    def prepare(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> None:
+    def prepare(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> None:
         pass
 
-    def call(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> ProviderReply:
+    def call(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> ProviderReply:
         self.calls += 1
         if self.ambiguous:
             raise ProviderAmbiguous
-        return ProviderReply(TokenUsage(1000, 100, 200), "reported", True, "answer", True, "stop")
+        return ProviderReply(
+            TokenUsage(1000, 100, 200), "deepseek-v4-flash", True, "answer", True, "stop"
+        )
 
     def complete(self, job: Job) -> bool:
         return True
@@ -226,6 +260,7 @@ class JobsTests(JobsContract, JobsSettlementContract, TestCase):
             None,
             reservation_for("short"),
             "deepseek-v4-flash",
+            pricing=HISTORICAL_PRICING.freeze("short"),
         )
 
     def command(self, key: int = 3) -> Enqueue:
@@ -325,11 +360,24 @@ class JobsTests(JobsContract, JobsSettlementContract, TestCase):
             require_budget("short", usage, fund, True)
 
     def test_invalid_token_values_cannot_be_billed(self) -> None:
-        for usage in (TokenUsage(-1, 0), TokenUsage(1, 0, 2), TokenUsage(4001, 0)):
+        for usage in (
+            TokenUsage(-1, 0),
+            TokenUsage(1, 0, 2),
+            TokenUsage(4001, 0),
+            TokenUsage(10**40, 0),
+            TokenUsage(0, 10**40),
+        ):
             with self.assertRaises(CoachInvalid):
                 usage_cost(usage, "short", reservation_for("short"))
 
 
 class RejectingProvider(Ports):
-    def prepare(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> None:
+    def prepare(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> None:
         raise CoachInvalid("request too large")

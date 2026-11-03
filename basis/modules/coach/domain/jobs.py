@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import ROUND_CEILING, Decimal
 from typing import Literal
+from uuid import UUID
 
 from basis.shared.identifiers import (
     AccountId,
@@ -31,12 +32,81 @@ class CoachUnavailable(Exception):
     pass
 
 
+class JobNotFound(Exception):
+    pass
+
+
+class CancellationConflict(CoachInvalid):
+    pass
+
+
 class ProviderRejected(Exception):
     pass
 
 
 class ProviderAmbiguous(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class PricingSnapshot:
+    """Local accounting policy, not a claim about a provider's live prices."""
+
+    version: str
+    input_rate: Decimal
+    hit_rate: Decimal
+    output_rate: Decimal
+    input_limit: int
+    output_limit: int
+    allowed_models: tuple[str, ...]
+
+    def validate(self) -> None:
+        rates = (self.input_rate, self.hit_rate, self.output_rate)
+        if (
+            not self.version.strip()
+            or len(self.version) > 30
+            or any(not rate.is_finite() or rate < 0 for rate in rates)
+            or any(
+                rate != 0 and not Decimal("1e-18") <= rate <= Decimal("9999.99999999")
+                for rate in rates
+            )
+            or self.hit_rate > self.input_rate
+            or any(
+                type(n) is not int or not 0 < n <= 2147483647
+                for n in (self.input_limit, self.output_limit)
+            )
+            or not self.allowed_models
+            or any(not model.strip() or len(model) > 100 for model in self.allowed_models)
+        ):
+            raise CoachInvalid("Política de costo no verificable.")
+
+
+@dataclass(frozen=True)
+class PricingPolicy:
+    version: str = "flash-peak-2026-10-17"
+    input_rate: Decimal = INPUT_RATE
+    hit_rate: Decimal = HIT_RATE
+    output_rate: Decimal = OUTPUT_RATE
+    short_limits: tuple[int, int] = (4000, 1500)
+    plan_limits: tuple[int, int] = (8000, 3000)
+    allowed_models: tuple[str, ...] = ("deepseek-flash", "deepseek-v4-flash")
+
+    def freeze(self, kind: JobKind) -> PricingSnapshot:
+        inputs, outputs = self.short_limits if kind == "short" else self.plan_limits
+        snapshot = PricingSnapshot(
+            self.version,
+            self.input_rate,
+            self.hit_rate,
+            self.output_rate,
+            inputs,
+            outputs,
+            self.allowed_models,
+        )
+        snapshot.validate()
+        return snapshot
+
+
+HISTORICAL_PRICING = PricingPolicy()
 
 
 @dataclass(frozen=True)
@@ -54,6 +124,7 @@ class ProviderReply:
     answer: str | None = ""
     answer_is_text: bool = True
     finish_reason: str | None = None
+    invalid_usage_observed: bool = False
 
 
 @dataclass
@@ -100,20 +171,86 @@ class Job:
     error: str = ""
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    pricing_version: str = "flash-peak-2026-10-17"
+    pricing: PricingSnapshot | None = None
+    invalid_usage_observed: bool | None = None
+    attempt_id: UUID | None = None
 
 
-def reservation_for(kind: JobKind) -> Decimal:
-    inputs, outputs = LIMITS[kind]
-    return inputs * INPUT_RATE + outputs * OUTPUT_RATE
+def job_pricing(job: Job) -> PricingSnapshot:
+    snapshot = job.pricing
+    if snapshot is None or snapshot.version != job.pricing_version:
+        raise CoachInvalid("Falta una tarifa congelada verificable.")
+    snapshot.validate()
+    if job.requested_model not in snapshot.allowed_models or job.reservation != reservation_for(
+        job.kind, snapshot
+    ):
+        raise CoachInvalid("La reserva no corresponde a su política congelada.")
+    return snapshot
 
 
-def require_budget(kind: JobKind, usage: Usage, fund: Fund, trial: bool) -> Decimal:
+@dataclass(frozen=True)
+class Reconcile:
+    job_id: JobId
+    key: str
+    actor: str
+    reference: str
+    evidence: str
+    decision: Literal["no_charge", "usage"]
+    confirmed_no_charge: bool = False
+    reported_model: str = ""
+    usage: TokenUsage | None = None
+
+    def validate(self) -> None:
+        if any(
+            not value.strip() or len(value) > limit
+            for value, limit in (
+                (self.key, 100),
+                (self.actor, 150),
+                (self.reference, 500),
+                (self.evidence, 4000),
+            )
+        ) or self.decision not in ("no_charge", "usage"):
+            raise CoachInvalid("Se requieren clave, actor, referencia y evidencia explícitos.")
+        if self.decision == "no_charge" and (
+            not self.confirmed_no_charge or self.usage is not None or self.reported_model
+        ):
+            raise CoachInvalid("No-cobro requiere confirmación explícita y sin uso imputado.")
+        if self.decision == "usage" and (self.confirmed_no_charge or self.usage is None):
+            raise CoachInvalid("La decisión de uso requiere tokens y modelo verificados.")
+
+
+@dataclass(frozen=True)
+class Reconciliation:
+    command: Reconcile
+    outcome: str
+    reason: str
+    cost: Decimal | None
+    job_status: str
+    created_at: datetime
+
+
+def reservation_for(kind: JobKind, pricing: PricingSnapshot | None = None) -> Decimal:
+    pricing = pricing or HISTORICAL_PRICING.freeze(kind)
+    pricing.validate()
+    return (
+        pricing.input_limit * pricing.input_rate + pricing.output_limit * pricing.output_rate
+    ).quantize(Decimal("0.00000001"), rounding=ROUND_CEILING)
+
+
+def require_budget(
+    kind: JobKind,
+    usage: Usage,
+    fund: Fund,
+    trial: bool,
+    pricing: PricingSnapshot | None = None,
+) -> Decimal:
     cap, short_cap, plan_cap = (Decimal("0.03"), 5, 1) if trial else (Decimal("1.00"), 200, 8)
     if (kind == "short" and usage.short_count >= short_cap) or (
         kind == "plan" and usage.plan_count >= plan_cap
     ):
         raise CoachInvalid("Has usado las acciones IA disponibles en este período.")
-    reservation = reservation_for(kind)
+    reservation = reservation_for(kind, pricing)
     if usage.spent + usage.reserved + reservation > cap:
         raise CoachInvalid("Se alcanzó el presupuesto IA de este período.")
     if trial and fund.spent + fund.reserved + reservation > fund.cap:
@@ -123,19 +260,76 @@ def require_budget(kind: JobKind, usage: Usage, fund: Fund, trial: bool) -> Deci
     return reservation
 
 
-def usage_cost(usage: TokenUsage, kind: JobKind, reservation: Decimal) -> Decimal:
+def usage_cost(
+    usage: TokenUsage,
+    kind: JobKind,
+    reservation: Decimal,
+    pricing: PricingSnapshot | None = None,
+) -> Decimal:
+    pricing = pricing or HISTORICAL_PRICING.freeze(kind)
+    pricing.validate()
     values = (usage.input_tokens, usage.output_tokens, usage.cache_hits)
-    if any(type(n) is not int or n < 0 for n in values) or usage.cache_hits > usage.input_tokens:
-        raise CoachInvalid
-    cost = (
-        (usage.input_tokens - usage.cache_hits) * INPUT_RATE
-        + usage.cache_hits * HIT_RATE
-        + usage.output_tokens * OUTPUT_RATE
-    ).quantize(Decimal("0.00000001"), rounding=ROUND_CEILING)
     if (
-        usage.input_tokens > LIMITS[kind][0]
-        or usage.output_tokens > LIMITS[kind][1]
-        or cost > reservation
+        any(type(n) is not int or n < 0 for n in values)
+        or usage.cache_hits > usage.input_tokens
+        or usage.input_tokens > pricing.input_limit
+        or usage.output_tokens > pricing.output_limit
     ):
         raise CoachInvalid
+    cost = (
+        (usage.input_tokens - usage.cache_hits) * pricing.input_rate
+        + usage.cache_hits * pricing.hit_rate
+        + usage.output_tokens * pricing.output_rate
+    ).quantize(Decimal("0.00000001"), rounding=ROUND_CEILING)
+    if cost > reservation:
+        raise CoachInvalid
     return cost
+
+
+def require_release(job: Job, usage: Usage, fund: Fund | None, cost: Decimal) -> None:
+    """Refuse corrupt/overdrawn aggregates rather than clamp or release twice."""
+    cap = Decimal("0.03") if usage.is_trial else Decimal("1")
+    if (
+        job.cost is not None
+        or job.invalid_usage_observed is True
+        or job.reservation < 0
+        or cost < 0
+        or cost > job.reservation
+        or usage.owner != job.owner
+        or usage.id != job.usage_period
+        or usage.is_trial != (fund is not None)
+        or usage.reserved < job.reservation
+        or usage.spent < 0
+        or usage.spent + usage.reserved > cap
+        or (
+            fund is not None
+            and (
+                fund.id != job.trial_fund
+                or fund.reserved < job.reservation
+                or fund.spent < 0
+                or fund.spent + fund.reserved > fund.cap
+            )
+        )
+    ):
+        raise CoachInvalid("Saldos incompatibles; reserva retenida.")
+
+
+def require_cancellation(job: Job, usage: Usage, fund: Fund | None) -> None:
+    """Validate the original ledgers and unused action before any adjustment."""
+    amounts = [job.reservation, usage.spent, usage.reserved]
+    if fund is not None:
+        amounts.extend((fund.spent, fund.reserved, fund.cap))
+    if (
+        any(not amount.is_finite() or amount < 0 for amount in amounts)
+        or job.kind not in ("short", "plan")
+        or usage.short_count < 0
+        or usage.plan_count < 0
+        or (usage.short_count if job.kind == "short" else usage.plan_count) < 1
+        or job.started_at is not None
+        or job.completed_at is not None
+        or job.reported_model
+        or job.answer
+        or any(n is not None for n in (job.input_tokens, job.output_tokens, job.cache_hit_tokens))
+    ):
+        raise CoachInvalid("Consulta o saldos incompatibles; reserva retenida.")
+    require_release(job, usage, fund, Decimal(0))

@@ -8,5 +8,6 @@ urlpatterns = [
     path("coach/", coach.coach, name="coach"),
     path("coach/ask/", coach.coach_ask, name="coach-ask"),
     path("coach/jobs/<uuid:pk>/", coach.job_detail, name="job-detail"),
+    path("coach/jobs/<uuid:pk>/cancel/", coach.job_cancel, name="job-cancel"),
     path("coach/proposals/<int:pk>/", coach.proposal_review, name="proposal-review"),
 ]

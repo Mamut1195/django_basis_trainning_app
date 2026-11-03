@@ -19,3 +19,6 @@ class AthleteCoachContext:
 
 class AthleteCoachContexts(Protocol):
     def read(self, owner: AccountId) -> AthleteCoachContext: ...
+    def read_for_acceptance(self, owner: AccountId) -> AthleteCoachContext:
+        """Require caller UoW/account lock; lock profile, preferences, sports in order."""
+        ...

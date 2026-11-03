@@ -13,6 +13,7 @@ from basis.modules.coach.adapters.context_wire import decode_context, encode_con
 from basis.modules.coach.adapters.provider import decode_reply
 from basis.modules.coach.adapters.provider import request_body as encode_request
 from basis.modules.coach.domain.jobs import (
+    HISTORICAL_PRICING,
     HIT_RATE,
     INPUT_RATE,
     LIMITS,
@@ -36,6 +37,7 @@ __all__ = (
     "context_snapshot",
     "request_body",
     "enqueue",
+    "cancel",
     "settle",
     "process_one",
     "quarantine_stale_jobs",
@@ -48,7 +50,10 @@ def context_snapshot(owner: AbstractUser, kind: JobKind = "short") -> dict[str, 
 
 def request_body(kind: JobKind, prompt: str, context: object, model: str) -> dict[str, object]:
     try:
-        return encode_request(kind, prompt, decode_context(context), model)
+        # Legacy preview only; durable dispatch passes the job's explicit snapshot.
+        return encode_request(
+            kind, prompt, decode_context(context), model, HISTORICAL_PRICING.freeze(kind)
+        )
     except CoachInvalid as error:
         raise ValidationError(str(error)) from None
 
@@ -96,6 +101,11 @@ def enqueue(
         raise ProviderUnavailable(str(error)) from None
     except CoachInvalid as error:
         raise ValidationError(str(error)) from None
+
+
+def cancel(owner: AbstractUser, job_id: UUID) -> AIJob:
+    result = jobs(httpx.Client).cancel(AccountId(owner.pk), JobId(job_id))
+    return AIJob.objects.get(pk=result.id, owner_id=owner.pk)
 
 
 def settle(job_id: UUID, data: object = None, error: str = "", definitive: bool = False) -> AIJob:

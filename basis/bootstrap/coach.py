@@ -13,7 +13,11 @@ from basis.modules.athletes.adapters.coach import DjangoAthleteCoachContexts
 from basis.modules.billing.adapters.coach import DjangoCoachBilling
 from basis.modules.catalog.adapters.coach import DjangoCoachExercises
 from basis.modules.coach.adapters.jobs import DjangoJobsRepository
-from basis.modules.coach.adapters.proposals import DjangoProposalRepository, DjangoProposalSink
+from basis.modules.coach.adapters.proposals import (
+    DjangoProposalChecks,
+    DjangoProposalRepository,
+    DjangoProposalSink,
+)
 from basis.modules.coach.adapters.provider import ClientFactory, DeepSeekProvider
 from basis.modules.coach.application.context import Contexts
 from basis.modules.coach.application.jobs import CoachConfiguration, Jobs
@@ -38,6 +42,7 @@ def proposals(source: object = None) -> Proposals:
         DjangoCoachPlanning(planning()),
         write_authorization(),
         DjangoUnitOfWork,
+        DjangoProposalChecks(contexts().snapshot_for_acceptance),
     )
 
 
