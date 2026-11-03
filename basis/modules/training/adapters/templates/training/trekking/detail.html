@@ -9,9 +9,9 @@
   <c-basis.card title="Recorrido registrado">
     <p>{{ summary.completed }} de {{ summary.stages }} etapas completadas</p>
     <dl class="metric-list">
-      {% for key,value in summary.totals.items %}
+      {% for label,unit,value in display_totals %}
         <div>
-          <dt>{{ key }}</dt>
+          <dt>{{ label }} ({{ unit }})</dt>
           <dd>
             {{ value|default_if_none:'Sin datos' }}
           </dd>
@@ -32,6 +32,7 @@
         </div>
       </div>
       <p>{{ stage.recovery_notes }}</p>
+      <a href="{% url 'stage-edit' trip.pk stage.pk %}">Corregir etapa</a>
     </c-basis.card>
   {% empty %}
     <c-basis.empty title="Añade tu primera jornada">

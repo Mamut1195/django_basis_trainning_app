@@ -44,5 +44,6 @@ urlpatterns = [
     path("progress/marks/", marks.strength_marks, name="strength-marks"),
     path("trekking/<int:pk>/", training.trip_detail, name="trip-detail"),
     path("trekking/<int:pk>/stages/new/", training.stage_new, name="stage-new"),
+    path("trekking/<int:pk>/stages/<int:stage_id>/edit/", training.stage_edit, name="stage-edit"),
     path("api/sessions/<uuid:pk>/snapshot/", training.snapshot_api, name="snapshot-api"),
 ]

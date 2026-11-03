@@ -171,6 +171,25 @@ class DjangoSessionRepository:
             row = Session(id=state.id, owner_id=state.owner)
         elif row.owner_id != state.owner:
             raise Unavailable("La sesión no está disponible.")
+        from ..domain.trekking import InvalidTrekking, StageNeighbour, validate_stage
+        from .models import TrekStage
+
+        stage = TrekStage.objects.filter(session_id=state.id).select_related("trip").first()
+        if stage is not None:
+            try:
+                validate_stage(
+                    AccountId(stage.trip.owner_id),
+                    state.owner,
+                    any(block.sport == "hiking" for block in state.blocks),
+                    stage.order,
+                    state.date,
+                    tuple(
+                        StageNeighbour(s.order, s.session.date)
+                        for s in stage.trip.stages.exclude(pk=stage.pk).select_related("session")
+                    ),
+                )
+            except InvalidTrekking as error:
+                raise InvalidExecution(str(error)) from error
         existing_blocks = {b.pk: b for b in row.blocks.all()} if not row._state.adding else {}
         row.title = state.title
         row.date = state.date
@@ -184,7 +203,11 @@ class DjangoSessionRepository:
         save_validated(row)
         if not 1 <= len(state.blocks) <= 30:
             raise InvalidExecution("Una sesión necesita entre 1 y 30 bloques.")
-        for order, block in enumerate(state.blocks, 1):
+        # Persist replacement hiking blocks before changing existing blocks, retaining their order.
+        ordered_blocks = sorted(
+            enumerate(state.blocks, 1), key=lambda item: item[1].sport != "hiking"
+        )
+        for order, block in ordered_blocks:
             if block.id is not None and block.id not in existing_blocks:
                 raise InvalidExecution("Bloque no disponible en esta sesión.")
             created = existing_blocks.get(block.id) if block.id is not None else None

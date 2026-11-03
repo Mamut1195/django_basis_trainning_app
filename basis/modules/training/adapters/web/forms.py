@@ -319,6 +319,17 @@ class TrekStageForm(forms.ModelForm[TrekStage]):
         ).distinct()
 
 
+class TrekStageEditForm(forms.ModelForm[TrekStage]):
+    class Meta:
+        model = TrekStage
+        fields = ["order", "overnight_altitude_m", "recovery_notes"]
+        labels = {
+            "order": "N\u00famero de etapa",
+            "overnight_altitude_m": "Altitud de pernocta (m)",
+            "recovery_notes": "Recuperaci\u00f3n entre jornadas",
+        }
+
+
 class RescheduleForm(forms.Form):
     cycle = forms.ModelChoiceField(
         label="Microciclo destino (opcional)", queryset=Cycle.objects.none(), required=False

@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Callable, Protocol
 
 from basis.shared.identifiers import AccountId, TrekStageId, TrekTripId
@@ -45,6 +46,16 @@ class AddStage:
     data: StageData
 
 
+@dataclass(frozen=True)
+class EditStage:
+    owner: AccountId
+    trip: TrekTripId
+    stage: TrekStageId
+    order: int
+    overnight_altitude_m: Decimal | None
+    recovery_notes: str
+
+
 class ProgressRepository(Protocol):
     def sessions(
         self, owner: AccountId, start: date | None = None, end: date | None = None
@@ -53,6 +64,7 @@ class ProgressRepository(Protocol):
     def stages(self, owner: AccountId, trip: TrekTripId) -> tuple[ProgressSession, ...]: ...
     def create_trip(self, command: CreateTrip) -> TrekTripId: ...
     def add_stage(self, command: AddStage) -> TrekStageId: ...
+    def edit_stage(self, command: EditStage) -> None: ...
 
 
 class Progress:
@@ -104,3 +116,9 @@ class Progress:
             result = self.repository.add_stage(command)
             work.commit()
             return result
+
+    def edit_stage(self, command: EditStage) -> None:
+        with self.uow() as work:
+            self.authorization.require(command.owner)
+            self.repository.edit_stage(command)
+            work.commit()

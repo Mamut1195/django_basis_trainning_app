@@ -99,6 +99,34 @@ class Session(Owned):
 
     def clean(self) -> None:
         self.same_owner(self.planned)
+        if not self._state.adding:
+            from basis.modules.training.domain.trekking import (
+                InvalidTrekking,
+                StageNeighbour,
+                validate_stage,
+            )
+            from basis.shared.identifiers import AccountId
+
+            from .trekking import TrekStage
+
+            stage = TrekStage.objects.filter(session_id=self.pk).select_related("trip").first()
+            if stage:
+                try:
+                    validate_stage(
+                        AccountId(stage.trip.owner_id),
+                        AccountId(self.owner_id),
+                        True,
+                        stage.order,
+                        self.date,
+                        tuple(
+                            StageNeighbour(s.order, s.session.date)
+                            for s in stage.trip.stages.exclude(pk=stage.pk).select_related(
+                                "session"
+                            )
+                        ),
+                    )
+                except InvalidTrekking as error:
+                    raise ValidationError(str(error)) from error
 
     @property
     def load(self) -> Decimal | None:
@@ -147,6 +175,21 @@ class Block(ValidatedModel):
     def clean(self) -> None:
         if bool(self.planned_id) == bool(self.session_id):
             raise ValidationError("Un bloque pertenece a prescripción o ejecución.")
+        if self.pk:
+            previous = type(self).objects.filter(pk=self.pk, sport="hiking").first()
+            if (
+                previous
+                and previous.session_id
+                and (self.sport != "hiking" or self.session_id != previous.session_id)
+            ):
+                if (
+                    hasattr(previous.session, "trek_stage")
+                    and not type(self)
+                    .objects.filter(session_id=previous.session_id, sport="hiking")
+                    .exclude(pk=self.pk)
+                    .exists()
+                ):
+                    raise ValidationError("La etapa debe conservar al menos un bloque de hiking.")
         require_mutable_prescription(self)
         source, session = self.source, self.session
         if source is not None and (
