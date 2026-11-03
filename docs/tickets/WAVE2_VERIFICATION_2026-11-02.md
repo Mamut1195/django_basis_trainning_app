@@ -52,3 +52,20 @@ Coordinación ejecutó además las **12 pruebas focales OK, cero omisiones, 1.32
 Dos contenedores desechables exclusivos compartieron namespace de red sin salida ni puertos publicados; PostgreSQL inicializado solo para esta prueba. Se montó únicamente archivo tar de Git y script runner, ambos de solo lectura, sin montar workspace privado ni bases reales. El contenedor de app se retiró al salir; se detuvo y retiró PostgreSQL con su volumen anónimo exclusivo. No quedaron contenedores con el prefijo de la prueba. Archivo fuente: linux-632-source.tar, SHA256 F96379DF6EE4D9FCCDA8913AF1D3E77281060E74E4259AD1025DE110AB0380B0. Scripts/logs conservados en .cache/wave2-20261102/ (linger_probe.py, linger-linux.log, linux-632.sh, linux-632-focal.log). El primer intento de probe inline falló por quoting de PowerShell; el script en archivo ejecutado después pasó.
 
 Para futuras pruebas HTTP locales, run_guarded.py se amplió a sockets loopback; continúa rechazando destinos externos y transporte HTTP real de httpx. MAM-632 sigue abierto por aceptación restante e integración en main. No se ejecutó CI remoto.
+
+## Candidato combinado estable86024f8
+
+Se revisaron e incorporaron los commits UX630 `ba5c42e` y `ac5d508` como `5da42b0` y `86024f8`, sin duplicar el commit815 ya incorporado. Incluyen barras de observaciones con texto/unidades/fuentes y presentación escapada del contexto por sesión. El subagente verificó viewport emulado390×844, teclado, filtros/vacío/error, persistencia de ajustes y descarga privada; no es lector de pantalla real ni dispositivo físico. Su suite general iniciada antes de cambiar el árbol no se acepta como evidencia del conjunto estable; se sustituyó por la ejecución de coordinación siguiente.
+
+Coordinación mantuvo HEAD `86024f8094f6dce08575107cc90158092639b4aa` y el árbol rastreado sin cambios durante toda la suite. Configuración sintética y runner de red descritos arriba, base exclusiva basis_wave2_integration:
+
+- VERIFIED: suite requerida por checks.yml, **638 pruebas, OK con9 omisiones,293.789s**, base test_ creada/destruida. Log combined-suite-86024f8.log. Las pruebas de navegador opt-in se verificaron aparte en sus worktrees como se describe en632/630.
+- VERIFIED: focal UX815 combinado **113 pruebas, cero omisiones,24.463s**; log ux815-combined-final.log.
+- VERIFIED: **241 pruebas puras,5.658s**, checker de arquitectura y ocho contratos Import Linter conservados.
+- VERIFIED: mypy core131/Django418 archivos, Ruff check y Ruff format427 archivos.
+- VERIFIED: djLint52 plantillas, cero cambios; Node22.19.0/npm10.9.3 reales; npm ci --ignore-scripts con lockfile existente y npm run format:check correctos. No se modificaron package.json/package-lock.json ni se actualizó npm. La falta de Prettier indicada en la entrega630 quedó resuelta en coordinación.
+- VERIFIED: tres documentos preexistentes conservan sus SHA256 del recibo original; git diff --check correcto.
+
+Logs: .cache/wave2-20261102/combined-*86024f8.log, npm-ci.log, prettier.log y djlint.log. CI remoto, publicación, imagen nueva/operación, accesibilidad asistiva, dispositivos y proveedor LIVE no se ejecutaron para este candidato. Los tickets siguen abiertos hasta sus criterios completos/main.
+
+El corpus636 preparado por Terra contiene17 casos ficticios NOT_RUN y una rúbrica propuesta, sin respuestas ni resultados del modelo. Coordinación detectó caracteres corruptos en el JSON inicial; el commit separado2c462c5 los corrigió antes de incorporarlo. Se verificó JSON/UTF8 estricto, IDs únicos/campos obligatorios y ausencia de? dentro de palabras; SHA256 cefef9c79c093850e31ca570c9bf2706d639ba45c90fc855c01e56975a233d8e. La preparación no acredita evaluación ni aprobación de umbrales. Sol633(contexto),818(contabilidad) y634(propuestas) continúan aislados con áreas y bases exclusivas; sus resultados no forman parte de638 pruebas anteriores.
