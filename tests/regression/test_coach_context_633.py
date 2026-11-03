@@ -21,7 +21,12 @@ from basis.modules.coach.adapters.context_wire import decode_context, encode_con
 from basis.modules.coach.adapters.provider import DeepSeekProvider, decode_reply, request_body
 from basis.modules.coach.application.context import Contexts
 from basis.modules.coach.domain.context import CoachContext
-from basis.modules.coach.domain.jobs import CoachInvalid, ProviderAmbiguous, ProviderRejected
+from basis.modules.coach.domain.jobs import (
+    HISTORICAL_PRICING,
+    CoachInvalid,
+    ProviderAmbiguous,
+    ProviderRejected,
+)
 from basis.modules.coach.domain.prompts import SYSTEM, instructions_digest
 from basis.modules.training.adapters.coach import DjangoTrainingCoachContexts
 from basis.modules.training.adapters.models import (
@@ -48,6 +53,8 @@ from tests_architecture.test_coach_context_633 import (
 )
 
 from .factories import account, exercise, proposal
+
+PRICING_633 = replace(HISTORICAL_PRICING, allowed_models=("synthetic-model-633",))
 
 
 class ContextCodec633Tests(SimpleTestCase):
@@ -159,15 +166,19 @@ class ContextCodec633Tests(SimpleTestCase):
             return httpx.Client(transport=httpx.MockTransport(handle), timeout=timeout)
 
         provider = DeepSeekProvider("synthetic-633-not-a-secret", client)
-        provider.prepare("short", "Hi", self.context(), "synthetic-model-633")
+        pricing = PRICING_633.freeze("short")
+        provider.prepare("short", "Hi", self.context(), "synthetic-model-633", pricing)
+        self.assertEqual(calls, [])
+        with self.assertRaises(CoachInvalid):
+            provider.prepare("short", "Hi", self.context(), "unapproved-synthetic-model", pricing)
         self.assertEqual(calls, [])
         stale = replace(self.context(), system_sha256="unrecognized-historical-instructions")
         with self.assertRaises(CoachInvalid):
-            provider.prepare("short", "Hi", stale, "synthetic-model-633")
+            provider.prepare("short", "Hi", stale, "synthetic-model-633", pricing)
         with self.assertRaises(ProviderAmbiguous):
-            provider.call("short", "Hi", stale, "synthetic-model-633")
+            provider.call("short", "Hi", stale, "synthetic-model-633", pricing)
         self.assertEqual(calls, [])
-        reply = provider.call("short", "Hi", self.context(), "synthetic-model-633")
+        reply = provider.call("short", "Hi", self.context(), "synthetic-model-633", pricing)
         assert reply is not None and reply.usage is not None
         self.assertEqual(reply.reported_model, "synthetic-reported-633")
         self.assertEqual(reply.usage.input_tokens, 10)
@@ -175,7 +186,7 @@ class ContextCodec633Tests(SimpleTestCase):
         self.assertEqual(len(calls), 1)
         self.assertEqual(json.loads(calls[0].content)["model"], "synthetic-model-633")
         with self.assertRaises(CoachInvalid):
-            provider.prepare("short", "x" * 5000, self.context(), "synthetic-model-633")
+            provider.prepare("short", "x" * 5000, self.context(), "synthetic-model-633", pricing)
         self.assertEqual(len(calls), 1)
 
     def test_simulated_provider_errors_and_output_schema_are_separate_from_live(self) -> None:
@@ -192,7 +203,11 @@ class ContextCodec633Tests(SimpleTestCase):
             expected = ProviderRejected if code in (400, 401, 429) else ProviderAmbiguous
             with self.subTest(code=code), self.assertRaises(expected):
                 DeepSeekProvider("synthetic-only", client).call(
-                    "short", "Hi", self.context(), "synthetic-model-633"
+                    "short",
+                    "Hi",
+                    self.context(),
+                    "synthetic-model-633",
+                    PRICING_633.freeze("short"),
                 )
             self.assertEqual(len(calls), 1)
 
@@ -204,7 +219,7 @@ class ContextCodec633Tests(SimpleTestCase):
 
         with self.assertRaises(ProviderAmbiguous):
             DeepSeekProvider("synthetic-only", timeout_client).call(
-                "short", "Hi", self.context(), "synthetic-model-633"
+                "short", "Hi", self.context(), "synthetic-model-633", PRICING_633.freeze("short")
             )
         decoded = decode_reply(
             {
@@ -282,7 +297,9 @@ class ContextProjection633Tests(TestCase):
     def test_short_preparation_accepts_a_minimal_real_projection_without_http(self) -> None:
         self.session()
         context = self.service.snapshot(self.owner_id, "short", None)
-        body = request_body("short", "Resumen", context, "synthetic-model-633")
+        body = request_body(
+            "short", "Resumen", context, "synthetic-model-633", PRICING_633.freeze("short")
+        )
         self.assertLessEqual(len(json.dumps(body, ensure_ascii=False).encode()) + 128, 4000)
         self.assertEqual(len(context.training.evidence), 1)
 
@@ -370,7 +387,9 @@ class ContextProjection633Tests(TestCase):
             trip=trip, session=hiking, order=1, recovery_notes=malicious
         )
         context = self.service.snapshot(self.owner_id, "plan", None)
-        body = request_body("plan", malicious, context, "synthetic-model-633")
+        body = request_body(
+            "plan", malicious, context, "synthetic-model-633", PRICING_633.freeze("plan")
+        )
         messages = [mapping(item) for item in rows(body["messages"])]
         self.assertEqual([m["role"] for m in messages], ["system", "user"])
         self.assertNotIn(malicious, str(messages[0]["content"]))
