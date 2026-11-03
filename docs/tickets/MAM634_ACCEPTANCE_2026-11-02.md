@@ -1,5 +1,12 @@
 # MAM-634 / BASIS-020 — aceptación local, 2026-11-02
 
+**Estado actual:** correctivo 633 `47af985` incorporado completo como `5a22481`.
+Conjunto local: **205 PG / 0 skips, 257 puras, mypy 133/424**, con los checks y
+recorrido descritos al final. Los tres commits 634 originales se conservan.
+**Revisiones independientes 633-R2 y 634-R2 PENDING; sin aceptación final
+integrada, main, LIVE ni cierre de tickets.** Las secciones previas al seguimiento
+final son recibos históricos y no sustituyen esta frontera de evidencia.
+
 ## Goal
 
 Completar la validación y revisión local de propuestas versionadas reutilizando
@@ -66,7 +73,7 @@ id/nombre. No existe una taxonomía aprobada para inferir compatibilidad deporti
 Separar checks deterministas de revisión humana de ese texto y no afirmar calidad
 del modelo, seguridad deportiva ni aceptación LIVE por fixtures.
 
-## Results — candidato local, pendiente revisión P1/P2 de 633
+## Results históricos — primer candidato, anterior al correctivo P1/P2 de 633
 
 **VERIFIED local, no aceptación final integrada.** MAM-634 y sus dependencias
 permanecen abiertos. Coordinación comunicó un posible deadlock en la ruta oficial
@@ -313,3 +320,55 @@ y datos sintéticos: la comparación muestra Cancelada → Programada sin marca
 `browser-screenshot-127-0-0-1-mw02qwsp-843173ed.png`, en el mismo directorio T3
 indicado arriba. No se aceptó esta propuesta de demostración ni se llamó al
 proveedor. **P1/P2 de 633 y aceptación integrada continúan PENDING.**
+
+## Conjunto local con el correctivo 633 — pendiente dictámenes R2
+
+Se incorporó **únicamente el commit completo validado**
+`47af9855197a972dd901975e316bace83489e3ce`, como
+`5a22481364a30c9068d0d8e0b0cfc83bb1f4cc6d`; no se editaron sus archivos desde
+634. Los commits propios preservados son `ef6e5ee`, `a4254d6` y `056b06f`.
+La dependencia alinea autorización personal atómica con cuenta → perfil y deriva
+la fecha del propietario de un único instante con su zona. Sus firmas y codec
+histórico permanecen intactos. Ver el recibo de 633 para la reproducción RED
+anterior de los ciclos/40P01; aquí no se vuelve a atribuir esa reproducción al
+executor 634.
+
+La prueba propia del escritor oficial de preferencias se adaptó al nuevo contrato:
+su primera sentencia contenciosa es ahora `SELECT ... FROM auth_user ... FOR UPDATE`.
+Se añadió un escritor directo de `AthleteSettings.availability` para demostrar que
+el guard **también retiene la fila de preferencias** desde el chequeo hasta el
+commit real del plan. Se conserva la observación real `Lock` y la relación con el
+backend holder mediante `pg_blocking_pids`; no se sustituye por sleeps o mocks.
+Los otros probes integrados de catálogo/meta y las carreras de decisiones siguen
+verificando el camino guard → `planning.create` → persistencia → commit/replay.
+
+Comando integrado, ejecutado con árbol de código estable y el mismo aislamiento:
+
+```powershell
+python .cache/mam634_run.py manage.py test basis.bootstrap.tests.test_mam634_proposals basis.bootstrap.tests.test_mam634_rm_provenance basis.bootstrap.tests.test_mam634_review_regressions tests.regression.test_coach_context_review_633 tests.regression.test_coach_context_locks_633 tests.regression.test_coach_context_633 tests.regression.test_multisport_815 tests.regression.test_training_contract tests.regression.test_private_access tests.regression.test_execution_records tests.regression.test_profile_onboarding basis.bootstrap.tests.test_identity basis.bootstrap.tests.test_wellness basis.bootstrap.tests.test_coach_jobs basis.bootstrap.tests.test_coach_edges basis.bootstrap.tests.test_planning --noinput --verbosity 2
+```
+
+**VERIFIED por el executor 634:** **205 tests PG / 0 skips / 76.845 s**, que incluyen
+37 propios 634, 157 de la selección 633 y 11 de planificación. Los ocho órdenes de
+escritores oficiales registran `cycle_observed=false`, SQLSTATE nulo y contención
+inicial en cuenta. Se ejecutaron además las pruebas Tokyo/Honolulu, rango temporal,
+DST, permisos gratuitos y autocommit del correctivo. Ningún test usó proveedor
+real; creación/destrucción exclusiva de `test_basis_wave3_634`.
+
+Checks repetidos en este conjunto: **257 puras**, mypy **133 núcleo / 424 Django**,
+checker VERIFIED, imports **8 kept / 0 broken**, Ruff repo, Django check sin
+hallazgos y `makemigrations --check --dry-run` sin cambios. Los comandos de puras,
+tipos, arquitectura y lint son los ya registrados arriba. Logs locales:
+`.cache/mam634-integrated-after-633.log` y `.cache/mam634-integrated-pure.log`.
+
+El servidor propio se reinició con el conjunto corregido y se repitió el recorrido
+T3 incognito de revisión/confirmación/aceptación en 390×844. La comparación mostró
+Cancelada → Programada y aceptar creó **versión 4** del plan sintético en
+`/plans/28/`, conservando la navegación a versiones 1–3. Se verificó
+`scrollWidth=390`, `innerWidth=390` y recursos externos observados vacíos. Este
+recorrido posterior sí aceptó la propuesta sintética del seguimiento anterior;
+no acredita dispositivo físico ni proveedor LIVE.
+
+Los correctivos solicitados están incorporados y los checks locales pasan, pero
+**633-R2 y 634-R2 siguen PENDING** a esta captura. No se declara aceptación final
+integrada ni aprobación independiente por ejecutar las pruebas del autor.

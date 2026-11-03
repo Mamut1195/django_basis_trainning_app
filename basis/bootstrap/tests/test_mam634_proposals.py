@@ -669,7 +669,7 @@ class ProposalConcurrency634Tests(TransactionTestCase):
         self.assertTrue(done.is_set())
         self.assertEqual(accept_proposal(self.owner, row.pk).pk, accepted.pk)
 
-    def test_guard_keeps_preferences_locked_after_check_until_plan_commit(self) -> None:
+    def test_official_preferences_writer_waits_on_account_until_plan_commit(self) -> None:
         from basis.bootstrap.athletes import athletes
         from basis.modules.athletes.adapters.django import DjangoAthleteRecords
         from basis.modules.athletes.public import EditPreferences
@@ -681,6 +681,15 @@ class ProposalConcurrency634Tests(TransactionTestCase):
 
         def writer() -> None:
             athletes().edit_preferences(EditPreferences(AccountId(self.owner.pk), data))
+
+        self.assert_guard_retains_lock_through_creation(row, writer, 'FROM "auth_user"')
+        self.assertEqual(AthleteSettings.objects.get(owner=self.owner).availability, [2])
+
+    def test_guard_keeps_preferences_row_locked_after_check_until_plan_commit(self) -> None:
+        row = draft(self.owner, self.content)
+
+        def writer() -> None:
+            AthleteSettings.objects.filter(owner=self.owner).update(availability=[2])
 
         self.assert_guard_retains_lock_through_creation(
             row, writer, 'UPDATE "basis_athletes_athletesettings"'
