@@ -1,5 +1,58 @@
 # MAM-818 — F03/F04/F05, verificación local 2026-11-02
 
+## Correcciones tras segunda revisión de 216d54f
+
+Base `cd9fa8829ced9ffd72bf5433212d1b3afd707f02`, commits anteriores preservados, código aún no integrado. Commit correctivo de esta ronda: `129ff4c8d8c9bfdb9fa34f3b0debddf6bf16eabc`. Suite completa nueva: 922 pruebas OK, cinco omisiones. El transporte congelado aprobado en la segunda revisión no se modifica; tampoco source codec/contexto/prompts 633 ni guard/bootstrap 634.
+
+El turno terminó con error de capacidad del modelo antes de guardar este recibo. Coordinación recuperó el documento pendiente y leyó los logs del ejecutor: focal estable91, puras255 y suite completa922/5 en274.714s. No son reejecuciones de coordinación. SHA256 de review2-full.log: 46586CB06361C116F7C921AD97381FDD6D419D8994379E74B556518AB9F73580. Los archivos Python del correctivo se habían escrito antes de iniciar esa suite; el único cambio sin commit recuperado era este recibo. Se conserva el error terminal de orquestación y no se presenta como una respuesta final exitosa del subagente.
+
+### Reproducciones propias anteriores al fix
+
+- **FAILED**, `review2-repro-fake.log`: una prueba compartida, **12 subcasos fallidos**, paid/trial × entrada/salida/cache 10**40 × no_charge/uso pequeño. Tras settlement uncertain, el conteo excedente se proyectaba como None; la conciliación liberaba la reserva o cargaba **0.00000030 USD sintéticos** con uso (1,0,0), contradiciendo la respuesta recibida.
+- **FAILED**, `review2-repro-pg.log`: tres pruebas, **14 fallos**: los mismos doce subcasos con ORM PostgreSQL y downgrade permitido para límites 4000.0 y 1500.0. Python dict equality equiparaba float/int y la reaplicación cambiaba la política de inválida a válida. Todo ocurrió con datos sintéticos en test_basis_wave2_818, sin bases existentes ni HTTP real.
+
+### Correcciones y compatibilidad
+
+- `Job.invalid_usage_observed` y la columna nullable homónima distinguen una observación inválida conocida (**True**) de historia/ausencia no reconstruida (**None**). Los flujos nuevos comienzan False (sin invalidez conocida). Settlement marca True antes de descartar de la proyección Integer cualquier valor no representable y también ante rechazo contable de los conteos. La marca se guarda con estado y observaciones en la misma UoW; no se finge que la columna limitada conserva el entero enorme.
+- La marca True es persistente y no borrable: guards PostgreSQL/SQLite impiden pasarla a False/NULL, incluso mediante bulk update; el fake respeta el mismo carácter irreversible. Conciliación de cualquier decisión y liberación contable rechazan esa evidencia conocida, conservan uncertain, reserva y gasto, y generan retained/cost=NULL auditado e idempotente. No hay endpoint ni vía de borrado de marca.
+- Los jobs anteriores a 0002 reciben **None**, no una observación inventada. None expresa desconocimiento, no prueba de conteos válidos. Se mantienen sus observaciones seguras previas y las reglas de conciliación con evidencia explícita; un entero que ya se perdió en una versión anterior no se reconstruye ni se declara conocido. Esta entrega no concilia ni reclasifica datos existentes.
+- La guarda de downgrade compara JSON canónico sensible a representaciones/tipos relevantes: distingue int/float y bool/int, conservando el orden significativo de arrays e ignorando solo el orden de claves. El trigger de snapshot PostgreSQL compara representación textual de jsonb, para impedir también que una actualización convierta 4000 en 4000.0 pese a igualdad numérica. Se rechaza downgrade antes de retirar triggers ante cualquiera de esas diferencias, auditorías o marca no NULL, que tampoco puede reconstruirse desde 0001.
+- Pruebas compartidas fake/ORM: settlement previo real con cada campo enorme, paid/trial, ambas decisiones contradictorias y replay; rollback después de escribir marca y después de insertar recibo retained. Pruebas PG de tres participantes: settlement inválido contra decisiones repetidas o diferentes, sin liberación ni cargo y con marca durable. Pruebas de almacenamiento/CLI verifican visibilidad de marca y bloqueo de borrado; las de migración verifican snapshot tipado intacto, escritura todavía rechazada por el trigger y ambos triggers todavía instalados tras fallar downgrade. La ida/vuelta histórica conserva también NULL de la nueva marca.
+
+### Verificación exclusiva del árbol de esta ronda
+
+Mismo runner reproducible sin cambios: Python raíz 3.13.7, config.test_settings, secreto sintético, AI_ENABLED=0, PostgreSQL 18.4; solo test_basis_wave2_818 creado/destruido. HTTP real y sockets externos bloqueados. No se alteraron 0001 ni el servidor PostgreSQL.
+
+```powershell
+& $python .cache/mam818/run_guarded.py unittest tests_architecture.test_coach_jobs.JobsTests.test_contract_settlement_huge_counts_cannot_be_reinterpreted_as_absent -v
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_jobs.DjangoJobsTests.test_contract_settlement_huge_counts_cannot_be_reinterpreted_as_absent basis.bootstrap.tests.test_coach_pricing_migration.HistoricalPricingMigrationTests.test_downgrade_cannot_change_float_input_limit_into_int basis.bootstrap.tests.test_coach_pricing_migration.HistoricalPricingMigrationTests.test_downgrade_cannot_change_float_output_limit_into_int --noinput -v 1
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_jobs basis.bootstrap.tests.test_coach_edges basis.bootstrap.tests.test_coach_provider_policy basis.bootstrap.tests.test_coach_reconciliation basis.bootstrap.tests.test_coach_pricing_migration basis.bootstrap.tests.test_installation tests.regression.test_billing_ai tests.regression.test_accounts.ReferenceSMTPTests --noinput -v 1
+& $python .cache/mam818/run_guarded.py unittest discover -s tests_architecture -q
+& $python .cache/mam818/run_guarded_sqlite.py manage test basis.bootstrap.tests.test_coach_jobs basis.bootstrap.tests.test_coach_provider_policy basis.bootstrap.tests.test_coach_reconciliation --noinput -v 1
+& $python .cache/mam818/run_guarded.py mypy --config-file mypy-core.ini
+& $python .cache/mam818/run_guarded.py mypy --config-file mypy-django.ini
+& $python .cache/mam818/run_guarded.py script scripts/architecture_check.py
+& $python .cache/mam818/run_guarded.py script .cache/mam818/check_imports.py
+& $python .cache/mam818/run_guarded.py ruff check .
+& $python .cache/mam818/run_guarded.py manage check
+& $python .cache/mam818/run_guarded.py manage makemigrations --check --dry-run
+& $python .cache/mam818/run_guarded.py script .cache/mam818/verify_guard.py
+& $python .cache/mam818/run_guarded.py manage test --noinput -v 1
+git diff --check
+```
+
+Las primeras dos órdenes corresponden a las reproducciones rojas previas, no a un resultado verde atribuido retroactivamente. Gates nuevos:
+
+- **VERIFIED:** focal estable **91 tests PostgreSQL, OK, cero omisiones**, 19.343 s (`review2-focal-stable.log`). La pasada previa de 91 también fue verde; después solo se reforzó la prueba de trigger con un valor de longitud legal y la comparación histórica de la nueva marca.
+- **VERIFIED:** **255 pruebas puras, OK**, 4.991 s (`review2-pure.log`).
+- **VERIFIED:** SQLite **47 tests, OK**, cuatro omisiones PG, 1.337 s (`review2-sqlite.log`).
+- **VERIFIED:** mypy core 130 / Django 418; architecture_check y ocho contratos import, cero rotos; Ruff global y format --check de diez fuentes/pruebas no migración; Django check y makemigrations --check --dry-run sin cambios; diff sin errores. Barrera HTTP/sockets probada nuevamente.
+- **VERIFIED por log del ejecutor recuperado:** suite completa nueva, 922 pruebas OK con cinco omisiones, 274.714s (`review2-full.log`), lanzada tras focal estable91 verde. Pendiente verificación del conjunto integrado por coordinación.
+
+**NOT RUN:** tercera revisión independiente nueva, integración/main, CI remoto/push/PR, producción, pagos/proveedor LIVE y conciliación de bases existentes. MAM-818 sigue abierto, incluidos contexto/evaluación deportiva, P03, capacidad y demás gates originales. Los recibos anteriores que siguen son históricos y no sustituyen esta verificación.
+
+---
+
 ## Correcciones tras revisión independiente de 8db5360
 
 Base de esta continuación: `a2b596fc37286f1083fc4461c4cc6de01dd4a135`, preservando todos los commits anteriores. Plan ampliado antes de editar implementación. Commit correctivo: `216d54fabb7d5f7f4eadb468120c086eba250e1f`. Suite completa de esta continuación: VERIFIED, 911 tests con cinco omisiones de navegador opt-in. El commit documental posterior no cambia código ni pruebas.
