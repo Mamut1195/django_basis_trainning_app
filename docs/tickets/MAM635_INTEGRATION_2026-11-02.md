@@ -25,3 +25,7 @@ El proceso de pruebas terminó con código 0. Después del `OK`, la destrucción
 El navegador y los ensayos de interrupción/reinicio en 390×844 y 1280×800 son evidencia del ejecutor, descrita en el recibo de aceptación; coordinación no los repitió. Timeout y error HTTP se ensayaron allí mediante eventos sintéticos. Suite completa, CI remoto, proveedor LIVE, dispositivo físico, modo avión, lector de pantalla e integración con MAM-818: **NOT RUN** en esta continuación.
 
 El aviso ya no está pendiente. Cancelación y ledger818 siguen pendientes; MAM-635 permanece parcial y abierto. La candidata633/634 continúa en `f42b86160c0afe3a545488fd07f0e5dd8a61a15f`; los tres documentos untracked ajenos se conservan.
+
+## Continuación: compatibilidad con MAM-818
+
+MAM-818 se incorporó después de la aprobación independiente R7; el candidato funcional integrado es `cecea65419dd5e9782805b39e6b317a207a0107c`. Coordinación verificó la focal que incluye estas diez pruebas de aceptación y luego la suite completa: 1.047 casos, 1.038 satisfactorios y nueve omisiones optativas de navegador. Comandos, procedencia, fallos del runner y límites están en [MAM818_INTEGRATION_2026-11-02.md](MAM818_INTEGRATION_2026-11-02.md). La compatibilidad automatizada con ledger818 ya no queda pendiente; no se repitió navegador sobre este conjunto. Cancelación continúa pendiente y MAM-635 sigue parcial y abierto. La rama congelada633/634 no cambia ni se publica.
