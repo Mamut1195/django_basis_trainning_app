@@ -19,6 +19,10 @@ from basis.modules.coach.domain.jobs import HISTORICAL_PRICING
 
 @skipUnlessDBFeature("has_select_for_update_skip_locked")
 class HistoricalPricingMigrationTests(TransactionTestCase):
+    def tearDown(self) -> None:
+        MigrationExecutor(connection).migrate([("basis_coach", "0003_open_attempt_fence")])
+        super().tearDown()
+
     def test_downgrade_cannot_remove_invalid_usage_evidence(self) -> None:
         self._assert_snapshot_is_preserved(
             self._historical_snapshot(),

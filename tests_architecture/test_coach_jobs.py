@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from types import TracebackType
 from unittest import TestCase
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from basis.modules.athletes.public import AthleteCoachContext, BillingProfile
 from basis.modules.billing.public import BillingState
@@ -149,7 +149,7 @@ class Memory:
     def claim(self, now: datetime) -> Job | None:
         for job in self.jobs.values():
             if job.status == "pending":
-                job.status, job.started_at = "running", now
+                job.status, job.started_at, job.attempt_id = "running", now, uuid4()
                 return replace(job)
         return None
 

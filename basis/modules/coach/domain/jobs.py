@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import ROUND_CEILING, Decimal
 from typing import Literal
+from uuid import UUID
 
 from basis.shared.identifiers import (
     AccountId,
@@ -165,6 +166,7 @@ class Job:
     pricing_version: str = "flash-peak-2026-10-17"
     pricing: PricingSnapshot | None = None
     invalid_usage_observed: bool | None = None
+    attempt_id: UUID | None = None
 
 
 def job_pricing(job: Job) -> PricingSnapshot:

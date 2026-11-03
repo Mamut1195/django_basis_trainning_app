@@ -3,6 +3,7 @@
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Literal, cast
+from uuid import uuid4
 
 from django.db import connection
 
@@ -109,6 +110,7 @@ def job_state(row: AIJob) -> Job:
         row.pricing_version,
         decode_pricing(cast(object, row.pricing_snapshot)),
         row.invalid_usage_observed,
+        row.attempt_id,
     )
 
 
@@ -201,6 +203,7 @@ class DjangoJobsRepository:
             pricing_version=job.pricing_version,
             pricing_snapshot=encode_pricing(job.pricing),
             invalid_usage_observed=job.invalid_usage_observed,
+            attempt_id=job.attempt_id,
         )
 
     def save_job(self, job: Job) -> None:
@@ -216,6 +219,7 @@ class DjangoJobsRepository:
             started_at=job.started_at,
             completed_at=job.completed_at,
             invalid_usage_observed=job.invalid_usage_observed,
+            attempt_id=job.attempt_id,
         )
 
     def claim(self, now: datetime) -> Job | None:
@@ -228,8 +232,11 @@ class DjangoJobsRepository:
         row = rows.first()
         if row is None:
             return None
-        AIJob.objects.filter(pk=row.pk).update(status="running", started_at=now)
-        row.status, row.started_at = "running", now
+        attempt_id = uuid4()
+        AIJob.objects.filter(pk=row.pk).update(
+            status="running", started_at=now, attempt_id=attempt_id
+        )
+        row.status, row.started_at, row.attempt_id = "running", now, attempt_id
         return job_state(row)
 
     def quarantine(self, before: datetime) -> None:

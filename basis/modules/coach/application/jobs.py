@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Callable, Protocol
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from basis.modules.accounts.public import AccountLocks
 from basis.modules.athletes.public import BillingProfiles
@@ -217,6 +217,8 @@ class Jobs:
         data: ProviderReply | None = None,
         error: str = "",
         definitive: bool = False,
+        *,
+        attempt_id: UUID | None = None,
     ) -> Job:
         with self.uow() as work:
             original = self.repo.job(job_id)
@@ -228,9 +230,17 @@ class Jobs:
             self.accounts.lock(original.owner)
             job = self.repo.lock_job(job_id)
             usage = self.repo.lock_usage(job.usage_period)
-            if job.status != "running":
+            if (job.attempt_id is not None or attempt_id is not None) and (
+                job.attempt_id != attempt_id
+            ):
                 work.commit()
                 return job
+            late = job.status == "uncertain" and attempt_id is not None
+            if job.status != "running" and not late:
+                work.commit()
+                return job
+            if attempt_id is not None:
+                job.attempt_id = None
             if data is None and not definitive:
                 job.status, job.error = (
                     "uncertain",
@@ -295,6 +305,11 @@ class Jobs:
                     self.repo.save_job(job)
                     work.commit()
                     return job
+            if late:
+                # A quarantined return is evidence, not an automatic settlement.
+                self.repo.save_job(job)
+                work.commit()
+                return job
             try:
                 require_release(job, usage, fund, cost)
             except CoachInvalid:
@@ -338,6 +353,8 @@ class Jobs:
             try:
                 if job.status != "uncertain":
                     raise CoachInvalid("El job ya no está uncertain; no se ajustan saldos.")
+                if job.attempt_id is not None:
+                    raise CoachInvalid("Intento abierto; reserva retenida hasta su cierre seguro.")
                 if job.invalid_usage_observed is True:
                     raise CoachInvalid(
                         "Uso inválido recibido; la evidencia y reserva permanecen retenidas."
@@ -434,7 +451,7 @@ class Jobs:
             pricing = job_pricing(job)
         except CoachInvalid:
             # An unverifiable pending policy must never reach the provider.
-            self.settle(job.id)
+            self.settle(job.id, attempt_id=job.attempt_id)
             with self.uow() as work:
                 self.repo.block()
                 work.commit()
@@ -445,6 +462,7 @@ class Jobs:
                 job.id,
                 error="El acceso activo terminó antes de procesar esta consulta.",
                 definitive=True,
+                attempt_id=job.attempt_id,
             )
             return True
         usage = self.repo.usage(job.usage_period)
@@ -462,13 +480,14 @@ class Jobs:
                 job.id,
                 error="El período cambió antes de procesar la consulta. Solicita una nueva revisión.",
                 definitive=True,
+                attempt_id=job.attempt_id,
             )
             return True
         try:
             data = self.provider.call(
                 job.kind, job.prompt, job.context, job.requested_model, pricing
             )
-            job = self.settle(job.id, data)
+            job = self.settle(job.id, data, attempt_id=job.attempt_id)
             if (
                 job.status == "succeeded"
                 and job.kind == "plan"
@@ -480,9 +499,14 @@ class Jobs:
                     self.repo.save_job(job)
                     work.commit()
         except ProviderRejected:
-            self.settle(job.id, error="El proveedor rechazó la solicitud.", definitive=True)
+            self.settle(
+                job.id,
+                error="El proveedor rechazó la solicitud.",
+                definitive=True,
+                attempt_id=job.attempt_id,
+            )
         except (ProviderAmbiguous, CoachInvalid):
-            self.settle(job.id)
+            self.settle(job.id, attempt_id=job.attempt_id)
         return True
 
     def quarantine_stale_jobs(self) -> None:

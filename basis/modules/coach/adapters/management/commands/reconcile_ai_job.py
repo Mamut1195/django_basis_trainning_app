@@ -53,6 +53,7 @@ class Command(BaseCommand):
                             "pricing": encode_pricing(job.pricing),
                             "reported_model": job.reported_model,
                             "invalid_usage_observed": job.invalid_usage_observed,
+                            "attempt_open": job.attempt_id is not None,
                             "service_blocked": service.repo.blocked(),
                             "reconciliation": {
                                 "key": record.command.key,
