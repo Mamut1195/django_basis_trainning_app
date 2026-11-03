@@ -7,11 +7,12 @@ import platform
 import subprocess
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from hashlib import sha256
 from importlib.metadata import version
 from pathlib import Path
 from time import perf_counter_ns
-from typing import Literal
+from typing import Literal, cast
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -30,8 +31,10 @@ from basis.modules.athletes.adapters.models import AthleteSettings
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.billing.adapters.models import BillingAccount
 from basis.modules.coach.adapters.context_wire import decode_context, encode_context
+from basis.modules.coach.adapters.jobs import decode_pricing
 from basis.modules.coach.adapters.models import AIJob, PlanProposal, TrialFund, UsagePeriod
 from basis.modules.coach.adapters.proposal_actions import accept_proposal, review_proposal
+from basis.modules.coach.domain.jobs import JobKind, TokenUsage, usage_cost
 from basis.modules.coach.domain.prompts import INSTRUCTIONS_VERSION, PLAN_FORMAT, SYSTEM
 from basis.modules.training.adapters.models import (
     Block,
@@ -233,6 +236,14 @@ class SimulatedHarness:
         job.refresh_from_db()
         usage = UsagePeriod.objects.get(pk=job.usage_period_id)
         return {
+            "job_id": str(job.pk),
+            "owner_id": job.owner_id,
+            "request_key": str(job.request_key),
+            "usage_period_id": job.usage_period_id,
+            "trial_fund_id": job.trial_fund_id,
+            "kind": job.kind,
+            "pricing_version": job.pricing_version,
+            "pricing_snapshot": job.pricing_snapshot,
             "status": job.status,
             "cost": str(job.cost) if job.cost is not None else None,
             "reserved": str(usage.reserved),
@@ -240,6 +251,8 @@ class SimulatedHarness:
             "reservation": str(job.reservation),
             "input_tokens": job.input_tokens,
             "output_tokens": job.output_tokens,
+            "cache_hit_tokens": job.cache_hit_tokens,
+            "invalid_usage_observed": job.invalid_usage_observed,
             "reported_model": job.reported_model,
             "attempt_open": job.attempt_id is not None,
             "error": job.error,
@@ -604,6 +617,165 @@ class SimulatedHarness:
         result.check(2, "operation", "error_recorded", bool(after["error"]), True)
         result.check(2, "operation", "no_active_attempt_after_return", after["attempt_open"], False)
 
+    def known_settlement(
+        self,
+        result: CaseResult,
+        before: dict[str, object],
+        after: dict[str, object],
+        after_second: dict[str, object],
+        dispatched: list[dict[str, object]],
+    ) -> None:
+        # Anchor the oracle before either worker: never derive a charge from an
+        # already-settled job/ledger, nor infer usage from the controlled text.
+        evidence: dict[str, object] = {"before": before, "received_calls": dispatched}
+        result.artifacts["known_usage_settlement"] = evidence
+        result.check(2, "operation", "known_usage_dispatch_count", len(dispatched), 1)
+        if len(dispatched) != 1:
+            return
+        call = dispatched[0]
+        identity = ("job_id", "owner_id", "request_key")
+        result.check(
+            2,
+            "operation",
+            "known_usage_dispatch_identity",
+            {key: call.get(key) for key in identity},
+            {key: before[key] for key in identity},
+        )
+        reply = call.get("controlled_reply")
+        pricing = decode_pricing(before["pricing_snapshot"])
+        kind = before["kind"]
+        valid_origin = (
+            isinstance(reply, dict)
+            and isinstance(reply.get("usage"), dict)
+            and pricing is not None
+            and pricing.version == before["pricing_version"]
+            and kind in ("short", "plan")
+        )
+        result.check(2, "operation", "known_usage_evidence_present", valid_origin, True)
+        if not valid_origin:
+            return
+        assert isinstance(reply, dict) and pricing is not None
+        counts = reply["usage"]
+        assert isinstance(counts, dict)
+        tokens = (
+            counts.get("prompt_tokens"),
+            counts.get("completion_tokens"),
+            counts.get("prompt_cache_hit_tokens", 0),
+        )
+        result.check(
+            2,
+            "operation",
+            "known_usage_integer_tokens",
+            all(type(value) is int for value in tokens),
+            True,
+        )
+        if any(type(value) is not int for value in tokens):
+            return
+        observed = TokenUsage(*(cast(int, value) for value in tokens))
+        # Existing domain contract supplies validation, rates and exact rounding.
+        # Invalid pricing/usage raises and run() retains scenario_execution=FAIL.
+        assert kind in ("short", "plan")
+        cost = usage_cost(
+            observed, cast(JobKind, kind), Decimal(str(before["reservation"])), pricing
+        )
+        evidence.update(
+            observed_usage=asdict(observed),
+            expected_cost=str(cost),
+            pricing_sha256=digest(before["pricing_snapshot"]),
+        )
+        result.check(
+            2,
+            "operation",
+            "known_usage_allowed_model",
+            reply.get("model") in pricing.allowed_models,
+            True,
+        )
+        expected_usage: list[dict[str, object]] = []
+        expected_fund: list[dict[str, object]] = []
+        for key, target in (("usage_period", expected_usage), ("trial_fund", expected_fund)):
+            rows = cast(list[dict[str, object]], before[key])
+            for row in rows:
+                target.append(
+                    {
+                        **row,
+                        "spent": str(Decimal(str(row["spent"])) + cost),
+                        "reserved": str(
+                            Decimal(str(row["reserved"])) - Decimal(str(before["reservation"]))
+                        ),
+                    }
+                )
+        result.check(2, "operation", "known_usage_original_ledger_present", len(expected_usage), 1)
+        result.check(
+            2,
+            "operation",
+            "known_usage_original_fund_present",
+            len(expected_fund),
+            0 if before["trial_fund_id"] is None else 1,
+        )
+        anchors = (
+            "job_id",
+            "owner_id",
+            "request_key",
+            "usage_period_id",
+            "trial_fund_id",
+            "kind",
+            "pricing_version",
+            "pricing_snapshot",
+            "reservation",
+            "short_count",
+            "plan_count",
+        )
+        expected_job = {key: before[key] for key in anchors}
+        expected_job.update(
+            status="failed",
+            cost=str(cost),
+            input_tokens=observed.input_tokens,
+            output_tokens=observed.output_tokens,
+            cache_hit_tokens=observed.cache_hits,
+            reported_model=reply.get("model"),
+            attempt_open=False,
+            answer="",
+            invalid_usage_observed=False,
+        )
+        evidence.update(
+            expected_job=expected_job,
+            expected_usage_period=expected_usage,
+            expected_trial_fund=expected_fund,
+        )
+        for phase, state in (("after", after), ("after_second_worker", after_second)):
+            prefix = "known_usage_" + phase
+            result.check(
+                2,
+                "operation",
+                prefix + "_spent_delta",
+                str(Decimal(str(state["spent"])) - Decimal(str(before["spent"]))),
+                str(cost),
+            )
+            result.check(
+                2,
+                "operation",
+                prefix + "_reserve_delta",
+                str(Decimal(str(before["reserved"])) - Decimal(str(state["reserved"]))),
+                str(Decimal(str(before["reservation"]))),
+            )
+            result.check(
+                2,
+                "operation",
+                prefix + "_job",
+                {key: state.get(key) for key in expected_job},
+                expected_job,
+            )
+            result.check(
+                2,
+                "operation",
+                prefix + "_original_usage_period",
+                state["usage_period"],
+                expected_usage,
+            )
+            result.check(
+                2, "operation", prefix + "_original_trial_fund", state["trial_fund"], expected_fund
+            )
+
     def errors(self, result: CaseResult) -> None:
         owner = account("636-quota")
         billing = BillingAccount.objects.get(owner=owner)
@@ -659,20 +831,7 @@ class SimulatedHarness:
             result.check(2, "operation", mode + "_no_retry", len(self.calls) - count, 1)
             result.check(2, "operation", mode + "_error_recorded", bool(after["error"]), True)
             if mode == "null_content":
-                result.check(
-                    2,
-                    "operation",
-                    "known_usage_cost_recorded",
-                    after_second["cost"] is not None,
-                    True,
-                )
-                result.check(
-                    2,
-                    "operation",
-                    "known_usage_releases_reserve",
-                    float(str(after_second["reserved"])),
-                    0.0,
-                )
+                self.known_settlement(result, before, after, after_second, self.calls[count:])
             else:
                 result.check(
                     2,
