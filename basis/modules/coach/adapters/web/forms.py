@@ -32,6 +32,12 @@ def rows(value: object) -> list[dict[str, object]]:
 class ProposalReviewForm(forms.Form):
     """Human-readable fields; the client cannot inject arbitrary JSON or foreign IDs."""
 
+    review_token = forms.CharField(required=False, widget=forms.HiddenInput)
+    constraints_reviewed = forms.BooleanField(
+        required=False,
+        label="He revisado equipo, limitaciones y datos faltantes; entiendo los supuestos declarados.",
+    )
+
     def __init__(
         self, data: Mapping[str, object] | None = None, *, content: object, owner: AbstractBaseUser
     ) -> None:

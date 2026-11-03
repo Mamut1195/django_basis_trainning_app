@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import uuid
+from hashlib import sha256
+from typing import cast
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,7 +19,14 @@ from basis.adapters.web.framework import owner, write_required
 from basis.modules.billing.public import ProviderUnavailable
 from basis.modules.coach.adapters.actions import enqueue
 from basis.modules.coach.adapters.models import AIJob, PlanProposal
-from basis.modules.coach.adapters.proposal_actions import edit_and_accept_proposal, reject_proposal
+from basis.modules.coach.adapters.proposal_actions import (
+    accept_proposal,
+    comparison,
+    edit_and_accept_proposal,
+    reject_proposal,
+    review_proposal,
+)
+from basis.modules.coach.adapters.proposals import review_key
 from basis.modules.coach.adapters.web.forms import ProposalReviewForm
 
 
@@ -78,17 +88,97 @@ def job_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
 
 @write_required
 def proposal_review(request: HttpRequest, pk: int) -> HttpResponse:
-
     proposal = get_object_or_404(PlanProposal, pk=pk, owner=owner(request))
-    form = ProposalReviewForm(request.POST or None, content=proposal.content, owner=owner(request))
-    if request.method == "POST":
-        if request.POST.get("decision") == "reject":
-            reject_proposal(owner(request), proposal.pk)
-            return redirect("coach")
-        if form.is_valid():
+    if request.method == "GET" and proposal.status != "pending":
+        return render(request, "coach/proposals/review.html", {"proposal": proposal})
+    key = review_key(proposal)
+    token = signing.dumps({"draft": key, "proposal": pk}, salt="coach.proposal-review")
+    form: ProposalReviewForm | None = None
+    changes: list[tuple[str, str, str]] = []
+    error = ""
+    compared = False
+    status = 200
+
+    def candidate_key(content: object) -> str:
+        return sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+    try:
+        decision = request.POST.get("decision") if request.method == "POST" else None
+        expected: str | None = None
+        receipt: dict[str, object] = {}
+        if decision in ("accept", "reject"):
             try:
-                plan = edit_and_accept_proposal(owner(request), proposal.pk, form.to_content())
-                return redirect("plan-detail", pk=plan.pk)
-            except ValidationError as exc:
-                form.add_error(None, exc)
-    return render(request, "coach/proposals/review.html", {"proposal": proposal, "form": form})
+                receipt = cast(
+                    dict[str, object],
+                    signing.loads(
+                        request.POST.get("review_token", ""),
+                        salt="coach.proposal-review",
+                        max_age=3600,
+                    ),
+                )
+                if receipt.get("proposal") != pk:
+                    raise signing.BadSignature
+                expected = str(receipt["draft"])
+            except (signing.BadSignature, KeyError, TypeError):
+                raise ValidationError(
+                    "La revisión expiró o no es válida. Recarga y compara de nuevo."
+                ) from None
+        if decision == "reject":
+            reject_proposal(owner(request), pk, expected)
+            return redirect("coach")
+        if proposal.status == "accepted" and decision == "accept":
+            # A retry returns the committed result without parsing old content or
+            # requiring the athlete's profile to still match the old draft.
+            if receipt.get("candidate") != candidate_key(proposal.content):
+                raise ValidationError(
+                    "Esta comparación no corresponde al resultado aceptado. Recarga la revisión."
+                )
+            plan = accept_proposal(owner(request), pk)
+            return redirect("plan-detail", pk=plan.pk)
+        review_proposal(owner(request), pk, expected_review=key)
+        form = ProposalReviewForm(
+            request.POST or None, content=proposal.content, owner=owner(request)
+        )
+        content: object = proposal.content
+        if request.method == "POST":
+            if decision not in ("preview", "accept"):
+                raise ValidationError("Selecciona comparar, aceptar o descartar.")
+            if form.is_valid():
+                content = form.to_content()
+                review_proposal(owner(request), pk, content, expected or key)
+                if decision == "accept":
+                    if receipt.get("candidate") != candidate_key(content):
+                        raise ValidationError(
+                            "Cambiaste campos después de comparar. Compara de nuevo antes de aceptar."
+                        )
+                    if not form.cleaned_data["constraints_reviewed"]:
+                        raise ValidationError(
+                            "Revisa equipo, limitaciones y datos faltantes antes de aceptar."
+                        )
+                    plan = edit_and_accept_proposal(owner(request), pk, content, expected)
+                    return redirect("plan-detail", pk=plan.pk)
+                token = signing.dumps(
+                    {"draft": key, "proposal": pk, "candidate": candidate_key(content)},
+                    salt="coach.proposal-review",
+                )
+                compared = True
+            else:
+                status = 400
+        changes = comparison(owner(request), proposal, content)
+    except ValidationError as exc:
+        error = " ".join(exc.messages)
+        status = 409 if request.method == "POST" else 400
+    return render(
+        request,
+        "coach/proposals/review.html",
+        {
+            "proposal": proposal,
+            "form": form,
+            "changes": changes,
+            "review_error": error,
+            "review_token": token,
+            "compared": compared,
+            "preferences": proposal.job.context.get("preferences") if form is not None else None,
+        },
+        status=status,
+    )
