@@ -28,6 +28,7 @@ from ..domain.jobs import (
     Job,
     JobKind,
     PricingPolicy,
+    PricingSnapshot,
     ProviderAmbiguous,
     ProviderRejected,
     ProviderReply,
@@ -68,9 +69,21 @@ class Contexts(Protocol):
 
 
 class Provider(Protocol):
-    def prepare(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> None: ...
+    def prepare(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> None: ...
     def call(
-        self, kind: JobKind, prompt: str, context: CoachContext, model: str
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
     ) -> ProviderReply | None: ...
 
 
@@ -168,7 +181,7 @@ class Jobs:
             if command.invalid_base_plan:
                 raise CoachInvalid("El plan seleccionado no es v\u00e1lido.")
             context = self.contexts.snapshot(command.owner, command.kind, command.base_plan)
-            self.provider.prepare(command.kind, command.prompt, context, self.config.model)
+            self.provider.prepare(command.kind, command.prompt, context, self.config.model, pricing)
             usage.reserved += reservation
             if command.kind == "short":
                 usage.short_count += 1
@@ -397,7 +410,7 @@ class Jobs:
         if job is None:
             return False
         try:
-            job_pricing(job)
+            pricing = job_pricing(job)
         except CoachInvalid:
             # An unverifiable pending policy must never reach the provider.
             self.settle(job.id)
@@ -431,7 +444,9 @@ class Jobs:
             )
             return True
         try:
-            data = self.provider.call(job.kind, job.prompt, job.context, job.requested_model)
+            data = self.provider.call(
+                job.kind, job.prompt, job.context, job.requested_model, pricing
+            )
             job = self.settle(job.id, data)
             if (
                 job.status == "succeeded"

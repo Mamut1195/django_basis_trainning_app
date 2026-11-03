@@ -10,9 +10,65 @@ from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase, skipUnlessDBFeature
 from django.utils import timezone
 
+from basis.modules.coach.adapters.jobs import encode_pricing
+from basis.modules.coach.domain.jobs import HISTORICAL_PRICING
+
 
 @skipUnlessDBFeature("has_select_for_update_skip_locked")
 class HistoricalPricingMigrationTests(TransactionTestCase):
+    def test_downgrade_preserves_unreconstructible_snapshot_even_without_audit(self) -> None:
+        snapshot = {
+            "version": "synthetic-new-policy",
+            "input_rate": "0.00000060",
+            "hit_rate": "0.000000006",
+            "output_rate": "0.00000120",
+            "input_limit": 4000,
+            "output_limit": 100,
+            "allowed_models": ["deepseek-v4-flash"],
+        }
+        self._assert_snapshot_is_preserved(snapshot, "synthetic-new-policy", "0.00252")
+
+    def test_downgrade_preserves_exact_json_even_for_equivalent_historical_rates(self) -> None:
+        snapshot = encode_pricing(HISTORICAL_PRICING.freeze("short"))
+        assert snapshot is not None
+        self._assert_snapshot_is_preserved(snapshot, "flash-peak-2026-10-17", "0.003")
+
+    def test_downgrade_cannot_turn_missing_snapshot_into_identified_policy(self) -> None:
+        self._assert_snapshot_is_preserved(None, "flash-peak-2026-10-17", "0.003")
+
+    def _assert_snapshot_is_preserved(
+        self, snapshot: dict[str, object] | None, version: str, reservation: str
+    ) -> None:
+        target = [("basis_coach", "0002_frozen_pricing_reconciliation")]
+        executor = MigrationExecutor(connection)
+        apps = executor.loader.project_state(target).apps
+        owner = get_user_model().objects.create_user(username="migration-new-snapshot")
+        usage = apps.get_model("basis_coach", "UsagePeriod").objects.create(
+            owner_id=owner.pk, key="new", reserved=reservation
+        )
+        Job = apps.get_model("basis_coach", "AIJob")
+        job = Job.objects.create(
+            id=uuid4(),
+            owner_id=owner.pk,
+            request_key=uuid4(),
+            kind="short",
+            prompt="fixture",
+            context={},
+            usage_period_id=usage.pk,
+            reservation=reservation,
+            requested_model="deepseek-v4-flash",
+            pricing_version=version,
+            pricing_snapshot=snapshot,
+        )
+        self.assertFalse(apps.get_model("basis_coach", "AIReconciliation").objects.exists())
+        try:
+            with self.assertRaisesRegex(IrreversibleError, "snapshot"):
+                executor.migrate([("basis_coach", "0001_initial")])
+            job.refresh_from_db()
+            self.assertEqual(job.pricing_snapshot, snapshot)
+        finally:
+            MigrationExecutor(connection).migrate(target)
+
     def test_schema_downgrade_cannot_remove_existing_reconciliation_history(self) -> None:
         executor = MigrationExecutor(connection)
         apps = executor.loader.project_state(
@@ -96,6 +152,11 @@ class HistoricalPricingMigrationTests(TransactionTestCase):
             )
             for pk in ids[1:]:
                 self.assertIsNone(Job.objects.get(pk=pk).pricing_snapshot)
+            before = list(
+                Job.objects.order_by("pk").values_list(
+                    "pk", "pricing_snapshot", "pricing_version", "cost", "reservation", "status"
+                )
+            )
             # A reversible schema rollout preserves pre-existing amounts/versions.
             executor = MigrationExecutor(connection)
             executor.migrate([("basis_coach", "0001_initial")])
@@ -106,3 +167,12 @@ class HistoricalPricingMigrationTests(TransactionTestCase):
             )
         finally:
             MigrationExecutor(connection).migrate(target)
+        apps = MigrationExecutor(connection).loader.project_state(target).apps
+        after = list(
+            apps.get_model("basis_coach", "AIJob")
+            .objects.order_by("pk")
+            .values_list(
+                "pk", "pricing_snapshot", "pricing_version", "cost", "reservation", "status"
+            )
+        )
+        self.assertEqual(after, before)

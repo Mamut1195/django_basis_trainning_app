@@ -29,7 +29,7 @@ from basis.modules.coach.adapters.proposal_actions import (
 )
 from basis.modules.coach.adapters.provider import DeepSeekProvider, decode_reply, request_body
 from basis.modules.coach.application.proposals import CreateProposal
-from basis.modules.coach.domain.jobs import ProviderAmbiguous, ProviderRejected
+from basis.modules.coach.domain.jobs import HISTORICAL_PRICING, ProviderAmbiguous, ProviderRejected
 from basis.modules.training.adapters.models import Goal, TrainingPlan
 from basis.modules.training.adapters.planning_actions import build_proposal, revise
 from basis.shared.identifiers import AccountId, JobId
@@ -165,14 +165,17 @@ class CoachEdgeTests(TestCase):
             return httpx.Client(transport=httpx.MockTransport(handle), timeout=timeout)
 
         result = DeepSeekProvider("test-not-a-credential", client).call(
-            "short", "Hi", context, "deepseek-flash"
+            "short", "Hi", context, "deepseek-flash", HISTORICAL_PRICING.freeze("short")
         )
         self.assertEqual(len(requests), 1)
         self.assertIsNotNone(result)
         assert result is not None
         self.assertEqual(result.answer, "answer")
         self.assertEqual(
-            json.loads(requests[0].content), request_body("short", "Hi", context, "deepseek-flash")
+            json.loads(requests[0].content),
+            request_body(
+                "short", "Hi", context, "deepseek-flash", HISTORICAL_PRICING.freeze("short")
+            ),
         )
 
     def test_timeout_is_ambiguous_and_provider_rejection_definitive(self) -> None:
@@ -190,7 +193,7 @@ class CoachEdgeTests(TestCase):
                     ProviderRejected if code == 429 else ProviderAmbiguous
                 ) as caught:
                     DeepSeekProvider("secret-test", client).call(
-                        "short", "Hi", context, "deepseek-flash"
+                        "short", "Hi", context, "deepseek-flash", HISTORICAL_PRICING.freeze("short")
                     )
                 self.assertNotIn("private", str(caught.exception))
                 self.assertNotIn("secret", str(caught.exception))

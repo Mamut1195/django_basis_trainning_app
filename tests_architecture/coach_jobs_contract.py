@@ -416,6 +416,9 @@ class JobsSettlementContract:
                 TokenUsage(4001, 0),
                 TokenUsage(1, 1501),
                 TokenUsage(True, 0),
+                TokenUsage(10**40, 0),
+                TokenUsage(0, 10**40),
+                TokenUsage(1, 0, 10**40),
             )
         ):
             command = replace(
@@ -424,6 +427,7 @@ class JobsSettlementContract:
             record = self.service.reconcile(command, apply=True)
             self.assertEqual((record.outcome, record.cost), ("retained", None))
             self.assertEqual(self.repository.reconciliation(job.id, command.key), record)
+            self.assertEqual(self.service.reconcile(command, apply=True), record)
         self.assertEqual(self.repository.job(job.id), job)
         self.assertEqual(self.repository.usage(before.id), before)
 

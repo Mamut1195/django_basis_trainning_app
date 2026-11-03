@@ -185,6 +185,40 @@ class ReconciliationCommandTests(TestCase):
             self.assertIsNone(decode_pricing({**data, field: value}))
         self.assertIsNone(decode_pricing({}))
 
+    def test_enormous_usage_is_retained_audited_and_idempotent_in_cli(self) -> None:
+        before = self.service.repo.usage(self.job.usage_period)
+        arguments = (
+            "--key",
+            "enormous-input",
+            "--actor",
+            "admin:test",
+            "--reference",
+            "fixture:huge-usage",
+            "--evidence",
+            "Synthetic out-of-budget usage",
+            "--decision",
+            "usage",
+            "--reported-model",
+            "deepseek-v4-flash",
+            "--input-tokens",
+            str(10**40),
+            "--output-tokens",
+            "0",
+            "--cache-hits",
+            "0",
+            "--apply",
+        )
+        result = self.command(*arguments)
+        self.assertEqual((result["outcome"], result["cost"]), ("retained", None))
+        self.assertEqual(self.command(*arguments), result)
+        self.assertEqual(AIReconciliation.objects.count(), 1)
+        row = AIReconciliation.objects.get()
+        tokens = row.token_usage
+        assert isinstance(tokens, dict)
+        self.assertEqual(tokens["input_tokens"], 10**40)
+        self.assertEqual(self.service.repo.usage(self.job.usage_period), before)
+        self.assertEqual(self.service.repo.job(self.job.id), self.job)
+
     def test_aggregate_ledger_matches_pending_uncertain_and_effective_settlements(self) -> None:
         for trial in (False, True):
             with self.subTest(trial=trial):

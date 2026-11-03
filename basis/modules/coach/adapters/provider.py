@@ -7,9 +7,9 @@ import httpx
 
 from ..domain.context import CoachContext
 from ..domain.jobs import (
-    LIMITS,
     CoachInvalid,
     JobKind,
+    PricingSnapshot,
     ProviderAmbiguous,
     ProviderRejected,
     ProviderReply,
@@ -24,8 +24,11 @@ class ClientFactory(Protocol):
 
 
 def request_body(
-    kind: JobKind, prompt: str, context: CoachContext, model: str
+    kind: JobKind, prompt: str, context: CoachContext, model: str, pricing: PricingSnapshot
 ) -> dict[str, object]:
+    pricing.validate()
+    if model not in pricing.allowed_models:
+        raise CoachInvalid("El modelo no pertenece a la política congelada.")
     if context.schema_version >= 2 and (
         context.instructions_version != INSTRUCTIONS_VERSION
         or context.system_sha256 != instructions_digest(SYSTEM)
@@ -46,12 +49,12 @@ def request_body(
             {"role": "user", "content": message},
         ],
         "thinking": {"type": "disabled"},
-        "max_tokens": LIMITS[kind][1],
+        "max_tokens": pricing.output_limit,
         "stream": False,
     }
     if kind == "plan":
         body["response_format"] = {"type": "json_object"}
-    if len(json.dumps(body, ensure_ascii=False).encode()) + 128 > LIMITS[kind][0]:
+    if len(json.dumps(body, ensure_ascii=False).encode()) + 128 > pricing.input_limit:
         raise CoachInvalid(
             "El contexto supera el presupuesto. Reduce la consulta o completa un objetivo m\u00e1s concreto."
         )
@@ -98,14 +101,26 @@ class DeepSeekProvider:
     def __init__(self, credential: str, client_factory: ClientFactory = httpx.Client) -> None:
         self.credential, self.client_factory = credential, client_factory
 
-    def prepare(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> None:
-        request_body(kind, prompt, context, model)
+    def prepare(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> None:
+        request_body(kind, prompt, context, model, pricing)
 
     def call(
-        self, kind: JobKind, prompt: str, context: CoachContext, model: str
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
     ) -> ProviderReply | None:
         try:
-            body = request_body(kind, prompt, context, model)
+            body = request_body(kind, prompt, context, model, pricing)
             with self.client_factory(timeout=httpx.Timeout(90, connect=10)) as client:
                 response = client.post(
                     "https://api.deepseek.com/chat/completions",

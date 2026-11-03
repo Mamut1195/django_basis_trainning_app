@@ -13,6 +13,7 @@ from basis.modules.coach.adapters.context_wire import decode_context, encode_con
 from basis.modules.coach.adapters.provider import decode_reply
 from basis.modules.coach.adapters.provider import request_body as encode_request
 from basis.modules.coach.domain.jobs import (
+    HISTORICAL_PRICING,
     HIT_RATE,
     INPUT_RATE,
     LIMITS,
@@ -48,7 +49,10 @@ def context_snapshot(owner: AbstractUser, kind: JobKind = "short") -> dict[str, 
 
 def request_body(kind: JobKind, prompt: str, context: object, model: str) -> dict[str, object]:
     try:
-        return encode_request(kind, prompt, decode_context(context), model)
+        # Legacy preview only; durable dispatch passes the job's explicit snapshot.
+        return encode_request(
+            kind, prompt, decode_context(context), model, HISTORICAL_PRICING.freeze(kind)
+        )
     except CoachInvalid as error:
         raise ValidationError(str(error)) from None
 

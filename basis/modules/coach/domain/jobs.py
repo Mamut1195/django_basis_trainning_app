@@ -257,18 +257,19 @@ def usage_cost(
     pricing = pricing or HISTORICAL_PRICING.freeze(kind)
     pricing.validate()
     values = (usage.input_tokens, usage.output_tokens, usage.cache_hits)
-    if any(type(n) is not int or n < 0 for n in values) or usage.cache_hits > usage.input_tokens:
+    if (
+        any(type(n) is not int or n < 0 for n in values)
+        or usage.cache_hits > usage.input_tokens
+        or usage.input_tokens > pricing.input_limit
+        or usage.output_tokens > pricing.output_limit
+    ):
         raise CoachInvalid
     cost = (
         (usage.input_tokens - usage.cache_hits) * pricing.input_rate
         + usage.cache_hits * pricing.hit_rate
         + usage.output_tokens * pricing.output_rate
     ).quantize(Decimal("0.00000001"), rounding=ROUND_CEILING)
-    if (
-        usage.input_tokens > pricing.input_limit
-        or usage.output_tokens > pricing.output_limit
-        or cost > reservation
-    ):
+    if cost > reservation:
         raise CoachInvalid
     return cost
 

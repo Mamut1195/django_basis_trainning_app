@@ -10,24 +10,35 @@ from django.apps.registry import Apps
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 
 
+def historical_policy(kind: str, version: str, model: str, reservation: Decimal) -> dict[str, object] | None:
+    limits = {'short': (4000, 1500, Decimal('0.003')), 'plan': (8000, 3000, Decimal('0.006'))}
+    if (version != 'flash-peak-2026-10-17' or model not in ('deepseek-flash', 'deepseek-v4-flash')
+            or kind not in limits or reservation != limits[kind][2]):
+        return None
+    inputs, outputs, _ = limits[kind]
+    return {
+        'version': 'flash-peak-2026-10-17',
+        'input_rate': '0.00000030', 'hit_rate': '0.000000006',
+        'output_rate': '0.00000120', 'input_limit': inputs, 'output_limit': outputs,
+        'allowed_models': ['deepseek-flash', 'deepseek-v4-flash'],
+    }
+
+
 def historical_snapshot(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     # Frozen LOCAL policy from 0001/source at fb9c17e, never live provider prices.
     # Only unambiguous historic anchors qualify; never recalculate prior costs.
     Job = apps.get_model('basis_coach', 'AIJob')
-    for kind, inputs, outputs, reservation in (
-        ('short', 4000, 1500, Decimal('0.003')),
-        ('plan', 8000, 3000, Decimal('0.006')),
+    for kind, reservation in (
+        ('short', Decimal('0.003')),
+        ('plan', Decimal('0.006')),
     ):
+        policy = historical_policy(kind, 'flash-peak-2026-10-17', 'deepseek-flash', reservation)
+        assert policy is not None
         Job.objects.using(schema_editor.connection.alias).filter(
             pricing_version='flash-peak-2026-10-17', kind=kind,
             requested_model__in=('deepseek-flash', 'deepseek-v4-flash'),
             reservation=reservation, pricing_snapshot__isnull=True,
-        ).update(pricing_snapshot={
-            'version': 'flash-peak-2026-10-17',
-            'input_rate': '0.00000030', 'hit_rate': '0.000000006',
-            'output_rate': '0.00000120', 'input_limit': inputs, 'output_limit': outputs,
-            'allowed_models': ['deepseek-flash', 'deepseek-v4-flash'],
-        })
+        ).update(pricing_snapshot=policy)
 
 
 def install_guards(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
@@ -63,8 +74,18 @@ def install_guards(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
 
 def remove_guards(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     audit = apps.get_model('basis_coach', 'AIReconciliation')
+    job_model = apps.get_model('basis_coach', 'AIJob')
+    if schema_editor.connection.vendor == 'postgresql':
+        # Serialize the check and schema reversal against concurrent job/audit writes.
+        schema_editor.execute(f'LOCK TABLE {job_model._meta.db_table}, {audit._meta.db_table} IN ACCESS EXCLUSIVE MODE')
     if audit.objects.using(schema_editor.connection.alias).exists():
         raise IrreversibleError('AI reconciliation history exists; refusing to remove the durable ledger')
+    jobs = job_model.objects.using(schema_editor.connection.alias)
+    for kind, version, model, reservation, snapshot in jobs.values_list(
+        'kind', 'pricing_version', 'requested_model', 'reservation', 'pricing_snapshot'
+    ).iterator():
+        if snapshot != historical_policy(kind, version, model, reservation):
+            raise IrreversibleError('AI pricing snapshot cannot be reconstructed exactly; refusing downgrade')
     if schema_editor.connection.vendor == 'postgresql':
         for model, trigger in (('AIReconciliation', 'coach_audit_immutable'), ('AIJob', 'coach_price_immutable')):
             table = apps.get_model('basis_coach', model)._meta.db_table

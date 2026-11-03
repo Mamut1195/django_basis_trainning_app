@@ -18,6 +18,7 @@ from basis.modules.coach.domain.jobs import (
     Fund,
     Job,
     JobKind,
+    PricingSnapshot,
     ProviderAmbiguous,
     ProviderReply,
     Reconciliation,
@@ -178,10 +179,24 @@ class Ports:
     ) -> CoachContext:
         return CONTEXT
 
-    def prepare(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> None:
+    def prepare(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> None:
         pass
 
-    def call(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> ProviderReply:
+    def call(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> ProviderReply:
         self.calls += 1
         if self.ambiguous:
             raise ProviderAmbiguous
@@ -342,11 +357,24 @@ class JobsTests(JobsContract, JobsSettlementContract, TestCase):
             require_budget("short", usage, fund, True)
 
     def test_invalid_token_values_cannot_be_billed(self) -> None:
-        for usage in (TokenUsage(-1, 0), TokenUsage(1, 0, 2), TokenUsage(4001, 0)):
+        for usage in (
+            TokenUsage(-1, 0),
+            TokenUsage(1, 0, 2),
+            TokenUsage(4001, 0),
+            TokenUsage(10**40, 0),
+            TokenUsage(0, 10**40),
+        ):
             with self.assertRaises(CoachInvalid):
                 usage_cost(usage, "short", reservation_for("short"))
 
 
 class RejectingProvider(Ports):
-    def prepare(self, kind: JobKind, prompt: str, context: CoachContext, model: str) -> None:
+    def prepare(
+        self,
+        kind: JobKind,
+        prompt: str,
+        context: CoachContext,
+        model: str,
+        pricing: PricingSnapshot,
+    ) -> None:
         raise CoachInvalid("request too large")

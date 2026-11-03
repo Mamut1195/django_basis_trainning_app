@@ -1,0 +1,112 @@
+"""Frozen job budgets reach the actual HTTP request through an isolated transport."""
+
+import json
+from dataclasses import replace
+from unittest.mock import patch
+from uuid import uuid4
+
+import httpx
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+
+from basis.adapters.django.transactions import DjangoUnitOfWork
+from basis.modules.accounts.adapters.coach import DjangoAccountLocks
+from basis.modules.coach.adapters.actions import request_body as preview_body
+from basis.modules.coach.adapters.context_wire import encode_context
+from basis.modules.coach.adapters.jobs import DjangoJobsRepository
+from basis.modules.coach.adapters.models import AIJob, UsagePeriod
+from basis.modules.coach.adapters.provider import DeepSeekProvider
+from basis.modules.coach.application.jobs import CoachConfiguration, Enqueue, Jobs
+from basis.modules.coach.domain.jobs import HISTORICAL_PRICING, LIMITS, CoachInvalid, PricingPolicy
+from basis.shared.identifiers import AccountId, AIRequestKey
+from tests_architecture.test_coach_jobs import CONTEXT, Ports, Profiles
+
+MODEL = "deepseek-v4-flash"
+
+
+class FrozenProviderPolicyTests(TestCase):
+    def setUp(self) -> None:
+        self.owner = AccountId(get_user_model().objects.create_user(username="frozen-provider").pk)
+        self.requests: list[dict[str, object]] = []
+
+        def respond(request: httpx.Request) -> httpx.Response:
+            self.requests.append(json.loads(request.content))
+            return httpx.Response(
+                200,
+                json={
+                    "model": MODEL,
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 20},
+                    "choices": [{"finish_reason": "stop", "message": {"content": "fixture"}}],
+                },
+            )
+
+        def client(*, timeout: httpx.Timeout) -> httpx.Client:
+            return httpx.Client(transport=httpx.MockTransport(respond), timeout=timeout)
+
+        ports = Ports()
+        self.service = Jobs(
+            DjangoJobsRepository(),
+            DjangoAccountLocks(),
+            ports,
+            Profiles(),
+            ports,
+            DeepSeekProvider("synthetic-not-a-credential", client),
+            ports,
+            ports,
+            DjangoUnitOfWork,
+            CoachConfiguration(True, True, MODEL),
+        )
+        body = preview_body("short", "question", encode_context(CONTEXT), MODEL)
+        body["max_tokens"] = 100
+        self.expected_body = body
+        self.exact_input_bound = len(json.dumps(body, ensure_ascii=False).encode()) + 128
+
+    def policy(self, input_bound: int) -> PricingPolicy:
+        return replace(
+            HISTORICAL_PRICING,
+            version="synthetic-frozen-transport",
+            short_limits=(input_bound, 100),
+        )
+
+    def test_enqueue_worker_uses_frozen_output_and_input_bounds_despite_current_policy(
+        self,
+    ) -> None:
+        self.service.config = replace(
+            self.service.config, pricing=self.policy(self.exact_input_bound)
+        )
+        job = self.service.enqueue(Enqueue(self.owner, "short", "question", AIRequestKey(uuid4())))
+        self.service.config = replace(
+            self.service.config,
+            pricing=replace(
+                HISTORICAL_PRICING,
+                version="synthetic-later",
+                short_limits=(1, 1),
+            ),
+        )
+        self.assertTrue(self.service.process_one())
+        self.assertEqual(self.requests, [self.expected_body])
+        self.assertEqual(self.requests[0]["max_tokens"], 100)
+        self.assertEqual(self.service.repo.job(job.id).status, "succeeded")
+        self.assertEqual(job.pricing.input_limit if job.pricing else None, self.exact_input_bound)
+
+    def test_global_limit_change_between_enqueue_and_call_cannot_change_frozen_request(
+        self,
+    ) -> None:
+        self.service.config = replace(
+            self.service.config, pricing=self.policy(self.exact_input_bound)
+        )
+        job = self.service.enqueue(Enqueue(self.owner, "short", "question", AIRequestKey(uuid4())))
+        with patch.dict(LIMITS, {"short": (1, 1)}):
+            self.assertTrue(self.service.process_one())
+        self.assertEqual(self.requests, [self.expected_body])
+        self.assertEqual(self.service.repo.job(job.id).status, "succeeded")
+
+    def test_enqueue_rejects_one_byte_over_frozen_input_budget_and_rolls_back(self) -> None:
+        self.service.config = replace(
+            self.service.config, pricing=self.policy(self.exact_input_bound - 1)
+        )
+        with self.assertRaisesRegex(CoachInvalid, "presupuesto"):
+            self.service.enqueue(Enqueue(self.owner, "short", "question", AIRequestKey(uuid4())))
+        self.assertFalse(AIJob.objects.exists())
+        self.assertFalse(UsagePeriod.objects.exists())
+        self.assertEqual(self.requests, [])
