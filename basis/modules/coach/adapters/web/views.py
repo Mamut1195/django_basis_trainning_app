@@ -10,14 +10,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.core.exceptions import ValidationError
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from basis.adapters.web import presentation
 from basis.adapters.web.framework import owner, write_required
 from basis.modules.billing.public import ProviderUnavailable
-from basis.modules.coach.adapters.actions import enqueue
+from basis.modules.coach.adapters.actions import cancel, enqueue
 from basis.modules.coach.adapters.models import AIJob, PlanProposal
 from basis.modules.coach.adapters.proposal_actions import (
     accept_proposal,
@@ -28,6 +28,7 @@ from basis.modules.coach.adapters.proposal_actions import (
 )
 from basis.modules.coach.adapters.proposals import review_key
 from basis.modules.coach.adapters.web.forms import ProposalReviewForm
+from basis.modules.coach.domain.jobs import CoachInvalid, JobNotFound
 
 
 @login_required
@@ -64,6 +65,22 @@ def coach_ask(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def job_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
+    return _job_result(request, pk)
+
+
+@login_required
+@require_POST
+def job_cancel(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
+    try:
+        cancel(owner(request), pk)
+    except JobNotFound:
+        raise Http404 from None
+    except CoachInvalid as exc:
+        return _job_result(request, pk, conflict=str(exc))
+    return redirect("job-detail", pk=pk)
+
+
+def _job_result(request: HttpRequest, pk: uuid.UUID, *, conflict: str = "") -> HttpResponse:
     job = get_object_or_404(AIJob, pk=pk, owner=owner(request))
     template = (
         "coach/jobs/_result.html" if request.headers.get("HX-Request") else "coach/jobs/detail.html"
@@ -82,7 +99,9 @@ def job_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
             "job": job,
             "display_answer": display_answer,
             "proposal": PlanProposal.objects.filter(job=job, owner=owner(request)).first(),
+            "cancellation_conflict": conflict,
         },
+        status=409 if conflict else 200,
     )
 
 

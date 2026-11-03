@@ -22,11 +22,13 @@ from basis.shared.ports import Clock, UnitOfWork
 from ..domain.context import CoachContext
 from ..domain.jobs import (
     HISTORICAL_PRICING,
+    CancellationConflict,
     CoachInvalid,
     CoachUnavailable,
     Fund,
     Job,
     JobKind,
+    JobNotFound,
     PricingPolicy,
     PricingSnapshot,
     ProviderAmbiguous,
@@ -38,6 +40,7 @@ from ..domain.jobs import (
     Usage,
     job_pricing,
     require_budget,
+    require_cancellation,
     require_release,
     usage_cost,
 )
@@ -208,6 +211,50 @@ class Jobs:
                 invalid_usage_observed=False,
             )
             self.repo.create(job)
+            work.commit()
+            return job
+
+    def cancel(self, owner: AccountId, job_id: JobId) -> Job:
+        with self.uow() as work:
+            original = self.repo.job(job_id)
+            if original.owner != owner:
+                raise JobNotFound
+            fund = (
+                self.repo.lock_fund(original.trial_fund)
+                if original.trial_fund is not None
+                else None
+            )
+            self.accounts.lock(owner)
+            job = self.repo.lock_job(job_id)
+            if job.owner != owner:
+                raise JobNotFound
+            if job.attempt_id is not None:
+                raise CancellationConflict("La consulta ya comenzó; su reserva se conserva.")
+            if job.status == "cancelled":
+                work.commit()
+                return job
+            if job.status != "pending":
+                raise CancellationConflict(
+                    "La consulta ya no está pendiente y no se puede cancelar."
+                )
+            if (job.trial_fund, job.usage_period) != (
+                original.trial_fund,
+                original.usage_period,
+            ):
+                raise CoachInvalid("Cambió el origen de la reserva; reserva retenida.")
+            usage = self.repo.lock_usage(job.usage_period)
+            require_cancellation(job, usage, fund)
+            usage.reserved -= job.reservation
+            if job.kind == "short":
+                usage.short_count -= 1
+            else:
+                usage.plan_count -= 1
+            self.repo.save_usage(usage)
+            if fund is not None:
+                fund.reserved -= job.reservation
+                self.repo.save_fund(fund)
+            job.status, job.cost, job.completed_at = "cancelled", Decimal(0), self.clock.now()
+            self.repo.save_job(job)
             work.commit()
             return job
 

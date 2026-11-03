@@ -32,6 +32,14 @@ class CoachUnavailable(Exception):
     pass
 
 
+class JobNotFound(Exception):
+    pass
+
+
+class CancellationConflict(CoachInvalid):
+    pass
+
+
 class ProviderRejected(Exception):
     pass
 
@@ -304,3 +312,24 @@ def require_release(job: Job, usage: Usage, fund: Fund | None, cost: Decimal) ->
         )
     ):
         raise CoachInvalid("Saldos incompatibles; reserva retenida.")
+
+
+def require_cancellation(job: Job, usage: Usage, fund: Fund | None) -> None:
+    """Validate the original ledgers and unused action before any adjustment."""
+    amounts = [job.reservation, usage.spent, usage.reserved]
+    if fund is not None:
+        amounts.extend((fund.spent, fund.reserved, fund.cap))
+    if (
+        any(not amount.is_finite() or amount < 0 for amount in amounts)
+        or job.kind not in ("short", "plan")
+        or usage.short_count < 0
+        or usage.plan_count < 0
+        or (usage.short_count if job.kind == "short" else usage.plan_count) < 1
+        or job.started_at is not None
+        or job.completed_at is not None
+        or job.reported_model
+        or job.answer
+        or any(n is not None for n in (job.input_tokens, job.output_tokens, job.cache_hit_tokens))
+    ):
+        raise CoachInvalid("Consulta o saldos incompatibles; reserva retenida.")
+    require_release(job, usage, fund, Decimal(0))

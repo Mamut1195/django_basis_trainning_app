@@ -28,6 +28,7 @@ from ..domain.jobs import (
     Fund,
     Job,
     JobKind,
+    JobNotFound,
     PricingSnapshot,
     Reconcile,
     Reconciliation,
@@ -182,10 +183,16 @@ class DjangoJobsRepository:
         )
 
     def job(self, job: JobId) -> Job:
-        return job_state(AIJob.objects.get(pk=job))
+        try:
+            return job_state(AIJob.objects.get(pk=job))
+        except AIJob.DoesNotExist:
+            raise JobNotFound from None
 
     def lock_job(self, job: JobId) -> Job:
-        return job_state(AIJob.objects.select_for_update().get(pk=job))
+        try:
+            return job_state(AIJob.objects.select_for_update().get(pk=job))
+        except AIJob.DoesNotExist:
+            raise JobNotFound from None
 
     def create(self, job: Job) -> None:
         AIJob.objects.create(

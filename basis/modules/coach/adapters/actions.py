@@ -37,6 +37,7 @@ __all__ = (
     "context_snapshot",
     "request_body",
     "enqueue",
+    "cancel",
     "settle",
     "process_one",
     "quarantine_stale_jobs",
@@ -100,6 +101,11 @@ def enqueue(
         raise ProviderUnavailable(str(error)) from None
     except CoachInvalid as error:
         raise ValidationError(str(error)) from None
+
+
+def cancel(owner: AbstractUser, job_id: UUID) -> AIJob:
+    result = jobs(httpx.Client).cancel(AccountId(owner.pk), JobId(job_id))
+    return AIJob.objects.get(pk=result.id, owner_id=owner.pk)
 
 
 def settle(job_id: UUID, data: object = None, error: str = "", definitive: bool = False) -> AIJob:
