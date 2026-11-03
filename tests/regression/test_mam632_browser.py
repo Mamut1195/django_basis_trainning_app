@@ -205,3 +205,51 @@ class OfflineDeliveryBrowserTests(StaticLiveServerTestCase):
                 a.close()
                 b.close()
                 browser.close()
+
+    def test_completed_offline_history_survives_reload_and_sync(self) -> None:
+        user = account("mam632-completed-history")
+        other = account("mam632-history-other")
+        item = session(user)
+        item.title = "Historia offline ficticia"
+        item.save(update_fields=["title"])
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=os.environ["BROWSER_EXECUTABLE"], headless=True
+            )
+            context, page = self.prepare(browser, user, item)
+            try:
+                page.get_by_role("button", name="Abrir sesi\u00f3n", exact=True).click()
+                page.locator("#offline-duration_seconds").fill("740")
+                page.get_by_role("button", name="Completar sesi\u00f3n", exact=True).click()
+                self.wait_async(page, "async () => (await window.basisPending()) === 1")
+                page.reload()
+                page.get_by_role("button", name="Abrir sesi\u00f3n", exact=True).click()
+                self.assertEqual(page.locator("#offline-duration_seconds").input_value(), "740")
+                self.assertIn("Completada", page.locator("#offline-sessions").inner_text())
+                context.set_offline(False)
+                self.wait_async(page, "async () => (await window.basisPending()) === 0")
+                context.set_offline(True)
+                page.reload()
+                page.get_by_role("button", name="Abrir sesi\u00f3n", exact=True).click()
+                self.assertEqual(page.locator("#offline-duration_seconds").input_value(), "740")
+                self.assertTrue(page.locator("#offline-duration_seconds").is_disabled())
+                self.assertIn(
+                    "historial completado", page.locator("#offline-editor").inner_text().lower()
+                )
+                context.set_offline(False)
+                page.goto(self.live_server_url + "/progress/")
+                self.assertIn("Historia offline ficticia", page.locator("body").inner_text())
+                self.assertIn("Completada", page.locator("body").inner_text())
+                second = browser.new_context()
+                try:
+                    other_page = second.new_page()
+                    self.login(other_page, other.username)
+                    other_page.goto(self.live_server_url + "/progress/")
+                    self.assertNotIn(
+                        "Historia offline ficticia", other_page.locator("body").inner_text()
+                    )
+                finally:
+                    second.close()
+            finally:
+                context.close()
+                browser.close()

@@ -51,3 +51,35 @@ Sobre el mismo padre `2b9ed1c15c87183df9b8be7f1163dcd9bd246c43`, sin cambios de 
 La batería de servidor (`tests.regression.test_pwa basis.bootstrap.tests.test_sync_web basis.bootstrap.tests.test_sync_receipts basis.modules.sync.adapters.test_wire`) ejecutó **22 OK** en PostgreSQL. `mypy --no-incremental` core 130 y Django 412 archivos, checker de arquitectura, ocho contratos Import Linter, `ruff check .` y `ruff format --check` (420 archivos) pasaron. El primer mypy Django detectó anotaciones ausentes y reutilización de métodos con self incompatible en el archivo de prueba; se corrigió y volvió a pasar. Registros nuevos: `.cache/mam632/server-extended-20261102.log` y `.cache/mam632/delivery-final-20261102.log`.
 
 **NOT RUN:** interrupción durante la recepción o commit en servidor; no se puede inferir del aborto previo ni de la respuesta perdida. También siguen pendientes aceptación del historial completado, navegadores adicionales, dispositivos físicos y SHA integrado, CI remoto y producción.
+
+## Repetición sobre MAM-820 integrado — 2026-11-02
+
+Base `98ea2923f6a675001bc9951f971d8a43759b58a3` (merge MAM-820), con el commit anterior aplicado mediante cherry-pick `685e162`. Worktree `t3/mam632-offline-acceptance`. Se utilizó únicamente PostgreSQL 18.4 local, `basis_wave2_632` y su base de pruebas exclusiva `test_basis_wave2_632`; la inspección previa confirmó que esta última no existía. `config.test_settings`, secreto sintético, `AI_ENABLED=0` y cuentas ficticias. El guard de Python permite conexiones solo a `127.0.0.1`; Chromium usa proxy local cerrado, resolución restringida y red de fondo deshabilitada. Las pruebas web solo accedieron al servidor local. Estos controles no constituyen auditoría de red.
+
+| Comprobación | Resultado de esta repetición |
+| --- | --- |
+| HTTP PWA, sincronización, recibos y codec | VERIFIED: 22 pruebas OK en PostgreSQL, incluida la carrera real de revisión y el rollback al fallar la creación del recibo. |
+| Entrega y conflictos | VERIFIED: batería final de 4 pruebas Chromium OK, incluyendo historial: aborto antes del servidor, respuesta perdida después del 200 con reintento idempotente y dos contextos independientes resolviendo a favor del servidor o del cliente. |
+| Historial completado | VERIFIED: prueba Chromium adicional: completar offline, recargar y recuperar duración y estado, sincronizar, volver a abrir offline con campos bloqueados, encontrar en Progreso y no mostrarlo en otra cuenta. Mientras permanece pendiente, el cliente permite editarlo; el bloqueo comprobado es posterior a la confirmación. |
+| Logout, aislamiento y service worker | VERIFIED: prueba PWA Chromium OK, 15 comprobaciones en `pwa-run/browser-report.json`, incluyendo expiración, limpieza multi-pestaña, logout fallido y exitoso, actualización bloqueada y activación segura. |
+| Corte durante recepción o commit | NOT RUN: el aborto previo al servidor y la pérdida de respuesta posterior al 200 no prueban ese momento. El rollback inducido al guardar el recibo comprueba atomicidad de servidor, no una desconexión de red durante commit. |
+| Otros navegadores, dispositivos físicos, instalación, HTTPS desplegado, cuotas/evicción, accesibilidad asistiva, suite completa y CI remoto | NOT RUN. Chromium headless, viewport móvil y contextos separados son emulación, no dispositivos físicos. No se ha integrado este trabajo en main ni se cierra MAM-632. |
+
+Evidencia ignorada por Git conservada en este worktree: `.cache/mam632-wave2/server.log`, `delivery.log`, `history.log`, `history-retry.log`, `delivery-history.log`, `delivery-final.log`, `pwa.log` y `pwa-run/browser-report.json`. `delivery-history.log` registra el primer fallo por selector escrito con `?`; `history.log` registra la expectativa incorrecta de bloqueo antes de confirmar el envío. Ambos se corrigieron sin eliminar la verificación posterior. Se observó el aviso de directorio `staticfiles` ausente; el servidor de pruebas sirvió los recursos y los recorridos pasaron. Un `Broken pipe` aparece en el recorrido de red interrumpida.
+
+Controles adicionales de esta repetición: `ruff check` y `ruff format --check` sobre `tests/regression/test_mam632_browser.py`, `mypy --config-file mypy-django.ini --no-incremental` (414 archivos) y `git diff --check`: VERIFIED. No se ejecutó build ni suite completa.
+
+Para reproducir, preparar una base exclusiva con permiso para crear su base `test_`, verificar que no exista antes y ejecutar secuencialmente. Los wrappers locales `delivery_guarded.py` y `browser_guarded.py` fijan el host de Django a `127.0.0.1`, agregan los argumentos de aislamiento Chromium descritos arriba y activan `BASIS_PWA_BROWSER=1`; `sitecustomize.py` restringe sockets Python. Se copiaron de la evidencia del worktree anterior, sin modificar ese worktree. No reutilizar los nombres de base del ejemplo sin autorización.
+
+```powershell
+$py = 'C:/Users/Jonnathan/Mamut system/django-basis-trainning-app/.venv-win/Scripts/python.exe'
+$env:PYTHONPATH = "$(Resolve-Path .cache/mam632-wave2);$(Get-Location)"
+$env:DJANGO_SETTINGS_MODULE = 'config.test_settings'
+$env:DJANGO_SECRET_KEY = 'mam632-synthetic-local'
+$env:AI_ENABLED = '0'
+$env:DATABASE_URL = 'postgresql://basis_wave0@127.0.0.1:55482/basis_wave2_632'
+$env:HTTP_PROXY = 'http://127.0.0.1:9'; $env:HTTPS_PROXY = 'http://127.0.0.1:9'; $env:NO_PROXY = '127.0.0.1'
+& $py manage.py test tests.regression.test_pwa basis.bootstrap.tests.test_sync_web basis.bootstrap.tests.test_sync_receipts basis.modules.sync.adapters.test_wire --noinput -v 2
+& $py .cache/mam632-wave2/delivery_guarded.py
+& $py .cache/mam632-wave2/browser_guarded.py --output .cache/mam632-wave2/pwa-run-NUEVO --browser-executable 'C:/Users/Jonnathan/AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe'
+```
