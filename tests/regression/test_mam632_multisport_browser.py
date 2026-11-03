@@ -41,6 +41,7 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
         item = session(owner, sport="strength")
         first = item.blocks.get()
         ex = exercise()
+        alternate_exercise = exercise()
         for order in (1, 2):
             StrengthSet.objects.create(
                 block=first, exercise=ex, order=order, target_reps=10, target_kg=20
@@ -67,6 +68,17 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
             '["blocks",0,"sets",0,"actual_reps"]': "8",
             '["blocks",0,"sets",0,"actual_kg"]': "0",
             '["blocks",0,"sets",0,"actual_rir"]': "0",
+            '["blocks",0,"sets",0,"actual_rpe"]': "7.5",
+            '["blocks",0,"sets",0,"actual_rest_seconds"]': "0",
+            '["blocks",0,"sets",0,"isometric_seconds"]': "0",
+            '["blocks",0,"sets",0,"actual_exercise"]': str(alternate_exercise.pk),
+            '["blocks",0,"sets",0,"actual_load_type"]': "external",
+            '["blocks",0,"sets",0,"actual_kind"]': "work",
+            '["blocks",0,"sets",0,"actual_side"]': "left",
+            '["blocks",0,"sets",0,"actual_tempo"]': "3-1-1-0",
+            '["blocks",0,"sets",0,"actual_range_of_motion"]': "parcial",
+            '["blocks",0,"sets",0,"actual_group"]': "grupo ficticio",
+            '["blocks",0,"sets",0,"adaptation_reason"]': "Adaptación ficticia offline",
             '["blocks",0,"sets",1,"actual_reps"]': "7",
             '["blocks",0,"sets",1,"actual_kg"]': "22.5",
             '["blocks",1,"actual","duration_seconds"]': "600",
@@ -163,6 +175,12 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
                 context.set_offline(True)
                 page.goto(self.live_server_url + "/offline/")
                 page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                adaptations = page.locator("details > summary").filter(
+                    has_text="Adaptación real opcional"
+                )
+                adaptations.first.wait_for(state="visible")
+                for summary in adaptations.all():
+                    summary.click()
                 for path, value in values.items():
                     field = page.locator(f"[data-path='{path}']")
                     if field.evaluate("e => e.tagName") == "SELECT":
@@ -238,6 +256,22 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
                 )
                 self.assertIsNone(sets[1]["actual_rir"])
                 self.assertEqual(sets[0]["actual_rir"], 0)
+                self.assertEqual(sets[0]["actual_exercise"], alternate_exercise.pk)
+                original_blocks = cast(list[dict[str, object]], original["blocks"])
+                current_blocks = cast(
+                    list[dict[str, object]], cast(dict[str, object], current)["blocks"]
+                )
+                for before_block, after_block in zip(original_blocks, current_blocks, strict=True):
+                    self.assertEqual(before_block["target"], after_block["target"])
+                    before_sets = cast(list[dict[str, object]], before_block["sets"])
+                    after_sets = cast(list[dict[str, object]], after_block["sets"])
+                    for before_set, after_set in zip(before_sets, after_sets, strict=True):
+                        for key, prescribed_value in before_set.items():
+                            if not key.startswith("actual_") and key not in (
+                                "isometric_seconds",
+                                "adaptation_reason",
+                            ):
+                                self.assertEqual(prescribed_value, after_set[key], key)
                 self.assertEqual(
                     cast(list[dict[str, object]], original["blocks"])[1]["target"],
                     cast(list[dict[str, object]], cast(dict[str, object], current)["blocks"])[1][

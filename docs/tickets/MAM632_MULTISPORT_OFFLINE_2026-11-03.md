@@ -45,3 +45,32 @@ Archivos ignorados por Git en `.cache/mam632-payload/`, conservar junto al workt
 | `pwa/multisport-completed.png` | `fc66a28e99366f3a911143d0153aae2e734063b2518bfa4106f47eab9a27310f` |
 
 Registros `first.log`, `second.log`, `third.log`, `fourth.log`, `final.log` y `guarded-final.log` preservados. `run.py` se copió y adaptó de la referencia de coordinación, sin ejecutar su base. **NOT RUN:** instalación real, teléfono, lector de pantalla, cuota/evicción, otros navegadores, CI/Actions, integración en main, publicación y producción. No se hizo push, PR ni mutación de Linear. La candidata congelada 633/634 no se tocó.
+
+## Revisión e integración de coordinación
+
+Se revisaron los tres commits propios `a128319`, `903b2b0` y `372a162`; se incorporaron en orden como `c77555a`, `cc4b159` y `b1d17d8`. Solo pruebas y documentación. Coordinación comprobó los hashes del runner, log final y JSON del ejecutor; coinciden con la tabla anterior.
+
+Primera repetición en coordinación, todavía sin ampliación propia: **VERIFIED**, una prueba, cero omisiones, 6.512 s, salida0. Ruff/formato y mypy Django focal sin silenciamiento de imports satisfactorios. Fuente funcional `b1d17d8`; no se repitió la suite global por cambios exclusivamente de pruebas.
+
+### Complemento ejecutado: todos los campos editables de serie
+
+Coordinación amplió la misma prueba a los 14 campos reales de la primera serie: reps, kg, RPE, RIR, descanso, isometría; ejercicio realizado, tipo de carga, tipo de serie, lado, tempo, rango, grupo y motivo de adaptación. Se abre el panel opcional mediante su control UI antes de rellenarlo. La segunda serie mantiene ausencia de RIR para distinguirla de cero. El caso compara el payload completo y verifica adicionalmente que objetivos y campos de prescripción de todos los bloques/series permanezcan iguales, aunque cambie el ejercicio realizado.
+
+**VERIFIED:** una prueba Chromium/PostgreSQL, cero omisiones, 15.035 s, salida0; Ruff check/format y mypy Django focal satisfactorios. Este resultado amplía la fila de fuerza anterior, que solo describía la entrega original. Sigue siendo una sesión sintética de seis deportes y una configuración por campo, no todas las combinaciones posibles ni un dispositivo físico. El editor propio de etapas trekking sigue fuera del wire offline y no se presenta como editado aquí. No se modificó producción.
+
+**FAILED de fixture, corregido:** el primer intento ampliado trató de enumerar paneles antes de terminar la apertura asíncrona del editor; el campo opcional permaneció oculto y Playwright agotó su espera. Se añadió una espera explícita a la primera cabecera de adaptación y luego se abrieron los paneles por UI. Mypy detectó además reutilización de un nombre `str` como `object` en la comparación de prescripción; se renombró la variable. Ambas correcciones son exclusivas de pruebas; se conservan los logs previos.
+
+Comando desde coordinación: `.venv-win/Scripts/python.exe -u .cache/wave4-632-payload-integration/run.py test tests.regression.test_mam632_multisport_browser --noinput -v 2`. Runner adaptado exclusivamente a `basis_wave3_integration`/`test_basis_wave3_integration`; guard de base temporal preexistente, HTTPX externo denegado y loopback local permitido. Ninguna conexión a la base del ejecutor ni parada de PostgreSQL. Django destruyó la base temporal en cada ejecución terminada.
+
+| Artefacto local de coordinación | SHA256 |
+| --- | --- |
+| `run.py` | `E383C1C9997E7BDB409CD597FB6CA1D9DFEB37F192C85FE9AF6883D4FCDB6A32` |
+| `verified.log` (repetición inicial) | `69389C248DA4899F01563C4352B053975CCFF8FB7F684EB448AA2B61E816E7D7` |
+| `strength-complete.log` (fallido) | `4B90FAE0A1DF39848350FD04D1D1342BBDB93196F2A7F288313917D328D3E4CB` |
+| `strength-verified.log` (final) | `0EBC8AFD2C27E3E1089421BA7BDE42439C8CD229A4FA174656882CC3C47ABD5A` |
+| `strength-final/multisport-wire.json` | `DCF6F7EFB0B456531C3C38D86B12A4A09B9C7884287511B9C707819B2DFB537C` |
+| `strength-final/multisport-completed.png` | `9A13400E6C6D65DF2CE5348A9BFD35CC5A17E5B3B4F050BDF529CB2EFFE99E10` |
+
+Todos están bajo `.cache/wave4-632-payload-integration/`, ignorados por Git. El test reutilizó inicialmente su directorio `pwa/`, por lo que su JSON/captura corresponden al intento ampliado más reciente; se copiaron a `strength-final/` para conservarlos. Los logs de ambas variantes permanecen separados y los artefactos originales del ejecutor siguen intactos en su worktree. No se afirma conservar un JSON independiente de la primera repetición de coordinación.
+
+MAM-632 sigue abierto por las aceptaciones externas indicadas; main, CI remoto y la rama congelada633/634 no cambian. La mayor cobertura automatizada no equivale a instalación real ni aceptación humana.
