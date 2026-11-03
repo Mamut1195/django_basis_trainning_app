@@ -83,3 +83,21 @@ $env:HTTP_PROXY = 'http://127.0.0.1:9'; $env:HTTPS_PROXY = 'http://127.0.0.1:9';
 & $py .cache/mam632-wave2/delivery_guarded.py
 & $py .cache/mam632-wave2/browser_guarded.py --output .cache/mam632-wave2/pwa-run-NUEVO --browser-executable 'C:/Users/Jonnathan/AppData/Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe'
 ```
+
+## Diseño previo: corte real durante transacción
+
+En una prueba PostgreSQL con servidor HTTP local real, autenticar una cuenta sintética y enviar un cuerpo válido con cookie y CSRF por socket TCP loopback. Un parche limitado a la prueba envolverá `DjangoReceiptRepository.save`: después de escribir el recibo dentro de la transacción, señalará una barrera y esperará su liberación. Desde otra conexión PostgreSQL se comprobará que la sesión anterior y la ausencia del recibo siguen visibles. Con el servidor retenido, el cliente cerrará el socket mediante reset TCP (`SO_LINGER`); se registrará ese cierre antes de liberar la barrera. Un segundo envoltorio observará el retorno de la salida de la unidad de trabajo para esperar el commit, sin temporizaciones arbitrarias. Después se comprobarán la sesión y el único recibo confirmados y se repetirá el mismo cuerpo y `mutation_id` por una nueva conexión HTTP autenticada, comprobando respuesta y ausencia de duplicación.
+
+La secuencia acredita cierre local del socket durante una transacción abierta y el resultado observado del servidor y reintento. No demuestra un corte de alimentación, un cliente navegador ni una interrupción exactamente dentro de la instrucción COMMIT. Los límites de espera solo sirven para fallar ante bloqueo; no establecen el orden. La fixture no modifica producción.
+
+Refuerzo del diseño, antes de ejecutar la variante: capturar el socket aceptado por el servidor de prueba y observar allí el reset mediante `recv(MSG_PEEK)` antes de liberar la barrera. Esta observación consume el error de socket; es instrumentación de la fixture, no una afirmación sobre cómo reaccionaría una implementación de servidor distinta.
+
+### Resultado de la ejecución delimitada
+
+**VERIFIED:** en PostgreSQL 18.4 y TCP loopback, la nueva prueba `tests.regression.test_mam632_disconnect` observó esta secuencia, forzada por eventos y sin sleeps: (1) sesión y recibo escritos dentro de la transacción del servidor; (2) otra conexión aún ve la revisión y duración anteriores y ningún recibo; (3) el cliente cierra con reset TCP; (4) el socket aceptado por el servidor informa `ConnectionResetError`; (5) se libera la barrera y termina la unidad de trabajo; (6) la sesión y un solo recibo son visibles; (7) una nueva petición HTTP autenticada con el mismo cuerpo y `mutation_id` devuelve 200 y exactamente el resultado del recibo, sin incrementar revisión ni duplicarlo. La lectura del reset en el socket del servidor consume ese error, por lo que este ensayo no mide si el servidor sin instrumentación detecta el reset al enviar su respuesta.
+
+Comando focal: `manage.py test tests.regression.test_mam632_disconnect basis.bootstrap.tests.test_sync_receipts --noinput -v 2`; **12 pruebas OK**, incluidos rollback inducido y carrera de revisión como escenarios independientes. Registro `.cache/mam632-wave2/tcp-reset-typed.log`. El primer chequeo mypy encontró dos anotaciones incorrectas del handler en la fixture; se corrigieron y se repitió. Se usó exclusivamente `basis_wave2_632` y `test_basis_wave2_632`, configuración y barreras de red de la sección anterior; la base de prueba no existía antes de ejecutar.
+
+`mypy --config-file mypy-django.ini --no-incremental`: **VERIFIED**, 415 archivos. Ruff y formato del archivo de prueba y `git diff --check`: **VERIFIED**.
+
+Este resultado cubre un reset de conexión después de la escritura y antes de liberar el commit; **no** reproduce corte durante la recepción del cuerpo ni una interrupción dentro de COMMIT, una desconexión del navegador o un dispositivo físico. La prueba HTTP opera directamente con un socket, no con la cola de IndexedDB. No se repitieron suite completa ni CI remoto.
