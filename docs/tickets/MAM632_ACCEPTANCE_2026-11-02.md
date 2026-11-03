@@ -101,3 +101,11 @@ Comando focal: `manage.py test tests.regression.test_mam632_disconnect basis.boo
 `mypy --config-file mypy-django.ini --no-incremental`: **VERIFIED**, 415 archivos. Ruff y formato del archivo de prueba y `git diff --check`: **VERIFIED**.
 
 Este resultado cubre un reset de conexión después de la escritura y antes de liberar el commit; **no** reproduce corte durante la recepción del cuerpo ni una interrupción dentro de COMMIT, una desconexión del navegador o un dispositivo físico. La prueba HTTP opera directamente con un socket, no con la cola de IndexedDB. No se repitieron suite completa ni CI remoto.
+
+### Corrección de portabilidad de SO_LINGER
+
+La fixture selecciona `struct.pack('HH', 1, 0)` en Windows y `struct.pack('ii', 1, 0)` en POSIX, sin cambiar las barreras ni las aserciones. Coordinación confirmó en el contenedor local existente `python:3.13.7-slim`, con `--network none` y solo `probe.py` montado: plataforma `posix`, `getsockopt(SO_LINGER)` de 8 bytes, `hh` falla con `OSError 22` e `ii` pasa. El registro compartido es `.cache/wave2-20261102/linger-linux.log` en el repositorio raíz; se leyó sin modificarlo. El primer intento de coordinación con `python -c` falló con `NameError` por quoting PowerShell; el probe final en archivo pasó.
+
+**VERIFIED adicional:** en Ubuntu WSL, Python 3.12.3, un probe TCP loopback independiente con `ii` de 8 bytes produjo `ConnectionResetError` en el socket receptor. **NOT RUN:** la prueba Django/PostgreSQL completa en Linux y CI remoto; los probes no acreditan esa ejecución.
+
+**VERIFIED en Windows tras la corrección:** `manage.py test tests.regression.test_mam632_disconnect basis.bootstrap.tests.test_sync_receipts --noinput -v 2`, 12 pruebas OK en PostgreSQL exclusivo; registro `.cache/mam632-wave2/tcp-reset-portable.log`. Ruff y formato del archivo modificado, y mypy Django estricto en 415 archivos: OK. No se repitió navegador ni suite completa.

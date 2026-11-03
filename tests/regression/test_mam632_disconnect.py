@@ -2,6 +2,7 @@
 
 import http.client
 import json
+import os
 import socket
 import struct
 from threading import Event, get_ident
@@ -125,7 +126,11 @@ class OfflineTransactionDisconnectTests(StaticLiveServerTestCase):
                 )
                 self.assertFalse(SyncReceipt.objects.filter(mutation_id=mutation).exists())
                 order.append("external-read-before-commit")
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("hh", 1, 0))
+                # Winsock uses two unsigned shorts; POSIX uses two native ints.
+                linger_format = "HH" if os.name == "nt" else "ii"
+                sock.setsockopt(
+                    socket.SOL_SOCKET, socket.SO_LINGER, struct.pack(linger_format, 1, 0)
+                )
                 sock.close()
                 order.append("client-reset")
                 self.assertEqual(len(server_sockets), 1)
