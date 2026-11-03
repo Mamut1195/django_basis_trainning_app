@@ -1,5 +1,7 @@
 # Wave4: recuperación e integración local — 2026-11-03
 
+Estado final de este avance local: MAM-635 y el harness636 revisados, incorporados y validados juntos; auditoría638 revisada e incorporada. El cierre verificado está al final y en [el handoff](../HANDOFF_WAVE4_RECOVERY_2026-11-03.md). Las secciones intermedias conservan los cortes anteriores y sus fallos, sin reescribirlos.
+
 ## Alcance y estado
 
 Continuación local autorizada por el usuario tras recuperar las tres tareas canceladas. No publicación, PR, Actions, producción, pagos, IA LIVE, actualización de dependencias ni cierre remoto. Los tres documentos untracked ajenos se preservan. La rama congelada633/634 sigue en `f42b86160c0afe3a545488fd07f0e5dd8a61a15f`.
@@ -82,3 +84,42 @@ El código R6 quedó fijado en `a676e37a6f3ca2f05b5837d7c7f6e1567a5a457e`, check
 Fuentes verificadas idénticas a ese HEAD antes de delegar una **nueva revisión independiente R7**, Sol6.1 high, taskId `node:delegated-task:command%3Amcp%3Aaf50bba0-8a06-43a9-89af-ea4a02879d0c%3Adelegate-task%3Abasis-wave4-636-settlement-independent-review-20261103-r7`. Revisor solo lectura del mismo checkout, evidencia propia `.cache/mam636-review-r7/` y DB distintas `basis_wave4_636_review7`/`test_basis_wave4_636_review7`. Debe invertir el control completo R5-N1, contrastar costo+gasto/tokens/doble cargo y conservar la detección R1–R6 y los denominadores. Dictamen pendiente; no se integra por el GREEN del autor. Solo el recibo puede cambiar mientras se revisan las fuentes fijadas.
 
 R6 terminó después `completed`, sin hijos ni preguntas pendientes. Recibo final `1f45b15f66ae30cb885fd36049e2efd56e55aedc`, árbol limpio y fuentes idénticas al código fijado. Coordinación leyó el recibo y recalculó las112 entradas de `.cache/mam636-fix6/artifact-manifest.json` sin discrepancias; SHA256 del manifiesto `0686eb811f72b7b751f8b1b34652aac940e000f60750fdeb063b02e74559c7da`. Se conservan RED de una prueba (PASS!=FAIL) y GREEN estable21,127 regresiones de worker,285 puras, tipos core135/Django441 y checks pertinentes del autor; no se atribuyen a coordinación como ejecuciones nuevas. Baseline89 observaciones PASS/0FAIL/3INCONCLUSIVE y7/34 expectativas PASS/3I/24NOTRUN;5/17 casos ejecutados y0 aceptados deportivamente. El control positivo conserva gasto previo, reserva adicional y contadores; cinco negativos completos detectan gasto borrado, costo/ledger alterados, tokens divergentes y doble cargo. Dictamen R7 e integración/suite final siguen pendientes.
+
+## Cierre verificado del avance local
+
+R7 terminó **completed / APPROVE** para `a676e37a6f3ca2f05b5837d7c7f6e1567a5a457e`, sin hijos ni preguntas pendientes. Repitió21 focales y20 controles independientes, incluidos R1–R6, el borrado único R5-N1, costo/gasto corruptos coherentes entre sí, doble cargo, decoder divergente y evidencia ausente. Los negativos completos producen FAIL localizado y guard rechazado; baseline sin mutación conserva17 casos/34 expectativas y0FAIL. No hay P1/P2 materiales reproducidos pendientes dentro del corte técnico revisado. Informe R7 SHA256 `043dba2e13d92416ab608d2cf92c429eb7cf9fd13f249d655da4ee05f6908eb1`; manifiesto `ccbb1b750f97d009953d9803f70d9281f9417e22660b5dd0c789f3f6f9ac076a`,89 entradas recalculadas por coordinación sin discrepancias. Ambos permanecen en `t3-b2aa5a24/.cache/mam636-review-r7/`.
+
+Solo después del dictamen se incorporaron los seis commits636: `7594a4f`→`26e6b60`, `4d59594`→`409912b`, `c1aaa93`→`c07becc`, `ebf018f`→`ef7c950`, `a676e37`→`3a3c0cd` y `1f45b15`→`efa9c4c`. La comparación Git de todas las fuentes/config/tests/scripts y entradas de dependencias con el candidato aprobado no presenta diferencias. El código de producto/assets/config sigue idéntico a `8806f70`, sobre el que se repitió navegador635. No se actualizaron dependencias ni se modificó el corpus.
+
+### Validación final nueva de coordinación
+
+Fuentes estables en **`efa9c4c1fad4c9038ea6d6d736daed860251cbe9`**, mismo HEAD antes y después de cada comando final:
+
+| Check | Resultado ejecutado |
+| --- | --- |
+| Suite completa `manage test --noinput -v2` | **1095 casos:1085 satisfactorios,10 omisiones optativas,0 fallos/errores;468.546s;exit0** |
+| Tipos core/Django, cachés nuevas separadas |135/441 fuentes;exit0 |
+| Ruff/formato sin caché |exit0;452 archivos ya formateados |
+| Arquitectura/imports |fronteras válidas;8 contratos kept/0 broken;exit0 |
+| Django check y makemigrations --check --dry-run |sin incidencias/sin cambios;exit0 |
+| Diff y procedencia |Git lógico sin diferencias con candidato; corpus intacto; verificación adicional descrita abajo |
+
+La suite global contiene ahora las21 pruebas636 y la cancelación635/calendario, además de contratos puros, ORM, HTTP y carreras PostgreSQL. Sus diez omisiones son las mismas categorías optativas de navegador descritas arriba. Los checks anteriores de djLint, Prettier, collectstatic, benchmark y navegador mantienen su atribución y alcance; no hubo cambios posteriores de producto/templates/assets que invaliden esa evidencia.
+
+Log global `full-final636.log`, SHA256 **`1a8afa0d6c036e5599093219c0622944c59c71c56483fce0c849d3cc33033e83`**. `full-final636.json` conserva argv, entorno MAM636 de salida, fecha, duración de proceso y HEAD antes/después. Labels finales: `mypy-core-final636`, `mypy-django-final636`, `ruff-final636`, `format-final636`, `architecture-final636`, `imports-final636`, `django-check-final636`, `migrations-final636`. No se ejecutó el runner636 default sobre la base del autor: se usó el runner de coordinación y sus dos bases autorizadas.
+
+`full-final636-baseline.json` registra SIMULATED,5/17 casos ejecutados,3 casos técnicos con todas sus expectativas PASS;7/34 expectativas PASS,3INCONCLUSIVE,24NOT_RUN,0FAIL;89 observaciones PASS,3INCONCLUSIVE,0FAIL;0 casos aceptados deportivamente. Human/sport PENDING, rúbrica PROPOSED_NOT_APPROVED, LIVE/final acceptance NOT_RUN. Los mutantes y la respuesta con fuga se conservan por separado, sin mezclarlos con el baseline.
+
+### Procedencia e incidencias de los verificadores
+
+Los hashes crudos del mapa de364 fuentes difieren entre checkouts: revisión `d51e897694bd7ae9d2563c66c3ec87f88cccb0ec932019d3402cad8f93e97e90`, integración `d0514e89545dcc540e93541bd6859f34f41e5d307181b2bbc550fd67af3b95fd`. Se reprodujo e investigó la discrepancia con systematic-debugging. **43 archivos difieren únicamente por LF/CRLF**, con core.autocrlf=true. `source-provenance.json` verifica ambos mapas crudos contra sus archivos y compara bytes sustituyendo solo CRLF por LF:364/364 equivalentes,0 diferencias adicionales; ninguna fuente o reporte fue normalizado o reescrito. Su SHA256 es `c01dfa50ef13a274a17b7995faf65ced75c98e739638c65808da0b268732e64e`. No se presenta igualdad byte a byte entre checkouts; se conserva la identidad real de cada ejecución y la equivalencia de contenido Git.
+
+El primer helper de coordinación usó `provenance-newlines.json` como resultado y como metadata de capture; esta última sobrescribió el resultado. La auditoría posterior falló con KeyError source_count, `scope-audit-execution.log`,exit1. El resultado inicial permanece solo en la salida de herramientas; no se reconstruyó fingiendo que fuera el original. Se conservaron copias de ambos scripts antes de corregirlos (`*-v1.py`), se separaron nombres y se ejecutó un nuevo readback `provenance-readback-v2`,exit0, que escribe `source-provenance.json`; auditoría `scope-audit-execution-v2`,exit0. Logs fallidos/corregidos y metadata se preservan. No afecta al resultado de tests ni modifica producto.
+
+`scope-audit.json` comprueba checks/exit/log SHA, conteos, origen de fuentes posterior a tests, aprobación R7 y89 hashes, ancestros de integración, rama congelada y los tres documentos ajenos; SHA256 `7ef22e435afd321e3e9a119647bc06a9f227c03a0e47f279e05e4b03be920d24`. Se ejecutó antes del handoff final, por lo que deja ese último documento explícitamente pendiente de su readback Git posterior.
+
+### Evidencia y límites finales
+
+Manifiesto de coordinación `.cache/wave4-recovery-20261103/artifact-manifest-final.json`: **103 entradas**, verificadas sin discrepancias, SHA256 **`9100236ead1f7fba8531a4324888228168676a3a3227f72cb0371573c1bf0b4c`**. Excluye cachés mypy y el log vivo PostgreSQL `postgres-start.log`; incluye su snapshot inmutable `postgres-start-readback.log`. El servidor compartido se conserva activo. Los logs ignorados no estarán en un clon nuevo.
+
+Este cierre acredita la recuperación, revisión, integración y validación **locales** solicitadas. **NOT RUN / fuera del cierre local:** publicación/push/PR/Actions/CI remoto, Docker/imagen/operaciones, remediación y reauditoría certifi, Polar sandbox pospuesto por el usuario, dispositivos físicos/lector de pantalla, EV001–012, LIVE/REPLAY/calidad o aceptación humana/deportiva y cierre de tickets. Los hallazgos críticos638 y esos gates siguen visibles para el siguiente trabajo autorizado. No se afirma preparación para producción. Handoff y auditoría final de alcance: [HANDOFF_WAVE4_RECOVERY_2026-11-03.md](../HANDOFF_WAVE4_RECOVERY_2026-11-03.md).
