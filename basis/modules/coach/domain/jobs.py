@@ -96,7 +96,7 @@ class Job:
     input_tokens: int | None = None
     output_tokens: int | None = None
     cache_hit_tokens: int | None = None
-    answer: str | None = ""
+    answer: str = ""
     error: str = ""
     started_at: datetime | None = None
     completed_at: datetime | None = None

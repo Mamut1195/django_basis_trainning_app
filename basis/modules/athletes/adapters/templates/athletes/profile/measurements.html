@@ -1,4 +1,5 @@
 {% extends 'shared/base.html' %}
+{% load l10n %}
 {% block content %}
   <c-basis.page-heading title="Historial de peso"
                         subtitle="Mediciones realizadas en kg. Cada registro conserva su fecha; los valores legados no tienen fecha conocida." />
@@ -15,12 +16,32 @@
       Exportar datos
     </c-ui.button>
   </div>
+  <c-basis.card title="Evolución del peso">
+    <p>
+      Mediciones fechadas de esta página, en kg, ordenadas de la más reciente a la más antigua. Las barras parten de cero y usan el mayor peso de esta página como escala; no comparan páginas. Fuente: tus mediciones registradas. Los pesos legados sin fecha quedan en el historial, fuera del gráfico.
+    </p>
+    {% if chart_rows %}
+      <ul class="observation-chart">
+        {% for measurement in chart_rows %}
+          <li>
+            <a href="#measurement-{{ measurement.pk }}">{{ measurement.date|date:'Y-m-d' }} · {{ measurement.weight_kg }} kg</a>
+            {% localize off %}<meter min="0"
+       max="{{ chart_max }}"
+       value="{{ measurement.weight_kg }}"
+       aria-label="{{ measurement.date|date:'Y-m-d' }}: {{ measurement.weight_kg }} kilogramos"></meter>{% endlocalize %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Sin mediciones fechadas en esta página.</p>
+    {% endif %}
+  </c-basis.card>
   <c-basis.card title="Registros privados">
     <p>
       Para corregir una medición, añade otra con su fecha y explica la corrección en notas. No se reemplaza el historial. Un cero legado se conserva como tal, pero no es una medición corporal válida.
     </p>
     {% for measurement in measurements %}
-      <div class="card-line">
+      <div class="card-line" id="measurement-{{ measurement.pk }}">
         <h3>{{ measurement.weight_kg }} kg</h3>
         <p>
           {% if measurement.date %}

@@ -226,8 +226,12 @@ class Jobs:
                     job.reported_model = data.reported_model[:100]
                     if not data.choice_present:
                         raise CoachInvalid
-                    job.answer = data.answer
-                    if not data.answer_is_text or data.finish_reason != "stop":
+                    job.answer = data.answer if isinstance(data.answer, str) else ""
+                    if (
+                        not data.answer_is_text
+                        or not isinstance(data.answer, str)
+                        or data.finish_reason != "stop"
+                    ):
                         error = "La respuesta no terminó correctamente; no se puede aplicar."
                 except CoachInvalid:
                     self.repo.block()

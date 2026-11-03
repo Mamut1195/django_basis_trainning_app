@@ -332,6 +332,8 @@ class WellnessTests(TestCase):
                 response = self.client.get(self.history, params)
                 self.assertEqual(response.status_code, 400)
                 self.assertTrue(response.context["form"].errors)
+                self.assertContains(response, "Corrige el rango", status_code=400)
+                self.assertNotContains(response, "Sin registros para este rango", status_code=400)
                 self.assertEqual(list(response.context["wellness_records"]), [])
 
     def test_history_paginates_stable_range_without_truncating_export(self) -> None:

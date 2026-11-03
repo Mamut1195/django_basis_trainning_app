@@ -133,6 +133,7 @@
       {% endfor %}
       <small>Compara el mismo protocolo de duración. Estas unidades no son una predicción de lesiones ni una equivalencia exacta entre deportes.</small>
     </c-basis.card>
+    {% include 'training/progress/_session_context.html' %}
     <div class="split">
       <c-basis.card title="Recuperación">
         {% for item in wellness_records %}
@@ -148,6 +149,7 @@
             Registra sueño, fatiga y disposición sin convertirlos en una puntuación inventada.
           </c-basis.empty>
         {% endfor %}
+        <a href="{% url 'wellness-history' %}">Ver historial completo de bienestar</a>
       </c-basis.card>
       <div class="stack">
         <c-basis.card title="Trekking por etapas">
@@ -167,6 +169,7 @@
           {% empty %}
             <p class="muted">Sin mediciones.</p>
           {% endfor %}
+          <a href="{% url 'measurement-history' %}">Ver historial completo de peso</a>
         </c-basis.card>
       </div>
     </div>

@@ -28,6 +28,44 @@
       </c-ui.button>
     </form>
   </c-basis.card>
+  {% if form.is_valid %}
+    <c-basis.card title="Evolución de bienestar">
+      <p>
+        Del {{ form.cleaned_data.start|date:'Y-m-d' }} al {{ form.cleaned_data.end|date:'Y-m-d' }}, registros de esta página, del más reciente al más antiguo. Fuente: tus check-ins. Fatiga y disposición se muestran por separado en escala 1–5; no se interpolan datos ausentes.
+      </p>
+      {% for item in wellness_records %}
+        <div class="card-line">
+          <a href="#wellness-{{ item.pk }}">{{ item.date|date:'Y-m-d' }} · {{ item.get_moment_display }}</a>
+          <ul class="observation-chart">
+            <li>
+              Fatiga:
+              {% if item.fatigue != None %}
+                {{ item.fatigue }}/5 <meter min="0"
+        max="5"
+        value="{{ item.fatigue }}"
+        aria-label="Fatiga {{ item.fatigue }} de 5"></meter>
+              {% else %}
+                Sin dato
+              {% endif %}
+            </li>
+            <li>
+              Disposición:
+              {% if item.readiness != None %}
+                {{ item.readiness }}/5 <meter min="0"
+        max="5"
+        value="{{ item.readiness }}"
+        aria-label="Disposición {{ item.readiness }} de 5"></meter>
+              {% else %}
+                Sin dato
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+      {% empty %}
+        <p>Sin registros para este rango.</p>
+      {% endfor %}
+    </c-basis.card>
+  {% endif %}
   <c-basis.card title="Registros privados">
     <p>Sin dato indica una observación no registrada; un cero registrado se conserva como cero.</p>
     <p>
@@ -39,7 +77,7 @@
       Dolor 0–10: 0 = sin dolor y 10 = máximo dolor percibido.
     </p>
     {% for item in wellness_records %}
-      <div class="card-line">
+      <div class="card-line" id="wellness-{{ item.pk }}">
         <h3>{{ item.date|date:'Y-m-d' }} · {{ item.get_moment_display }}</h3>
         <dl class="metric-list">
           <div>
@@ -120,7 +158,11 @@
         {% endif %}
       </div>
     {% empty %}
-      <p>Sin registros para este rango. Puedes entrenar sin completar un check-in.</p>
+      {% if form.is_valid %}
+        <p>Sin registros para este rango. Puedes entrenar sin completar un check-in.</p>
+      {% else %}
+        <p role="status">Corrige el rango para consultar tus registros.</p>
+      {% endif %}
     {% endfor %}
     {% if form.is_valid and wellness_records.paginator.num_pages > 1 %}
       {% if wellness_records.has_previous %}

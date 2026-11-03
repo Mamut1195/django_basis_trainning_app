@@ -8,11 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 
 from basis.adapters.web.framework import owner, public_id
 
 
 @login_required
+@never_cache
 def export_data(request: HttpRequest) -> HttpResponse:
     from basis.bootstrap.exports import export_readers
     from basis.shared.identifiers import AccountId

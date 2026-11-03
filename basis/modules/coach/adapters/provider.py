@@ -51,12 +51,9 @@ def request_body(
 
 
 def decode_reply(value: object) -> ProviderReply | None:
-    if not value:
+    if not value or not isinstance(value, dict):
+        # No trustworthy usage: let settlement retain the reservation without retry.
         return None
-    if not isinstance(value, dict):
-        # Legacy unexpected top-level JSON escapes the worker, leaving its running
-        # reservation for stale quarantine; do not silently change retry/accounting.
-        raise AttributeError(f"'{type(value).__name__}' object has no attribute 'get'")
     try:
         d = mapping(value)
         counts = mapping(d.get("usage", {}))
@@ -81,7 +78,7 @@ def decode_reply(value: object) -> ProviderReply | None:
             usage,
             reported,
             True,
-            None if answer is None else str(answer),
+            answer if isinstance(answer, str) else "",
             isinstance(answer, str),
             finish if isinstance(finish, str) else None,
         )

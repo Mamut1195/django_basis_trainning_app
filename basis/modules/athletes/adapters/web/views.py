@@ -226,11 +226,15 @@ def measurement_history(request: HttpRequest) -> HttpResponse:
     rows = Measurement.objects.filter(owner=owner(request)).order_by(
         F("date").desc(nulls_last=True), "-pk"
     )
+    page = Paginator(rows, 20).get_page(request.GET.get("page"))
+    chart_rows = [row for row in page if row.date is not None and row.weight_kg > 0]
     return render(
         request,
         "athletes/profile/measurements.html",
         {
-            "measurements": Paginator(rows, 20).get_page(request.GET.get("page")),
+            "measurements": page,
+            "chart_rows": chart_rows,
+            "chart_max": max((row.weight_kg for row in chart_rows), default=None),
             "personal_access": can_edit_personal(owner(request).pk),
         },
     )

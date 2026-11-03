@@ -1,0 +1,106 @@
+<c-basis.card title="Contexto de sesiones completadas">
+  <p>{{ report.context_method }}</p>
+  <p>
+    {{ report.load_method }} ({{ report.load_unit }}). Se muestra la duración en segundos y el RPE declarado de cada sesión.
+  </p>
+  {% for row in report.context %}
+    <div class="card-line">
+      <h3>
+        {{ row.date|date:'Y-m-d'|default:'Fecha desconocida' }} · <a href="{% url 'session-detail' row.session_id %}"
+    aria-label="Abrir sesión fuente del {{ row.date|date:'Y-m-d'|default:'sin fecha' }}">Abrir sesión fuente</a>
+      </h3>
+      <p>
+        Disciplinas:
+        {% for sport in row.sports %}
+          {% if sport == 'strength' %}
+            Fuerza
+          {% elif sport == 'cardio' %}
+            Cardio
+          {% elif sport == 'running' %}
+            Running
+          {% elif sport == 'cycling' %}
+            Ciclismo
+          {% elif sport == 'swimming' %}
+            Natación
+          {% elif sport == 'hiking' %}
+            Hiking
+          {% else %}
+            {{ sport }}
+          {% endif %}
+          {% if not forloop.last %},{% endif %}
+        {% empty %}
+          Sin disciplina registrada
+        {% endfor %}
+      </p>
+      <dl class="metric-list">
+        <div>
+          <dt>Protocolo de duración</dt>
+          <dd>
+            {% if row.protocol == 'elapsed' %}
+              Tiempo transcurrido
+            {% elif row.protocol == 'moving' %}
+              Tiempo en movimiento
+            {% else %}
+              {{ row.protocol|default:'Sin dato' }}
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>Duración (s)</dt>
+          <dd>
+            {{ row.duration_seconds|default_if_none:'Sin dato' }}
+          </dd>
+        </div>
+        <div>
+          <dt>RPE declarado (0–10)</dt>
+          <dd>
+            {{ row.reported_rpe|default_if_none:'Sin dato' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Carga interna ({{ report.load_unit }})</dt>
+          <dd>
+            {{ row.internal_load|default_if_none:'Sin dato' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Fecha distinta anterior en el período</dt>
+          <dd>
+            {{ row.previous_date|date:'Y-m-d'|default:'Sin fecha anterior' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Diferencia de fechas (días)</dt>
+          <dd>
+            {{ row.days_since_previous|default_if_none:'Sin dato' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Días consecutivos observados</dt>
+          <dd>
+            {{ row.consecutive_days|default_if_none:'Sin dato' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Sesiones completadas en esta fecha</dt>
+          <dd>
+            {{ row.sessions_on_date|default_if_none:'Sin dato' }}
+          </dd>
+        </div>
+      </dl>
+      {% if row.stage_recovery %}
+        <p>
+          <a href="{% url 'trip-detail' row.stage_recovery.trip_id %}">Recorrido fuente · etapa {{ row.stage_recovery.order }}</a>
+        </p>
+        <p>
+          Altitud de pernocta: {{ row.stage_recovery.overnight_altitude_m|default_if_none:'Sin dato' }} m.
+        </p>
+        <p class="prose">
+          Nota declarada de recuperación: {{ row.stage_recovery.recovery_notes|default:'Sin nota'|linebreaksbr }}
+        </p>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p>Sin sesiones completadas en este período.</p>
+  {% endfor %}
+</c-basis.card>
