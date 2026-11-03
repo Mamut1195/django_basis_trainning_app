@@ -1,10 +1,13 @@
 """Historical local policy migration on synthetic rows only."""
 
+import json
 from decimal import Decimal
+from importlib import import_module
+from typing import Callable, cast
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
-from django.db import connection
+from django.db import DatabaseError, connection, transaction
 from django.db.migrations.exceptions import IrreversibleError
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase, skipUnlessDBFeature
@@ -16,6 +19,46 @@ from basis.modules.coach.domain.jobs import HISTORICAL_PRICING
 
 @skipUnlessDBFeature("has_select_for_update_skip_locked")
 class HistoricalPricingMigrationTests(TransactionTestCase):
+    def test_downgrade_cannot_remove_invalid_usage_evidence(self) -> None:
+        self._assert_snapshot_is_preserved(
+            self._historical_snapshot(),
+            "flash-peak-2026-10-17",
+            "0.003",
+            invalid_usage_observed=True,
+        )
+
+    def test_json_guard_distinguishes_boolean_integer_and_float_types(self) -> None:
+        module = import_module(
+            "basis.modules.coach.adapters.migrations.0002_frozen_pricing_reconciliation"
+        )
+        same = cast(Callable[[object, object], bool], module.same_json_types)
+        self.assertFalse(same({"value": True}, {"value": 1}))
+        self.assertFalse(same({"value": False}, {"value": 0}))
+        self.assertFalse(same({"value": 4000.0}, {"value": 4000}))
+        self.assertTrue(same({"a": [1, True], "b": None}, {"b": None, "a": [1, True]}))
+
+    def test_downgrade_cannot_change_float_input_limit_into_int(self) -> None:
+        self._assert_snapshot_is_preserved(
+            self._historical_snapshot(input_limit=4000.0), "flash-peak-2026-10-17", "0.003"
+        )
+
+    def test_downgrade_cannot_change_float_output_limit_into_int(self) -> None:
+        self._assert_snapshot_is_preserved(
+            self._historical_snapshot(output_limit=1500.0), "flash-peak-2026-10-17", "0.003"
+        )
+
+    def _historical_snapshot(self, **changes: object) -> dict[str, object]:
+        return {
+            "version": "flash-peak-2026-10-17",
+            "input_rate": "0.00000030",
+            "hit_rate": "0.000000006",
+            "output_rate": "0.00000120",
+            "input_limit": 4000,
+            "output_limit": 1500,
+            "allowed_models": ["deepseek-flash", "deepseek-v4-flash"],
+            **changes,
+        }
+
     def test_downgrade_preserves_unreconstructible_snapshot_even_without_audit(self) -> None:
         snapshot = {
             "version": "synthetic-new-policy",
@@ -37,7 +80,11 @@ class HistoricalPricingMigrationTests(TransactionTestCase):
         self._assert_snapshot_is_preserved(None, "flash-peak-2026-10-17", "0.003")
 
     def _assert_snapshot_is_preserved(
-        self, snapshot: dict[str, object] | None, version: str, reservation: str
+        self,
+        snapshot: dict[str, object] | None,
+        version: str,
+        reservation: str,
+        invalid_usage_observed: bool | None = None,
     ) -> None:
         target = [("basis_coach", "0002_frozen_pricing_reconciliation")]
         executor = MigrationExecutor(connection)
@@ -59,13 +106,27 @@ class HistoricalPricingMigrationTests(TransactionTestCase):
             requested_model="deepseek-v4-flash",
             pricing_version=version,
             pricing_snapshot=snapshot,
+            invalid_usage_observed=invalid_usage_observed,
         )
         self.assertFalse(apps.get_model("basis_coach", "AIReconciliation").objects.exists())
         try:
-            with self.assertRaisesRegex(IrreversibleError, "snapshot"):
+            with self.assertRaisesRegex(IrreversibleError, "snapshot|evidence"):
                 executor.migrate([("basis_coach", "0001_initial")])
             job.refresh_from_db()
             self.assertEqual(job.pricing_snapshot, snapshot)
+            self.assertEqual(
+                json.dumps(job.pricing_snapshot, sort_keys=True),
+                json.dumps(snapshot, sort_keys=True),
+            )
+            self.assertIs(job.invalid_usage_observed, invalid_usage_observed)
+            # A rejected downgrade must leave the price guard installed too.
+            with self.assertRaises(DatabaseError), transaction.atomic():
+                Job.objects.filter(pk=job.pk).update(pricing_version="changed")
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT count(*) FROM pg_trigger WHERE tgname IN ('coach_price_immutable', 'coach_audit_immutable') AND NOT tgisinternal"
+                )
+                self.assertEqual(cursor.fetchone(), (2,))
         finally:
             MigrationExecutor(connection).migrate(target)
 
@@ -144,6 +205,7 @@ class HistoricalPricingMigrationTests(TransactionTestCase):
             apps = executor.loader.project_state(target).apps
             Job = apps.get_model("basis_coach", "AIJob")
             known = Job.objects.get(pk=ids[0])
+            self.assertIsNone(known.invalid_usage_observed)
             self.assertEqual(known.pricing_snapshot["input_rate"], "0.00000030")
             self.assertEqual(known.pricing_snapshot["input_limit"], 4000)
             self.assertEqual(
@@ -154,7 +216,13 @@ class HistoricalPricingMigrationTests(TransactionTestCase):
                 self.assertIsNone(Job.objects.get(pk=pk).pricing_snapshot)
             before = list(
                 Job.objects.order_by("pk").values_list(
-                    "pk", "pricing_snapshot", "pricing_version", "cost", "reservation", "status"
+                    "pk",
+                    "pricing_snapshot",
+                    "pricing_version",
+                    "cost",
+                    "reservation",
+                    "status",
+                    "invalid_usage_observed",
                 )
             )
             # A reversible schema rollout preserves pre-existing amounts/versions.
@@ -172,7 +240,13 @@ class HistoricalPricingMigrationTests(TransactionTestCase):
             apps.get_model("basis_coach", "AIJob")
             .objects.order_by("pk")
             .values_list(
-                "pk", "pricing_snapshot", "pricing_version", "cost", "reservation", "status"
+                "pk",
+                "pricing_snapshot",
+                "pricing_version",
+                "cost",
+                "reservation",
+                "status",
+                "invalid_usage_observed",
             )
         )
         self.assertEqual(after, before)

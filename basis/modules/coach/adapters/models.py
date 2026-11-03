@@ -82,6 +82,7 @@ class AIJob(Owned):
     reported_model = models.CharField(max_length=100, blank=True)
     pricing_version = models.CharField(max_length=30, default="flash-peak-2026-10-17")
     pricing_snapshot = models.JSONField(null=True, blank=True)
+    invalid_usage_observed = models.BooleanField(null=True, blank=True, default=None)
     input_tokens = models.PositiveIntegerField(null=True, blank=True)
     output_tokens = models.PositiveIntegerField(null=True, blank=True)
     cache_hit_tokens = models.PositiveIntegerField(null=True, blank=True)

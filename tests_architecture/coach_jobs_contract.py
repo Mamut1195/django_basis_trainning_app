@@ -526,6 +526,84 @@ class JobsSettlementContract:
             with self.assertRaisesRegex(CoachInvalid, "acciones IA"):
                 require_budget("short", usage, fund, trial)
 
+    def test_contract_settlement_huge_counts_cannot_be_reinterpreted_as_absent(self) -> None:
+        assert isinstance(self, TestCase)
+        for trial in (False, True):
+            for field, tokens in (
+                ("input", TokenUsage(10**40, 0, 0)),
+                ("output", TokenUsage(1, 10**40, 0)),
+                ("cache", TokenUsage(1, 0, 10**40)),
+            ):
+                for charged in (False, True):
+                    with self.subTest(trial=trial, field=field, charged=charged):
+                        job = self._running_reserved_job(trial)
+                        settled = self.service.settle(
+                            job.id,
+                            ProviderReply(
+                                tokens, "deepseek-v4-flash", True, "fixture", True, "stop"
+                            ),
+                        )
+                        self.assertEqual((settled.status, settled.cost), ("uncertain", None))
+                        self.assertIs(settled.invalid_usage_observed, True)
+                        before = self.repository.usage(job.usage_period)
+                        fund = self.repository.fund(job.trial_fund) if job.trial_fund else None
+                        decision = self._decision(settled, charged=charged)
+                        if charged:
+                            decision = replace(decision, usage=TokenUsage(1, 0, 0))
+                        record = self.service.reconcile(decision, apply=True)
+                        self.assertEqual((record.outcome, record.cost), ("retained", None))
+                        self.assertEqual(self.service.reconcile(decision, apply=True), record)
+                        self.assertEqual(
+                            self.repository.reconciliation(job.id, decision.key), record
+                        )
+                        self.assertEqual(self.repository.usage(job.usage_period), before)
+                        self.assertEqual(self.repository.job(job.id), settled)
+                        if fund:
+                            self.assertEqual(self.repository.fund(fund.id), fund)
+
+    def test_contract_invalid_observation_marker_and_retained_audit_rollback(self) -> None:
+        assert isinstance(self, TestCase)
+        for trial in (False, True):
+            job = self._running_reserved_job(trial)
+            usage = self.repository.usage(job.usage_period)
+            fund = self.repository.fund(job.trial_fund) if job.trial_fund else None
+            save = self.repository.save_job
+
+            def save_then_fail(changed: Job) -> None:
+                save(changed)
+                raise RuntimeError("evidence write failed")
+
+            reply = ProviderReply(
+                TokenUsage(10**40, 0, 0), "deepseek-v4-flash", True, "fixture", True, "stop"
+            )
+            with patch.object(self.repository, "save_job", side_effect=save_then_fail):
+                with self.assertRaisesRegex(RuntimeError, "evidence write failed"):
+                    self.service.settle(job.id, reply)
+            self.assertEqual(self.repository.job(job.id), job)
+            self.assertEqual(self.repository.usage(job.usage_period), usage)
+            if fund:
+                self.assertEqual(self.repository.fund(fund.id), fund)
+            with patch.object(self.service.provider, "call") as call:
+                settled = self.service.settle(job.id, reply)
+                call.assert_not_called()
+            self.assertIs(settled.invalid_usage_observed, True)
+            command = self._decision(settled)
+            append = self.repository.add_reconciliation
+
+            def append_then_fail(record: Reconciliation) -> None:
+                append(record)
+                raise RuntimeError("retained audit failed")
+
+            with patch.object(self.repository, "add_reconciliation", side_effect=append_then_fail):
+                with self.assertRaisesRegex(RuntimeError, "retained audit failed"):
+                    self.service.reconcile(command, apply=True)
+            self.assertIsNone(self.repository.reconciliation(job.id, command.key))
+            self.assertEqual(self.repository.job(job.id), settled)
+            self.assertEqual(self.repository.usage(job.usage_period), usage)
+            if fund:
+                self.assertEqual(self.repository.fund(fund.id), fund)
+            self.assertEqual(self.service.reconcile(command, apply=True).outcome, "retained")
+
     def test_contract_uncertain_with_preexisting_cost_is_not_charged_or_released_again(
         self,
     ) -> None:

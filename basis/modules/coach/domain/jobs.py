@@ -163,6 +163,7 @@ class Job:
     completed_at: datetime | None = None
     pricing_version: str = "flash-peak-2026-10-17"
     pricing: PricingSnapshot | None = None
+    invalid_usage_observed: bool | None = None
 
 
 def job_pricing(job: Job) -> PricingSnapshot:
@@ -279,6 +280,7 @@ def require_release(job: Job, usage: Usage, fund: Fund | None, cost: Decimal) ->
     cap = Decimal("0.03") if usage.is_trial else Decimal("1")
     if (
         job.cost is not None
+        or job.invalid_usage_observed is True
         or job.reservation < 0
         or cost < 0
         or cost > job.reservation

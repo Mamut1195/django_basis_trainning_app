@@ -205,6 +205,7 @@ class Jobs:
                 command.base_plan,
                 pricing_version=pricing.version,
                 pricing=pricing,
+                invalid_usage_observed=False,
             )
             self.repo.create(job)
             work.commit()
@@ -244,6 +245,16 @@ class Jobs:
                 # Keep bounded observations even when validation fails; never infer cost.
                 job.reported_model = data.reported_model[:100]
                 if data.usage is not None:
+                    # Integer columns cannot represent every provider observation.
+                    # Preserve a sticky rejection marker before projecting safe values.
+                    job.invalid_usage_observed = job.invalid_usage_observed is True or any(
+                        type(value) is not int or not 0 <= value <= 2147483647
+                        for value in (
+                            data.usage.input_tokens,
+                            data.usage.output_tokens,
+                            data.usage.cache_hits,
+                        )
+                    )
                     job.input_tokens, job.output_tokens, job.cache_hit_tokens = (
                         value if type(value) is int and 0 <= value <= 2147483647 else None
                         for value in (
@@ -258,7 +269,11 @@ class Jobs:
                         raise CoachInvalid
                     if data.usage is None:
                         raise CoachInvalid
-                    cost = usage_cost(data.usage, job.kind, job.reservation, pricing)
+                    try:
+                        cost = usage_cost(data.usage, job.kind, job.reservation, pricing)
+                    except CoachInvalid:
+                        job.invalid_usage_observed = True
+                        raise
                     if not data.choice_present:
                         raise CoachInvalid
                     job.answer = data.answer if isinstance(data.answer, str) else ""
@@ -321,6 +336,10 @@ class Jobs:
             try:
                 if job.status != "uncertain":
                     raise CoachInvalid("El job ya no está uncertain; no se ajustan saldos.")
+                if job.invalid_usage_observed is True:
+                    raise CoachInvalid(
+                        "Uso inválido recibido; la evidencia y reserva permanecen retenidas."
+                    )
                 if command.decision == "usage":
                     pricing = job_pricing(job)
                     if command.reported_model not in pricing.allowed_models or (

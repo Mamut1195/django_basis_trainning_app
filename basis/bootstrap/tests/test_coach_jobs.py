@@ -98,6 +98,113 @@ class DjangoSelectionTests(TestCase):
 
 @skipUnlessDBFeature("has_select_for_update_skip_locked")
 class DjangoClaimConcurrencyTests(TransactionTestCase):
+    def test_huge_settlement_racing_with_reconciliation_and_replays_retains_every_reserve(
+        self,
+    ) -> None:
+        for trial in (False, True):
+            for repeated in (False, True):
+                with self.subTest(trial=trial, repeated=repeated):
+                    owner = AccountId(
+                        get_user_model()
+                        .objects.create_user(username=f"invalid-race-{trial}-{repeated}")
+                        .pk
+                    )
+                    reservation = reservation_for("short")
+                    usage = UsagePeriod.objects.create(
+                        owner_id=owner, key="invalid-race", reserved=reservation, is_trial=trial
+                    )
+                    fund = (
+                        TrialFund.objects.create(
+                            month=f"2027-{1 + int(repeated):02}", reserved=reservation
+                        )
+                        if trial
+                        else None
+                    )
+                    repo = DjangoJobsRepository()
+                    job = Job(
+                        JobId(uuid4()),
+                        owner,
+                        AIRequestKey(uuid4()),
+                        "short",
+                        "q",
+                        CONTEXT,
+                        UsagePeriodId(usage.pk),
+                        TrialFundId(fund.pk) if fund else None,
+                        reservation,
+                        "deepseek-v4-flash",
+                        status="running",
+                        pricing=HISTORICAL_PRICING.freeze("short"),
+                    )
+                    repo.create(job)
+                    repo.save_job(job)
+                    barrier = Barrier(3)
+
+                    def act(number: int) -> str:
+                        close_old_connections()
+                        try:
+                            ports = Ports()
+                            service = Jobs(
+                                DjangoJobsRepository(),
+                                DjangoAccountLocks(),
+                                ports,
+                                Profiles(),
+                                ports,
+                                ports,
+                                ports,
+                                ports,
+                                DjangoUnitOfWork,
+                                CoachConfiguration(False, False, "deepseek-v4-flash"),
+                            )
+                            barrier.wait(timeout=10)
+                            if number == 0:
+                                service.settle(
+                                    job.id,
+                                    ProviderReply(
+                                        TokenUsage(10**40, 0),
+                                        "deepseek-v4-flash",
+                                        True,
+                                        "fixture",
+                                        True,
+                                        "stop",
+                                    ),
+                                )
+                                return "settled"
+                            charged = number == 2 and not repeated
+                            command = Reconcile(
+                                job.id,
+                                "repeat" if repeated else f"decision-{number}",
+                                "admin:test",
+                                "fixture:invalid-race",
+                                "Synthetic decision after response",
+                                "usage" if charged else "no_charge",
+                                not charged,
+                                "deepseek-v4-flash" if charged else "",
+                                TokenUsage(1, 0) if charged else None,
+                            )
+                            record = service.reconcile(command, apply=True)
+                            self.assertEqual(service.reconcile(command, apply=True), record)
+                            return record.outcome
+                        finally:
+                            connections.close_all()
+
+                    with ThreadPoolExecutor(max_workers=3) as pool:
+                        futures = [pool.submit(act, number) for number in (0, 1, 2)]
+                        self.assertEqual(
+                            [future.result(timeout=25) for future in futures],
+                            ["settled", "retained", "retained"],
+                        )
+                    result = repo.job(job.id)
+                    self.assertIs(result.invalid_usage_observed, True)
+                    self.assertEqual((result.status, result.cost), ("uncertain", None))
+                    usage.refresh_from_db()
+                    self.assertEqual((usage.reserved, usage.spent), (reservation, 0))
+                    self.assertEqual(
+                        AIReconciliation.objects.filter(job_id=job.id).count(), 1 if repeated else 2
+                    )
+                    if fund:
+                        fund.refresh_from_db()
+                        self.assertEqual((fund.reserved, fund.spent), (reservation, 0))
+
     def test_concurrent_reconciliation_same_key_distinct_keys_and_conflicting_decisions(
         self,
     ) -> None:

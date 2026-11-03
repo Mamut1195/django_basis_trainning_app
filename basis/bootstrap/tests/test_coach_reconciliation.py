@@ -219,6 +219,39 @@ class ReconciliationCommandTests(TestCase):
         self.assertEqual(self.service.repo.usage(self.job.usage_period), before)
         self.assertEqual(self.service.repo.job(self.job.id), self.job)
 
+    def test_settlement_invalid_usage_flag_is_sticky_and_visible_in_command_query(self) -> None:
+        running = replace(self.job, status="running")
+        self.service.repo.save_job(running)
+        settled = self.service.settle(
+            running.id,
+            ProviderReply(
+                TokenUsage(10**40, 0), "deepseek-v4-flash", True, "fixture", True, "stop"
+            ),
+        )
+        self.assertIs(settled.invalid_usage_observed, True)
+        self.assertIs(self.command()["invalid_usage_observed"], True)
+        for value in (False, None):
+            with self.assertRaises(DatabaseError), transaction.atomic():
+                AIJob.objects.filter(pk=self.job.id).update(invalid_usage_observed=value)
+        self.assertIs(self.service.repo.job(self.job.id).invalid_usage_observed, True)
+        self.assertEqual(self.command(*self.arguments(), "--apply")["outcome"], "retained")
+        self.assertEqual(
+            self.service.repo.usage(self.job.usage_period).reserved, self.job.reservation
+        )
+
+    def test_database_price_guard_preserves_json_numeric_types(self) -> None:
+        row = AIJob.objects.get(pk=self.job.id)
+        assert isinstance(row.pricing_snapshot, dict)
+        for field, value in (
+            ("input_limit", 4000.0),
+            ("output_limit", 1500.0),
+            ("input_limit", True),
+        ):
+            with self.assertRaises(DatabaseError), transaction.atomic():
+                AIJob.objects.filter(pk=row.pk).update(
+                    pricing_snapshot={**row.pricing_snapshot, field: value}
+                )
+
     def test_aggregate_ledger_matches_pending_uncertain_and_effective_settlements(self) -> None:
         for trial in (False, True):
             with self.subTest(trial=trial):

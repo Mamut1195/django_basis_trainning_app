@@ -2,6 +2,7 @@
 
 import django.db.models.deletion
 import django.db.models.expressions
+import json
 from decimal import Decimal
 from django.conf import settings
 from django.db import migrations, models
@@ -22,6 +23,13 @@ def historical_policy(kind: str, version: str, model: str, reservation: Decimal)
         'output_rate': '0.00000120', 'input_limit': inputs, 'output_limit': outputs,
         'allowed_models': ['deepseek-flash', 'deepseek-v4-flash'],
     }
+
+
+def same_json_types(left: object, right: object) -> bool:
+    # Python equality equates 4000.0/4000 and True/1; JSON encoding does not.
+    return json.dumps(left, sort_keys=True, separators=(',', ':'), allow_nan=False) == json.dumps(
+        right, sort_keys=True, separators=(',', ':'), allow_nan=False
+    )
 
 
 def historical_snapshot(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
@@ -54,11 +62,14 @@ def install_guards(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
         """)
         schema_editor.execute(f"CREATE TRIGGER coach_audit_immutable BEFORE UPDATE OR DELETE ON {audit} FOR EACH ROW EXECUTE FUNCTION basis_coach_audit_immutable()")
         changed = ' OR '.join(f'OLD.{col} IS DISTINCT FROM NEW.{col}' for col in anchors if col != 'pricing_snapshot')
-        changed += ' OR OLD.pricing_snapshot::jsonb IS DISTINCT FROM NEW.pricing_snapshot::jsonb'
+        # jsonb numeric equality also equates 4000.0/4000; text retains that distinction.
+        changed += ' OR OLD.pricing_snapshot::text IS DISTINCT FROM NEW.pricing_snapshot::text'
         schema_editor.execute(f"""
             CREATE FUNCTION basis_coach_price_immutable() RETURNS trigger AS $$
             BEGIN
                 IF {changed} THEN RAISE EXCEPTION 'AI job accounting policy is immutable'; END IF;
+                IF OLD.invalid_usage_observed IS TRUE AND NEW.invalid_usage_observed IS DISTINCT FROM TRUE
+                THEN RAISE EXCEPTION 'Invalid AI usage evidence is immutable'; END IF;
                 RETURN NEW;
             END; $$ LANGUAGE plpgsql
         """)
@@ -67,6 +78,7 @@ def install_guards(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
         for action in ('UPDATE', 'DELETE'):
             schema_editor.execute(f"CREATE TRIGGER coach_audit_{action.lower()} BEFORE {action} ON {audit} BEGIN SELECT RAISE(ABORT, 'AI reconciliation history is immutable'); END")
         changed = ' OR '.join(f'OLD.{col} IS NOT NEW.{col}' for col in anchors)
+        changed += ' OR (OLD.invalid_usage_observed = 1 AND NEW.invalid_usage_observed IS NOT 1)'
         schema_editor.execute(f"CREATE TRIGGER coach_price_immutable BEFORE UPDATE ON {job} WHEN {changed} BEGIN SELECT RAISE(ABORT, 'AI job accounting policy is immutable'); END")
     else:
         raise RuntimeError('Immutable AI ledger requires PostgreSQL or SQLite')
@@ -81,10 +93,12 @@ def remove_guards(apps: Apps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     if audit.objects.using(schema_editor.connection.alias).exists():
         raise IrreversibleError('AI reconciliation history exists; refusing to remove the durable ledger')
     jobs = job_model.objects.using(schema_editor.connection.alias)
+    if jobs.filter(invalid_usage_observed__isnull=False).exists():
+        raise IrreversibleError('AI usage evidence cannot be reconstructed; refusing downgrade')
     for kind, version, model, reservation, snapshot in jobs.values_list(
         'kind', 'pricing_version', 'requested_model', 'reservation', 'pricing_snapshot'
     ).iterator():
-        if snapshot != historical_policy(kind, version, model, reservation):
+        if not same_json_types(snapshot, historical_policy(kind, version, model, reservation)):
             raise IrreversibleError('AI pricing snapshot cannot be reconstructed exactly; refusing downgrade')
     if schema_editor.connection.vendor == 'postgresql':
         for model, trigger in (('AIReconciliation', 'coach_audit_immutable'), ('AIJob', 'coach_price_immutable')):
@@ -129,6 +143,11 @@ class Migration(migrations.Migration):
             model_name='aijob',
             name='pricing_snapshot',
             field=models.JSONField(blank=True, null=True),
+        ),
+        migrations.AddField(
+            model_name='aijob',
+            name='invalid_usage_observed',
+            field=models.BooleanField(blank=True, default=None, null=True),
         ),
         migrations.AddConstraint(
             model_name='aijob',

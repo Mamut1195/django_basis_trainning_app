@@ -141,6 +141,9 @@ class Memory:
         self.jobs[job.id] = replace(job)
 
     def save_job(self, job: Job) -> None:
+        previous = self.jobs[job.id]
+        if previous.invalid_usage_observed is True and job.invalid_usage_observed is not True:
+            raise ValueError("invalid usage evidence is immutable")
         self.jobs[job.id] = replace(job)
 
     def claim(self, now: datetime) -> Job | None:

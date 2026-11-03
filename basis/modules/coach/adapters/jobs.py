@@ -108,6 +108,7 @@ def job_state(row: AIJob) -> Job:
         row.completed_at,
         row.pricing_version,
         decode_pricing(cast(object, row.pricing_snapshot)),
+        row.invalid_usage_observed,
     )
 
 
@@ -199,6 +200,7 @@ class DjangoJobsRepository:
             base_plan_id=job.base_plan,
             pricing_version=job.pricing_version,
             pricing_snapshot=encode_pricing(job.pricing),
+            invalid_usage_observed=job.invalid_usage_observed,
         )
 
     def save_job(self, job: Job) -> None:
@@ -213,6 +215,7 @@ class DjangoJobsRepository:
             error=job.error,
             started_at=job.started_at,
             completed_at=job.completed_at,
+            invalid_usage_observed=job.invalid_usage_observed,
         )
 
     def claim(self, now: datetime) -> Job | None:
