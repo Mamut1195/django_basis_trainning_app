@@ -21,8 +21,12 @@ Entorno actual: intérprete `.venv-win/Scripts/python.exe`; PostgreSQL 18.4 real
 
 Logs locales: `.cache/wave2-20261102/` (f01-f02-postgres, architecture-tests, mypy-core, mypy-django, imports, django-check y migrations). El primer reinicio de la instancia tomó 5432 por omitir opciones de arranque; la conexión prevista a 55482 falló. Se detuvo exclusivamente esa instancia desechable y se reinició con `-p 55482 -h 127.0.0.1`; conexión/version y cuatro bases separadas quedaron verificadas antes de las pruebas.
 
-NOT RUN en este corte: suite Django completa del árbol combinado de la tanda, CI remoto, publicación/PR, imagen/operación, dispositivos y proveedores LIVE. Revisión independiente en curso. MAM-635/818 siguen abiertos por alcance adicional y dependencias; esta corrección no resuelve tarifas versionadas, modelo reportado ni conciliación de reservas ambiguas.
+Revisión independiente Sol high terminada: sin bloqueos ni regresiones identificadas por inspección estática de 332a060 contra 98ea292, incluidos locks, persistencia NOT NULL, idempotencia y rollback. No ejecutó pruebas adicionales ni contactó proveedores.
+
+NOT RUN en este corte: suite Django completa del árbol combinado de la tanda, CI remoto, publicación/PR, imagen/operación, dispositivos y proveedores LIVE. MAM-635/818 siguen abiertos por alcance adicional y dependencias; esta corrección no resuelve tarifas versionadas, modelo reportado ni conciliación de reservas ambiguas.
 
 ## Frentes en ejecución
 
 MAM-815 (Sol high), MAM-630 (Terra high) y MAM-632 (Terra high) ejecutan trabajo aislado desde main98ea292; las bases sintéticas autorizadas son respectivamente basis_wave2_815, basis_wave2_630 y basis_wave2_632. No se afirma terminación ni integración de sus resultados en este corte.
+
+El primer lote MAM-630 (`7bf307d`) se revisó e incorporó localmente como `fb9c17e`: enlaces a historiales, error de rango y Cache-Control privado/no-store en exportación. Sus 84 pruebas PostgreSQL pertenecen a la ejecución del subagente; la suite combinada aún no se ejecutó. Terra continúa gráficos y aceptación visual/accesible. Se abrió además MAM-818 F03/F04/F05 con Sol high aislado desde fb9c17e y base exclusiva basis_wave2_818; ningún resultado de ese frente se afirma todavía.
