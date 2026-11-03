@@ -400,6 +400,33 @@ th {
   font-variant-numeric: tabular-nums;
   font-size: var(--font-lg);
 }
+.observation-chart {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+.observation-chart li {
+  display: grid;
+  gap: var(--space-1);
+}
+.observation-chart meter {
+  display: block;
+  width: min(100%, 24rem);
+  height: 1rem;
+}
+.observation-chart meter::-webkit-meter-bar {
+  background: var(--border);
+  border: 0;
+}
+.observation-chart meter::-webkit-meter-optimum-value,
+.observation-chart meter::-webkit-meter-suboptimum-value,
+.observation-chart meter::-webkit-meter-even-less-good-value {
+  background: var(--accent);
+}
+.observation-chart meter::-moz-meter-bar {
+  background: var(--accent);
+}
 .metric-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));

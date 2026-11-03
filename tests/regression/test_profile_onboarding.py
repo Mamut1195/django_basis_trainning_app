@@ -141,8 +141,9 @@ class ProfileOnboardingTests(TestCase):
             ),
             [Decimal("72.35"), Decimal("71.80")],
         )
-        self.assertContains(
-            self.client.get("/profile/measurements/"), self.day.isoformat(), count=2
+        history = self.client.get("/profile/measurements/")
+        self.assertEqual(
+            [row.date for row in history.context["measurements"]], [self.day, self.day]
         )
         session.refresh_from_db()
         self.assertEqual(session.duration_seconds, 123)

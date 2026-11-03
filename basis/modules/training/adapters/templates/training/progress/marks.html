@@ -1,4 +1,5 @@
 {% extends 'shared/base.html' %}
+{% load l10n %}
 {% block content %}
   <c-basis.page-heading title="Marcas de fuerza"
                         subtitle="Consulta tus registros declarados y estimaciones por serie sin mezclarlos." />
@@ -13,6 +14,13 @@
     </form>
   </c-basis.card>
   {% if valid %}
+    {% if chart_exercise_selected %}
+      <p>
+        Las barras muestran las observaciones de cada página para el ejercicio y fechas seleccionados. Cada grupo usa su mayor valor como escala desde cero; no compara páginas ni mezcla marcas medidas con estimaciones.
+      </p>
+    {% else %}
+      <p>Selecciona un ejercicio para mostrar las barras de evolución de sus marcas.</p>
+    {% endif %}
     <c-basis.card title="1RM medido declarado">
       <p>
         Valores registrados por ti; no son una certificación instrumental. Solo se muestran valores positivos. Los registros anteriores sin valor positivo se conservan en la exportación.
@@ -21,6 +29,14 @@
         <p>
           {{ mark.date|date:'Y-m-d' }} · {{ mark.exercise_name }} · {{ mark.kg }} kg · Medido declarado · <a href="{% url 'measured-rm-detail' mark.id %}">Ver registro fuente</a>
         </p>
+        {% if chart_exercise_selected %}
+          <div class="observation-chart">
+            {% localize off %}<meter min="0"
+       max="{{ measured_max }}"
+       value="{{ mark.kg }}"
+       aria-label="{{ mark.date|date:'Y-m-d' }}: {{ mark.kg }} kilogramos medidos declarados"></meter>{% endlocalize %}
+          </div>
+        {% endif %}
       {% empty %}
         <p>Sin marcas medidas en este filtro.</p>
       {% endfor %}
@@ -40,6 +56,14 @@
         <p>
           {{ mark.date|date:'Y-m-d' }} · {{ mark.exercise_name }} · {{ mark.kg }} kg estimados · {{ mark.observed_kg }} kg × {{ mark.reps }} rep · RPE real {{ mark.rpe }} · Epley · {{ mark.block_title }} / serie {{ mark.set_order }} · <a href="{% url 'session-detail' mark.session_id %}">{{ mark.session_title }}</a>
         </p>
+        {% if chart_exercise_selected %}
+          <div class="observation-chart">
+            {% localize off %}<meter min="0"
+       max="{{ estimated_max }}"
+       value="{{ mark.kg }}"
+       aria-label="{{ mark.date|date:'Y-m-d' }}: {{ mark.kg }} kilogramos estimados"></meter>{% endlocalize %}
+          </div>
+        {% endif %}
       {% empty %}
         <p>Sin estimaciones elegibles en este filtro.</p>
       {% endfor %}

@@ -100,6 +100,24 @@ class StrengthMarksTests(TestCase):
         self.assertContains(response, "Bloque A / serie")
         self.assertNotContains(response, "Sesión ajena privada")
 
+    def test_bars_only_for_selected_exercise_and_keep_sources_separate(self) -> None:
+        own = UserExerciseRM.objects.create(
+            user=self.user.athlete,
+            exercise=self.exercise,
+            peso_maximo_rm=Decimal("90"),
+            fecha_registro=self.today,
+        )
+        self.series()
+        unfiltered = self.client.get(self.url)
+        self.assertNotContains(unfiltered, "<meter")
+        filtered = self.client.get(self.url, {"exercise": self.exercise.pk})
+        self.assertContains(filtered, 'value="90.00"')
+        self.assertContains(filtered, "kilogramos medidos declarados")
+        self.assertContains(filtered, "kilogramos estimados")
+        self.assertContains(filtered, reverse("measured-rm-detail", args=[own.pk]))
+        self.assertContains(filtered, reverse("session-detail", args=[self.session.pk]))
+        self.assertNotContains(filtered, "Sesi\u00f3n ajena privada")
+
     def test_private_source_links_filters_and_read_only(self) -> None:
         own = UserExerciseRM.objects.create(
             user=self.user.athlete,
