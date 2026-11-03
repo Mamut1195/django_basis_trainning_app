@@ -133,6 +133,7 @@
       {% endfor %}
       <small>Compara el mismo protocolo de duración. Estas unidades no son una predicción de lesiones ni una equivalencia exacta entre deportes.</small>
     </c-basis.card>
+    {% include 'training/progress/_session_context.html' %}
     <div class="split">
       <c-basis.card title="Recuperación">
         {% for item in wellness_records %}
