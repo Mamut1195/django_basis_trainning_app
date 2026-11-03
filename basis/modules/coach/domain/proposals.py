@@ -56,6 +56,17 @@ def validate_context(
     preferences = b.preferences
     if preferences is None or not preferences.availability:
         raise CoachInvalid("Registra tus días disponibles antes de revisar una propuesta.")
+    # CoachContext currently has no authorized RM read projection. Ownership in
+    # the manual planning service cannot establish provenance for generated data.
+    if any(
+        row.rm_reference is not None or row.target_percent_rm is not None
+        for session in definition.sessions
+        for block in session.blocks
+        for row in block.sets
+    ):
+        raise CoachInvalid(
+            "El contexto no contiene RM autorizadas. Revisa esas referencias en la planificación manual."
+        )
     allowed = {e.id for e in source.exercises or ()} & {e.id for e in current.exercises or ()}
     for session in definition.sessions:
         if session.date.isoweekday() not in preferences.availability:

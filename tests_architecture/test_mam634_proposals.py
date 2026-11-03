@@ -19,6 +19,7 @@ from basis.modules.training.public import (
     PlanDefinition,
     ProgressReport,
     ScheduledDefinition,
+    StrengthData,
     TrainingCoachContext,
 )
 from basis.shared.identifiers import AccountId, GoalId, JobId, PlanId, ProposalId
@@ -67,6 +68,20 @@ def definition() -> PlanDefinition:
 
 
 class DeclaredConstraints634Tests(TestCase):
+    def test_unconsulted_rm_is_rejected_by_presence_including_zero(self) -> None:
+        frozen, data = context(), definition()
+        for row in (
+            StrengthData(1, rm_reference=1),
+            StrengthData(1, target_percent_rm=Decimal(70)),
+            StrengthData(1, rm_reference=0),
+            StrengthData(1, target_percent_rm=Decimal(0)),
+        ):
+            with self.subTest(row=row):
+                block = BlockData("strength", sets=(row,))
+                candidate = replace(data, sessions=(replace(data.sessions[0], blocks=(block,)),))
+                with self.assertRaisesRegex(CoachInvalid, "RM autorizadas"):
+                    validate_context(candidate, frozen, frozen)
+
     def test_clocks_progress_and_new_observations_are_not_restriction_equality(self) -> None:
         frozen = context()
         current = replace(

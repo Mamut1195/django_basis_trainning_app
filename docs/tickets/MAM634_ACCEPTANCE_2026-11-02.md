@@ -219,3 +219,50 @@ Se encuentran en `C:/Users/Jonnathan/.t3/userdata/browser-artifacts/`.
 - **NOT RUN** suite global de todo el repositorio por este executor, CI remoto,
   proveedor IA/pagos LIVE, dispositivos reales, lector de pantalla, producción y
   aceptación humana. **NOT RUN** integración a padre/main y cierre de tickets.
+
+## Seguimiento 634 — procedencia de RM, posterior a ef6e5ee
+
+Se conserva sin reescribir `ef6e5eedb18f0bdef474e98d7e57bee707905b80`, candidato
+anterior con las verificaciones y gates P1/P2 descritos arriba.
+
+**Hallazgo propio del executor 634**, no una ejecución de coordinación: el probe
+PostgreSQL `.cache/mam634_rm_source_probe.py` creó un borrador con `rm_reference`
+de una RM existente y propia más `target_percent_rm=70`, aunque el snapshot declara
+`strength_rm_not_consulted` y no contiene ninguna proyección de RM autorizadas.
+Ambas ejecuciones del probe se revirtieron explícitamente; no dejaron calendario
+ni registros de ese atleta de prueba. La validación común de propiedad de una RM
+no sustituye la procedencia del contexto enviado al proveedor.
+
+Coordinación aprobó el guard y una regresión dedicados. `validate_context` rechaza
+ahora la presencia de `rm_reference` **o** `target_percent_rm` con `is not None`:
+cero también es presencia. Este contrato de coach no proporciona RM consultadas;
+no se agregaron tipos/campos, lecturas de RM, fórmulas ni reglas deportivas. La
+planificación manual mantiene sus servicios existentes. `None` conserva ausencia.
+
+La regresión previa al fix (5 tests y subcasos) falló en creación, sink, revisión
+y edición; los subcasos porcentaje aislado/cero alcanzaban errores del validador
+común en lugar de la negativa de procedencia esperada. Tras el guard, la creación
+desde sink no expone propuesta, revisión HTTP no muestra campos, aceptación y
+edición rechazan antes de persistir, y estado/contenido/calendario no quedan
+parcialmente guardados. También se verifica que prescripciones sin RM se aplican.
+
+```powershell
+python .cache/mam634_run.py manage.py test basis.bootstrap.tests.test_mam634_rm_provenance basis.bootstrap.tests.test_mam634_proposals --noinput -v 1
+python .cache/mam634_run.py -m unittest discover -s tests_architecture
+python .cache/mam634_run.py -m mypy --config-file mypy-core.ini
+python .cache/mam634_run.py -m mypy --config-file mypy-django.ini
+python .cache/mam634_run.py scripts/architecture_check.py
+lint-imports
+python -m ruff check .
+python -m ruff format --check basis/modules/coach/domain/proposals.py basis/bootstrap/tests/test_mam634_rm_provenance.py tests_architecture/test_mam634_proposals.py
+git diff --check
+```
+
+**VERIFIED local:** 32 PG / 0 skips / 8.869 s, 254 puras, mypy 133/422, checker,
+imports 8/0 y Ruff check/format. Un error inicial de invariancia de `dict` en el
+helper nuevo se corrigió con `Mapping`; tipos y focal PG se repitieron verdes.
+Logs: `.cache/mam634-rm-before.log`, `.cache/mam634-rm-validated.log`,
+`.cache/mam634-rm-pure.log`; manifiesto de esos tres archivos de código/prueba en
+`.cache/mam634-rm-validated-files.json`. **P1/P2 de 633 y aceptación integrada
+siguen PENDING.** Esta corrección de procedencia no acredita calidad del modelo,
+seguridad deportiva, IA LIVE ni cierre de MAM-634 o sus dependencias.
