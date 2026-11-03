@@ -169,8 +169,8 @@ class DjangoPlanRepository:
             row.start_date,
             row.end_date,
             row.notes,
-            tuple(cycle_definition(c) for c in row.cycles.all()),
-            tuple(scheduled_definition(s) for s in row.sessions.all()),
+            tuple(cycle_definition(c) for c in row.cycles.order_by("pk")),
+            tuple(scheduled_definition(s) for s in row.sessions.order_by("pk")),
         )
         executed = frozenset(
             PlannedSessionId(s.pk) for s in row.sessions.all() if intent_executions(s).exists()

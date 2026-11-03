@@ -6,6 +6,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.db import connection
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -55,6 +56,26 @@ class DjangoPlanningTests(PlanningContract, TestCase):
     def execute(self, id: PlannedSessionId) -> None:
         row = PlannedSession.objects.get(pk=id)
         Session.objects.create(owner=self.user, planned=row, title=row.title, date=row.date)
+
+    def test_snapshot_cycles_and_sessions_keep_creation_order_after_updates(self) -> None:
+        result = self.service.create(CreatePlan(self.owner, self.definition))
+        Cycle.objects.filter(plan_id=result.id, kind="macro").update(focus="Updated focus")
+        PlannedSession.objects.filter(plan_id=result.id, title="executed").update(
+            notes="Updated notes"
+        )
+        if connection.vendor == "postgresql":
+            # A valid sequential plan must give the same snapshot as an index scan.
+            with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL enable_indexscan = off")
+                cursor.execute("SET LOCAL enable_bitmapscan = off")
+        saved = self.repository.snapshot(self.owner, result.id, lock=False)
+        self.assertEqual(
+            [cycle.kind.value for cycle in saved.definition.cycles], ["macro", "meso", "micro"]
+        )
+        self.assertEqual(
+            [session.title for session in saved.definition.sessions],
+            [session.title for session in self.definition.sessions],
+        )
 
     def proposal(self) -> dict[str, object]:
         data = self.definition
