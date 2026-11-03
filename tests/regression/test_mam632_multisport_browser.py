@@ -176,6 +176,7 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
                 queued = cast(dict[str, object], records[1][0])
                 self.assertEqual(saved["session"], queued["session"])
                 self.assertEqual(saved["account"], queued["account"])
+                self.assertEqual(saved["account"], str(owner.athlete.public_id))
                 mutation = cast(str, queued["mutation_id"])
                 self.assertEqual(
                     pool.submit(db_read, mutation).result()[1:], (0, "Descanso ficticio", 0)
