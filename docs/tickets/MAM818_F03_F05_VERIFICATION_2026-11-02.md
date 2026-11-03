@@ -1,5 +1,61 @@
 # MAM-818 — F03/F04/F05, verificación local 2026-11-02
 
+## Correcciones tras revisión independiente de 8db5360
+
+Base de esta continuación: `a2b596fc37286f1083fc4461c4cc6de01dd4a135`, preservando todos los commits anteriores. Plan ampliado antes de editar implementación. Commit correctivo: `216d54fabb7d5f7f4eadb468120c086eba250e1f`. Suite completa de esta continuación: VERIFIED, 911 tests con cinco omisiones de navegador opt-in. El commit documental posterior no cambia código ni pruebas.
+
+La revisión encontró tres defectos reales en 8db5360. Los resultados del recibo inicial conservado más abajo pertenecen a aquel árbol y **no acreditan** estas correcciones. No se integró código en main ni se reutilizó una revisión histórica como aprobación del nuevo candidato.
+
+### Reproducción antes de corregir
+
+- `review-repro-domain.log`: **FAILED**, una prueba; `input_tokens=10**40` escapó con `decimal.InvalidOperation` durante quantize.
+- `review-repro-postgres.log`: **FAILED**, cinco pruebas nuevas, cuatro fallos y un error. Enqueue aceptaba un byte sobre el presupuesto congelado; MockTransport recibió max_tokens=1500 con una reserva limitada a 100; cambiar LIMITS global a (1,1) impidió enviar el job válido reservado; downgrade no rechazó snapshot nuevo sin auditorías; CLI de uso enorme escapó con InvalidOperation en lugar de registrar retained.
+- La reproducción usó exclusivamente datos sintéticos, la base de pruebas exclusiva y MockTransport. Ninguna llamada HTTP real ni conciliación de datos existentes.
+
+### Cambios correctivos
+
+- **P1 / transporte:** PricingSnapshot es parámetro obligatorio de Provider.prepare/call y del adaptador request_body. Enqueue pasa exactamente el snapshot reservado; el worker vuelve a validar el snapshot persistido y lo pasa al proveedor. max_tokens usa output_limit y la cota conservadora UTF-8 (bytes serializados + margen de 128) usa input_limit de ese snapshot. No es una medición LIVE ni un tokenizer. provider.py deja de leer LIMITS global. Tres pruebas enqueue → worker → MockTransport verifican max_tokens=100, la frontera exacta de bytes, rollback al excederla y cambios de política/globales entre reserva y envío. La fachada legacy actions.request_body conserva únicamente su preview con política histórica explícita; no participa en dispatch durable.
+- **P2 / downgrade:** 0002 fija un único constructor de política histórica y compara el JSON completo de cada snapshot con lo que reconstruiría al reaplicar la migración. Rechaza snapshots nuevos, representaciones JSON distintas aunque las tasas sean numéricamente equivalentes y NULL que se convertiría en política identificada. Rechaza también toda auditoría existente. PostgreSQL toma locks exclusivos de job y auditoría durante comprobación/reversión, evitando una escritura entre el control y el cambio de esquema. Se conserva la prueba de ida/vuelta histórica y se amplía para comparar exactamente snapshots, versiones, costos, reservas y estados; tres nuevas pruebas sin auditorías acreditan los rechazos sin perder datos.
+- **P2 / uso enorme:** usage_cost valida tipos, signo, cache y límites de entrada/salida **antes** de multiplicar o cuantizar. La conciliación registra retained/cost=NULL y conserva la reserva y saldos para 10**40. Contrato fake/ORM ampliado para entrada, salida y cache enormes con replay idempotente; CLI verifica un único recibo durable con el valor original y sin mutar el job.
+- Sin cambios de contexto/codec/prompts 633, propuestas/bootstrap 634, migraciones 0001 ni datos existentes. Extensión autorizada limitada a provider.py, puerto/fakes, fachada de preview y pruebas pertinentes.
+
+### Verificación del candidato corregido
+
+Mismo intérprete raíz, config.test_settings, AI_ENABLED=0, secreto sintético, HTTP real y sockets externos bloqueados. Base `basis_wave2_818`, solo test `test_basis_wave2_818`; PostgreSQL 18.4. No se detuvo instancia ni se operaron otras bases.
+
+```powershell
+& $python .cache/mam818/run_guarded.py unittest tests_architecture.test_coach_jobs.JobsTests.test_invalid_token_values_cannot_be_billed -v
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_provider_policy basis.bootstrap.tests.test_coach_reconciliation.ReconciliationCommandTests.test_enormous_usage_is_retained_audited_and_idempotent_in_cli basis.bootstrap.tests.test_coach_pricing_migration.HistoricalPricingMigrationTests.test_downgrade_preserves_unreconstructible_snapshot_even_without_audit --noinput -v 2
+& $python .cache/mam818/run_guarded.py manage test basis.bootstrap.tests.test_coach_jobs basis.bootstrap.tests.test_coach_edges basis.bootstrap.tests.test_coach_provider_policy basis.bootstrap.tests.test_coach_reconciliation basis.bootstrap.tests.test_coach_pricing_migration basis.bootstrap.tests.test_installation tests.regression.test_billing_ai tests.regression.test_accounts.ReferenceSMTPTests --noinput -v 1
+& $python .cache/mam818/run_guarded.py unittest discover -s tests_architecture -q
+& $python .cache/mam818/run_guarded_sqlite.py manage test basis.bootstrap.tests.test_coach_jobs basis.bootstrap.tests.test_coach_provider_policy basis.bootstrap.tests.test_coach_reconciliation --noinput -v 1
+& $python .cache/mam818/run_guarded.py mypy --config-file mypy-core.ini
+& $python .cache/mam818/run_guarded.py mypy --config-file mypy-django.ini
+& $python .cache/mam818/run_guarded.py script scripts/architecture_check.py
+& $python .cache/mam818/run_guarded.py script .cache/mam818/check_imports.py
+& $python .cache/mam818/run_guarded.py ruff check .
+& $python .cache/mam818/run_guarded.py manage check
+& $python .cache/mam818/run_guarded.py manage makemigrations --check --dry-run
+& $python .cache/mam818/run_guarded.py script .cache/mam818/verify_guard.py
+& $python .cache/mam818/run_guarded.py manage test --noinput -v 1
+git diff --check
+```
+
+Las primeras dos órdenes documentan la reproducción roja anterior a la corrección; no se declaran verdes retroactivamente. Los comandos restantes corresponden al candidato corregido:
+
+- **VERIFIED:** focal PostgreSQL **82 tests, OK, cero omisiones**, 16.337 s (`review-focal-final.log`). Focal anterior de 75 ampliada, sin retirar assertions. Una primera pasada de 80 también pasó antes de agregar los dos casos adicionales de exactitud JSON/NULL.
+- **VERIFIED:** puras **253 tests, OK**, 3.805 s (`review-pure.log`); se ampliaron casos de uso enorme en tests existentes.
+- **VERIFIED:** SQLite focal **42 tests, OK**, tres omisiones de concurrencia PG, 0.943 s (`review-sqlite.log`).
+- **VERIFIED:** mypy core 130 archivos, Django 418; arquitectura y ocho contratos de importación, cero rotos; Ruff check global y format --check de diez fuentes/pruebas modificadas no migración; Django check y ausencia de migraciones pendientes; git diff --check. Mypy detectó inicialmente JSONField opcional indexado sin estrechar tipo en la nueva prueba CLI; corregido con comprobación explícita de dict, sin suprimir errores ni retirar assertions.
+- **VERIFIED:** barrera HTTP/sockets externos comprobada nuevamente; proveedor usa MockTransport. Runner y su bloque Python reproducible permanecen sin cambios.
+- **VERIFIED:** suite completa nueva **911 tests, OK**, cinco omisiones de navegador opt-in, 261.847 s (`review-full.log`); iniciada únicamente después de focal 82 verde y árbol estabilizado. Sin omisiones contables PostgreSQL. Corresponde a las fuentes de `216d54f`, no a las de 8db5360.
+
+**NOT RUN:** nueva revisión independiente del candidato, integración en main, CI remoto/push/PR, producción, proveedor/precios/alias LIVE y conciliación de datos existentes. La próxima revisión será una delegación nueva bajo coordinación. MAM-818 sigue abierto por estos gates y los demás criterios conservados; estas correcciones no resuelven contexto/evaluación deportiva, P03 ni capacidad.
+
+---
+
+Las secciones siguientes conservan el recibo original de 8db5360 y sus resultados históricos.
+
 ## Estado y procedencia
 
 Implementación local en worktree aislado `C:/Users/Jonnathan/.t3/worktrees/django-basis-trainning-app/t3-8cf5fdb3`, desde padre `fb9c17ea6ecc804ac2c3a27936fba1537c908976`. Plan escrito antes de editar: [MAM818_F03_F05_PLAN_2026-11-02.md](MAM818_F03_F05_PLAN_2026-11-02.md).
