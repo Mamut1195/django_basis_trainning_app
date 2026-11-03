@@ -3,7 +3,9 @@
 from dataclasses import replace
 from datetime import date, timedelta
 
+from django.db import transaction
 from django.db.models import Exists, OuterRef
+from django.db.transaction import TransactionManagementError
 
 from basis.modules.training.adapters.models import Goal, PlannedSession, Session, TrainingPlan
 from basis.shared.identifiers import AccountId, GoalId, PlanId
@@ -25,6 +27,41 @@ from .progress import progress_session
 
 
 class DjangoTrainingCoachContexts:
+    def read_for_acceptance(
+        self, owner: AccountId, today: date, base_plan: PlanId | None
+    ) -> TrainingCoachContext:
+        if not transaction.get_connection(Goal.objects.db).in_atomic_block:
+            raise TransactionManagementError("Acceptance context requires an open unit of work")
+        # The caller already holds lock_account, the anchor taken by official
+        # goal/create/lineage writers. Lock the projected existing goals first.
+        goals = set(
+            Goal.objects.filter(owner_id=owner)
+            .order_by("priority", "pk")
+            .values_list("pk", flat=True)[:8]
+        )
+        if base_plan is not None:
+            goal = (
+                TrainingPlan.objects.filter(owner_id=owner, pk=base_plan)
+                .values_list("goal_id", flat=True)
+                .first()
+            )
+            if goal is not None:
+                goals.add(goal)
+        tuple(
+            Goal.objects.select_for_update()
+            .filter(owner_id=owner, pk__in=goals)
+            .order_by("pk")
+            .values_list("pk", flat=True)
+        )
+        if base_plan is not None:
+            tuple(
+                TrainingPlan.objects.select_for_update()
+                .filter(owner_id=owner, pk=base_plan)
+                .order_by("pk")
+                .values_list("pk", flat=True)
+            )
+        return self.read(owner, today)
+
     def read(self, owner: AccountId, today: date) -> TrainingCoachContext:
         start, session_limit, goal_limit = today - timedelta(days=13), 14, 8
         goals = tuple(

@@ -4,9 +4,9 @@ from dataclasses import replace
 from datetime import timedelta
 
 from basis.modules.athletes.public import AthleteCoachContexts
-from basis.modules.catalog.public import CoachExercises
+from basis.modules.catalog.public import CoachExercises, InvalidCatalogData
 from basis.modules.training.public import TrainingCoachContexts
-from basis.shared.identifiers import AccountId, PlanId
+from basis.shared.identifiers import AccountId, ExerciseId, PlanId
 from basis.shared.ports import Clock
 
 from ..domain.context import CoachContext
@@ -32,12 +32,48 @@ class Contexts:
     def snapshot(
         self, owner: AccountId, kind: JobKind, base_plan_id: PlanId | None
     ) -> CoachContext:
+        return self._snapshot(owner, kind, base_plan_id)
+
+    def snapshot_for_acceptance(
+        self,
+        owner: AccountId,
+        kind: JobKind,
+        base_plan_id: PlanId | None,
+        *,
+        exercise_ids: tuple[ExerciseId, ...] = (),
+    ) -> CoachContext:
+        """Caller holds UoW/account before proposal; pass every draft exercise ID.
+
+        Locks survive until the caller commits/rolls back the actual application.
+        This read does not itself compare a proposal or grant write permission.
+        """
+        if kind != "plan":
+            raise CoachInvalid("La lectura para aceptación requiere una propuesta de plan.")
+        return self._snapshot(
+            owner, kind, base_plan_id, for_acceptance=True, exercise_ids=exercise_ids
+        )
+
+    def _snapshot(
+        self,
+        owner: AccountId,
+        kind: JobKind,
+        base_plan_id: PlanId | None,
+        *,
+        for_acceptance: bool = False,
+        exercise_ids: tuple[ExerciseId, ...] = (),
+    ) -> CoachContext:
+        now, today = self.clock.now(), self.clock.today()
+        if for_acceptance:
+            athlete = self.athletes.read_for_acceptance(owner)
+            if athlete.preferences is None:
+                raise CoachInvalid("Completa tus preferencias antes de aceptar una propuesta.")
+            training = self.training.read_for_acceptance(owner, today, base_plan_id)
         base = self.training.selected(owner, base_plan_id) if base_plan_id is not None else None
         if base_plan_id is not None and (kind != "plan" or base is None):
             raise CoachInvalid("El plan seleccionado no est\u00e1 disponible.")
-        now, today = self.clock.now(), self.clock.today()
-        athlete = self.athletes.read(owner)
-        training = self.training.read(owner, today)
+        if not for_acceptance:
+            athlete = self.athletes.read(owner)
+            training = self.training.read(owner, today)
         start = training.scope.start if training.scope else today - timedelta(days=13)
         # Future or stale declarations are not current recovery evidence. Their
         # absence is explicit; nothing is inferred from gaps between sessions.
@@ -115,11 +151,23 @@ class Contexts:
                 )
                 if value is None
             )
+        try:
+            exercises = (
+                (
+                    self.exercises.read_for_acceptance(exercise_ids)
+                    if for_acceptance
+                    else self.exercises.read()
+                )
+                if kind == "plan"
+                else None
+            )
+        except InvalidCatalogData as error:
+            raise CoachInvalid(str(error)) from error
         return CoachContext(
             now,
             athlete,
             training,
-            self.exercises.read() if kind == "plan" else None,
+            exercises,
             self.training.variables() if kind == "plan" else None,
             base,
             schema_version=2,

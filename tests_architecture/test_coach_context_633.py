@@ -53,6 +53,9 @@ class Athletes:
             raise PermissionError
         return self.data
 
+    def read_for_acceptance(self, owner: AccountId) -> AthleteCoachContext:
+        return self.read(owner)
+
 
 class Training:
     def __init__(self) -> None:
@@ -72,6 +75,11 @@ class Training:
             return None
         return CoachBasePlan(plan, "Owned", 1, GoalId(1), TODAY, TODAY)
 
+    def read_for_acceptance(
+        self, owner: AccountId, today: date, base_plan: PlanId | None
+    ) -> TrainingCoachContext:
+        return self.read(owner, today)
+
     def variables(self) -> tuple[CoachVariables, ...]:
         return (CoachVariables("running", (("distance_m", "m"),)),)
 
@@ -83,6 +91,9 @@ class Exercises:
     def read(self) -> tuple[CoachExercise, ...]:
         self.calls += 1
         return (CoachExercise(ExerciseId(1), "Synthetic"),)
+
+    def read_for_acceptance(self, referenced: tuple[ExerciseId, ...]) -> tuple[CoachExercise, ...]:
+        return self.read()
 
 
 class CoachContext633Tests(TestCase):
@@ -113,6 +124,13 @@ class CoachContext633Tests(TestCase):
         self.assertEqual(self.catalog.calls, 0)
         self.assertEqual(self.athletes.reads, [OWNER])
         self.assertEqual(self.training.reads, [OWNER])
+
+    def test_acceptance_rejects_absent_preferences_without_silent_defaults(self) -> None:
+        with self.assertRaises(CoachInvalid):
+            self.service.snapshot_for_acceptance(OWNER, "plan", None)
+        self.assertEqual(self.training.reads, [])
+        with self.assertRaises(CoachInvalid):
+            self.service.snapshot_for_acceptance(OWNER, "short", None)
 
     def test_other_owner_and_foreign_base_are_rejected_before_reading_context(self) -> None:
         cases: tuple[tuple[JobKind, PlanId], ...] = (("plan", PlanId(2)), ("short", PlanId(1)))
