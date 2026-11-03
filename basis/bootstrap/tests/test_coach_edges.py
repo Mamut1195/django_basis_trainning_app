@@ -156,7 +156,7 @@ class CoachEdgeTests(TestCase):
                 200,
                 json={
                     "usage": {"prompt_tokens": 10, "completion_tokens": 2},
-                    "model": "reported",
+                    "model": "deepseek-v4-flash",
                     "choices": [{"message": {"content": "answer"}, "finish_reason": "stop"}],
                 },
             )
@@ -259,6 +259,7 @@ class CoachEdgeTests(TestCase):
         response = client.return_value.__enter__.return_value.post.return_value
         response.status_code = 200
         response.json.return_value = {
+            "model": "deepseek-v4-flash",
             "usage": {"prompt_tokens": 10, "completion_tokens": 10},
             "choices": [{"finish_reason": "stop", "message": {"content": '{"question":"Goal?"}'}}],
         }
@@ -299,6 +300,7 @@ class CoachEdgeTests(TestCase):
         response = client.return_value.__enter__.return_value.post.return_value
         response.status_code = 200
         response.json.return_value = {
+            "model": "deepseek-v4-flash",
             "usage": {"prompt_tokens": 10, "completion_tokens": 10},
             "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(source)}}],
         }
@@ -340,7 +342,7 @@ class CoachEdgeTests(TestCase):
         result = decode_reply(
             {
                 "usage": {"prompt_tokens": 10, "completion_tokens": 2},
-                "model": "reported",
+                "model": "deepseek-v4-flash",
                 "choices": [{"message": {"content": None}, "finish_reason": "stop"}],
             }
         )
@@ -352,7 +354,7 @@ class CoachEdgeTests(TestCase):
     def test_malformed_http_reply_does_not_stop_worker_or_repeat_paid_request(self) -> None:
         valid = {
             "usage": {"prompt_tokens": 10, "completion_tokens": 2},
-            "model": "reported",
+            "model": "deepseek-v4-flash",
             "choices": [{"message": {"content": "answer"}, "finish_reason": "stop"}],
         }
         null_content = copy.deepcopy(valid)

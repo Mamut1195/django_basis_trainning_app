@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import Callable, Protocol
 from uuid import uuid4
 
@@ -20,16 +21,23 @@ from basis.shared.ports import Clock, UnitOfWork
 
 from ..domain.context import CoachContext
 from ..domain.jobs import (
+    HISTORICAL_PRICING,
     CoachInvalid,
     CoachUnavailable,
     Fund,
     Job,
     JobKind,
+    PricingPolicy,
     ProviderAmbiguous,
     ProviderRejected,
     ProviderReply,
+    Reconcile,
+    Reconciliation,
+    TokenUsage,
     Usage,
+    job_pricing,
     require_budget,
+    require_release,
     usage_cost,
 )
 
@@ -39,6 +47,7 @@ class CoachConfiguration:
     enabled: bool
     credential_configured: bool
     model: str
+    pricing: PricingPolicy = HISTORICAL_PRICING
 
 
 @dataclass(frozen=True)
@@ -87,6 +96,8 @@ class JobsRepository(Protocol):
     def save_job(self, job: Job) -> None: ...
     def claim(self, now: datetime) -> Job | None: ...
     def quarantine(self, before: datetime) -> None: ...
+    def reconciliation(self, job: JobId, key: str) -> Reconciliation | None: ...
+    def add_reconciliation(self, record: Reconciliation) -> None: ...
 
 
 class Jobs:
@@ -110,7 +121,7 @@ class Jobs:
     def require_available(self) -> None:
         if not self.config.enabled or not self.config.credential_configured:
             raise CoachUnavailable("El entrenador IA todavía no está habilitado.")
-        if self.config.model not in ("deepseek-flash", "deepseek-v4-flash") or self.repo.blocked():
+        if self.config.model not in self.config.pricing.allowed_models or self.repo.blocked():
             raise CoachUnavailable("La IA está pausada hasta verificar modelo, precios y uso.")
 
     def enqueue(self, command: Enqueue) -> Job:
@@ -152,7 +163,8 @@ class Jobs:
             assert billing.period_start is not None
             key = "trial-lifetime" if trial else billing.period_start.isoformat()
             usage = self.repo.lock_period(command.owner, key, trial)
-            reservation = require_budget(command.kind, usage, fund, trial)
+            pricing = self.config.pricing.freeze(command.kind)
+            reservation = require_budget(command.kind, usage, fund, trial, pricing)
             if command.invalid_base_plan:
                 raise CoachInvalid("El plan seleccionado no es v\u00e1lido.")
             context = self.contexts.snapshot(command.owner, command.kind, command.base_plan)
@@ -178,6 +190,8 @@ class Jobs:
                 reservation,
                 self.config.model,
                 command.base_plan,
+                pricing_version=pricing.version,
+                pricing=pricing,
             )
             self.repo.create(job)
             work.commit()
@@ -212,18 +226,26 @@ class Jobs:
                 self.repo.save_job(job)
                 work.commit()
                 return job
-            from decimal import Decimal
-
             cost = Decimal(0)
             if data is not None:
+                # Keep bounded observations even when validation fails; never infer cost.
+                job.reported_model = data.reported_model[:100]
+                if data.usage is not None:
+                    job.input_tokens, job.output_tokens, job.cache_hit_tokens = (
+                        value if type(value) is int and 0 <= value <= 2147483647 else None
+                        for value in (
+                            data.usage.input_tokens,
+                            data.usage.output_tokens,
+                            data.usage.cache_hits,
+                        )
+                    )
                 try:
+                    pricing = job_pricing(job)
+                    if data.reported_model not in pricing.allowed_models:
+                        raise CoachInvalid
                     if data.usage is None:
                         raise CoachInvalid
-                    cost = usage_cost(data.usage, job.kind, job.reservation)
-                    job.input_tokens = data.usage.input_tokens
-                    job.output_tokens = data.usage.output_tokens
-                    job.cache_hit_tokens = data.usage.cache_hits
-                    job.reported_model = data.reported_model[:100]
+                    cost = usage_cost(data.usage, job.kind, job.reservation, pricing)
                     if not data.choice_present:
                         raise CoachInvalid
                     job.answer = data.answer if isinstance(data.answer, str) else ""
@@ -243,6 +265,15 @@ class Jobs:
                     self.repo.save_job(job)
                     work.commit()
                     return job
+            try:
+                require_release(job, usage, fund, cost)
+            except CoachInvalid:
+                self.repo.block()
+                job.status, job.error = "uncertain", "Saldos incompatibles; reserva retenida."
+                job.completed_at = self.clock.now()
+                self.repo.save_job(job)
+                work.commit()
+                return job
             usage.reserved -= job.reservation
             usage.spent += cost
             self.repo.save_usage(usage)
@@ -257,6 +288,106 @@ class Jobs:
             work.commit()
             return job
 
+    def reconcile(self, command: Reconcile, *, apply: bool = False) -> Reconciliation:
+        """Administrative evidence only: never calls provider, billing or proposal ports."""
+        command.validate()
+        with self.uow() as work:
+            original = self.repo.job(command.job_id)
+            # Same lock order as settlement/enqueue, including the original trial month.
+            fund = self.repo.lock_fund(original.trial_fund) if original.trial_fund else None
+            self.accounts.lock(original.owner)
+            job = self.repo.lock_job(command.job_id)
+            usage = self.repo.lock_usage(job.usage_period)
+            previous = self.repo.reconciliation(job.id, command.key)
+            if previous is not None:
+                if previous.command != command:
+                    raise CoachInvalid("La clave de conciliación ya tiene otra decisión.")
+                return previous
+            cost: Decimal | None = None
+            reason = ""
+            try:
+                if job.status != "uncertain":
+                    raise CoachInvalid("El job ya no está uncertain; no se ajustan saldos.")
+                if command.decision == "usage":
+                    pricing = job_pricing(job)
+                    if command.reported_model not in pricing.allowed_models or (
+                        job.reported_model
+                        and job.reported_model != command.reported_model
+                        and job.reported_model not in pricing.allowed_models
+                    ):
+                        raise CoachInvalid("Modelo discrepante; requiere revisión de política.")
+                    assert command.usage is not None
+                    cost = usage_cost(command.usage, job.kind, job.reservation, pricing)
+                    observed = (job.input_tokens, job.output_tokens, job.cache_hit_tokens)
+                    proposed = (
+                        command.usage.input_tokens,
+                        command.usage.output_tokens,
+                        command.usage.cache_hits,
+                    )
+                    if any(old is not None and old != new for old, new in zip(observed, proposed)):
+                        raise CoachInvalid("El uso no coincide con la evidencia del job.")
+                else:
+                    # Explicit no-charge evidence may resolve missing usage/snapshot, but
+                    # known out-of-policy observations still require separate review.
+                    if (
+                        job.reported_model
+                        or job.input_tokens is not None
+                        or job.output_tokens is not None
+                        or job.cache_hit_tokens is not None
+                    ):
+                        pricing = job_pricing(job)
+                        if job.reported_model and job.reported_model not in pricing.allowed_models:
+                            raise CoachInvalid("Modelo discrepante; reserva retenida.")
+                        if any(
+                            value is not None and (value < 0 or value > limit)
+                            for value, limit in (
+                                (job.input_tokens, pricing.input_limit),
+                                (job.output_tokens, pricing.output_limit),
+                                (job.cache_hit_tokens, pricing.input_limit),
+                            )
+                        ) or (
+                            job.cache_hit_tokens is not None
+                            and job.input_tokens is not None
+                            and job.cache_hit_tokens > job.input_tokens
+                        ):
+                            raise CoachInvalid("Uso observado fuera de límites; reserva retenida.")
+                        if job.input_tokens is not None and job.output_tokens is not None:
+                            usage_cost(
+                                TokenUsage(
+                                    job.input_tokens, job.output_tokens, job.cache_hit_tokens or 0
+                                ),
+                                job.kind,
+                                job.reservation,
+                                pricing,
+                            )
+                    cost = Decimal(0)
+                require_release(job, usage, fund, cost)
+            except CoachInvalid as exc:
+                cost = None
+                reason = str(exc) or "Uso fuera de límites; reserva retenida."
+            outcome = (
+                "retained"
+                if cost is None
+                else ("released" if command.decision == "no_charge" else "charged")
+            )
+            if cost is not None:
+                usage.reserved -= job.reservation
+                usage.spent += cost
+                self.repo.save_usage(usage)
+                if fund is not None:
+                    fund.reserved -= job.reservation
+                    fund.spent += cost
+                    self.repo.save_fund(fund)
+                job.cost, job.status = cost, "failed"
+                job.error = "Conciliado administrativamente; no se aplica respuesta ni se reenvía."
+                job.completed_at = self.clock.now()
+                self.repo.save_job(job)
+            record = Reconciliation(command, outcome, reason, cost, job.status, self.clock.now())
+            self.repo.add_reconciliation(record)
+            if apply:
+                work.commit()
+            return record
+
     def process_one(self) -> bool:
         if not self.config.enabled or not self.config.credential_configured or self.repo.blocked():
             return False
@@ -265,6 +396,15 @@ class Jobs:
             work.commit()
         if job is None:
             return False
+        try:
+            job_pricing(job)
+        except CoachInvalid:
+            # An unverifiable pending policy must never reach the provider.
+            self.settle(job.id)
+            with self.uow() as work:
+                self.repo.block()
+                work.commit()
+            return True
         billing = self.billing.get(job.owner)
         if billing is None or not state_entitled(billing, self.clock.now()):
             self.settle(

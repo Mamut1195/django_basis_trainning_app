@@ -13,12 +13,14 @@ from basis.modules.billing.public import BillingState
 from basis.modules.coach.application.jobs import CoachConfiguration, Enqueue, Jobs
 from basis.modules.coach.domain.context import CoachContext
 from basis.modules.coach.domain.jobs import (
+    HISTORICAL_PRICING,
     CoachInvalid,
     Fund,
     Job,
     JobKind,
     ProviderAmbiguous,
     ProviderReply,
+    Reconciliation,
     TokenUsage,
     Usage,
     require_budget,
@@ -52,9 +54,12 @@ class Memory:
         self.funds: dict[TrialFundId, Fund] = {}
         self.is_blocked = False
         self.committed = False
+        self.reconciliations: dict[tuple[JobId, str], Reconciliation] = {}
 
     def __enter__(self) -> "Memory":
-        self.before = deepcopy((self.jobs, self.usages, self.funds, self.is_blocked))
+        self.before = deepcopy(
+            (self.jobs, self.usages, self.funds, self.is_blocked, self.reconciliations)
+        )
         self.committed = False
         return self
 
@@ -65,13 +70,22 @@ class Memory:
         traceback: TracebackType | None,
     ) -> None:
         if not self.committed or exc_type is not None:
-            self.jobs, self.usages, self.funds, self.is_blocked = self.before
+            self.jobs, self.usages, self.funds, self.is_blocked, self.reconciliations = self.before
 
     def commit(self) -> None:
         self.committed = True
 
     def blocked(self) -> bool:
         return self.is_blocked
+
+    def reconciliation(self, job: JobId, key: str) -> Reconciliation | None:
+        return self.reconciliations.get((job, key))
+
+    def add_reconciliation(self, record: Reconciliation) -> None:
+        key = record.command.job_id, record.command.key
+        if key in self.reconciliations:
+            raise ValueError("immutable reconciliation")
+        self.reconciliations[key] = record
 
     def block(self) -> None:
         self.is_blocked = True
@@ -171,7 +185,9 @@ class Ports:
         self.calls += 1
         if self.ambiguous:
             raise ProviderAmbiguous
-        return ProviderReply(TokenUsage(1000, 100, 200), "reported", True, "answer", True, "stop")
+        return ProviderReply(
+            TokenUsage(1000, 100, 200), "deepseek-v4-flash", True, "answer", True, "stop"
+        )
 
     def complete(self, job: Job) -> bool:
         return True
@@ -226,6 +242,7 @@ class JobsTests(JobsContract, JobsSettlementContract, TestCase):
             None,
             reservation_for("short"),
             "deepseek-v4-flash",
+            pricing=HISTORICAL_PRICING.freeze("short"),
         )
 
     def command(self, key: int = 3) -> Enqueue:
