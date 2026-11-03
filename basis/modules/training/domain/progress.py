@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date as Date
 from decimal import Decimal
 
-from basis.shared.identifiers import SessionId
+from basis.shared.identifiers import SessionId, TrekStageId, TrekTripId
 
 from .execution import DurationProtocol, Metric, MetricName
 from .sports import VARIABLES, internal_load
@@ -19,6 +19,15 @@ class ProgressBlock:
 
 
 @dataclass(frozen=True)
+class StageRecovery:
+    trip: TrekTripId
+    stage: TrekStageId
+    order: int
+    overnight_altitude_m: Decimal | None
+    recovery_notes: str
+
+
+@dataclass(frozen=True)
 class ProgressSession:
     id: SessionId
     completed: bool
@@ -27,6 +36,16 @@ class ProgressSession:
     reported_rpe: Decimal | None = None
     blocks: tuple[ProgressBlock, ...] = ()
     date: Date | None = None
+    stage_recovery: StageRecovery | None = None
+
+
+@dataclass(frozen=True)
+class SessionContext:
+    session: ProgressSession
+    previous_date: Date | None
+    days_since_previous: int | None
+    consecutive_days: int | None
+    sessions_on_date: int | None
 
 
 @dataclass(frozen=True)
@@ -76,6 +95,7 @@ class ProgressReport:
     scheduled_past: int
     completed_scheduled: int
     adherence_percent: float | None
+    context: tuple[SessionContext, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -151,6 +171,36 @@ def intensity_summary(
     )
 
 
+def session_context(sessions: tuple[ProgressSession, ...]) -> tuple[SessionContext, ...]:
+    """Observed dates in this selection; gaps do not establish rest or recovery.
+
+    Same-day sessions share a day count: dates alone cannot order them or
+    establish hours between sessions. Missing dates never imply a streak.
+    """
+    counts: dict[Date, int] = {}
+    for session in sessions:
+        if session.date is not None:
+            counts[session.date] = counts.get(session.date, 0) + 1
+    days: dict[Date, tuple[Date | None, int | None, int]] = {}
+    previous: Date | None = None
+    streak = 0
+    for day in sorted(counts):
+        gap = (day - previous).days if previous is not None else None
+        streak = streak + 1 if gap == 1 else 1
+        days[day] = (previous, gap, streak)
+        previous = day
+    return tuple(
+        SessionContext(
+            session,
+            *days[session.date],
+            counts[session.date],
+        )
+        if session.date is not None
+        else SessionContext(session, None, None, None, None)
+        for session in sessions
+    )
+
+
 def report(
     sessions: tuple[ProgressSession, ...],
     scheduled: tuple[ScheduledProgress, ...],
@@ -203,6 +253,7 @@ def report(
         expected,
         done,
         round(done / expected * 100, 1) if expected else None,
+        session_context(completed),
     )
 
 

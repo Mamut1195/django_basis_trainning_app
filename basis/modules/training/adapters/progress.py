@@ -8,13 +8,26 @@ from basis.shared.identifiers import AccountId, SessionId, TrekStageId, TrekTrip
 
 from ..application.progress import AddStage, CreateTrip, EditStage
 from ..domain.execution import DurationProtocol
-from ..domain.progress import ProgressBlock, ProgressSession, ScheduledProgress
+from ..domain.progress import ProgressBlock, ProgressSession, ScheduledProgress, StageRecovery
 from ..domain.trekking import TrekkingUnavailable
 from .django import save_validated
 from .wire import metrics
 
 
 def progress_session(row: Session) -> ProgressSession:
+    stage = getattr(row, "trek_stage", None)
+    # A malformed administrative link must not expose another account's trip.
+    recovery = (
+        StageRecovery(
+            TrekTripId(stage.trip_id),
+            TrekStageId(stage.pk),
+            stage.order,
+            stage.overnight_altitude_m,
+            stage.recovery_notes,
+        )
+        if stage is not None and stage.trip.owner_id == row.owner_id
+        else None
+    )
     return ProgressSession(
         SessionId(row.pk),
         row.status == "completed",
@@ -31,6 +44,7 @@ def progress_session(row: Session) -> ProgressSession:
             for b in row.blocks.all()
         ),
         row.date,
+        recovery,
     )
 
 
@@ -44,7 +58,7 @@ class DjangoProgressRepository:
         query = Session.objects.filter(owner_id=owner, status="completed")
         if start is not None and end is not None:
             query = query.filter(date__range=(start, end))
-        rows = query.prefetch_related("blocks__sets", "blocks__intervals")
+        rows = query.select_related("trek_stage__trip").prefetch_related("blocks__sets")
         return tuple(progress_session(s) for s in rows)
 
     def scheduled(self, owner: AccountId, today: date) -> tuple[ScheduledProgress, ...]:
@@ -65,8 +79,8 @@ class DjangoProgressRepository:
         if not TrekTrip.objects.filter(pk=trip, owner_id=owner).exists():
             raise TrekkingUnavailable("El trekking no existe.")
         rows = (
-            TrekStage.objects.filter(trip_id=trip)
-            .select_related("session")
+            TrekStage.objects.filter(trip_id=trip, session__owner_id=owner)
+            .select_related("session__trek_stage__trip")
             .prefetch_related("session__blocks__sets")
         )
         return tuple(progress_session(s.session) for s in rows)

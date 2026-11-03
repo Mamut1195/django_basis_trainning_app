@@ -1,7 +1,7 @@
 """Existing report dictionaries remain a presentation concern."""
 
 from ..domain.progress import Coverage, ProgressReport, TrekSummary
-from ..domain.sports import SPORT_LABELS
+from ..domain.sports import SPORT_LABELS, internal_load
 
 
 def coverage(value: Coverage) -> dict[str, int]:
@@ -61,6 +61,41 @@ def encode_progress(result: ProgressReport) -> dict[str, object]:
         "completed_scheduled": result.completed_scheduled,
         "adherence_percent": result.adherence_percent,
         "method": "session-rpe-v1; total de bloque; sin suma entre deportes",
+        "load_method": "session-rpe-v1: minutos de sesión × RPE de sesión; separado por protocolo",
+        "load_unit": "UA",
+        "context_method": (
+            "Fechas de sesiones completadas dentro del período seleccionado; "
+            "días consecutivos observados, sin inferir descanso, horas de recuperación "
+            "ni riesgo de lesión. Notas de recuperación declaradas de etapas de trekking; "
+            "no son una evaluación de recuperación."
+        ),
+        "context": [
+            {
+                "session_id": str(c.session.id),
+                "date": c.session.date,
+                "sports": list(dict.fromkeys(b.sport for b in c.session.blocks)),
+                "protocol": c.session.protocol.value,
+                "duration_seconds": c.session.duration_seconds,
+                "reported_rpe": c.session.reported_rpe,
+                "internal_load": internal_load(c.session.duration_seconds, c.session.reported_rpe),
+                "previous_date": c.previous_date,
+                "days_since_previous": c.days_since_previous,
+                "consecutive_days": c.consecutive_days,
+                "sessions_on_date": c.sessions_on_date,
+                "stage_recovery": (
+                    {
+                        "trip_id": c.session.stage_recovery.trip,
+                        "stage_id": c.session.stage_recovery.stage,
+                        "order": c.session.stage_recovery.order,
+                        "overnight_altitude_m": c.session.stage_recovery.overnight_altitude_m,
+                        "recovery_notes": c.session.stage_recovery.recovery_notes,
+                    }
+                    if c.session.stage_recovery is not None
+                    else None
+                ),
+            }
+            for c in result.context
+        ],
     }
 
 
