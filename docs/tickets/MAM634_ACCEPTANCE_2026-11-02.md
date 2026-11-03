@@ -3,9 +3,11 @@
 **Estado actual:** correctivo 633 `47af985` incorporado completo como `5a22481`.
 Conjunto local: **205 PG / 0 skips, 257 puras, mypy 133/424**, con los checks y
 recorrido descritos al final. Los tres commits 634 originales se conservan.
-**Revisiones independientes 633-R2 y 634-R2 PENDING; sin aceptación final
-integrada, main, LIVE ni cierre de tickets.** Las secciones previas al seguimiento
-final son recibos históricos y no sustituyen esta frontera de evidencia.
+**633-R2 y 634-R2 terminadas sin bloqueantes nuevos dentro de sus ámbitos.** Las
+objeciones previas quedaron resueltas; PostgreSQL integrado fue ejecutado por el
+executor 634 y no repetido por esos reviewers. **Entrega local verificada; sin
+integración a main, LIVE ni cierre de tickets.** Los gates PENDING de las secciones
+anteriores son capturas históricas; el último seguimiento registra sus resultados.
 
 ## Goal
 
@@ -372,3 +374,48 @@ no acredita dispositivo físico ni proveedor LIVE.
 Los correctivos solicitados están incorporados y los checks locales pasan, pero
 **633-R2 y 634-R2 siguen PENDING** a esta captura. No se declara aceptación final
 integrada ni aprobación independiente por ejecutar las pruebas del autor.
+
+## Cierre del alcance local y entrega a coordinación
+
+Se leyeron completos los dictámenes finales ya publicados:
+
+- **634-R2:** sin nuevos P1/P2 propios; cierra NaN, referencias RM y estado oculto.
+  Verificación independiente: 14 pruebas puras focales y 7 checks adicionales en
+  memoria. Confirma composición, rechazo stale antes de mutación, UoW y semántica
+  histórica. No ejecutó PostgreSQL, navegador, suites completas ni proveedor.
+- **633-R2:** sin bloqueantes nuevos en `47af985`; P1/P2 resueltos en su alcance.
+  Verificación independiente: 8 pruebas puras, compatibilidad del encoder antiguo,
+  omisiones/capturas v2, recortes y DST; revisó hashes de logs del autor, sin repetir
+  PostgreSQL. Señala un comentario P3 obsoleto sobre anchors en
+  `athletes/adapters/coach.py`, fuera de propiedad 634, que no se editó aquí.
+
+No se convierten esos dictámenes en una ejecución independiente del conjunto.
+La **ejecución integrada del executor 634** es la selección 205 PG/0 skips,
+257 puras y checks/UIs registrados en el seguimiento anterior. Se comprobó con
+`git diff --exit-code 056b06f HEAD -- <los ocho archivos productivos 634>` que el
+código de propuestas revisado no cambió al incorporar el correctivo 633 y adaptar
+la prueba de locks. El recibo final es documental; no requiere otra suite de
+runtime ni modifica el árbol productivo ya validado.
+
+Orden de **commits propios 634** para integrar después de las dependencias:
+
+1. `ef6e5eedb18f0bdef474e98d7e57bee707905b80` — implementación/revisión inicial.
+2. `a4254d689ce7c3049df2ead7b06b09826d5a040c` — procedencia RM.
+3. `056b06ff81d4763d49e26ef6b1d147bafac590e0` — números controlados y estado visible.
+4. `7ca9fd271124ba3dda1a4d83c89fb5e699fb8ffa` — prueba con orden corregido y recibo integrado.
+5. El commit documental que contiene este cierre; identificarlo por
+   `git log -1 -- docs/tickets/MAM634_ACCEPTANCE_2026-11-02.md`.
+
+Dependencias ajenas: los commits fuente 633 y PR35 de la tabla, más
+`47af9855197a972dd901975e316bace83489e3ce` (cherry-pick local `5a22481`).
+Coordinación ya administra su integración; no presentarlos como trabajo propio ni
+volver a aplicarlos duplicados. Ningún archivo de jobs/contabilidad, codec/prompts,
+modelos/migraciones, progreso o scripts compartidos se editó desde 634.
+
+El servidor propio de prueba quedó detenido; PostgreSQL 18.4 permanece intacto.
+Árbol limpio al entregar. Los extractos 500/300, referencias existentes de catálogo,
+duraciones desconocidas y límites deportivos conservan las salvedades anteriores.
+**NOT RUN:** suite global completa por este executor, CI remoto, main, proveedor
+IA/pagos LIVE, dispositivos físicos, lector de pantalla y aceptación humana.
+**MAM-634 y sus dependencias permanecen abiertos.** Este recibo completa el trabajo
+local autorizado y permite revisar/integrar sus commits; no concede cierre remoto.
