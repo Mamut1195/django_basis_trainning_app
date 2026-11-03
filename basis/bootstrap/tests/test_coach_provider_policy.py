@@ -17,7 +17,14 @@ from basis.modules.coach.adapters.jobs import DjangoJobsRepository
 from basis.modules.coach.adapters.models import AIJob, UsagePeriod
 from basis.modules.coach.adapters.provider import DeepSeekProvider
 from basis.modules.coach.application.jobs import CoachConfiguration, Enqueue, Jobs
-from basis.modules.coach.domain.jobs import HISTORICAL_PRICING, LIMITS, CoachInvalid, PricingPolicy
+from basis.modules.coach.domain.jobs import (
+    HISTORICAL_PRICING,
+    LIMITS,
+    CoachInvalid,
+    PricingPolicy,
+    Reconcile,
+    TokenUsage,
+)
 from basis.shared.identifiers import AccountId, AIRequestKey
 from tests_architecture.test_coach_jobs import CONTEXT, Ports, Profiles
 
@@ -67,6 +74,60 @@ class FrozenProviderPolicyTests(TestCase):
             version="synthetic-frozen-transport",
             short_limits=(input_bound, 100),
         )
+
+    def test_worker_decodes_mixed_invalid_usage_and_reconciliation_retains_it(self) -> None:
+        calls: list[int] = []
+
+        def respond(request: httpx.Request) -> httpx.Response:
+            calls.append(1)
+            return httpx.Response(
+                200,
+                json={
+                    "model": MODEL,
+                    "usage": {
+                        "prompt_tokens": 10**40,
+                        "completion_tokens": False,
+                    },
+                    "choices": [{"finish_reason": "stop", "message": {"content": "fixture"}}],
+                },
+            )
+
+        def client(*, timeout: httpx.Timeout) -> httpx.Client:
+            return httpx.Client(transport=httpx.MockTransport(respond), timeout=timeout)
+
+        self.service.provider = DeepSeekProvider("synthetic", client)
+        first = self.service.enqueue(
+            Enqueue(self.owner, "short", "question", AIRequestKey(uuid4()))
+        )
+        second = self.service.enqueue(
+            Enqueue(self.owner, "short", "question", AIRequestKey(uuid4()))
+        )
+        self.assertTrue(self.service.process_one())
+        job = self.service.repo.job(first.id)
+        self.assertEqual((job.status, job.cost), ("uncertain", None))
+        before = self.service.repo.usage(job.usage_period)
+        for charged in (False, True):
+            command = Reconcile(
+                job.id,
+                f"decision-{charged}",
+                "admin:test",
+                "ledger:fixture",
+                "synthetic evidence",
+                "usage" if charged else "no_charge",
+                not charged,
+                MODEL if charged else "",
+                TokenUsage(1, 0, 0) if charged else None,
+            )
+            record = self.service.reconcile(command, apply=True)
+            self.assertEqual((record.outcome, record.cost), ("retained", None))
+            self.assertEqual(self.service.reconcile(command, apply=True), record)
+        self.assertIs(AIJob.objects.get(pk=first.id).invalid_usage_observed, True)
+        self.assertEqual(self.service.repo.usage(job.usage_period), before)
+        self.assertFalse(
+            self.service.process_one()
+        )  # Existing service block requires human action.
+        self.assertEqual(self.service.repo.job(second.id).status, "pending")
+        self.assertEqual(len(calls), 1)
 
     def test_enqueue_worker_uses_frozen_output_and_input_bounds_despite_current_policy(
         self,

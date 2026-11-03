@@ -115,6 +115,7 @@ class ProviderReply:
     answer: str | None = ""
     answer_is_text: bool = True
     finish_reason: str | None = None
+    invalid_usage_observed: bool = False
 
 
 @dataclass

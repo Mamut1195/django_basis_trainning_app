@@ -244,6 +244,8 @@ class Jobs:
             if data is not None:
                 # Keep bounded observations even when validation fails; never infer cost.
                 job.reported_model = data.reported_model[:100]
+                if data.invalid_usage_observed:
+                    job.invalid_usage_observed = True
                 if data.usage is not None:
                     # Integer columns cannot represent every provider observation.
                     # Preserve a sticky rejection marker before projecting safe values.
@@ -267,7 +269,7 @@ class Jobs:
                     pricing = job_pricing(job)
                     if data.reported_model not in pricing.allowed_models:
                         raise CoachInvalid
-                    if data.usage is None:
+                    if data.usage is None or data.invalid_usage_observed:
                         raise CoachInvalid
                     try:
                         cost = usage_cost(data.usage, job.kind, job.reservation, pricing)

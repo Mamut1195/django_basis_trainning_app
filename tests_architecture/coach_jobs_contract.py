@@ -561,6 +561,116 @@ class JobsSettlementContract:
                         if fund:
                             self.assertEqual(self.repository.fund(fund.id), fund)
 
+    def test_contract_decoded_malformed_usage_retains_evidence_and_reservations(self) -> None:
+        from basis.modules.coach.adapters.provider import decode_reply
+
+        assert isinstance(self, TestCase)
+        cases: list[object] = []
+        invalid_values: tuple[object, ...] = (False, "1", None, 1.5, [])
+        for field in ("prompt_tokens", "completion_tokens", "prompt_cache_hit_tokens"):
+            for invalid in invalid_values:
+                counts: dict[str, object] = {"prompt_tokens": 10, "completion_tokens": 1}
+                counts[field] = invalid
+                cases.append(counts)
+        cases.extend(({}, {"prompt_tokens": 10}, {"completion_tokens": 1}, None, []))
+        cases.append({"prompt_tokens": 10**40, "completion_tokens": False})
+        for trial in (False, True):
+            for case in cases:
+                with self.subTest(trial=trial, counts=case):
+                    job = self._running_reserved_job(trial)
+                    reply = decode_reply({"model": "deepseek-v4-flash", "usage": case})
+                    self.assertIsNotNone(reply)
+                    settled = self.service.settle(job.id, reply)
+                    self.assertEqual((settled.status, settled.cost), ("uncertain", None))
+                    self.assertEqual(
+                        (settled.input_tokens, settled.output_tokens, settled.cache_hit_tokens),
+                        (None, None, None),
+                    )
+                    before = self.repository.usage(job.usage_period)
+                    fund = self.repository.fund(job.trial_fund) if job.trial_fund else None
+                    self.assertEqual((before.reserved, before.spent), (job.reservation, 0))
+                    if fund:
+                        self.assertGreaterEqual(fund.reserved, job.reservation)
+                    for charged in (False, True):
+                        decision = self._decision(settled, charged=charged)
+                        if charged:
+                            decision = replace(
+                                decision, key="decision-usage", usage=TokenUsage(1, 0, 0)
+                            )
+                        with patch.object(self.service.provider, "call") as call:
+                            record = self.service.reconcile(decision, apply=True)
+                            self.assertEqual(self.service.reconcile(decision, apply=True), record)
+                            call.assert_not_called()
+                        self.assertEqual((record.outcome, record.cost), ("retained", None))
+                        self.assertEqual(
+                            self.repository.reconciliation(job.id, decision.key), record
+                        )
+                    self.assertIs(self.repository.job(job.id).invalid_usage_observed, True)
+                    self.assertEqual(self.repository.usage(job.usage_period), before)
+                    if fund:
+                        self.assertEqual(self.repository.fund(fund.id), fund)
+
+    def test_contract_missing_usage_does_not_invent_historical_observation(self) -> None:
+        from basis.modules.coach.adapters.provider import decode_reply
+
+        assert isinstance(self, TestCase)
+        payloads: tuple[object, ...] = ({"model": "deepseek-v4-flash"}, None, [], "text", 1)
+        for payload in payloads:
+            with self.subTest(payload=payload):
+                job = self._running_reserved_job(False)
+                reply = decode_reply(payload)
+                settled = self.service.settle(job.id, reply)
+                self.assertEqual(settled.status, "uncertain")
+                self.assertIsNone(settled.invalid_usage_observed)
+
+    def test_contract_worker_decodes_malformed_usage_without_resending(self) -> None:
+        import httpx
+
+        from basis.modules.coach.adapters.provider import DeepSeekProvider
+
+        assert isinstance(self, TestCase)
+        calls: list[int] = []
+
+        def respond(request: httpx.Request) -> httpx.Response:
+            calls.append(1)
+            return httpx.Response(
+                200,
+                json={
+                    "model": "deepseek-v4-flash",
+                    "usage": {
+                        "prompt_tokens": 10**40,
+                        "completion_tokens": False,
+                    },
+                },
+            )
+
+        def client(*, timeout: httpx.Timeout) -> httpx.Client:
+            return httpx.Client(transport=httpx.MockTransport(respond), timeout=timeout)
+
+        job = self.service.enqueue(Enqueue(self.owner, "short", "question", AIRequestKey(uuid4())))
+        previous = self.service.provider
+        self.service.provider = DeepSeekProvider("synthetic", client)
+        try:
+            self.assertTrue(self.service.process_one())
+            settled = self.repository.job(job.id)
+            self.assertEqual((settled.status, settled.invalid_usage_observed), ("uncertain", True))
+            before = self.repository.usage(job.usage_period)
+            self.assertEqual((before.reserved, before.spent), (job.reservation, 0))
+            for charged in (False, True):
+                decision = replace(
+                    self._decision(settled, charged=charged), key=f"decision-{charged}"
+                )
+                if charged:
+                    decision = replace(decision, usage=TokenUsage(1, 0, 0))
+                record = self.service.reconcile(decision, apply=True)
+                self.assertEqual((record.outcome, record.cost), ("retained", None))
+                self.assertEqual(self.service.reconcile(decision, apply=True), record)
+            self.assertEqual(self.repository.usage(job.usage_period), before)
+            self.assertFalse(self.service.process_one())
+            self.assertEqual(len(calls), 1)
+        finally:
+            self.service.provider = previous
+
     def test_contract_invalid_observation_marker_and_retained_audit_rollback(self) -> None:
         assert isinstance(self, TestCase)
         for trial in (False, True):

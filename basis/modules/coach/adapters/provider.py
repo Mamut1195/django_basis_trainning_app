@@ -67,7 +67,12 @@ def decode_reply(value: object) -> ProviderReply | None:
         return None
     try:
         d = mapping(value)
-        counts = mapping(d.get("usage", {}))
+    except ValueError:
+        return ProviderReply(None)
+    if "usage" not in d:
+        return ProviderReply(None)
+    try:
+        counts = mapping(d["usage"])
         ins, outs, hits = (
             counts["prompt_tokens"],
             counts["completion_tokens"],
@@ -79,7 +84,8 @@ def decode_reply(value: object) -> ProviderReply | None:
             else None
         )
     except (ValueError, KeyError):
-        return ProviderReply(None)
+        return ProviderReply(None, invalid_usage_observed=True)
+    invalid_usage = usage is None
     reported = str(d.get("model", "unknown"))[:100]
     try:
         choice = mapping(rows(d["choices"])[0])
@@ -92,9 +98,10 @@ def decode_reply(value: object) -> ProviderReply | None:
             answer if isinstance(answer, str) else "",
             isinstance(answer, str),
             finish if isinstance(finish, str) else None,
+            invalid_usage,
         )
     except (ValueError, KeyError, IndexError):
-        return ProviderReply(usage, reported)
+        return ProviderReply(usage, reported, invalid_usage_observed=invalid_usage)
 
 
 class DeepSeekProvider:
