@@ -74,6 +74,14 @@ class ProgressPeriodTests(TestCase):
         with self.assertRaises(ValueError):
             progress().read(ReadProgress(owner, date(2026, 1, 5), date(2026, 1, 4)))
 
+    def test_recovery_and_measurement_summaries_link_to_full_private_histories(self) -> None:
+        from django.urls import reverse
+
+        response = self.client.get(reverse("progress"))
+        for route in ("wellness-history", "measurement-history"):
+            self.assertContains(response, f'href="{reverse(route)}"')
+            self.assertEqual(self.client.get(reverse(route)).status_code, 200)
+
     def test_repository_excludes_other_dates_before_projection(self) -> None:
         with patch(
             "basis.modules.training.adapters.progress.progress_session",

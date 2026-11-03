@@ -40,6 +40,8 @@ class ExportCompatibilityTests(TestCase):
         self.client.force_login(owner)
         response = self.client.get("/export/")
         self.assertEqual(response.status_code, 200)
+        self.assertIn("private", response["Cache-Control"])
+        self.assertIn("no-store", response["Cache-Control"])
         payload = cast(dict[str, object], json.loads(response.content))
         self.assertEqual(payload["schema"], "basis-export-v1")
         athletes = cast(list[dict[str, object]], payload["athlete"])

@@ -120,7 +120,11 @@
         {% endif %}
       </div>
     {% empty %}
-      <p>Sin registros para este rango. Puedes entrenar sin completar un check-in.</p>
+      {% if form.is_valid %}
+        <p>Sin registros para este rango. Puedes entrenar sin completar un check-in.</p>
+      {% else %}
+        <p role="status">Corrige el rango para consultar tus registros.</p>
+      {% endif %}
     {% endfor %}
     {% if form.is_valid and wellness_records.paginator.num_pages > 1 %}
       {% if wellness_records.has_previous %}
