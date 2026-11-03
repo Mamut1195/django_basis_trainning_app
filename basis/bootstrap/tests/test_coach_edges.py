@@ -34,6 +34,8 @@ from basis.modules.training.adapters.models import Goal, TrainingPlan
 from basis.modules.training.adapters.planning_actions import build_proposal, revise
 from basis.shared.identifiers import AccountId, JobId
 
+AVAILABLE_DAYS = (1, 3, 5)
+
 
 def account(name: str = "athlete") -> User:
     user = get_user_model().objects.create_user(
@@ -47,7 +49,7 @@ def account(name: str = "athlete") -> User:
         email_verified=True,
         edad=25,
     )
-    AthleteSettings.objects.create(owner=user, availability=[1, 3, 5])
+    AthleteSettings.objects.create(owner=user, availability=list(AVAILABLE_DAYS))
     BillingAccount.objects.create(
         owner=user,
         polar_customer_id="customer-" + name,
@@ -65,9 +67,16 @@ def exercise() -> Exercise:
 
 def proposal(owner: User) -> dict[str, object]:
     goal = Goal.objects.create(owner=owner, title="Consistency", sport="running")
+    today = timezone.localdate()
+    # Keep the fixture valid without widening the athlete's declared availability.
+    session_date = next(
+        today + timedelta(days=offset)
+        for offset in range(7)
+        if (today + timedelta(days=offset)).isoweekday() in AVAILABLE_DAYS
+    )
     start, end = (
-        timezone.localdate().isoformat(),
-        (timezone.localdate() + timedelta(days=6)).isoformat(),
+        today.isoformat(),
+        (today + timedelta(days=6)).isoformat(),
     )
     return {
         "title": "Week",
@@ -92,7 +101,7 @@ def proposal(owner: User) -> dict[str, object]:
         "sessions": [
             {
                 "title": "Run",
-                "date": start,
+                "date": session_date.isoformat(),
                 "cycle_key": "mi",
                 "blocks": [
                     {"sport": "running", "title": "Easy", "target": {"duration_seconds": 1800}}
