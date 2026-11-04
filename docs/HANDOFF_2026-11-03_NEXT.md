@@ -13,7 +13,7 @@ Continuar desde `origin/main`. No reabrir la recuperación Wave 4 ni volver a au
 | PR 36 | https://github.com/Mamut1195/django_basis_trainning_app/pull/36 fusionado. Wave 4 local más `certifi==2026.10.23` |
 | PR 37 | https://github.com/Mamut1195/django_basis_trainning_app/pull/37 fusionado. Decisión de la próxima semana por session-RPE |
 
-Checkout local al escribir esto: rama `codex/coach-session-rpe-20261103` en `b31120a`, detrás de `main`. El siguiente harness debe usar `origin/main` en `9e575e0`, no esa rama.
+Este documento viaja en el PR 38, rama `docs/handoff-20261103`. Todavía no está en `main`. El producto a retomar es `origin/main` en `9e575e0`. La rama `codex/coach-session-rpe-20261103` se quedó en `b31120a` y no hay que seguirla.
 
 `AI_ENABLED` sigue en 0. No se llamó a DeepSeek. No hay etiqueta nueva después de v2026.11.03.
 
