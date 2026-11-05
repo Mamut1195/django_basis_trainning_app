@@ -181,11 +181,13 @@ def session_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
             for exercise_id, count in counts.items():
                 record = best.get(exercise_id)
                 reps, kg = targets[exercise_id]
+                reps_text = str(reps) if reps is not None else "—"
+                kg_text = format(kg.normalize(), "f") if kg is not None else "—"
                 exercises.append(
                     {
                         "name": names[exercise_id],
                         "sets": count,
-                        "target": f"{reps if reps is not None else '—'}×{kg if kg is not None else '—'} kg",
+                        "target": f"{reps_text} × {kg_text} kg",
                         "best": f"{record[2]} kg × {record[3]}" if record else None,
                         "best_date": record[1] if record else None,
                     }
