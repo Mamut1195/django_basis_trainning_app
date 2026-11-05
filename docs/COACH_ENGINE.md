@@ -161,10 +161,9 @@ Contrato:
 
 Pruebas: `tests_architecture/test_coach_tools.py` (14, incluidas las de esquema).
 
-**Límite actual:** el contexto del entrenador lee solo 14 días, así que
-`get_load_summary` suele responder "faltan semanas" para una base de 4. MAM-1026 debe
-ampliar la ventana del contexto (con su prueba de privacidad y tamaño) antes de que la
-regla `load_spike` pueda dispararse en producción.
+**Ventana:** el contexto del proveedor sigue en 14 días; la ventana de 35 días vive en
+`training.adapters.diagnosis` y solo alimenta el diagnóstico. `get_load_summary` puede
+responder "faltan semanas" si el contexto corto no alcanza, y lo dice.
 
 ## Diagnóstico en la pantalla del Entrenador
 
@@ -185,8 +184,22 @@ Ejemplo real en staging: “Carga por encima de tu base · Llevas 2 semanas por 
 120 % · 1.622x y 1.440x · Bajar un 20 % del volumen en accesorios”. La misma pantalla
 mostró “4 sesiones sin RPE” y la propuesta de preguntar antes de cambiar cargas.
 
+## Contexto del proveedor
+
+El contexto congelado incluye `diagnosis` cuando el entrenador se ejecuta:
+
+- Hasta **4 hallazgos** con `rule`, `severity`, `title`, `reason`, dos evidencias y propuesta.
+- El prompt v3 ya prohíbe recalcular métricas; los campos son autodescriptivos y el modelo
+  debe tratarlos como hechos, respetando `stop`.
+- `request_body` estima tokens con `bytes / 3` (en vez de comparar bytes con tokens) y
+  recorta hallazgos hasta que el cuerpo quepa en el límite congelado. La app conserva el
+  diagnóstico completo aunque el proveedor reciba menos.
+
+Pruebas: `tests/regression/test_coach_context_633.py` (14, incluye round-trip del hallazgo,
+recorte por presupuesto y cuerpo real con diagnóstico).
+
 ## Siguiente
 
-1. **MAM-1025**: exponer estas funciones como herramientas con esquema.
-2. **MAM-1026**: incluir los hallazgos en el contexto del entrenador y validar la propuesta.
-3. **MAM-1027**: casos de decisión en el corpus de evaluación.
+1. **MAM-1027**: casos de decisión en el corpus de evaluación y rúbrica.
+2. **MAM-1015/1016**: Hoy y offline con el rediseño aprobado.
+3. Prueba LIVE con la key cuando la rúbrica esté aprobada.

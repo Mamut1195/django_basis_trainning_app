@@ -32,6 +32,7 @@ from basis.modules.training.public import (
 from basis.shared.identifiers import ExerciseId, GoalId, PlanId, TrekStageId, TrekTripId
 
 from ..domain.context import CoachContext
+from ..domain.decisions import Finding
 
 CONTEXT_UNITS = {
     "duration_seconds": "s",
@@ -112,6 +113,26 @@ def coverage(value: object) -> Coverage:
     if len(values) != 4:
         raise ValueError("Expected four coverage counts")
     return Coverage(integer(values[0]), integer(values[1]), integer(values[2]), integer(values[3]))
+
+
+def decode_findings(value: object) -> tuple[Finding, ...]:
+    if value is None:
+        return ()
+    result: list[Finding] = []
+    for item in rows(value):
+        d = mapping(item)
+        proposal = d.get("proposal")
+        result.append(
+            Finding(
+                rule=text(d["rule"]),
+                severity=text(d["severity"]),
+                title=text(d["title"]),
+                reason=text(d["reason"]),
+                evidence=tuple(text(s) for s in rows(d["evidence"])),
+                proposal=text(proposal) if proposal is not None else None,
+            )
+        )
+    return tuple(result)
 
 
 def decode_evidence(value: object, recent: tuple[CoachRecentSession, ...]) -> CoachSessionEvidence:
@@ -275,6 +296,17 @@ def encode_context(context: CoachContext) -> dict[str, object]:
             "plan_sha256": context.plan_sha256,
             "tools": list(context.tools),
         }
+        data["diagnosis"] = [
+            {
+                "rule": finding.rule,
+                "severity": finding.severity,
+                "title": finding.title,
+                "reason": finding.reason,
+                "evidence": list(finding.evidence[:2]),
+                "proposal": finding.proposal,
+            }
+            for finding in context.diagnosis[:4]
+        ]
         data["scope"] = asdict(t.scope) if t.scope else None
         data["session_evidence"] = [
             {
@@ -550,4 +582,5 @@ def decode_context(value: object) -> CoachContext:
         tools=tuple(text(s) for s in rows(provenance["tools"])) if version == 2 else (),
         legacy_omissions=tuple(omissions),
         progress_method=text(r["method"]) if "method" in r else "",
+        diagnosis=decode_findings(d.get("diagnosis")) if version == 2 else (),
     )

@@ -16,7 +16,7 @@ from basis.modules.coach.adapters.actions import request_body as preview_body
 from basis.modules.coach.adapters.context_wire import encode_context
 from basis.modules.coach.adapters.jobs import DjangoJobsRepository
 from basis.modules.coach.adapters.models import AIJob, UsagePeriod
-from basis.modules.coach.adapters.provider import DeepSeekProvider
+from basis.modules.coach.adapters.provider import DeepSeekProvider, estimated_tokens
 from basis.modules.coach.application.jobs import CoachConfiguration, Enqueue, Jobs
 from basis.modules.coach.domain.jobs import (
     HISTORICAL_PRICING,
@@ -67,7 +67,7 @@ class FrozenProviderPolicyTests(TestCase):
         body = preview_body("short", "question", encode_context(CONTEXT), MODEL)
         body["max_tokens"] = 100
         self.expected_body = body
-        self.exact_input_bound = len(json.dumps(body, ensure_ascii=False).encode()) + 128
+        self.exact_input_bound = estimated_tokens(body) + 128
 
     def policy(self, input_bound: int) -> PricingPolicy:
         return replace(

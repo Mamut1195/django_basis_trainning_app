@@ -6,6 +6,7 @@ from django.conf import settings
 
 from basis.adapters.django.transactions import DjangoClock, DjangoUnitOfWork
 from basis.bootstrap.billing import write_authorization
+from basis.bootstrap.diagnosis import for_owner as diagnosis_for_owner
 from basis.bootstrap.planning import planning
 from basis.modules.accounts.adapters.coach import DjangoAccountLocks
 from basis.modules.athletes.adapters.billing import DjangoBillingProfiles
@@ -33,6 +34,7 @@ def contexts() -> Contexts:
         DjangoTrainingCoachContexts(),
         DjangoCoachExercises(),
         DjangoClock(),
+        diagnosis_for_owner,
     )
 
 
