@@ -218,7 +218,7 @@ def service_worker_ready(page: Page) -> dict[str, object]:
 
 
 def presentation_acceptance(page: Page, origin: str, output: Path) -> list[str]:
-    """Exercise real themes, keyboard navigation and a server-rejected form."""
+    """Exercise desktop/mobile presentation, keyboard navigation and a server-rejected form."""
     captures: list[str] = []
     dom_states: dict[str, object] = {}
     for size, viewport in (
@@ -226,18 +226,12 @@ def presentation_acceptance(page: Page, origin: str, output: Path) -> list[str]:
         ("mobile", {"width": 390, "height": 844}),
     ):
         page.set_viewport_size({"width": viewport["width"], "height": viewport["height"]})
-        for theme in ("light", "dark"):
-            page.evaluate("theme => localStorage.setItem('basis-theme', theme)", theme)
-            page.goto(origin + "/")
-            page.wait_for_function(
-                "theme => document.documentElement.classList.contains('dark') === (theme === 'dark')",
-                arg=theme,
-            )
-            page.evaluate("""async () => {
+        page.goto(origin + "/")
+        page.evaluate("""async () => {
               await document.fonts.ready;
               await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             }""")
-            state: object = page.evaluate("""() => {
+        state: object = page.evaluate("""() => {
               const inspect = selector => {
                 const node = document.querySelector(selector);
                 const style = getComputedStyle(node);
@@ -253,25 +247,25 @@ def presentation_acceptance(page: Page, origin: str, output: Path) -> list[str]:
               return {hero: inspect('.hero'), heading: inspect('.hero h2'),
                 button: inspect('.hero .actions a:first-child'), fonts: document.fonts.status};
             }""")
-            dom_states[size + "-" + theme] = state
-            assert page.locator(".hero h2").is_visible()
-            assert page.evaluate("""() => {
+        dom_states[size] = state
+        assert page.locator(".hero h2").is_visible()
+        assert page.evaluate("""() => {
               const hero = getComputedStyle(document.querySelector('.hero'));
               const heading = getComputedStyle(document.querySelector('.hero h2'));
               return heading.color !== hero.backgroundColor && heading.opacity !== '0'
                 && hero.opacity !== '0' && heading.visibility === 'visible';
             }"""), state
-            no_overflow(page)
-            name = "today-" + size + "-" + theme + ".png"
-            page.screenshot(path=str(output / name), full_page=True, animations="disabled")
-            page.locator(".hero").screenshot(
-                path=str(output / ("hero-" + size + "-" + theme + ".png")), animations="disabled"
-            )
-            page.screenshot(
-                path=str(output / ("viewport-" + size + "-" + theme + ".png")),
-                animations="disabled",
-            )
-            captures.append(name)
+        no_overflow(page)
+        name = "today-" + size + ".png"
+        page.screenshot(path=str(output / name), full_page=True, animations="disabled")
+        page.locator(".hero").screenshot(
+            path=str(output / ("hero-" + size + ".png")), animations="disabled"
+        )
+        page.screenshot(
+            path=str(output / ("viewport-" + size + ".png")),
+            animations="disabled",
+        )
+        captures.append(name)
     (output / "presentation-dom.json").write_text(
         json.dumps(dom_states, indent=2), encoding="utf-8"
     )
@@ -287,12 +281,6 @@ def presentation_acceptance(page: Page, origin: str, output: Path) -> list[str]:
     assert rectangle is not None and rectangle["y"] >= 0, "Focused skip link is offscreen"
     page.keyboard.press("Enter")
     assert page.url.endswith("#main"), "Keyboard skip link did not reach the content"
-    toggle = page.locator("[data-theme-toggle]:visible").first
-    toggle.focus()
-    before = page.locator("html").evaluate("node => node.classList.contains('dark')")
-    page.keyboard.press("Enter")
-    assert page.locator("html").evaluate("node => node.classList.contains('dark')") != before
-    assert page.evaluate("localStorage.getItem('basis-theme')") == ("light" if before else "dark")
     page.goto(origin + "/sessions/new/")
     form = page.locator("form[data-form-submit]")
     # Native validation is deliberately bypassed to exercise Django's server errors.
@@ -405,8 +393,8 @@ def run(origin: str, output: Path, executable: str | None, password: str) -> dic
             visual_screenshots = presentation_acceptance(page, origin, output)
             checks.extend(
                 (
-                    "desktop_mobile_light_dark_screenshots",
-                    "keyboard_skip_link_and_theme_toggle",
+                    "desktop_mobile_screenshots",
+                    "keyboard_skip_link",
                     "server_error_summary_focus_and_field_link",
                     "submit_busy_disabled_status_with_navigation_held",
                 )

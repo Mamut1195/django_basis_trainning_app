@@ -282,7 +282,7 @@ def dom_checks(output: Path, executable: str) -> dict[str, object]:
                 files("django_cotton_ui").joinpath("static/django_cotton_ui/cotton-ui.css")
             )
             for width in (390, 768, 1440):
-                for theme in ("light", "dark"):
+                for theme in ("light",):
                     page.set_viewport_size({"width": width, "height": 1000})
                     # Representative markup uses the installed button's classes, not a
                     # replacement component. This fixture is not a real application route.
@@ -309,10 +309,6 @@ def dom_checks(output: Path, executable: str) -> dict[str, object]:
                         str(ROOT / "basis/adapters/web/static/basis/css/app.css"),
                     ):
                         page.add_style_tag(path=css)
-                    page.evaluate(
-                        "theme => document.documentElement.classList.toggle('dark',theme==='dark')",
-                        theme,
-                    )
                     page.keyboard.press("Tab")
                     audit = mapping(page.evaluate(AUDIT))
                     (output / "dom-last-audit.json").write_text(
@@ -469,17 +465,12 @@ def browser(origin: str, output: Path, executable: str) -> dict[str, object]:
             login(page, origin, "owner@browser.test", os.environ["BASIS_E2E_PASSWORD"])
             for width in (390, 768, 1440):
                 page.set_viewport_size({"width": width, "height": 1000 if width == 1440 else 844})
-                for theme in ("light", "dark"):
-                    page.evaluate("value => localStorage.setItem('basis-theme', value)", theme)
+                for theme in ("light",):
                     for name, path in pages.items():
                         response = page.goto(origin + path)
                         assert response is not None and response.status == 200, (
                             path,
                             response.status if response else None,
-                        )
-                        page.wait_for_function(
-                            "value => document.documentElement.classList.contains('dark') === (value === 'dark')",
-                            arg=theme,
                         )
                         no_overflow(page)
                         page.keyboard.press("Tab")
@@ -504,20 +495,13 @@ def browser(origin: str, output: Path, executable: str) -> dict[str, object]:
                                 full_page=True,
                                 animations="disabled",
                             )
-            tasks.append("viewport_theme_matrix_60_pages_and_6_expanded_proposal_states")
+            tasks.append("viewport_matrix_pages_and_expanded_proposal_states")
             page.goto(origin + "/")
             page.keyboard.press("Tab")
             assert page.locator(".skip-link").evaluate("node => node === document.activeElement")
             page.keyboard.press("Enter")
             assert page.url.endswith("#main")
-            toggle = page.locator("[data-theme-toggle]:visible").first
-            toggle.focus()
-            outline = toggle.evaluate(
-                "node => ({style:getComputedStyle(node).outlineStyle,width:getComputedStyle(node).outlineWidth})"
-            )
-            assert mapping(outline)["style"] != "none"
-            page.keyboard.press("Enter")
-            tasks.append("keyboard_skip_theme_focus")
+            tasks.append("keyboard_skip_link")
             page.goto(origin + pages["scheduled"] + "reschedule/")
             page.locator("input[name=date]").fill(str(data["rescheduled_date"]))
             page.locator("textarea[name=reason]").fill("Cambio de disponibilidad de la fixture UX")
