@@ -8,6 +8,8 @@ from basis.modules.athletes.public import AthleteCoachContext
 from basis.modules.catalog.public import CoachExercise
 from basis.modules.training.public import CoachBasePlan, CoachVariables, TrainingCoachContext
 
+from .decisions import Finding
+
 
 def owner_snapshot_date(instant: datetime, timezone_name: str | None) -> date:
     """One captured, aware instant; missing owner zone explicitly falls back to UTC."""
@@ -37,3 +39,4 @@ class CoachContext:
     tools: tuple[str, ...] = ()
     legacy_omissions: tuple[str, ...] = ()
     progress_method: str = "session-rpe-v1; total de bloque; sin suma entre deportes"
+    diagnosis: tuple[Finding, ...] = ()

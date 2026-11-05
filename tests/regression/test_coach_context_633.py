@@ -18,9 +18,15 @@ from basis.modules.athletes.adapters.models import AthleteSettings, Wellness
 from basis.modules.athletes.adapters.models import User as Athlete
 from basis.modules.catalog.adapters.coach import DjangoCoachExercises
 from basis.modules.coach.adapters.context_wire import decode_context, encode_context, mapping, rows
-from basis.modules.coach.adapters.provider import DeepSeekProvider, decode_reply, request_body
+from basis.modules.coach.adapters.provider import (
+    DeepSeekProvider,
+    decode_reply,
+    estimated_tokens,
+    request_body,
+)
 from basis.modules.coach.application.context import Contexts
 from basis.modules.coach.domain.context import CoachContext
+from basis.modules.coach.domain.decisions import Finding
 from basis.modules.coach.domain.jobs import (
     HISTORICAL_PRICING,
     CoachInvalid,
@@ -73,6 +79,53 @@ class ContextCodec633Tests(SimpleTestCase):
         self.assertEqual(
             mapping(encoded["provenance"])["system_sha256"], instructions_digest(SYSTEM)
         )
+
+    def test_diagnosis_findings_roundtrip_compactly(self) -> None:
+        finding = Finding(
+            "load_spike",
+            "warn",
+            "Carga alta",
+            "Dos semanas por encima de la base.",
+            ("Hace 1 semana: 1.440x", "Hace 2 semanas: 1.300x"),
+            "Bajar un 20 % del volumen en accesorios.",
+        )
+        context = replace(self.context(), diagnosis=(finding,))
+        encoded = encode_context(context)
+        self.assertEqual(mapping(rows(encoded["diagnosis"])[0])["rule"], "load_spike")
+        self.assertEqual(decode_context(encoded).diagnosis, (finding,))
+
+    def test_request_body_carries_diagnosis_and_trims_to_fit(self) -> None:
+        finding = Finding(
+            "load_spike",
+            "warn",
+            "Carga alta",
+            "Dos semanas por encima de la base.",
+            ("Hace 1 semana: 1.440x",),
+            "Bajar un 20 % del volumen en accesorios.",
+        )
+        context = replace(self.context(), diagnosis=(finding,))
+        body = request_body(
+            "short", "Hi", context, "synthetic-model-633", PRICING_633.freeze("short")
+        )
+        messages = [mapping(item) for item in rows(body["messages"])]
+        payload = mapping(json.loads(str(messages[1]["content"])))
+        carried = rows(mapping(payload["context"])["diagnosis"])
+        self.assertEqual(mapping(carried[0])["rule"], "load_spike")
+        self.assertLessEqual(estimated_tokens(body) + 128, 4000)
+
+        huge = tuple(
+            Finding(f"rule-{index}", "info", "T", "x" * 4000, ("e",)) for index in range(4)
+        )
+        trimmed = request_body(
+            "short",
+            "Hi",
+            replace(self.context(), diagnosis=huge),
+            "synthetic-model-633",
+            PRICING_633.freeze("short"),
+        )
+        trimmed_messages = [mapping(item) for item in rows(trimmed["messages"])]
+        trimmed_payload = mapping(json.loads(str(trimmed_messages[1]["content"])))
+        self.assertLess(len(rows(mapping(trimmed_payload["context"])["diagnosis"])), 4)
 
     def test_legacy_omissions_are_not_reconstructed_as_new_evidence(self) -> None:
         old = encode_context(replace(self.context(), schema_version=1))
@@ -186,7 +239,7 @@ class ContextCodec633Tests(SimpleTestCase):
         self.assertEqual(len(calls), 1)
         self.assertEqual(json.loads(calls[0].content)["model"], "synthetic-model-633")
         with self.assertRaises(CoachInvalid):
-            provider.prepare("short", "x" * 5000, self.context(), "synthetic-model-633", pricing)
+            provider.prepare("short", "x" * 15000, self.context(), "synthetic-model-633", pricing)
         self.assertEqual(len(calls), 1)
 
     def test_simulated_provider_errors_and_output_schema_are_separate_from_live(self) -> None:
@@ -297,10 +350,23 @@ class ContextProjection633Tests(TestCase):
     def test_short_preparation_accepts_a_minimal_real_projection_without_http(self) -> None:
         self.session()
         context = self.service.snapshot(self.owner_id, "short", None)
+        finding = Finding(
+            "load_spike",
+            "warn",
+            "Carga alta",
+            "Dos semanas por encima de la base.",
+            ("Hace 1 semana: 1.440x",),
+            "Bajar un 20 % del volumen en accesorios.",
+        )
+        context = replace(context, diagnosis=(finding,))
         body = request_body(
             "short", "Resumen", context, "synthetic-model-633", PRICING_633.freeze("short")
         )
-        self.assertLessEqual(len(json.dumps(body, ensure_ascii=False).encode()) + 128, 4000)
+        self.assertLessEqual(estimated_tokens(body) + 128, 4000)
+        messages = [mapping(item) for item in rows(body["messages"])]
+        payload = mapping(json.loads(str(messages[1]["content"])))
+        carried = rows(mapping(payload["context"])["diagnosis"])
+        self.assertEqual(mapping(carried[0])["rule"], "load_spike")
         self.assertEqual(len(context.training.evidence), 1)
 
     def test_malformed_administrative_links_do_not_expose_foreign_identifiers(self) -> None:

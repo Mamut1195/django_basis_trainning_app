@@ -13,6 +13,8 @@ from basis.modules.athletes.public import (
 )
 from basis.modules.catalog.public import CoachExercise
 from basis.modules.coach.application.context import Contexts
+from basis.modules.coach.application.diagnosis import Diagnosis
+from basis.modules.coach.domain.decisions import Finding
 from basis.modules.coach.domain.jobs import CoachInvalid, JobKind
 from basis.modules.coach.domain.prompts import (
     INSTRUCTIONS_VERSION,
@@ -113,6 +115,17 @@ class CoachContext633Tests(TestCase):
     def setUp(self) -> None:
         self.athletes, self.training, self.catalog = Athletes(), Training(), Exercises()
         self.service = Contexts(self.athletes, self.training, self.catalog, Clock())
+
+    def test_diagnosis_findings_are_capped_and_attached(self) -> None:
+        findings = tuple(Finding(f"rule-{index}", "info", "T", "R", ("E",)) for index in range(5))
+
+        def provider(owner: AccountId, day: date) -> Diagnosis:
+            return Diagnosis(findings, "running", "elapsed", 6, Decimal("6.00"), {"weeks": 6})
+
+        service = Contexts(self.athletes, self.training, self.catalog, Clock(), provider)
+        context = service.snapshot(OWNER, "short", None)
+        self.assertEqual(len(context.diagnosis), 4)
+        self.assertEqual(context.diagnosis[0].rule, "rule-0")
 
     def test_missingness_and_trace_are_explicit_without_sport_inference(self) -> None:
         context = self.service.snapshot(OWNER, "short", None)

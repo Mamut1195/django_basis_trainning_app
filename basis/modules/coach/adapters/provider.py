@@ -1,6 +1,7 @@
 """Single-call DeepSeek boundary, with injectable transport and no retry path."""
 
 import json
+from dataclasses import replace
 from typing import Protocol
 
 import httpx
@@ -23,6 +24,11 @@ class ClientFactory(Protocol):
     def __call__(self, *, timeout: httpx.Timeout) -> httpx.Client: ...
 
 
+def estimated_tokens(body: dict[str, object]) -> int:
+    """Conservative token estimate: Spanish UTF-8 is about 3 bytes per token."""
+    return len(json.dumps(body, ensure_ascii=False).encode()) // 3
+
+
 def request_body(
     kind: JobKind, prompt: str, context: CoachContext, model: str, pricing: PricingSnapshot
 ) -> dict[str, object]:
@@ -37,6 +43,25 @@ def request_body(
         raise CoachInvalid(
             "Las instrucciones cambiaron desde la captura. Solicita una nueva revisión."
         )
+    # Keep as many deterministic findings as fit; never fail a consultation because
+    # the diagnosis does not fit. The app still shows the complete diagnosis.
+    for count in range(len(context.diagnosis), -1, -1):
+        candidate = (
+            context
+            if count == len(context.diagnosis)
+            else replace(context, diagnosis=context.diagnosis[:count])
+        )
+        body = _request_body(kind, prompt, candidate, model, pricing)
+        if estimated_tokens(body) + 128 <= pricing.input_limit:
+            return body
+    raise CoachInvalid(
+        "El contexto supera el presupuesto. Reduce la consulta o completa un objetivo más concreto."
+    )
+
+
+def _request_body(
+    kind: JobKind, prompt: str, context: CoachContext, model: str, pricing: PricingSnapshot
+) -> dict[str, object]:
     message = json.dumps(
         {"context": encode_context(context), "request": prompt},
         ensure_ascii=False,
@@ -54,10 +79,6 @@ def request_body(
     }
     if kind == "plan":
         body["response_format"] = {"type": "json_object"}
-    if len(json.dumps(body, ensure_ascii=False).encode()) + 128 > pricing.input_limit:
-        raise CoachInvalid(
-            "El contexto supera el presupuesto. Reduce la consulta o completa un objetivo m\u00e1s concreto."
-        )
     return body
 
 

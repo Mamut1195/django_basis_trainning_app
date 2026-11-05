@@ -1,7 +1,8 @@
 """Compose only public, owner-scoped context ports."""
 
+from collections.abc import Callable
 from dataclasses import replace
-from datetime import timedelta
+from datetime import date, timedelta
 
 from basis.modules.athletes.public import AthleteCoachContexts
 from basis.modules.catalog.public import CoachExercises, InvalidCatalogData
@@ -12,6 +13,7 @@ from basis.shared.ports import Clock
 from ..domain.context import CoachContext, owner_snapshot_date
 from ..domain.jobs import CoachInvalid, JobKind
 from ..domain.prompts import INSTRUCTIONS_VERSION, PLAN_FORMAT, SYSTEM, instructions_digest
+from .diagnosis import Diagnosis
 
 
 class Contexts:
@@ -21,6 +23,7 @@ class Contexts:
         training: TrainingCoachContexts,
         exercises: CoachExercises,
         clock: Clock,
+        diagnosis: Callable[[AccountId, date], Diagnosis] | None = None,
     ) -> None:
         self.athletes, self.training, self.exercises, self.clock = (
             athletes,
@@ -28,6 +31,7 @@ class Contexts:
             exercises,
             clock,
         )
+        self.diagnosis = diagnosis
 
     def snapshot(
         self, owner: AccountId, kind: JobKind, base_plan_id: PlanId | None
@@ -81,6 +85,11 @@ class Contexts:
             today = owner_snapshot_date(now, owner_zone)
         except ValueError as error:
             raise CoachInvalid(str(error)) from error
+        findings = (
+            tuple(self.diagnosis(owner, today).findings[:4])
+            if self.diagnosis is not None and not for_acceptance
+            else ()
+        )
         training = (
             self.training.read_for_acceptance(owner, today, base_plan_id)
             if for_acceptance
@@ -195,4 +204,5 @@ class Contexts:
             tools=("athletes.coach.read/v1", "training.coach.read/v2")
             + (("training.coach.selected/v1",) if base is not None else ())
             + (("catalog.coach.read/v1", "training.coach.variables/v1") if kind == "plan" else ()),
+            diagnosis=findings,
         )
