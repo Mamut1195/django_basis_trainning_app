@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BASIS Training · Propuesta UI/UX</title>
+<style>
+  :root{
+    --bg:#f8fafc; --surface:#fff; --ink:#111827; --muted:#374151; --line:#e5e7eb;
+    --blue:#0400ff; --blue-hover:#0300cc; --blue-soft:#eef2ff; --blue-ink:#1e1b4b;
+    --accent:var(--blue); --accent-soft:var(--blue-soft); --on-accent:#fff;
+    --ok:#0f7a4d; --ok-soft:#e8f7ef; --warn:#a64c17; --warn-soft:#fff1e6;
+    --radius:16px; --radius-sm:10px; --shadow:0 4px 18px #11182708;
+    --nav-h:64px; --action-h:76px; --max:1120px;
+    --font:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit}
+  .app{min-height:100dvh}
+  a{color:var(--blue);text-decoration:none}
+
+  /* ---------- desktop sidebar ---------- */
+  .sidebar{display:none}
+  @media (min-width:1024px){
+    .sidebar{display:flex;flex-direction:column;gap:8px;position:fixed;inset:0 auto 0 0;width:248px;
+      padding:24px 16px;background:var(--surface);border-right:1px solid var(--line);z-index:30}
+    .sidebar .brand{margin:0 8px 18px}
+    .side-nav{display:grid;gap:2px}
+    .side-nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;
+      color:var(--muted);font-size:15px;min-height:44px}
+    .side-nav a[aria-current]{background:var(--blue-soft);color:var(--blue);font-weight:650}
+    .side-nav .ico{width:20px;text-align:center;font-size:17px}
+    .side-foot{margin-top:auto;display:grid;gap:10px;padding:0 12px;font-size:14px}
+    .shell{margin-left:248px}
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+    padding:10px 16px;background:rgba(248,250,252,.88);backdrop-filter:blur(10px);
+    border-bottom:1px solid transparent}
+  @media (min-width:1024px){.topbar{padding:14px 32px;background:transparent;backdrop-filter:none;border-bottom:0}}
+  .topbar .grow{flex:1}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+    background:var(--ok-soft);color:var(--ok);font-size:12px;font-weight:600;border:1px solid transparent}
+  .chip.off{background:var(--warn-soft);color:var(--warn)}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:grid;
+    place-items:center;font-size:13px;font-weight:700}
+
+  /* ---------- layout ---------- */
+  .content{max-width:var(--max);margin:0 auto;padding:8px 16px calc(var(--nav-h) + var(--action-h) + 28px)}
+  @media (min-width:1024px){.content{padding:8px 32px 48px}}
+  .grid{display:grid;gap:16px}
+  @media (min-width:1024px){.today-grid{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:clamp(28px,4vw,40px);line-height:1.05;margin:6px 0 8px;letter-spacing:-.02em}
+  h2{font-size:18px;margin:0;letter-spacing:-.01em}
+  p{margin:0;color:var(--muted);line-height:1.5}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;box-shadow:var(--shadow)}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .hero{background:linear-gradient(135deg,var(--blue) 0%,#1a17ff 55%,#3b2bff 100%);color:#fff;
+    border:0;border-radius:22px;padding:20px;box-shadow:0 14px 34px #0400ff33}
+  .hero .eyebrow{color:#c7c4ff}
+  .hero h2{font-size:26px;color:#fff;margin:6px 0 4px}
+  .hero p{color:#dcd9ff}
+  .hero .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .hero .btn-primary{background:#fff;border-color:#fff;color:var(--blue);box-shadow:0 6px 16px #0300cc55}
+  .hero .btn-primary:hover{background:#f2f2ff}
+
+  /* ---------- buttons ---------- */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;
+    padding:0 18px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);
+    font-weight:650;font-size:15px;cursor:pointer;transition:transform .06s ease,background .14s ease}
+  .btn:active{transform:scale(.985)}
+  .btn-primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn-primary:hover{background:var(--blue-hover)}
+  .btn-ghost{background:transparent;border-color:#c7c4ff;color:#fff}
+  .btn-soft{background:var(--blue-soft);border-color:transparent;color:var(--blue)}
+  .btn-block{width:100%}
+  .btn-sm{min-height:38px;padding:0 12px;font-size:14px}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+
+  /* ---------- list ---------- */
+  .rows{display:grid;gap:2px}
+  .row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;cursor:pointer;
+    min-height:64px;background:transparent;border:0;text-align:left;width:100%}
+  .row:hover{background:#f1f5f9}
+  .row .sport{width:40px;height:40px;border-radius:12px;background:var(--blue-soft);color:var(--blue);
+    display:grid;place-items:center;font-size:18px;flex:none}
+  .row .body{flex:1;min-width:0}
+  .row .title{display:block;font-weight:650;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .meta{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+  .row .chev{color:#94a3b8;font-size:18px}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+    font-size:11.5px;font-weight:650;white-space:nowrap}
+  .pill.now{background:var(--blue-soft);color:var(--blue)}
+  .pill.pending{background:var(--warn-soft);color:var(--warn)}
+  .pill.done{background:var(--ok-soft);color:var(--ok)}
+
+  /* ---------- stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .stat .v{font-size:22px;font-weight:750;letter-spacing:-.02em;margin-top:2px}
+  .stat .u{font-size:12px;color:var(--muted)}
+  .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+
+  /* ---------- bottom nav + action bar ---------- */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(4,1fr);
+    background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .tabbar button{display:grid;justify-items:center;gap:2px;background:none;border:0;font-size:11px;
+    color:var(--muted);padding:6px 0;min-height:48px;cursor:pointer}
+  .tabbar button[aria-current]{color:var(--blue);font-weight:700}
+  .tabbar .i{font-size:18px}
+  .actionbar{position:fixed;left:0;right:0;bottom:var(--nav-h);z-index:39;display:flex;gap:10px;
+    padding:10px 16px;background:rgba(248,250,252,.96);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line)}
+  .actionbar .btn{flex:1}
+  @media (min-width:1024px){.tabbar,.actionbar{display:none}}
+  .desktop-actions{display:none}
+  @media (min-width:1024px){.desktop-actions{display:flex;gap:10px;margin-top:16px}}
+
+  /* ---------- sheet / modal ---------- */
+  .sheet{position:fixed;inset:0;z-index:60;display:none}
+  .sheet.open{display:block}
+  .sheet .backdrop{position:absolute;inset:0;background:#0f172a66;animation:fade .18s ease}
+  .sheet .panel{position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+    border-radius:24px 24px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+    max-height:92dvh;overflow:auto;animation:up .22s ease}
+  @media (min-width:1024px){
+    .sheet .panel{position:relative;margin:7vh auto;max-width:540px;border-radius:20px;bottom:auto;
+      animation:pop .18s ease}
+  }
+  @keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+  @keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .grabber{width:40px;height:4px;border-radius:99px;background:#e2e8f0;margin:0 auto 12px}
+  @media (min-width:1024px){.grabber{display:none}}
+  .sheet h2{font-size:20px;margin-bottom:2px}
+  .sheet .sub{font-size:13px;color:var(--muted)}
+
+  .stepper{display:flex;align-items:center;gap:14px;margin:14px 0 10px}
+  .stepper button{width:52px;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--surface);
+    font-size:24px;font-weight:700;cursor:pointer;flex:none}
+  .stepper .value{flex:1;text-align:center}
+  .stepper .value b{font-size:38px;letter-spacing:-.03em}
+  .stepper .value span{display:block;font-size:12px;color:var(--muted)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chips button{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+    font-size:13px;font-weight:600;cursor:pointer;min-height:40px}
+  .chips button[aria-pressed="true"]{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+  .rpe{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-top:8px}
+  .rpe button{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+    font-weight:700;cursor:pointer;font-size:14px}
+  .rpe button[aria-pressed="true"]{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .rpe-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+
+  details.more{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+  details.more summary{cursor:pointer;font-weight:650;font-size:14px;list-style:none;display:flex;
+    justify-content:space-between;align-items:center;min-height:44px}
+  details.more summary::-webkit-details-marker{display:none}
+  .fields{display:grid;gap:12px;margin-top:8px}
+  @media (min-width:600px){.fields.two{grid-template-columns:1fr 1fr}}
+  label.f{display:grid;gap:6px;font-size:12px;font-weight:650;color:var(--muted)}
+  label.f input,label.f textarea{height:46px;border:1px solid var(--line);border-radius:10px;padding:0 12px;
+    font:inherit;color:var(--ink);background:var(--surface);font-weight:500}
+  label.f select{height:46px;width:100%;border:1px solid var(--line);border-radius:10px;padding:0 10px;
+    font:inherit;color:var(--ink);background:var(--surface);font-weight:500}
+  label.f textarea{height:72px;padding:10px 12px;resize:vertical}
+
+  .sheet-actions{display:grid;gap:10px;margin-top:18px}
+  .offline-note{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--warn);
+    background:var(--warn-soft);border-radius:10px;padding:10px 12px;margin-top:14px}
+
+  .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--action-h) + 16px);transform:translate(-50%,12px);
+    background:#111827;color:#fff;padding:11px 16px;border-radius:12px;font-size:13.5px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:80;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (min-width:1024px){.toast{bottom:28px}}
+
+  .empty{padding:24px 8px;text-align:center;color:var(--muted);font-size:14px}
+  .backlink{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);
+    font-weight:650;min-height:44px;cursor:pointer;padding:0}
+  .prescription{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin-top:12px}
+  .banner{display:none;gap:10px;align-items:center;background:var(--blue-soft);color:var(--blue-ink);
+    border:1px solid #dbe3ff;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+  .banner.show{display:flex}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+  /* ---------- plan ---------- */
+  .tabs{display:flex;gap:4px;background:#eef2f7;padding:4px;border-radius:999px;margin:12px 0 16px}
+  .tabs button{flex:1;border:0;background:transparent;min-height:42px;border-radius:999px;font-weight:650;
+    color:var(--muted);cursor:pointer;font-size:14px}
+  .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-soft)}
+  .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;padding-bottom:4px}
+  @media (max-width: 700px) {
+    .week{gap:4px}
+    .day{min-height:84px;padding:6px;gap:4px}
+    .day .chip{display:none}
+    .day .num{font-size:16px}
+    .day .dow{font-size:9px;letter-spacing:.06em}
+  }
+  .day{border:1px solid var(--line);border-radius:12px;padding:8px;min-height:112px;background:var(--surface);
+    text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+  .day[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .day .dow{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+  .day .num{font-size:18px;font-weight:750}
+  .day .chip{font-size:10.5px;padding:3px 7px;font-weight:650;border-radius:999px;background:var(--accent-soft);
+    color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .day .chip.done{background:var(--ok-soft);color:var(--ok)}
+  .day .chip.off{background:#f1f5f9;color:var(--muted)}
+  .day .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:auto}
+  .day:focus-visible,.tabs button:focus-visible,.period button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .tree{display:grid;gap:8px}
+  .tree .node{border-left:3px solid var(--accent-soft);padding:8px 12px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .tree .node.meso{margin-left:16px;border-color:#c7d2fe}
+  .tree .node.micro{margin-left:32px;border-color:#e2e8f0}
+  .version{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+
+  /* ---------- progress ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media (min-width:720px){.kpis{grid-template-columns:repeat(4,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+  .kpi .v{font-size:26px;font-weight:750;letter-spacing:-.02em;margin-top:4px}
+  .kpi .s{font-size:12px;color:var(--muted)}
+  .bars{display:flex;align-items:flex-end;gap:12px;height:140px;padding-top:8px}
+  .bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+  .bars .fill{width:100%;max-width:46px;background:linear-gradient(180deg,var(--blue) 0%,#4f46ff 100%);
+    border-radius:8px 8px 4px 4px;min-height:4px}
+  .bars .lbl{font-size:11px;color:var(--muted)}
+  .period{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:4px}
+  .period button{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+    font-size:13px;font-weight:600;cursor:pointer;min-height:40px;white-space:nowrap}
+  .period button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* ---------- coach ---------- */
+  .composer textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:12px;padding:12px;
+    font:inherit;color:var(--ink);resize:vertical}
+  .composer .meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .composer .grid2{display:grid;gap:10px;margin-top:10px}
+  @media (min-width:600px){.composer .grid2{grid-template-columns:1fr 1fr}}
+  .composer label.f{padding:0}
+  .quota{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px}
+  .quota .track{height:8px;border-radius:99px;background:#eef2f7;overflow:hidden;margin-top:8px}
+  .quota .track span{display:block;height:100%;background:var(--accent);border-radius:99px}
+  .job{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:12px;border:1px solid var(--line);
+    border-radius:12px;background:var(--surface)}
+  .job .body{min-width:0;flex:1}
+  .job .title{font-weight:650;font-size:14px;margin:0}
+  .job .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .spinner{width:14px;height:14px;border-radius:50%;border:2px solid #c7d2fe;border-top-color:var(--accent);
+    display:inline-block;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .banner.warn{display:flex;background:var(--warn-soft);border-color:#f6d7bf;color:var(--warn);margin-bottom:12px;
+    align-items:flex-start}
+  .banner.warn > span{flex:none;margin-top:2px}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="brand"><strong style="font-size:20px;letter-spacing:-.02em">BASIS</strong>
+      <div class="small muted">Training</div></div>
+    <nav class="side-nav">
+      <a href="#" aria-current="page" data-go="today"><span class="ico">◉</span>Hoy</a>
+      <a href="#" data-go="plan" onclick="showScreen('plan'); return false"><span class="ico">▦</span>Plan</a>
+      <a href="#" data-go="progress" onclick="showScreen('progress'); return false"><span class="ico">↗</span>Progreso</a>
+      <a href="#" data-go="coach" onclick="showScreen('coach'); return false"><span class="ico">✳</span>Entrenador</a>
+    </nav>
+    <div class="side-foot">
+      <a href="#" data-go="offline">Sesiones sin conexión <span class="pill pending" id="sidePending" hidden>1</span></a>
+      <a href="#">Suscripción</a>
+    </div>
+  </aside>
+
+  <div class="shell">
+    <header class="topbar">
+      <div class="grow"><span class="eyebrow">Entrena con intención</span></div>
+      <span class="chip" id="netChip"><span class="dot"></span>En línea</span>
+      <div class="avatar" title="Atleta de prueba">AP</div>
+    </header>
+
+    <main class="content">
+
+      <!-- ============ HOY ============ -->
+      <section data-screen="today">
+        <div class="eyebrow" id="todayDate">Miércoles, 4 de noviembre</div>
+        <h1>Tu día. Tu siguiente paso.</h1>
+        <p class="small">Una sesión a la vez, con intención.</p>
+
+        <div class="grid today-grid" style="margin-top:16px">
+          <div class="grid">
+            <div class="hero" id="hero">
+              <div class="eyebrow">Ahora</div>
+              <h2 id="heroTitle">Sendero de prueba</h2>
+              <p id="heroMeta">Hiking · 45 min objetivo · en curso</p>
+              <div class="actions">
+                <button class="btn btn-primary" type="button" onclick="openRecord()">Registrar</button>
+                <button class="btn btn-ghost" type="button" onclick="showScreen('session')">Abrir sesión</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h2>Sesiones de hoy</h2><span class="pill now" id="todayCount">3</span></div>
+              <div class="rows" id="sessionRows"></div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="card">
+              <div class="card-head"><h2>Bienestar</h2><span class="pill done">Listo</span></div>
+              <p class="small">Sueño 7 h · Fatiga 3/10 · Ánimo bien. Contexto para hoy.</p>
+              <button class="btn btn-soft btn-block btn-sm" type="button" style="margin-top:12px" onclick="toast('Bienestar registrado (demo)')">Registrar bienestar</button>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h2>Sin conexión</h2><span class="pill pending" id="pendingPill" hidden>1 pendiente</span></div>
+              <p class="small" id="offlineCopy">Todo sincronizado. Guarda una sesión antes de salir.</p>
+              <button class="btn btn-block btn-sm" type="button" style="margin-top:12px" onclick="showScreen('offline')">Abrir sesiones guardadas</button>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h2>Tu dirección</h2></div>
+              <p class="small">Un objetivo claro da sentido al plan.</p>
+              <a href="#" style="display:inline-block;margin-top:10px;font-weight:650">Crear mi primer objetivo →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SESIÓN ============ -->
+      <section data-screen="session" hidden>
+        <button class="backlink" type="button" onclick="showScreen('today')">← Hoy</button>
+        <div class="eyebrow" style="margin-top:8px" id="sportLine">Hiking / senderismo · En curso</div>
+        <h1 id="sessionTitle">Sendero de prueba</h1>
+
+        <div class="grid" style="margin-top:14px">
+          <div class="card">
+            <div class="card-head"><h2>Prescripción</h2><span class="pill now">45 min</span></div>
+            <div class="prescription">
+              <div><strong>Sendero</strong><p class="small">Duración objetivo</p></div>
+              <strong>45 min</strong>
+            </div>
+            <div class="desktop-actions">
+              <button class="btn btn-primary" type="button" onclick="openRecord()">Registrar</button>
+              <button class="btn" type="button" onclick="completeFromSession()">Completar sesión</button>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><div class="k">Duración</div><div class="v" id="statDuration">—</div><div class="u">segundos</div></div>
+            <div class="stat"><div class="k">RPE real</div><div class="v" id="statRpe">—</div><div class="u">de 10</div></div>
+            <div class="stat"><div class="k">Carga</div><div class="v" id="statLoad">—</div><div class="u">UA</div></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>Lo que registres</h2><span class="pill" id="localPill">Local</span></div>
+            <p class="small">Sin conexión se guarda en este dispositivo. Al volver la red, se envía una sola vez.</p>
+            <div class="offline-note" id="sessionNote" hidden><span>●</span> Sin conexión · los cambios quedan en cola</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ OFFLINE ============ -->
+      <section data-screen="offline" hidden>
+        <button class="backlink" type="button" onclick="showScreen('today')">← Hoy</button>
+        <div class="eyebrow" style="margin-top:8px">Sin conexión</div>
+        <h1>Tu entrenamiento continúa.</h1>
+        <p class="small">Solo se guardan en este dispositivo las sesiones que eliges descargar.</p>
+
+        <div class="grid" style="margin-top:16px">
+          <div class="card">
+            <div class="card-head"><h2>Cola</h2><span class="pill pending" id="queuePill" hidden>1 pendiente</span></div>
+            <div class="rows" id="offlineRows"></div>
+            <button class="btn btn-primary btn-block" type="button" style="margin-top:12px" onclick="syncNow()">Sincronizar ahora</button>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Estado</h2></div>
+            <p class="small" id="syncState">Sincronizado hace un momento.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PLAN ============ -->
+      <section data-screen="plan" hidden>
+        <div class="eyebrow">Planificación</div>
+        <h1>Tu plan, semana a semana.</h1>
+        <p class="small">Lo programado y lo hecho, separados. Cambiar el plan no borra tu historia.</p>
+        <div class="tabs" role="tablist" aria-label="Vistas del plan">
+          <button role="tab" aria-selected="true" onclick="planTab('semana')">Semana</button>
+          <button role="tab" aria-selected="false" onclick="planTab('ciclos')">Ciclos</button>
+          <button role="tab" aria-selected="false" onclick="planTab('versiones')">Versiones</button>
+        </div>
+        <div data-plan-panel="semana">
+          <div class="card">
+            <div class="card-head">
+              <h2 id="weekLabel">3 – 9 de noviembre</h2>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-sm" type="button" onclick="weekMove(-1)" aria-label="Semana anterior">←</button>
+                <button class="btn btn-sm" type="button" onclick="weekMove(0)">Hoy</button>
+                <button class="btn btn-sm" type="button" onclick="weekMove(1)" aria-label="Semana siguiente">→</button>
+              </div>
+            </div>
+            <div class="week" id="weekGrid"></div>
+            <p class="small muted" id="planStatus" role="status" style="margin-top:10px">Toca un día para ver sus sesiones.</p>
+          </div>
+          <div id="dayPanel"></div>
+          <button class="btn btn-primary btn-block" type="button" style="margin-top:12px" onclick="openPlanSheet()">Añadir sesión</button>
+        </div>
+        <div data-plan-panel="ciclos" hidden>
+          <div class="card">
+            <div class="card-head"><h2>Ciclos</h2><button class="btn btn-sm" type="button" onclick="toast('Abriendo editor de ciclo (demo)')">Añadir ciclo</button></div>
+            <div class="tree">
+              <div class="node"><div><strong>Macro · Base 2026</strong><div class="small muted">12 semanas · 3 nov – 25 ene</div></div><span class="pill">Activo</span></div>
+              <div class="node meso"><div><strong>Meso · Constancia</strong><div class="small muted">4 semanas</div></div><span class="pill now">En curso</span></div>
+              <div class="node micro"><div><strong>Micro · Semana 1</strong><div class="small muted">3 sesiones</div></div><span class="pill now">En curso</span></div>
+            </div>
+            <p class="small muted" style="margin-top:12px">Cada cambio conserva su motivo y crea una versión nueva.</p>
+          </div>
+        </div>
+        <div data-plan-panel="versiones" hidden>
+          <div class="card">
+            <div class="card-head"><h2>Versiones</h2></div>
+            <div class="version"><div><strong>v3</strong><div class="small muted">Cambio: subir volumen del sábado</div></div><button class="btn btn-sm" type="button" onclick="compareVersions()">Comparar con v2</button></div>
+            <div class="version"><div><strong>v2</strong><div class="small muted">Cambio: mover rodaje al jueves</div></div><button class="btn btn-sm" type="button" onclick="toast('Abriendo versión 2 (demo)')">Abrir</button></div>
+            <div class="version"><div><strong>v1</strong><div class="small muted">Creación</div></div><button class="btn btn-sm" type="button" onclick="toast('Abriendo versión 1 (demo)')">Abrir</button></div>
+            <div id="comparePanel" hidden style="margin-top:12px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PROGRESO ============ -->
+      <section data-screen="progress" hidden>
+        <div class="eyebrow">Progreso</div>
+        <h1>Lo que estás construyendo.</h1>
+        <p class="small">Tus datos por disciplina, con las unidades y los huecos a la vista.</p>
+        <div class="period" style="margin-top:12px">
+          <button type="button" aria-pressed="true" onclick="setPeriod(this, '7 días')">7 días</button>
+          <button type="button" aria-pressed="false" onclick="setPeriod(this, '30 días')">30 días</button>
+          <button type="button" aria-pressed="false" onclick="setPeriod(this, 'semana ISO')">Semana</button>
+          <button type="button" aria-pressed="false" onclick="setPeriod(this, 'rango')">Rango</button>
+          <button type="button" aria-pressed="false" onclick="setPeriod(this, 'todo')">Todo</button>
+        </div>
+        <p class="small" id="periodStatus" role="status" style="margin:8px 0 12px">Del 3 al 9 de noviembre.</p>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Sesiones</div><div class="v">4</div><div class="s">3 completadas</div></div>
+          <div class="kpi"><div class="k">Adherencia</div><div class="v">75%</div><div class="s">3 de 4 programadas</div></div>
+          <div class="kpi"><div class="k">Carga</div><div class="v">720</div><div class="s">UA · min × RPE</div></div>
+          <div class="kpi"><div class="k">RPE medio</div><div class="v">6,0</div><div class="s">3 sesiones con dato</div></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-head"><h2>Carga por semana</h2><span class="pill">UA</span></div>
+          <div class="bars">
+            <div class="b"><div class="fill" style="height:38%"></div><span class="lbl">S1</span></div>
+            <div class="b"><div class="fill" style="height:64%"></div><span class="lbl">S2</span></div>
+            <div class="b"><div class="fill" style="height:52%"></div><span class="lbl">S3</span></div>
+            <div class="b"><div class="fill" style="height:82%"></div><span class="lbl">S4</span></div>
+          </div>
+          <p class="small muted" style="margin-top:8px">Compara el mismo protocolo de duración. No es una predicción de lesiones.</p>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-head"><h2>Running</h2><span class="pill now">2 sesiones</span></div>
+          <div class="rows">
+            <div class="row" style="cursor:default">
+              <span class="sport">🏃</span>
+              <span class="body"><span class="title">Distancia</span><span class="meta">12.400 m · 3 de 3 bloques con dato</span></span>
+            </div>
+            <div class="row" style="cursor:default">
+              <span class="sport">⛰</span>
+              <span class="body"><span class="title">Ascenso</span><span class="meta">320 m · 2 de 3 bloques con dato</span></span>
+            </div>
+            <div class="row" style="cursor:default">
+              <span class="sport">⏱</span>
+              <span class="body"><span class="title">RPE real</span><span class="meta">entre 5 y 7 · 2 de 2 sesiones</span></span>
+            </div>
+          </div>
+          <details class="more">
+            <summary>Cómo se calcula <span>＋</span></summary>
+            <p class="small" style="margin-top:8px">Los totales suman solo bloques con dato. Los que faltan se muestran como “sin dato”, no como cero. El RPE de una sesión mixta se muestra en cada disciplina presente, sin sumar deportes.</p>
+          </details>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-head"><h2>Fuerza</h2><span class="pill pending">Sin volumen todavía</span></div>
+          <p class="small">Hay 1 sesión, pero ninguna serie con reps y kilos registrados. El volumen aparecerá cuando haya datos.</p>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button class="btn btn-sm" type="button" onclick="toast('Abriendo bienestar (demo)')">Registrar bienestar</button>
+          <button class="btn btn-sm" type="button" onclick="toast('Abriendo peso (demo)')">Registrar peso</button>
+          <button class="btn btn-sm" type="button" onclick="exportData(this)">Exportar mis datos</button>
+        </div>
+      </section>
+
+      <!-- ============ ENTRENADOR ============ -->
+      <section data-screen="coach" hidden>
+        <div class="eyebrow">Tu entrenador</div>
+        <h1>Entrena con contexto.</h1>
+        <p class="small">Pregunta o pide una propuesta. Nada entra al plan sin tu revisión.</p>
+        <div class="banner warn" style="margin-top:12px">
+          <span>●</span>
+          <div><strong>El entrenador está desactivado en esta instalación.</strong> Así se vería al habilitarlo; ninguna respuesta se aplica sola.</div>
+        </div>
+        <div class="card">
+          <div class="composer">
+            <label class="f" for="coachPrompt">¿En qué quieres trabajar?</label>
+            <textarea id="coachPrompt" maxlength="2000" placeholder="Ayúdame a organizar la próxima semana según mi disponibilidad." oninput="coachInput()"></textarea>
+            <div class="meta"><span id="coachCount">0 / 2000</span><span class="small">Se envía tu contexto de perfil, plan y bienestar.</span></div>
+            <div class="grid2">
+              <label class="f">Tipo de ayuda
+                <select id="coachKind" onchange="coachInput()">
+                  <option value="short">Consulta breve</option>
+                  <option value="plan">Propuesta de plan y ciclos</option>
+                </select>
+              </label>
+              <label class="f">Plan a revisar
+                <select><option>Crear un plan nuevo</option><option>Base 2026 · v3</option></select>
+              </label>
+            </div>
+            <button class="btn btn-primary btn-block" id="coachSend" type="button" style="margin-top:12px" disabled onclick="askCoach()">Consultar entrenador</button>
+          </div>
+          <div class="quota">
+            <div style="display:flex;justify-content:space-between"><strong>Cuota del período</strong><span class="small">3 de 5 consultas</span></div>
+            <div class="track"><span style="width:60%"></span></div>
+            <p class="small" style="margin-top:8px">Costo acumulado: USD 0,02 de USD 1,00 · reserva atómica por consulta.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-head"><h2>Tus consultas</h2><span class="pill" id="jobCount">2</span></div>
+          <div class="grid" id="jobList" style="gap:8px">
+            <div class="job">
+              <div class="body"><p class="title">¿Cómo reparto la semana si solo tengo 3 días?</p>
+                <p class="sub">Consulta breve · <span id="jobTimer">preparando… 0 s</span></p></div>
+              <button class="btn btn-sm" type="button" onclick="cancelJob(this)">Cancelar</button>
+            </div>
+            <div class="job">
+              <div class="body"><p class="title">Propuesta de 4 semanas para el senderismo</p>
+                <p class="sub">Plan · lista · deepseek-flash</p></div>
+              <button class="btn btn-sm btn-primary" type="button" onclick="toast('Abriendo revisión de propuesta (demo)')">Revisar</button>
+            </div>
+          </div>
+          <p class="small muted" id="coachStatus" role="status" style="margin-top:10px">Una consulta en curso. Puedes volver luego sin perderla.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="actionbar" id="actionbar" hidden>
+    <button class="btn" type="button" onclick="completeFromSession()">Completar</button>
+    <button class="btn btn-primary" type="button" onclick="openRecord()">Registrar</button>
+  </div>
+
+  <nav class="tabbar" aria-label="Principal">
+    <button type="button" data-go="today" aria-current="page" onclick="showScreen('today')"><span class="i">◉</span>Hoy</button>
+      <button type="button" data-go="plan" onclick="showScreen('plan')"><span class="i">▦</span>Plan</button>
+      <button type="button" data-go="progress" onclick="showScreen('progress')"><span class="i">↗</span>Progreso</button>
+      <button type="button" data-go="coach" onclick="showScreen('coach')"><span class="i">✳</span>Entrenador</button>
+  </nav>
+
+  <!-- ============ REGISTRAR ============ -->
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="backdrop" onclick="closeSheet()"></div>
+    <div class="panel">
+      <div class="grabber"></div>
+      <h2 id="sheetTitle">Registrar sesión</h2>
+      <div class="sub" id="sheetSub">Sendero de prueba · sin conexión</div>
+
+      <div class="stepper">
+        <button type="button" onclick="bump(-5)" aria-label="Cinco minutos menos">−</button>
+        <div class="value"><b id="durValue">45</b><span>minutos</span></div>
+        <button type="button" onclick="bump(5)" aria-label="Cinco minutos más">+</button>
+      </div>
+      <div class="chips" id="durChips"></div>
+
+      <div style="margin-top:20px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <strong style="font-size:13px;color:var(--muted)">RPE de la sesión</strong>
+          <span class="small" id="rpeWord">moderado</span>
+        </div>
+        <div class="rpe" id="rpeScale"></div>
+        <div class="rpe-label"><span>1 · muy suave</span><span>10 · máximo</span></div>
+      </div>
+
+      <details class="more">
+        <summary>Detalles opcionales <span>＋</span></summary>
+        <div class="fields two">
+          <label class="f">Distancia (m)<input type="number" inputmode="numeric" placeholder="—"></label>
+          <label class="f">FC media (lpm)<input type="number" inputmode="numeric" placeholder="—"></label>
+        </div>
+        <label class="f" style="margin-top:12px">Notas<textarea placeholder="Cómo te sentiste, terreno, incidencias…"></textarea></label>
+      </details>
+
+      <div class="offline-note" id="sheetOffline" hidden><span>●</span> Sin conexión · se guarda en este dispositivo</div>
+
+      <div class="sheet-actions">
+        <button class="btn btn-primary btn-block" type="button" onclick="saveRecord(true)">Guardar y completar</button>
+        <button class="btn btn-block" type="button" onclick="saveRecord(false)">Guardar sin completar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet" id="planSheet" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle">
+    <div class="backdrop" onclick="closePlanSheet()"></div>
+    <div class="panel">
+      <div class="grabber"></div>
+      <h2 id="planSheetTitle">Añadir sesión</h2>
+      <div class="sub" id="planSheetSub">Jueves 6 de noviembre · versión 3</div>
+      <div class="fields" style="margin-top:14px">
+        <label class="f">Nombre<input id="planTitle" type="text" value="Rodaje suave"></label>
+        <label class="f">Disciplina
+          <select id="planSport">
+            <option>Running</option><option>Fuerza</option><option>Ciclismo</option>
+            <option>Natación</option><option>Hiking</option>
+          </select>
+        </label>
+        <label class="f">Duración (min)
+          <input id="planDuration" type="number" value="30" min="5" max="600" inputmode="numeric">
+        </label>
+        <label class="f">Día
+          <select id="planDay"></select>
+        </label>
+      </div>
+      <p class="small muted" style="margin-top:10px">Se guarda como versión nueva del plan. Lo ya ejecutado no cambia.</p>
+      <div class="sheet-actions">
+        <button class="btn btn-primary btn-block" type="button" onclick="savePlanSession()">Guardar sesión</button>
+        <button class="btn btn-block" type="button" onclick="closePlanSheet()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+  const state = {
+    sessions: [
+      {id:1, title:'Sendero de prueba', sport:'Hiking', icon:'⛰', target:2700, status:'in_progress', duration:null, rpe:null},
+      {id:2, title:'Rodaje de prueba', sport:'Running', icon:'🏃', target:1800, status:'in_progress', duration:null, rpe:null},
+      {id:3, title:'Fuerza de prueba', sport:'Fuerza', icon:'🏋', target:null, status:'in_progress', duration:null, rpe:null}
+    ],
+    current: 0,
+    duration: 45,
+    rpe: 6,
+    pending: 0,
+    online: true,
+    synced: true
+  };
+
+  const $ = (s) => document.querySelector(s);
+  const money = (n) => new Intl.NumberFormat('es-EC', {maximumFractionDigits:0}).format(n);
+
+  function fmtTarget(s) {
+    return s.target ? `${Math.round(s.target/60)} min objetivo` : 'series por registrar';
+  }
+
+  function render() {
+    const s = state.sessions[state.current];
+    $('#sessionRows').innerHTML = state.sessions.map((row, i) => `
+      <button class="row" type="button" onclick="selectSession(${i})">
+        <span class="sport">${row.icon}</span>
+        <span class="body">
+          <span class="title">${row.title}</span>
+          <span class="meta">${row.sport} · ${fmtTarget(row)}</span>
+        </span>
+        ${row.status === 'completed'
+          ? '<span class="pill done">Completada</span>'
+          : (row.duration ? '<span class="pill pending">Pendiente</span>' : '<span class="pill now">En curso</span>')}
+        <span class="chev">›</span>
+      </button>`).join('');
+    $('#todayCount').textContent = state.sessions.length;
+
+    $('#heroTitle').textContent = s.title;
+    $('#heroMeta').textContent = `${s.sport} · ${fmtTarget(s)} · ${s.status === 'completed' ? 'completada' : 'en curso'}`;
+    $('#sessionTitle').textContent = s.title;
+    $('#sportLine').textContent = `${s.sport} · ${s.status === 'completed' ? 'Completada' : 'En curso'}`;
+    $('#statDuration').textContent = s.duration ? money(s.duration * 60) : '—';
+    $('#statRpe').textContent = s.rpe ? String(s.rpe).replace('.', ',') : '—';
+    $('#statLoad').textContent = s.duration && s.rpe ? money(s.duration * s.rpe) : '—';
+    $('#localPill').textContent = s.status === 'completed' ? 'Completada' : 'Local';
+    $('#localPill').className = 'pill ' + (s.status === 'completed' ? 'done' : '');
+    $('#pendingPill').hidden = state.pending === 0;
+    $('#pendingPill').textContent = `${state.pending} pendiente${state.pending === 1 ? '' : 's'}`;
+    $('#sidePending').hidden = state.pending === 0;
+    $('#sidePending').textContent = state.pending;
+    $('#queuePill').hidden = state.pending === 0;
+    $('#queuePill').textContent = `${state.pending} pendiente${state.pending === 1 ? '' : 's'}`;
+    $('#offlineCopy').textContent = state.pending
+      ? `${state.pending} registro${state.pending === 1 ? '' : 's'} esperando red.`
+      : 'Todo sincronizado. Guarda una sesión antes de salir.';
+    $('#syncState').textContent = state.pending
+      ? `${state.pending} registro${state.pending === 1 ? '' : 's'} esperando conexión.`
+      : (state.online ? 'Sincronizado hace un momento.' : 'Sin conexión. Nada pendiente.');
+    $('#offlineRows').innerHTML = state.sessions.filter(r => r.duration || r.status === 'completed').map(r => `
+      <div class="row" style="cursor:default">
+        <span class="sport">${r.icon}</span>
+        <span class="body"><span class="title">${r.title}</span>
+          <span class="meta">${r.duration ? r.duration + ' min · RPE ' + r.rpe : 'sin mediciones'}</span></span>
+        ${r.status === 'completed'
+          ? '<span class="pill done">Completada</span>'
+          : (state.pending ? '<span class="pill pending">Pendiente</span>' : '<span class="pill done">Sincronizada</span>')}
+      </div>`).join('') || '<div class="empty">No hay sesiones guardadas todavía.</div>';
+    $('#sessionNote').hidden = state.online;
+    $('#sheetOffline').hidden = state.online;
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll('[data-screen]').forEach((el) => el.hidden = el.dataset.screen !== name);
+    document.querySelectorAll('.tabbar button, .side-nav a').forEach((el) =>
+      el.toggleAttribute('aria-current', el.dataset.go === name));
+    $('#actionbar').hidden = name !== 'session' || window.innerWidth >= 1024;
+    window.scrollTo({top:0, behavior:'instant'});
+  }
+
+  function selectSession(i) { state.current = i; render(); showScreen('session'); }
+
+  function openRecord() {
+    const s = state.sessions[state.current];
+    state.duration = s.duration || 45;
+    state.rpe = s.rpe || 6;
+    $('#sheetTitle').textContent = s.status === 'completed' ? 'Editar registro' : 'Registrar sesión';
+    $('#sheetSub').textContent = `${s.title} · ${s.sport}`;
+    renderSheet();
+    $('#sheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSheet() { $('#sheet').classList.remove('open'); document.body.style.overflow = ''; }
+
+  function renderSheet() {
+    $('#durValue').textContent = state.duration;
+    $('#durChips').innerHTML = [15,30,45,60,90].map(v =>
+      `<button type="button" aria-pressed="${v===state.duration}" onclick="setDuration(${v})">${v} min</button>`).join('');
+    $('#rpeScale').innerHTML = Array.from({length:10},(_,i)=>i+1).map(v =>
+      `<button type="button" aria-label="RPE ${v}" aria-pressed="${v===state.rpe}" onclick="setRpe(${v})">${v}</button>`).join('');
+    const words = {1:'muy suave',2:'muy suave',3:'suave',4:'suave',5:'moderado',6:'moderado',7:'fuerte',8:'fuerte',9:'máximo',10:'máximo'};
+    $('#rpeWord').textContent = words[state.rpe];
+  }
+  function bump(delta) { state.duration = Math.min(600, Math.max(1, state.duration + delta)); renderSheet(); }
+  function setDuration(v) { state.duration = v; renderSheet(); }
+  function setRpe(v) { state.rpe = v; renderSheet(); }
+
+  let toastTimer;
+  function toast(text) {
+    const node = $('#toast');
+    node.textContent = text;
+    node.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => node.classList.remove('show'), 2600);
+  }
+
+  function saveRecord(complete) {
+    const s = state.sessions[state.current];
+    s.duration = state.duration;
+    s.rpe = state.rpe;
+    if (complete) s.status = 'completed';
+    state.pending += 1;
+    closeSheet();
+    render();
+    toast(complete ? 'Sesión completada y guardada aquí' : 'Guardado en este dispositivo');
+    if (state.online) setTimeout(syncNow, 900);
+  }
+
+  function completeFromSession() { openRecord(); }
+
+  function syncNow() {
+    if (!state.pending) { toast('No hay nada pendiente'); return; }
+    if (!state.online) { toast('Sin conexión: se enviará al volver la red'); return; }
+    state.pending = 0;
+    render();
+    $('#syncState').textContent = 'Sincronizado hace un momento.';
+    toast('Sincronizado: 1 recibo');
+  }
+
+  // toolbar demo controls
+  $('#netChip').addEventListener('click', () => {
+    state.online = !state.online;
+    $('#netChip').className = 'chip' + (state.online ? '' : ' off');
+    $('#netChip').innerHTML = `<span class="dot"></span>${state.online ? 'En línea' : 'Sin conexión'}`;
+    render();
+    toast(state.online ? 'Red simulada: en línea' : 'Red simulada: sin conexión');
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+  // click the network chip to simulate offline during review
+  $('#netChip').title = 'Clic para simular sin conexión';
+
+  /* ---------------- plan ---------------- */
+  const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+  const MONDAY = new Date(2026, 10, 3);
+  const plan = {
+    offset: 0,
+    selected: 2,
+    sessions: [
+      { day: 0, title: "Rodaje", sport: "Running", duration: 30, status: "done" },
+      { day: 2, title: "Fuerza", sport: "Fuerza", duration: 45, status: "scheduled" },
+      { day: 6, title: "Sendero", sport: "Hiking", duration: 120, status: "scheduled" },
+    ],
+  };
+  const dayDate = (index) => {
+    const date = new Date(MONDAY);
+    date.setDate(MONDAY.getDate() + plan.offset * 7 + index);
+    return date;
+  };
+  function weekLabel() {
+    const start = dayDate(0), end = dayDate(6);
+    const fmt = new Intl.DateTimeFormat("es-EC", { day: "numeric", month: "short" });
+    $("#weekLabel").textContent = `${fmt.format(start)} – ${fmt.format(end)}`;
+  }
+  function renderWeek() {
+    $("#weekGrid").innerHTML = DAY_NAMES.map((name, index) => {
+      const items = plan.offset === 0 ? plan.sessions.filter((s) => s.day === index) : [];
+      return `<button class="day" type="button" aria-pressed="${index === plan.selected}" onclick="selectDay(${index})">
+        <span class="dow">${name.slice(0, 3)}</span>
+        <span class="num">${dayDate(index).getDate()}</span>
+        ${items.length ? '<span class="dot"></span>' : ""}
+        ${items.map((s) => `<span class="chip ${s.status === "done" ? "done" : ""}">${s.title}</span>`).join("")}
+      </button>`;
+    }).join("");
+  }
+  function renderDayPanel() {
+    const date = dayDate(plan.selected);
+    const name = DAY_NAMES[plan.selected];
+    const items = plan.offset === 0 ? plan.sessions.filter((s) => s.day === plan.selected) : [];
+    $("#dayPanel").innerHTML = `<div class="card" style="margin-top:12px">
+      <div class="card-head"><h2>${name} ${date.getDate()}</h2><span class="pill">${items.length} sesión${items.length === 1 ? "" : "es"}</span></div>
+      ${items.length ? items.map((s) => `<div class="row" style="cursor:default">
+          <span class="sport">▦</span>
+          <span class="body"><span class="title">${s.title}</span><span class="meta">${s.sport} · ${s.duration} min · ${s.status === "done" ? "Completada" : "Programada"}</span></span>
+          <button class="btn btn-sm" type="button" onclick="toast('Abriendo editor de ${s.title} (demo)')">Editar</button>
+        </div>`).join("") : `<p class="small muted">Sin sesiones este día. Puedes añadir una.</p>`}
+    </div>`;
+    $("#planStatus").textContent = `Mostrando ${name.toLowerCase()} ${date.getDate()}.`;
+  }
+  function selectDay(index) {
+    plan.selected = index;
+    renderWeek();
+    renderDayPanel();
+  }
+  function weekMove(delta) {
+    if (delta === 0) { plan.offset = 0; plan.selected = 2; } else plan.offset += delta;
+    weekLabel();
+    renderWeek();
+    renderDayPanel();
+    $("#planStatus").textContent = "Cargando semana…";
+    setTimeout(() => {
+      $("#planStatus").textContent = "Semana cargada. Toca un día para ver sus sesiones.";
+    }, 350);
+  }
+  function planTab(name) {
+    document.querySelectorAll(".tabs button").forEach((button) =>
+      button.setAttribute("aria-selected", String(button.textContent.trim().toLowerCase() === name)));
+    document.querySelectorAll("[data-plan-panel]").forEach((panel) => (panel.hidden = panel.dataset.planPanel !== name));
+  }
+  function compareVersions() {
+    const panel = $("#comparePanel");
+    panel.hidden = false;
+    panel.innerHTML = `<div class="banner" style="display:flex"><span>●</span>
+      <div><strong>v2 → v3</strong><br>Rodaje: 30 → 40 min · Sábado: +1 serie de fuerza. El historial no cambia.</div></div>`;
+    toast("Comparación calculada");
+  }
+  function openPlanSheet() {
+    const select = $("#planDay");
+    select.innerHTML = DAY_NAMES.map((name, index) =>
+      `<option value="${index}" ${index === plan.selected ? "selected" : ""}>${name}</option>`).join("");
+    $("#planSheetSub").textContent = `${DAY_NAMES[plan.selected]} ${dayDate(plan.selected).getDate()} · versión 3`;
+    $("#planSheet").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closePlanSheet() {
+    $("#planSheet").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function savePlanSession() {
+    const title = $("#planTitle").value.trim();
+    const duration = Number($("#planDuration").value || 0);
+    if (!title) { toast("Ponle un nombre a la sesión"); $("#planTitle").focus(); return; }
+    if (duration < 5) { toast("La duración debe ser de al menos 5 minutos"); $("#planDuration").focus(); return; }
+    const day = Number($("#planDay").value);
+    plan.sessions.push({ day, title, sport: $("#planSport").value, duration, status: "scheduled" });
+    plan.offset = 0;
+    plan.selected = day;
+    closePlanSheet();
+    renderWeek();
+    renderDayPanel();
+    $("#planStatus").textContent = `Sesión añadida al ${DAY_NAMES[day].toLowerCase()} ${dayDate(day).getDate()}.`;
+    toast("Sesión añadida al plan");
+  }
+
+  /* ---------------- progreso ---------------- */
+  function setPeriod(button, label) {
+    document.querySelectorAll(".period button").forEach((item) => item.setAttribute("aria-pressed", "false"));
+    button.setAttribute("aria-pressed", "true");
+    $("#periodStatus").textContent = "Actualizando…";
+    setTimeout(() => {
+      $("#periodStatus").textContent =
+        label === "todo" ? "Todo el historial." : `Datos del período: ${label}.`;
+      toast("Progreso actualizado");
+    }, 400);
+  }
+  function exportData(button) {
+    const original = button.textContent;
+    button.disabled = true;
+    button.textContent = "Preparando…";
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = original;
+      toast("Archivo listo (demo)");
+    }, 1200);
+  }
+
+  /* ---------------- entrenador ---------------- */
+  let coachTimer;
+  function coachInput() {
+    const value = $("#coachPrompt").value;
+    $("#coachCount").textContent = `${value.length} / 2000`;
+    $("#coachSend").disabled = !value.trim();
+  }
+  function askCoach() {
+    const prompt = $("#coachPrompt").value.trim();
+    if (!prompt) return;
+    const send = $("#coachSend");
+    send.disabled = true;
+    send.innerHTML = '<span class="spinner"></span>Enviando…';
+    const kind = $("#coachKind").value === "plan" ? "Propuesta de plan" : "Consulta breve";
+    setTimeout(() => {
+      send.textContent = "Consultar entrenador";
+      $("#coachPrompt").value = "";
+      coachInput();
+      const list = $("#jobList");
+      const card = document.createElement("div");
+      card.className = "job";
+      card.innerHTML = `<div class="body"><p class="title">${prompt.slice(0, 70)}</p>
+        <p class="sub">${kind} · <span class="timer">0 s</span></p></div>
+        <button class="btn btn-sm" type="button" onclick="cancelJob(this)">Cancelar</button>`;
+      list.prepend(card);
+      $("#jobCount").textContent = String(list.children.length);
+      $("#coachStatus").textContent = "Consulta enviada. Preparando respuesta… puedes volver después.";
+      let seconds = 0;
+      clearInterval(coachTimer);
+      coachTimer = setInterval(() => {
+        seconds += 1;
+        card.querySelector(".timer").textContent = `${seconds} s`;
+        if (seconds >= 6) {
+          clearInterval(coachTimer);
+          card.querySelector(".sub").innerHTML = `${kind} · lista · respuesta de ejemplo`;
+          card.querySelector("button").outerHTML =
+            '<button class="btn btn-sm btn-primary" type="button" onclick="toast(\'Abriendo revisión de propuesta (demo)\')">Revisar</button>';
+          $("#coachStatus").textContent = "Consulta lista. Revisa la propuesta antes de aplicarla.";
+          toast("Respuesta lista (demo)");
+        }
+      }, 1000);
+    }, 600);
+  }
+  function cancelJob(button) {
+    const card = button.closest(".job");
+    card.querySelector(".sub").innerHTML = "Cancelada · reserva recuperada";
+    button.remove();
+    $("#coachStatus").textContent = "Consulta cancelada. Recuperaste la reserva y la consulta.";
+    toast("Consulta cancelada");
+  }
+
+  weekLabel();
+  renderWeek();
+  renderDayPanel();
+  render();
+  showScreen('today');
+  if (window.innerWidth >= 1024) $('#actionbar').hidden = true;
+</script>
+</body>
+</html>
