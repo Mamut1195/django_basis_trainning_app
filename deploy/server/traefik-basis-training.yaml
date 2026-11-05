@@ -1,0 +1,36 @@
+# Traefik dynamic route for BASIS on app.basisasesoria.fitness.
+# Mirrors the manual dynamic files already used on this host; the container is
+# basis-training-web on the shared `coolify` network. TLS uses the host resolver.
+http:
+  routers:
+    basis-training-http:
+      entryPoints:
+        - http
+      rule: Host(`app.basisasesoria.fitness`)
+      middlewares:
+        - basis-training-https-redirect
+      service: basis-training
+    basis-training-https:
+      entryPoints:
+        - https
+      rule: Host(`app.basisasesoria.fitness`)
+      middlewares:
+        - basis-training-gzip
+      service: basis-training
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: app.basisasesoria.fitness
+  middlewares:
+    basis-training-https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    basis-training-gzip:
+      compress: true
+  services:
+    basis-training:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://basis-training-web:8000"
