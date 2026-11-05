@@ -15,7 +15,9 @@
             <p>{{ finding.reason }}</p>
             <small>{{ finding.evidence|join:" · " }}</small>
             {% if finding.proposal %}
-              <p><strong>Propuesta:</strong> {{ finding.proposal }}</p>
+              <p>
+                <strong>Propuesta:</strong> {{ finding.proposal }}
+              </p>
             {% endif %}
           </div>
         {% endfor %}
@@ -29,7 +31,9 @@
       <small class="muted">Analizado: {{ diagnosis.sport }} · {{ diagnosis.protocol }} · {{ diagnosis.weeks }} semanas.</small>
     {% endif %}
     {% for note in diagnosis.notes %}
-      <p class="muted"><small>{{ note }}</small></p>
+      <p class="muted">
+        <small>{{ note }}</small>
+      </p>
     {% endfor %}
   </c-basis.card>
   <c-basis.card>
