@@ -1,57 +1,113 @@
 {% extends 'shared/base.html' %}
 {% block content %}
-  <c-basis.page-heading title="Tu día. Tu siguiente paso."
+  <c-basis.page-heading title="Hoy"
                         eyebrow="{{ today|date:'l, j \d\e F' }}"
-                        subtitle="Un lugar para planificar, registrar y entender tu entrenamiento." />
+                        subtitle="Lo que toca hoy, cómo va la semana y qué hiciste." />
   <div class="split">
     <div class="stack">
-      <section class="hero stack-sm" aria-label="Tu siguiente sesión">
-        <p class="eyebrow">Hoy cuenta</p>
-        {% if active_session %}
+      {% if active_session %}
+        <section class="hero stack-sm" aria-label="Sesión en curso">
+          <p class="eyebrow">En curso</p>
           <h2>{{ active_session.title }}</h2>
-          <p>Registro en curso · {{ active_session.date|date:'j M' }}</p>
+          <p>
+            {{ active_session.date|date:'j M' }}
+            {% if active_session.duration_minutes %}· {{ active_session.duration_minutes }} min{% endif %}
+          </p>
+          <div class="block-list">
+            {% for block in active_session.blocks.all %}
+              <div class="block-line">
+                <span class="pill">{{ block.get_sport_display }}</span>
+                <strong>{{ block.title }}</strong>
+                {% if block.target_label %}<span class="muted">· {{ block.target_label }}</span>{% endif %}
+                {% if block.sport == 'strength' and block.sets.all %}
+                  <div class="small muted">
+                    {% for set in block.sets.all|slice:':4' %}
+                      {{ set.exercise.nombre }}
+                      {% if set.target_reps %}{{ set.target_reps }}×{% endif %}
+                      {% if set.target_kg %}{{ set.target_kg }} kg{% endif %}
+                      {% if not forloop.last %}·{% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
           <c-ui.button variant="primary" href="{% url 'session-detail' active_session.pk %}">
             Continuar sesión
           </c-ui.button>
-        {% elif scheduled %}
-          {% with item=scheduled.0.0 %}
-            <h2>{{ item.title }}</h2>
-            <p>{{ item.plan.title }} · Sesión programada</p>
-            <c-ui.button variant="primary" href="{% url 'scheduled-detail' item.pk %}">
-              Ver sesión de hoy
-            </c-ui.button>
-          {% endwith %}
-        {% else %}
-          <h2>Tu agenda está abierta</h2>
-          <p>Registra una actividad libre o prepara tu siguiente sesión.</p>
-          {% if write_access %}
-            <c-ui.button variant="primary" href="{% url 'session-new' %}">
-              Registrar entrenamiento
-            </c-ui.button>
-          {% else %}
-            <c-ui.button variant="primary" href="{% url 'billing' %}">
-              Consultar acceso
-            </c-ui.button>
-          {% endif %}
-        {% endif %}
-      </section>
-      <c-basis.card title="Tu agenda de hoy">
-        {% for item, state in scheduled %}
-          <div class="card-line row">
-            <div>
-              <span class="pill">{{ state }}</span>
-              <h3>{{ item.title }}</h3>
-              <small>{{ item.plan.title }}</small>
+        </section>
+      {% endif %}
+      <c-basis.card title="{% if active_session %}También hoy{% else %}Tus sesiones de hoy{% endif %}">
+        {% for entry in today_others %}
+          <article class="today-session">
+            <div class="card-line row">
+              <div>
+                <span class="pill">{{ entry.state }}</span>
+                <h3>{{ entry.item.title }}</h3>
+                <small>{{ entry.item.plan.title }}</small>
+              </div>
+              <c-ui.button href="{% url 'scheduled-detail' entry.item.pk %}" size="sm">
+                {% if entry.state == 'En curso' %}
+                  Continuar sesión
+                {% else %}
+                  Ver sesión
+                {% endif %}
+              </c-ui.button>
             </div>
-            <c-ui.button href="{% url 'scheduled-detail' item.pk %}" size="sm">
-              Ver sesión
-            </c-ui.button>
-          </div>
+            <div class="block-list">
+              {% for block in entry.blocks %}
+                <div class="block-line">
+                  <span class="pill">{{ block.get_sport_display }}</span>
+                  <strong>{{ block.title }}</strong>
+                  {% if block.target_label %}<span class="muted">· {{ block.target_label }}</span>{% endif %}
+                  {% if block.sport == 'strength' and block.sets.all %}
+                    <div class="small muted">
+                      {% for set in block.sets.all|slice:':4' %}
+                        {{ set.exercise.nombre }}
+                        {% if set.target_reps %}{{ set.target_reps }}×{% endif %}
+                        {% if set.target_kg %}{{ set.target_kg }} kg{% endif %}
+                        {% if not forloop.last %}·{% endif %}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% empty %}
+                <p class="small muted">Sin bloques detallados.</p>
+              {% endfor %}
+            </div>
+          </article>
         {% empty %}
-          <c-basis.empty title="Tu agenda está abierta">
-            Programa una sesión o registra una actividad libre.
-          </c-basis.empty>
+          {% if active_session %}
+            <p class="muted">No hay más sesiones programadas para hoy.</p>
+          {% else %}
+            <p class="muted">No hay sesiones programadas para hoy.</p>
+            <div class="actions">
+              {% if write_access %}
+                <c-ui.button variant="primary" href="{% url 'session-new' %}">
+                  Registrar entrenamiento
+                </c-ui.button>
+              {% endif %}
+              <c-ui.button href="{% url 'plans' %}">
+                Ver plan
+              </c-ui.button>
+            </div>
+          {% endif %}
         {% endfor %}
+      </c-basis.card>
+      <c-basis.card title="Esta semana">
+        <div class="week-strip">
+          {% for day in week_days %}
+            <div class="week-day{% if day.today %} is-today{% endif %}">
+              <span class="week-dow">{{ day.date|date:'D' }}</span>
+              <span class="week-num">{{ day.date|date:'j' }}</span>
+              <div class="week-items">
+                {% for item in day.items %}
+                  <span class="week-item {{ item.kind }}">{{ item.title }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
       </c-basis.card>
       <c-basis.card title="Últimas sesiones">
         {% for item in recent %}
@@ -59,11 +115,19 @@
             <div>
               <a href="{% url 'session-detail' item.pk %}">{{ item.title }}</a>
               <br>
-              <small>{{ item.date|date:'j M' }} · {{ item.get_status_display }}</small>
+              <small>
+                {{ item.date|date:'j M' }} · {{ item.get_status_display }}
+                {% for block in item.blocks.all %}
+                  · {{ block.get_sport_display }}
+                  {% if not forloop.last %}+{% endif %}
+                {% endfor %}
+              </small>
             </div>
-            {% if item.load != None %}
-              <span>{{ item.load }} <small>UA · {{ item.get_duration_protocol_display }}</small></span>
-            {% endif %}
+            <span class="small muted">
+              {% if item.duration_minutes %}{{ item.duration_minutes }} min{% endif %}
+              {% if item.reported_rpe %}· RPE {{ item.reported_rpe }}{% endif %}
+              {% if item.load != None %}· {{ item.load }} UA{% endif %}
+            </span>
           </div>
         {% empty %}
           <c-basis.empty title="Tu historia empieza aquí">
