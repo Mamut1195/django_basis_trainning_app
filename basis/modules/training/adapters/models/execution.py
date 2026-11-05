@@ -129,6 +129,12 @@ class Session(Owned):
                     raise ValidationError(str(error)) from error
 
     @property
+    def duration_minutes(self) -> int | None:
+        if self.duration_seconds is None:
+            return None
+        return round(self.duration_seconds / 60)
+
+    @property
     def load(self) -> Decimal | None:
         return (
             internal_load(self.duration_seconds, self.reported_rpe)
@@ -171,6 +177,24 @@ class Block(ValidatedModel):
                 name="block_exact_parent",
             )
         ]
+
+    @property
+    def target_label(self) -> str:
+        """Short human target for lists: duration, distance and ascent when present."""
+        target = self.target if isinstance(self.target, dict) else {}
+        parts: list[str] = []
+        seconds = target.get("duration_seconds")
+        if isinstance(seconds, (int, float)) and not isinstance(seconds, bool) and seconds > 0:
+            parts.append(f"{round(seconds / 60)} min")
+        distance = target.get("distance_m")
+        if isinstance(distance, (int, float)) and not isinstance(distance, bool) and distance > 0:
+            parts.append(
+                f"{distance / 1000:.1f} km" if distance >= 1000 else f"{round(distance)} m"
+            )
+        ascent = target.get("ascent_m")
+        if isinstance(ascent, (int, float)) and not isinstance(ascent, bool) and ascent > 0:
+            parts.append(f"{round(ascent)} m +")
+        return " · ".join(parts)
 
     def clean(self) -> None:
         if bool(self.planned_id) == bool(self.session_id):

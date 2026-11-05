@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from collections import defaultdict
+from dataclasses import dataclass, replace
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -39,6 +41,7 @@ from basis.shared.identifiers import AccountId, PlanId, PlannedSessionId, Revisi
 from ...domain.manual import EmptyPrescription
 from ..actions import revise_plan, start_session
 from ..models import (
+    Block,
     Goal,
     PlannedSession,
     Session,
@@ -55,23 +58,91 @@ from .forms import (
 )
 
 
+@dataclass(frozen=True)
+class TodayEntry:
+    item: PlannedSession
+    state: str
+    blocks: tuple[Block, ...]
+
+
 @login_required
 def today(request: HttpRequest) -> HttpResponse:
-    day = owner_date(AccountId(owner(request).pk), timezone.now())
+    account = AccountId(owner(request).pk)
+    day = owner_date(account, timezone.now())
+    rows = effective_sessions(account, owner_date)
+    week_start = day - timedelta(days=day.weekday())
+    week_end = week_start + timedelta(days=6)
+    week_rows = [
+        (row, calendar_status(row, day)) for row in rows if week_start <= row.date <= week_end
+    ]
+    planned_blocks: dict[int, list[Block]] = defaultdict(list)
+    planned_ids = [row.pk for row, _ in week_rows]
+    if planned_ids:
+        for block in (
+            Block.objects.filter(planned_id__in=planned_ids)
+            .prefetch_related("sets__exercise")
+            .order_by("order", "pk")
+        ):
+            if block.planned_id is not None:
+                planned_blocks[block.planned_id].append(block)
+    today_sessions = [
+        TodayEntry(row, state, tuple(planned_blocks.get(row.pk, ())))
+        for row, state in week_rows
+        if row.date == day
+    ]
+    week_sessions = (
+        Session.objects.filter(owner=owner(request), date__range=(week_start, week_end))
+        .prefetch_related("blocks")
+        .order_by("date", "created_at")
+    )
+    week_days = []
+    for offset in range(7):
+        current = week_start + timedelta(days=offset)
+        items = [
+            {
+                "kind": "plan",
+                "title": row.title,
+                "state": state,
+                "sports": [block.sport for block in planned_blocks.get(row.pk, ())],
+            }
+            for row, state in week_rows
+            if row.date == current
+        ]
+        items.extend(
+            {
+                "kind": "done",
+                "title": session.title,
+                "state": session.get_status_display(),
+                "sports": [block.sport for block in session.blocks.all()],
+            }
+            for session in week_sessions
+            if session.date == current
+        )
+        week_days.append({"date": current, "today": current == day, "items": items})
+    active_session = (
+        Session.objects.filter(owner=owner(request), status="in_progress")
+        .prefetch_related("blocks__sets__exercise")
+        .first()
+    )
+    today_others = [
+        entry
+        for entry in today_sessions
+        if not (active_session and entry.item.pk == active_session.planned_id)
+    ]
     return render(
         request,
         "training/execution/today.html",
         {
             "today": day,
-            "scheduled": [
-                (row, calendar_status(row, day))
-                for row in effective_sessions(AccountId(owner(request).pk), owner_date)
-                if row.date == day
-            ],
-            "active_session": Session.objects.filter(
-                owner=owner(request), status="in_progress"
-            ).first(),
-            "recent": Session.objects.filter(owner=owner(request))[:5],
+            "today_sessions": today_sessions,
+            "today_others": today_others,
+            "week_days": week_days,
+            "active_session": active_session,
+            "recent": (
+                Session.objects.filter(owner=owner(request))
+                .prefetch_related("blocks")
+                .order_by("-date", "-created_at")[:5]
+            ),
             "wellness": presentation.wellness_today(owner(request).pk, day),
             "goals": Goal.objects.filter(owner=owner(request))[:3],
         },
