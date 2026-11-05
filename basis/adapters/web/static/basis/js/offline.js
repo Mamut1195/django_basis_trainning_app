@@ -617,7 +617,7 @@
       "1",
       604800,
     );
-    const durationField = fields.querySelector('[data-path=\'["duration_seconds"]\']');
+    const durationField = fields.querySelector("[data-path='[\"duration_seconds\"]']");
     const targetSeconds = Number(snapshot.blocks?.[0]?.target?.duration_seconds || 0);
     numberInput(
       fields,
@@ -627,7 +627,7 @@
       "0.5",
       10,
     );
-    const rpeField = fields.querySelector('[data-path=\'["reported_rpe"]\']');
+    const rpeField = fields.querySelector("[data-path='[\"reported_rpe\"]']");
     const load = element("p", "Carga estimada: — UA", { class: "offline-load" });
     const refreshLoad = () => {
       const seconds = Number(durationField?.value || 0);
