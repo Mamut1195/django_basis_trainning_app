@@ -835,6 +835,11 @@ main:has(#component-catalog) {
   background: transparent;
   border: 1px solid var(--accent);
 }
+.week-more {
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 600;
+}
 .block-list {
   display: flex;
   flex-direction: column;

@@ -118,7 +118,14 @@ def today(request: HttpRequest) -> HttpResponse:
             for session in week_sessions
             if session.date == current
         )
-        week_days.append({"date": current, "today": current == day, "items": items})
+        week_days.append(
+            {
+                "date": current,
+                "today": current == day,
+                "items": items,
+                "extra": max(0, len(items) - 2),
+            }
+        )
     active_session = (
         Session.objects.filter(owner=owner(request), status="in_progress")
         .prefetch_related("blocks__sets__exercise")
