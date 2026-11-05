@@ -1,6 +1,6 @@
 {% load l10n %}
 <section id="session-player" class="stack" data-revision="{{ session.revision }}">
-  <c-basis.card title="Registro rápido por serie">
+  <c-basis.card title="Registra tu serie">
     <p class="muted">
       Solo resultados reales. Los objetivos y el registro anterior son referencias, nunca se rellenan automáticamente.
     </p>
@@ -25,10 +25,11 @@
              data-player-row
              data-rest="{{ row.rest_seconds|default_if_none:0 }}">
       <c-basis.card>
-        <h3 tabindex="-1">{{ row.exercise.nombre }} · serie {{ row.order }}</h3>
-        <p>
-          {{ row.block.title }} · {{ row.get_kind_display }} · {{ row.get_side_display }} · {{ row.get_load_type_display }}
+        <h3 tabindex="-1">{{ row.exercise.nombre }}</h3>
+        <p class="muted">
+          Serie {{ row.order }} de {{ row.block.sets.all|length }} · {{ row.block.title }}
         </p>
+        <p>{{ row.get_kind_display }} · {{ row.get_side_display }} · {{ row.get_load_type_display }}</p>
         {% if row.actual_exercise_id %}
           <p>Ejercicio realizado: {{ row.actual_exercise.nombre }} · {{ row.adaptation_reason }}</p>
         {% endif %}

@@ -3,6 +3,33 @@
 {% block content %}
   <c-basis.page-heading :title="session.title"
                         subtitle="{{ session.date|date:'l, j M Y' }} · {{ session.get_status_display }}" />
+  {% if strength_summary %}
+    <c-basis.card title="Fuerza de la sesión">
+      <p class="muted">{{ strength_total }} series · {{ strength_exercise_count }} ejercicios</p>
+      {% for block in strength_summary %}
+        <div class="block-line">
+          <strong>{{ block.title }}</strong>
+        </div>
+        {% for exercise in block.exercises %}
+          <div class="card-line row">
+            <div>
+              <strong>{{ exercise.name }}</strong>
+              <br>
+              <small>{{ exercise.sets }} series · objetivo {{ exercise.target }}</small>
+            </div>
+            <span class="small muted">
+              {% if exercise.best %}
+                Mejor: {{ exercise.best }}
+                {% if exercise.best_date %}· {{ exercise.best_date|date:'j M' }}{% endif %}
+              {% else %}
+                Sin registro previo
+              {% endif %}
+            </span>
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </c-basis.card>
+  {% endif %}
   <div class="actions">
     {% if session.status == 'in_progress' and write_access %}
       <c-ui.button href="{% url 'session-edit' session.pk %}">

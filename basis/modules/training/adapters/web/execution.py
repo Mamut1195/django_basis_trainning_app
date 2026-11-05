@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
+from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -136,6 +138,59 @@ def session_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
         )
         for row in rows
     ]
+    strength_sets = [row for row in rows if row.block.sport == "strength"]
+    strength_summary: list[dict[str, object]] = []
+    if strength_sets:
+        best: dict[int, tuple[Decimal, date, Decimal, int]] = {}
+        mark_history = (
+            StrengthSet.objects.filter(
+                block__session__owner_id=session.owner_id,
+                block__session__status="completed",
+                exercise_id__in={row.exercise_id for row in strength_sets},
+                actual_kg__gt=0,
+                actual_reps__gt=0,
+            )
+            .select_related("block__session")
+            .order_by("block__session__date", "pk")
+        )
+        for mark in mark_history:
+            assert mark.actual_kg is not None and mark.actual_reps is not None
+            session_row = mark.block.session
+            if session_row is None:
+                continue
+            volume = mark.actual_kg * mark.actual_reps
+            current = best.get(mark.exercise_id)
+            if current is None or volume > current[0]:
+                best[mark.exercise_id] = (
+                    volume,
+                    session_row.date,
+                    mark.actual_kg,
+                    mark.actual_reps,
+                )
+        for block in session.blocks.all():
+            if block.sport != "strength":
+                continue
+            counts: dict[int, int] = {}
+            targets: dict[int, tuple[int | None, Decimal | None]] = {}
+            names: dict[int, str] = {}
+            for set_row in block.sets.all():
+                counts[set_row.exercise_id] = counts.get(set_row.exercise_id, 0) + 1
+                targets.setdefault(set_row.exercise_id, (set_row.target_reps, set_row.target_kg))
+                names[set_row.exercise_id] = set_row.exercise.nombre
+            exercises: list[dict[str, object]] = []
+            for exercise_id, count in counts.items():
+                record = best.get(exercise_id)
+                reps, kg = targets[exercise_id]
+                exercises.append(
+                    {
+                        "name": names[exercise_id],
+                        "sets": count,
+                        "target": f"{reps if reps is not None else '—'}×{kg if kg is not None else '—'} kg",
+                        "best": f"{record[2]} kg × {record[3]}" if record else None,
+                        "best_date": record[1] if record else None,
+                    }
+                )
+            strength_summary.append({"title": block.title, "exercises": exercises})
     return render(
         request,
         "training/execution/session.html",
@@ -144,6 +199,9 @@ def session_detail(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
             "snapshot": session_snapshot(session),
             "blocks": session.blocks.all(),
             "quick_sets": quick_sets,
+            "strength_summary": strength_summary,
+            "strength_total": len(strength_sets),
+            "strength_exercise_count": len({row.exercise_id for row in strength_sets}),
         },
     )
 

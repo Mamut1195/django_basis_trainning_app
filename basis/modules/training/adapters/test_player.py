@@ -149,6 +149,13 @@ class PlayerTests(TestCase):
         self.assertIsNone(self.session.blocks.get().sets.all()[1].actual_reps)
         self.assertIn(self.send(revision=self.session.revision).status_code, (400, 404, 409))
 
+    def test_session_summary_shows_strength_targets_and_previous(self) -> None:
+        response = self.client.get(reverse("session-detail", args=[self.session.pk]))
+        self.assertContains(response, "Fuerza de la sesión")
+        self.assertContains(response, "2 series")
+        self.assertContains(response, self.exercise.nombre)
+        self.assertContains(response, "Sin registro previo")
+
     def test_today_prioritizes_owner_active_session_and_checkin(self) -> None:
         Session.objects.create(owner=self.other, title="FOREIGN SECRET")
         response = self.client.get("/")
