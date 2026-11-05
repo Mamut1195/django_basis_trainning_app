@@ -221,6 +221,9 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
                     ),
                 )
                 context.set_offline(False)
+                # Chromium's network emulation does not always deliver `online`;
+                # dispatch the reconnect event the app listens to.
+                page.evaluate("window.dispatchEvent(new Event('online'))")
                 self.wait(page, "async () => (await window.basisPending()) === 0")
                 self.assertEqual(sent[0]["mutation_id"], mutation)
                 self.assertEqual(sent[0]["session"], queued["session"])
