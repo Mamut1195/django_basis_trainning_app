@@ -12,10 +12,12 @@ from django.core import signing
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from basis.adapters.web import presentation
 from basis.adapters.web.framework import owner, write_required
+from basis.bootstrap import diagnosis as diagnosis_bootstrap
 from basis.modules.billing.public import ProviderUnavailable
 from basis.modules.coach.adapters.actions import cancel, enqueue
 from basis.modules.coach.adapters.models import AIJob, PlanProposal
@@ -29,10 +31,13 @@ from basis.modules.coach.adapters.proposal_actions import (
 from basis.modules.coach.adapters.proposals import review_key
 from basis.modules.coach.adapters.web.forms import ProposalReviewForm
 from basis.modules.coach.domain.jobs import CoachInvalid, JobNotFound
+from basis.shared.identifiers import AccountId
 
 
 @login_required
 def coach(request: HttpRequest) -> HttpResponse:
+    account = AccountId(owner(request).pk)
+    diagnosis = diagnosis_bootstrap.for_owner(account, timezone.localdate())
     return render(
         request,
         "coach/consultations/index.html",
@@ -41,6 +46,7 @@ def coach(request: HttpRequest) -> HttpResponse:
             "plans": presentation.current_plans(owner(request).pk),
             "ai_enabled": settings.AI_ENABLED and bool(settings.DEEPSEEK_API_KEY),
             "request_key": uuid.uuid4(),
+            "diagnosis": diagnosis,
         },
     )
 

@@ -73,7 +73,7 @@
       });
     });
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (frozen) location.reload();
+      if (frozen && navigator.onLine) location.reload();
     });
     navigator.serviceWorker
       .register("/service-worker.js")

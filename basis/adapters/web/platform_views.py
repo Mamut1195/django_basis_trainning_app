@@ -88,7 +88,6 @@ def service_worker(request: HttpRequest) -> HttpResponse:
     required_assets = (
         "basis/css/tokens.css",
         "basis/css/app.css",
-        "basis/js/theme.js",
         "basis/js/app.js",
         "basis/js/offline.js",
         "basis/js/forms.js",

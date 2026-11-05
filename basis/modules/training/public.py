@@ -58,6 +58,22 @@ from .application.progress import (
     ReadProgress,
     ReadTrip,
 )
+from .domain.analysis import (
+    Adherence,
+    LoadSample,
+    MuscleVolume,
+    SetRecord,
+    TrendPoint,
+    WeeklyLoad,
+    adherence,
+    estimated_1rm_rir,
+    load_ratio,
+    rolling_mean,
+    slope_per_week,
+    volume_by_muscle,
+    week_start,
+    weekly_loads,
+)
 from .domain.execution import (
     AdaptationField,
     AdaptationPresence,
@@ -161,6 +177,20 @@ from .domain.trekking import (
 )
 
 __all__ = (
+    "LoadSample",
+    "WeeklyLoad",
+    "MuscleVolume",
+    "SetRecord",
+    "TrendPoint",
+    "Adherence",
+    "adherence",
+    "estimated_1rm_rir",
+    "load_ratio",
+    "rolling_mean",
+    "slope_per_week",
+    "volume_by_muscle",
+    "week_start",
+    "weekly_loads",
     "EstimatedMark",
     "EstimatedMarkPage",
     "EstimatedMarks",

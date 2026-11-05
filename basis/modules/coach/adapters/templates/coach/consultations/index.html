@@ -3,6 +3,39 @@
   <c-basis.page-heading title="Entrena con contexto."
                         eyebrow="Tu entrenador IA"
                         subtitle="Pregunta sobre tu entrenamiento o pide una propuesta de ciclos. Tú decides qué incorporar a tu plan." />
+  <c-basis.card title="Diagnóstico de tu entrenamiento">
+    <p class="muted">
+      Calculado con tus sesiones registradas. No es consejo médico ni una predicción de lesiones.
+    </p>
+    {% if diagnosis.findings %}
+      <div class="stack-sm">
+        {% for finding in diagnosis.findings %}
+          <div class="card-line">
+            <span class="pill">{{ finding.title }}</span>
+            <p>{{ finding.reason }}</p>
+            <small>{{ finding.evidence|join:" · " }}</small>
+            {% if finding.proposal %}
+              <p>
+                <strong>Propuesta:</strong> {{ finding.proposal }}
+              </p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted">
+        Todavía no hay suficiente historial para un diagnóstico. Registra sesiones con RPE y vuelve a mirar.
+      </p>
+    {% endif %}
+    {% if diagnosis.sport %}
+      <small class="muted">Analizado: {{ diagnosis.sport }} · {{ diagnosis.protocol }} · {{ diagnosis.weeks }} semanas.</small>
+    {% endif %}
+    {% for note in diagnosis.notes %}
+      <p class="muted">
+        <small>{{ note }}</small>
+      </p>
+    {% endfor %}
+  </c-basis.card>
   <c-basis.card>
     <form method="post" action="{% url 'coach-ask' %}" class="stack">
       {% csrf_token %}
