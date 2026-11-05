@@ -163,6 +163,7 @@ class PlayerTests(TestCase):
         self.assertContains(response, "Fuerza privada")
         self.assertContains(response, self.exercise.nombre)
         self.assertContains(response, "Esta semana")
+        self.assertContains(response, f"/sessions/{self.session.pk}/")
         self.assertContains(response, "Últimas sesiones")
         self.assertContains(response, "Antes de empezar")
         self.assertContains(response, "Tu dirección")
