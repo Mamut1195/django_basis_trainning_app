@@ -78,7 +78,7 @@
     </c-basis.card>
   </div>
   {% if session.status == 'in_progress' %}
-    {% include 'training/execution/_blocks.html' with editable=True %}
+    {% include 'training/execution/_blocks.html' with editable=True player=True %}
   {% else %}
     {% include 'training/execution/_blocks.html' with editable=False %}
   {% endif %}
