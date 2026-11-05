@@ -104,7 +104,7 @@
               <span class="week-num">{{ day.date|date:'j' }}</span>
               <div class="week-items">
                 {% for item in day.items|slice:':2' %}
-                  <span class="week-item {{ item.kind }}">{{ item.title }}</span>
+                  <a class="week-item {{ item.kind }}" href="{{ item.url }}">{{ item.title }}</a>
                 {% endfor %}
                 {% if day.extra %}<span class="week-more">+{{ day.extra }}</span>{% endif %}
               </div>

@@ -821,6 +821,7 @@ main:has(#component-catalog) {
   gap: 0.2rem;
 }
 .week-item {
+  display: block;
   overflow: hidden;
   padding: 0.12rem 0.25rem;
   border-radius: 0.25rem;
@@ -828,6 +829,7 @@ main:has(#component-catalog) {
   color: var(--accent-strong);
   font-size: 0.6rem;
   line-height: 1.2;
+  text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

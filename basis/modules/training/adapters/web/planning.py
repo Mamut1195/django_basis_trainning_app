@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -103,6 +104,7 @@ def today(request: HttpRequest) -> HttpResponse:
                 "kind": "plan",
                 "title": row.title,
                 "state": state,
+                "url": reverse("scheduled-detail", args=[row.pk]),
                 "sports": [block.sport for block in planned_blocks.get(row.pk, ())],
             }
             for row, state in week_rows
@@ -113,6 +115,7 @@ def today(request: HttpRequest) -> HttpResponse:
                 "kind": "done",
                 "title": session.title,
                 "state": session.get_status_display(),
+                "url": reverse("session-detail", args=[session.pk]),
                 "sports": [block.sport for block in session.blocks.all()],
             }
             for session in week_sessions
