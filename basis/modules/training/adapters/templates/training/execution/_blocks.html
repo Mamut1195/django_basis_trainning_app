@@ -1,42 +1,45 @@
 {% load training_tags %}
 {% for block in blocks %}
-  <c-basis.card>
-    <div class="stack-sm">
-      <div class="row">
-        <div>
-          <span class="pill">{{ block.get_sport_display }}</span>
-          <h2>{{ block.title }}</h2>
+  {% if block.sport == 'strength' and player %}
+  {% else %}
+    <c-basis.card>
+      <div class="stack-sm">
+        <div class="row">
+          <div>
+            <span class="pill">{{ block.get_sport_display }}</span>
+            <h2>{{ block.title }}</h2>
+          </div>
+          {% if editable and write_access %}
+            <a href="{% url 'block-metrics' block.pk %}">
+              {% if block.session_id %}
+                Registrar variables
+              {% else %}
+                Definir variables
+              {% endif %}
+            </a>
+          {% endif %}
         </div>
-        {% if editable and write_access %}
-          <a href="{% url 'block-metrics' block.pk %}">
-            {% if block.session_id %}
-              Registrar variables
+        {% include 'training/execution/_metrics.html' %}
+        {% if block.sport != 'strength' %}
+          <p class="muted">
+            {% if block.threshold_snapshot %}
+              Referencia de umbral congelada: {{ block.threshold_snapshot.value }} {{ block.threshold_snapshot.unit }}
+              · {{ block.threshold_snapshot.measured_on }} · Método: {{ block.threshold_snapshot.method }}
+              · Tipo: {{ block.threshold_snapshot.kind|default:'Sin documentar' }}
+              · Fuente: {{ block.threshold_snapshot.source|default:'Sin documentar' }}
             {% else %}
-              Definir variables
+              Referencia de umbral: sin registrar. No se infiere desde el perfil actual.
             {% endif %}
-          </a>
+          </p>
+        {% endif %}
+        {% if block.sport == 'strength' %}
+          {% include 'training/execution/_strength.html' %}
+        {% else %}
+          {% include 'training/execution/_intervals.html' %}
         {% endif %}
       </div>
-      {% include 'training/execution/_metrics.html' %}
-      {% if block.sport != 'strength' %}
-        <p class="muted">
-          {% if block.threshold_snapshot %}
-            Referencia de umbral congelada: {{ block.threshold_snapshot.value }} {{ block.threshold_snapshot.unit }}
-            · {{ block.threshold_snapshot.measured_on }} · Método: {{ block.threshold_snapshot.method }}
-            · Tipo: {{ block.threshold_snapshot.kind|default:'Sin documentar' }}
-            · Fuente: {{ block.threshold_snapshot.source|default:'Sin documentar' }}
-          {% else %}
-            Referencia de umbral: sin registrar. No se infiere desde el perfil actual.
-          {% endif %}
-        </p>
-      {% endif %}
-      {% if block.sport == 'strength' %}
-        {% include 'training/execution/_strength.html' %}
-      {% else %}
-        {% include 'training/execution/_intervals.html' %}
-      {% endif %}
-    </div>
-  </c-basis.card>
+    </c-basis.card>
+  {% endif %}
 {% empty %}
   <c-basis.card>
     <c-basis.empty title="Añade el primer bloque">
