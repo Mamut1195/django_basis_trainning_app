@@ -101,6 +101,7 @@ class HikingBrowserTests(StaticLiveServerTestCase):
                     page.get_by_role("button", name="Abrir sesión", exact=True).wait_for()
                     context.set_offline(True)
                     page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                    page.locator("details.offline-details > summary").click()
                     for key, value in hiking_observations().items():
                         page.locator(f'input[data-path=\'["blocks",0,"actual","{key}"]\']').fill(
                             value

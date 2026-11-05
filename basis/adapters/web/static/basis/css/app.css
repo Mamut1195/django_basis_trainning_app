@@ -441,13 +441,98 @@ th {
   font-weight: 600;
 }
 .offline-controls {
-  position: sticky;
-  bottom: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: var(--space-4);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-soft);
   z-index: 10;
+}
+.offline-controls button {
+  width: 100%;
+  min-height: 3rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 650;
+  cursor: pointer;
+}
+.offline-controls .offline-finish {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.offline-details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+}
+.offline-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  list-style: none;
+}
+.offline-details > summary::-webkit-details-marker {
+  display: none;
+}
+.offline-details > summary::before {
+  content: "▸";
+  margin-right: var(--space-2);
+  color: var(--muted);
+}
+.offline-details[open] > summary::before {
+  content: "▾";
+}
+.offline-load {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--muted);
+}
+.offline-plan {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-soft);
+}
+.offline-plan h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.offline-plan-row {
+  margin: 0;
+  font-size: var(--font-md);
+  color: var(--text);
+}
+.offline-target {
+  align-self: start;
+  margin-top: var(--space-2);
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.offline-help {
+  margin: 0;
+  font-size: var(--font-xs);
+  color: var(--muted);
+}
+@media (min-width: 851px) {
+  .offline-controls {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 .htmx-indicator {
   display: none;

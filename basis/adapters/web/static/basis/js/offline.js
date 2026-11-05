@@ -24,7 +24,9 @@
     if (event.key === "basis-account" && scope && event.newValue !== scope) invalidate();
   });
   addEventListener("pageshow", (event) => {
-    if (event.persisted) {
+    // Never force a navigation while offline: iOS restores from bfcache and the
+    // reload would land on a different cached page, losing the record context.
+    if (event.persisted && navigator.onLine) {
       document.body.hidden = true;
       location.reload();
     }
@@ -567,17 +569,56 @@
       snapshot.status === "completed" &&
       !(await all("outbox")).some((item) => item.session.id === snapshot.id);
     assertAccount();
+    const sportNames = {
+      strength: "Fuerza",
+      cardio: "Cardio",
+      running: "Running",
+      cycling: "Ciclismo",
+      swimming: "Natación",
+      hiking: "Hiking",
+    };
+    const targetText = (block) => {
+      const target = block.target || {};
+      const parts = [];
+      if (Number(target.duration_seconds) > 0)
+        parts.push(Math.round(Number(target.duration_seconds) / 60) + " min");
+      if (Number(target.distance_m) > 0)
+        parts.push(new Intl.NumberFormat("es-EC").format(Number(target.distance_m)) + " m");
+      if (block.sets?.length) parts.push(block.sets.length + " series");
+      if (block.intervals?.length) parts.push(block.intervals.length + " intervalos");
+      return parts.join(" · ") || "sin objetivo";
+    };
     container.append(element("h2", snapshot.title));
+    const sports = [...new Set((snapshot.blocks || []).map((block) => block.sport))];
+    container.append(
+      element(
+        "p",
+        sports.map((sport) => sportNames[sport] || sport).join(" + ") +
+          " · " +
+          (snapshot.blocks || []).map(targetText).filter(Boolean)[0],
+        { class: "muted" },
+      ),
+    );
+    const plan = element("div", null, { class: "offline-plan" });
+    plan.append(element("h3", "Lo que toca hoy"));
+    for (const block of snapshot.blocks || []) {
+      const row = element("p", null, { class: "offline-plan-row" });
+      row.append(element("strong", block.title), " · " + targetText(block));
+      plan.append(row);
+    }
+    container.append(plan);
     const form = element("form", null, { class: "stack" });
     const fields = element("div", null, { class: "form-fields" });
     numberInput(
       fields,
-      "Duración (" + snapshot.duration_protocol + ", segundos)",
+      "Duración real (segundos)",
       snapshot.duration_seconds,
       ["duration_seconds"],
       "1",
       604800,
     );
+    const durationField = fields.querySelector('[data-path=\'["duration_seconds"]\']');
+    const targetSeconds = Number(snapshot.blocks?.[0]?.target?.duration_seconds || 0);
     numberInput(
       fields,
       "RPE real de sesión (0–10)",
@@ -586,7 +627,39 @@
       "0.5",
       10,
     );
+    const rpeField = fields.querySelector('[data-path=\'["reported_rpe"]\']');
+    const load = element("p", "Carga estimada: — UA", { class: "offline-load" });
+    const refreshLoad = () => {
+      const seconds = Number(durationField?.value || 0);
+      const rpe = Number(rpeField?.value || 0);
+      load.textContent =
+        seconds > 0 && rpe > 0
+          ? "Carga estimada: " + Math.round((seconds / 60) * rpe) + " UA (min × RPE)"
+          : "Carga estimada: — UA (min × RPE)";
+    };
+    for (const field of [durationField, rpeField]) field?.addEventListener("input", refreshLoad);
+    if (targetSeconds > 0) {
+      const useTarget = element(
+        "button",
+        "Usar objetivo: " + Math.round(targetSeconds / 60) + " min",
+        { type: "button", class: "offline-target" },
+      );
+      useTarget.addEventListener("click", () => {
+        if (durationField) durationField.value = String(targetSeconds);
+        refreshLoad();
+      });
+      fields.append(useTarget);
+    }
+    fields.append(
+      element("p", "1 = muy suave · 10 = máximo. Con estos dos datos se calcula la carga.", {
+        class: "offline-help",
+      }),
+      load,
+    );
+    refreshLoad();
     form.append(fields);
+    const blockDetails = element("details", null, { class: "offline-details" });
+    blockDetails.append(element("summary", "Más datos (opcional)"));
     const schema = JSON.parse(document.querySelector("#offline-schema")?.textContent || "{}");
     for (let index = 0; index < snapshot.blocks.length; index++) {
       const block = snapshot.blocks[index];
@@ -735,21 +808,24 @@
         );
         fieldset.append(intervalFields);
       }
-      form.append(fieldset);
+      blockDetails.append(fieldset);
     }
+    form.append(blockDetails);
     const controls = element("div", null, { class: "offline-controls actions" });
     if (!completed) {
       const save = element("button", "Guardar registro", {
           type: "submit",
           name: "mode",
           value: "draft",
+          class: "offline-save",
         }),
         finish = element("button", "Completar sesión", {
           type: "submit",
           name: "mode",
           value: "complete",
+          class: "offline-finish",
         });
-      controls.append(save, finish);
+      controls.append(finish, save);
     } else {
       for (const input of form.querySelectorAll("input,select")) input.disabled = true;
       controls.append(element("p", "El historial completado se conserva sin cambios."));
@@ -780,6 +856,14 @@
       try {
         await queueSession(updated, record);
         section.hidden = true;
+        container.replaceChildren();
+        await renderSessions();
+        status(
+          updated.status === "completed"
+            ? "Sesión completada y guardada en este dispositivo. Se enviará al volver la conexión."
+            : "Guardado en este dispositivo. Se enviará al volver la conexión.",
+        );
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (error) {
         status(
           error.message ||

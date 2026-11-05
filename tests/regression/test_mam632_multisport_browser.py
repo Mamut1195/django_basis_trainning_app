@@ -36,6 +36,11 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
     def wait(self, page: Page, expression: str) -> None:
         helpers.PwaBrowserTests.wait_async(cast(helpers.PwaBrowserTests, self), page, expression)
 
+    def open_details(self, page: Page) -> None:
+        details = page.locator("details.offline-details").first
+        if details.count() and not details.evaluate("node => node.open"):
+            page.locator("details.offline-details > summary").first.click()
+
     def test_multisport_recovery(self) -> None:
         owner, other = account("payload-owner"), account("payload-other")
         item = session(owner, sport="strength")
@@ -175,6 +180,7 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
                 context.set_offline(True)
                 page.goto(self.live_server_url + "/offline/")
                 page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                self.open_details(page)
                 adaptations = page.locator("details > summary").filter(
                     has_text="Adaptación real opcional"
                 )
@@ -201,6 +207,7 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
                 )
                 page.reload()
                 page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                self.open_details(page)
                 for path, value in values.items():
                     self.assertEqual(page.locator(f"[data-path='{path}']").input_value(), value)
                 self.assertEqual(self.records(page)[0][0], saved)
@@ -299,6 +306,7 @@ class MultisportOfflineTests(StaticLiveServerTestCase):
                 context.set_offline(True)
                 page.reload()
                 page.get_by_role("button", name="Abrir sesión", exact=True).click()
+                self.open_details(page)
                 for path, value in values.items():
                     field = page.locator(f"[data-path='{path}']")
                     if field.get_attribute("type") == "number":

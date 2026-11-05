@@ -41,18 +41,6 @@
     status("No se pudo completar la solicitud. Tus datos locales siguen guardados."),
   );
   document.addEventListener("click", (event) => {
-    const theme = event.target.closest("[data-theme-toggle]");
-    if (theme) {
-      document.documentElement.classList.toggle("dark");
-      try {
-        localStorage.setItem(
-          "basis-theme",
-          document.documentElement.classList.contains("dark") ? "dark" : "light",
-        );
-      } catch (_) {
-        /* Optional preference. */
-      }
-    }
     const back = event.target.closest("[data-back]");
     if (back) {
       event.preventDefault();

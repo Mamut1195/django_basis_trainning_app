@@ -1,23 +1,35 @@
 {% extends 'shared/base.html' %}
 {% block content %}
-  <c-basis.page-heading title="Tu entrenamiento continúa."
-                        eyebrow="Sin conexión"
-                        subtitle="Solo se guardan en este dispositivo las sesiones que eliges descargar." />
-  <div class="notice" id="offline-status" role="status">Abriendo sesiones guardadas…</div>
+  <header class="offline-head">
+    <p class="eyebrow">Sin conexión</p>
+    <h1>Tus sesiones guardadas</h1>
+    <p class="muted">Registra aunque no haya red. Se enviará solo cuando vuelva la conexión.</p>
+  </header>
+  <section class="offline-summary" aria-live="polite">
+    <span class="offline-summary-icon" aria-hidden="true">●</span>
+    <div>
+      <strong id="offline-summary-title">Comprobando…</strong>
+      <small id="offline-summary-text">Revisando los registros de este dispositivo.</small>
+    </div>
+  </section>
   <div class="actions">
-    <c-ui.button type="button" data-sync-now>
-      Sincronizar pendientes
+    <c-ui.button variant="primary" data-sync-now>
+      Reintentar envío
     </c-ui.button>
-    <c-ui.button type="button" data-export-local>
-      Exportar registros locales
-    </c-ui.button>
-    <a href="/accounts/login/">Entrar o cambiar de cuenta (con conexión)</a>
   </div>
+  <div class="notice" id="offline-status" role="status" hidden></div>
   <div id="offline-sessions" class="stack"></div>
   <section id="offline-editor" class="stack" hidden>
     <c-basis.card>
       <div id="offline-editor-content" class="stack"></div>
     </c-basis.card>
   </section>
+  <details class="offline-more">
+    <summary>Más opciones</summary>
+    <button type="button" class="plain-button" data-export-local>
+      Exportar copia de seguridad
+    </button>
+    <a href="/accounts/login/">Entrar o cambiar de cuenta</a>
+  </details>
   {{ offline_schema|json_script:'offline-schema' }}
 {% endblock %}
