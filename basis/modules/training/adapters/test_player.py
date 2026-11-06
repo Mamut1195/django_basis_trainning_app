@@ -135,9 +135,14 @@ class PlayerTests(TestCase):
         self.session.refresh_from_db()
         close = reverse("player-complete", args=[self.session.pk])
         self.assertEqual(
-            self.client.post(close, {"revision": self.session.revision}).status_code, 400
+            self.client.post(close, {"revision": self.session.revision}).status_code, 302
         )
-        self.assertEqual(self.client.post(close, {"revision": 1, "confirm": "on"}).status_code, 409)
+        stale = self.client.post(close, {"revision": 1, "confirm": "on"})
+        self.assertEqual(stale.status_code, 302)
+        self.assertContains(
+            self.client.get(reverse("session-detail", args=[self.session.pk])),
+            "La sesión cambió",
+        )
         self.assertEqual(
             self.client.post(
                 close, {"revision": self.session.revision, "confirm": "on"}
