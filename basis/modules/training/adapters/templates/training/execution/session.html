@@ -83,27 +83,36 @@
     {% include 'training/execution/_blocks.html' with editable=False %}
   {% endif %}
   {% if session.status == 'in_progress' and write_access %}
-    <c-basis.card title="Cerrar el registro">
+    <dialog id="close-session-dialog"
+            class="session-dialog"
+            aria-labelledby="close-session-title">
       <form id="close-session"
             method="post"
             action="{% url 'player-complete' session.pk %}">
         {% csrf_token %}
+        <h2 id="close-session-title">Cerrar el registro</h2>
+        <p>
+          Se conservarán solo tus observaciones. Puedes cerrar una sesión parcial; los datos ausentes no se completan con objetivos. Una sesión cerrada no se puede editar.
+        </p>
         <input type="hidden"
                name="revision"
                value="{{ session.revision }}"
                data-player-revision>
-        <p>
-          Se conservarán solo tus observaciones. Puedes cerrar una sesión parcial; los datos ausentes no se completan con objetivos. Una sesión cerrada no se puede editar.
-        </p>
         <label>
           <input type="checkbox" required name="confirm">
           He revisado los datos y quiero cerrar el registro.
         </label>
-        <c-ui.button type="submit" variant="primary">
-          Confirmar cierre de sesión
-        </c-ui.button>
+        <p role="status" class="small" data-close-status></p>
+        <div class="actions">
+          <c-ui.button type="button" data-close-dialog>
+            Cancelar
+          </c-ui.button>
+          <c-ui.button type="submit" variant="primary">
+            Confirmar cierre de sesión
+          </c-ui.button>
+        </div>
       </form>
-    </c-basis.card>
+    </dialog>
   {% endif %}
   <script defer src="{% static 'basis/js/player.js' %}"></script>
   {{ snapshot|json_script:'session-snapshot' }}
