@@ -154,6 +154,13 @@ class PlayerTests(TestCase):
         self.assertIsNone(self.session.blocks.get().sets.all()[1].actual_reps)
         self.assertIn(self.send(revision=self.session.revision).status_code, (400, 404, 409))
 
+    def test_plan_overview_shows_goal_week_and_strength(self) -> None:
+        response = self.client.get(reverse("plans"))
+        self.assertContains(response, "Tu plan")
+        self.assertContains(response, "Esta semana")
+        self.assertContains(response, "Fuerza privada")
+        self.assertContains(response, self.exercise.nombre)
+
     def test_close_registration_is_a_modal_launched_from_the_top(self) -> None:
         response = self.client.get(reverse("session-detail", args=[self.session.pk]))
         self.assertContains(response, 'id="close-session-dialog"')

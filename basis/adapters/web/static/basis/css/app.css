@@ -895,3 +895,43 @@ main:has(#component-catalog) {
 .session-dialog .actions {
   margin-top: 1rem;
 }
+.plan-week {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.plan-day {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.plan-day[open] {
+  border-color: var(--accent);
+}
+.plan-day > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+.plan-day > summary::-webkit-details-marker {
+  display: none;
+}
+.plan-day-name {
+  flex: 1;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.plan-day-date {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.plan-entry {
+  padding: 0.6rem 0.75rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.plan-entry + .plan-entry {
+  border-top: 1px solid var(--border);
+}

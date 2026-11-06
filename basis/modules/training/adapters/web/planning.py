@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, replace
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -64,6 +64,21 @@ class TodayEntry:
     item: PlannedSession
     state: str
     blocks: tuple[Block, ...]
+
+
+@dataclass(frozen=True)
+class PlanDayEntry:
+    title: str
+    state: str
+    url: str
+    blocks: tuple[Block, ...]
+
+
+@dataclass(frozen=True)
+class PlanDay:
+    date: date
+    today: bool
+    entries: tuple[PlanDayEntry, ...]
 
 
 @login_required
@@ -161,16 +176,78 @@ def today(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def plan_list(request: HttpRequest) -> HttpResponse:
-    return render(
-        request,
-        "training/planning/index.html",
-        {
-            "plans": TrainingPlan.objects.filter(owner=owner(request), next_version__isnull=True)
-            .select_related("goal")
-            .order_by("-created_at"),
-            "goals": Goal.objects.filter(owner=owner(request)),
-        },
+    account = AccountId(owner(request).pk)
+    day = owner_date(account, timezone.now())
+    plans = list(
+        TrainingPlan.objects.filter(owner=owner(request), next_version__isnull=True)
+        .select_related("goal")
+        .order_by("-created_at")
     )
+    plan = plans[0] if plans else None
+    context: dict[str, object] = {
+        "plans": plans,
+        "plan": plan,
+        "goals": Goal.objects.filter(owner=owner(request)),
+    }
+    if plan is not None:
+        week_start = day - timedelta(days=day.weekday())
+        week_end = week_start + timedelta(days=6)
+        rows = [
+            row
+            for row in effective_sessions(account, owner_date)
+            if row.plan_id == plan.pk and week_start <= row.date <= week_end
+        ]
+        planned_blocks: dict[int, list[Block]] = defaultdict(list)
+        planned_ids = [row.pk for row in rows]
+        if planned_ids:
+            for block in (
+                Block.objects.filter(planned_id__in=planned_ids)
+                .prefetch_related("sets__exercise")
+                .order_by("order", "pk")
+            ):
+                if block.planned_id is not None:
+                    planned_blocks[block.planned_id].append(block)
+        manual_sessions = (
+            Session.objects.filter(
+                owner=owner(request),
+                planned__isnull=True,
+                date__range=(week_start, week_end),
+            )
+            .prefetch_related("blocks__sets__exercise")
+            .order_by("date", "created_at")
+        )
+        week_days: list[PlanDay] = []
+        for offset in range(7):
+            current = week_start + timedelta(days=offset)
+            entries: list[PlanDayEntry] = [
+                PlanDayEntry(
+                    row.title,
+                    calendar_status(row, day),
+                    reverse("scheduled-detail", args=[row.pk]),
+                    tuple(planned_blocks.get(row.pk, ())),
+                )
+                for row in rows
+                if row.date == current
+            ]
+            entries.extend(
+                PlanDayEntry(
+                    session.title,
+                    session.get_status_display(),
+                    reverse("session-detail", args=[session.pk]),
+                    tuple(session.blocks.all()),
+                )
+                for session in manual_sessions
+                if session.date == current
+            )
+            week_days.append(PlanDay(current, current == day, tuple(entries)))
+        context.update(
+            {
+                "week_start": week_start,
+                "week_end": week_end,
+                "week_days": week_days,
+            }
+        )
+    return render(request, "training/planning/overview.html", context)
 
 
 @write_required
