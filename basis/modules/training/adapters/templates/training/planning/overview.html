@@ -1,0 +1,123 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  {% if plan %}
+    <c-basis.page-heading title="Tu plan"
+                          eyebrow="{{ plan.title }}"
+                          subtitle="Objetivo, semana y lo que ya hiciste. Cambiar el plan no borra tu historia." />
+    {% if plan.goal %}
+      <c-basis.card title="Objetivo">
+        <div class="stack-sm">
+          <h2>{{ plan.goal.title }}</h2>
+          <p>
+            {{ plan.goal.get_sport_display }}
+            {% if plan.goal.target_date %}· meta {{ plan.goal.target_date|date:'j M Y' }}{% endif %}
+          </p>
+          <div class="grid">
+            {% if plan.goal.baseline_value != None %}
+              <p class="stat">
+                {{ plan.goal.baseline_value }} <span class="stat-unit">{{ plan.goal.target_unit }}</span>
+                <br>
+                <small>base</small>
+              </p>
+            {% endif %}
+            {% if plan.goal.target_value != None %}
+              <p class="stat">
+                {{ plan.goal.target_value }} <span class="stat-unit">{{ plan.goal.target_unit }}</span>
+                <br>
+                <small>meta</small>
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </c-basis.card>
+    {% endif %}
+    <c-basis.card title="Esta semana">
+      <p class="muted">
+        {{ week_start|date:'j M' }} – {{ week_end|date:'j M Y' }} · toca un día para ver sus sesiones.
+      </p>
+      <div class="plan-week">
+        {% for day in week_days %}
+          <details class="plan-day" {% if day.today %}open{% endif %}>
+            <summary>
+              <span class="plan-day-name">{{ day.date|date:'l' }}</span>
+              <span class="plan-day-date">{{ day.date|date:'j M' }}</span>
+              <span class="pill">{{ day.entries|length }}</span>
+            </summary>
+            {% for entry in day.entries %}
+              <div class="plan-entry">
+                <div class="row">
+                  <a href="{{ entry.url }}"><strong>{{ entry.title }}</strong></a>
+                  <span class="pill">{{ entry.state }}</span>
+                </div>
+                {% for block in entry.blocks %}
+                  <p class="small muted">
+                    {{ block.get_sport_display }} · {{ block.title }}
+                    {% if block.target_label %}· {{ block.target_label }}{% endif %}
+                  </p>
+                  {% if block.sport == 'strength' %}
+                    <p class="small muted">
+                      {% for set in block.sets.all|slice:':3' %}
+                        {{ set.exercise.nombre }}
+                        {{ set.target_reps|default:'—' }}×{{ set.target_kg|default:'—' }} kg
+                        {% if not forloop.last %}·{% endif %}
+                      {% endfor %}
+                    </p>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% empty %}
+              <p class="muted">Descanso o sin sesión.</p>
+            {% endfor %}
+          </details>
+        {% endfor %}
+      </div>
+    </c-basis.card>
+    <div class="actions">
+      <c-ui.button variant="primary" href="{% url 'scheduled-new' %}">
+        Programar sesión
+      </c-ui.button>
+      <c-ui.button href="{% url 'plan-calendar' plan.pk %}">
+        Calendario completo
+      </c-ui.button>
+      <c-ui.button href="{% url 'plan-detail' plan.pk %}">
+        Versiones y ciclos
+      </c-ui.button>
+    </div>
+    {% if plans|length > 1 %}
+      <c-basis.card title="Otros planes">
+        {% for other in plans %}
+          {% if other.pk != plan.pk %}
+            <div class="card-line row">
+              <div>
+                <a href="{% url 'plan-detail' other.pk %}">{{ other.title }}</a>
+                <br>
+                <small>Versión {{ other.version }} · {{ other.goal.title }}</small>
+              </div>
+              <span class="pill">{{ other.start_date|date:'j M' }} → {{ other.end_date|date:'j M' }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </c-basis.card>
+    {% endif %}
+  {% else %}
+    <c-basis.page-heading title="Tu plan"
+                          eyebrow="Planificación"
+                          subtitle="Objetivo, ciclos y sesiones. Cambia tu futuro sin borrar tu historia." />
+    <c-basis.card>
+      <c-basis.empty title="Dale estructura a tu entrenamiento">
+        Crea un objetivo y después organiza tus ciclos y sesiones.
+      </c-basis.empty>
+      <div class="actions">
+        <c-ui.button variant="primary" href="{% url 'plan-new' %}">
+          Crear plan
+        </c-ui.button>
+        <c-ui.button href="{% url 'owned-new' 'goal' %}">
+          Nuevo objetivo
+        </c-ui.button>
+        <c-ui.button href="{% url 'plan-template' %}">
+          Crear desde plantilla
+        </c-ui.button>
+      </div>
+    </c-basis.card>
+  {% endif %}
+{% endblock %}
