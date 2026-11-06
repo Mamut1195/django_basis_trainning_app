@@ -872,3 +872,26 @@ main:has(#component-catalog) {
     font-size: 0.52rem;
   }
 }
+.session-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: inherit;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 25%);
+}
+.session-dialog::backdrop {
+  background: rgb(8 12 24 / 55%);
+}
+.session-dialog h2 {
+  margin-top: 0;
+}
+.session-dialog form {
+  margin: 0;
+}
+.session-dialog .actions {
+  margin-top: 1rem;
+}

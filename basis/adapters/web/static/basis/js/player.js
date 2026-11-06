@@ -192,11 +192,25 @@
     });
   }
   const close = document.querySelector("#close-session");
+  const closeDialog = document.querySelector("#close-session-dialog");
+  const closeStatus = closeDialog?.querySelector("[data-close-status]");
+  document.querySelector("[data-complete-session]")?.addEventListener("click", () => {
+    if (closeStatus) closeStatus.textContent = "";
+    closeDialog?.showModal();
+  });
+  closeDialog
+    ?.querySelector("[data-close-dialog]")
+    ?.addEventListener("click", () => closeDialog.close());
+  closeDialog?.addEventListener("click", (event) => {
+    if (event.target === closeDialog) closeDialog.close();
+  });
   close?.addEventListener("submit", (event) => {
     if (blocked || [...states.values()].some((state) => state.dirty || state.saving)) {
       event.preventDefault();
-      status.textContent = "No se cerró: guarda y confirma todos los cambios pendientes primero.";
-      root.scrollIntoView();
+      const message = "No se cerró: guarda y confirma todos los cambios pendientes primero.";
+      if (closeStatus && closeDialog?.open) closeStatus.textContent = message;
+      else status.textContent = message;
+      if (!closeDialog?.open) root.scrollIntoView();
     }
   });
   addEventListener("beforeunload", (event) => {

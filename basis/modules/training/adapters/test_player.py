@@ -149,6 +149,12 @@ class PlayerTests(TestCase):
         self.assertIsNone(self.session.blocks.get().sets.all()[1].actual_reps)
         self.assertIn(self.send(revision=self.session.revision).status_code, (400, 404, 409))
 
+    def test_close_registration_is_a_modal_launched_from_the_top(self) -> None:
+        response = self.client.get(reverse("session-detail", args=[self.session.pk]))
+        self.assertContains(response, 'id="close-session-dialog"')
+        self.assertContains(response, "data-complete-session")
+        self.assertContains(response, "Confirmar cierre de sesión")
+
     def test_session_summary_shows_strength_targets_and_previous(self) -> None:
         response = self.client.get(reverse("session-detail", args=[self.session.pk]))
         self.assertContains(response, "Fuerza de la sesión")
