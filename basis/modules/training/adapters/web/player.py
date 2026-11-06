@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from django import forms
+from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -68,18 +69,25 @@ def save_set(request: HttpRequest, pk: int) -> HttpResponse:
 def complete(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
     session = get_object_or_404(Session, pk=pk, owner=owner(request))
     if request.POST.get("confirm") != "on":
-        return HttpResponse("Confirme el cierre del registro.", status=400)
+        messages.error(request, "Confirma que revisaste los datos antes de cerrar.")
+        return redirect("session-detail", pk=pk)
     try:
         revision = int(request.POST.get("revision", ""))
     except ValueError:
-        return HttpResponse("Recarga antes de cerrar la sesión.", status=400)
+        messages.error(request, "Recarga la sesión antes de cerrar.")
+        return redirect("session-detail", pk=pk)
     snapshot = session_snapshot(session)
     snapshot["revision"] = revision
     snapshot["status"] = "completed"
     try:
         sync_session(owner(request), uuid.uuid4(), snapshot)
     except Conflict:
-        return HttpResponse("La sesión cambió. Recarga antes de cerrar.", status=409)
+        messages.error(
+            request,
+            "La sesión cambió mientras la revisabas. Ya cargamos la versión más reciente; revisa y vuelve a cerrar.",
+        )
+        return redirect("session-detail", pk=pk)
     except ValidationError as error:
-        return HttpResponse(str(error), status=400)
+        messages.error(request, str(error))
+        return redirect("session-detail", pk=pk)
     return redirect("session-detail", pk=pk)
