@@ -5,7 +5,7 @@ from django.urls import path
 from basis.modules.training.adapters import web as training
 from basis.modules.training.adapters.web import editor
 
-from . import marks, player
+from . import marks, player, records
 
 urlpatterns = [
     path("plans/from-template/", editor.template_new, name="plan-template"),
@@ -42,6 +42,7 @@ urlpatterns = [
     path("blocks/<int:pk>/intervals/new/", training.interval_new, name="interval-new"),
     path("progress/", training.progress, name="progress"),
     path("progress/marks/", marks.strength_marks, name="strength-marks"),
+    path("progress/records/", records.all_records, name="records"),
     path("trekking/<int:pk>/", training.trip_detail, name="trip-detail"),
     path("trekking/<int:pk>/stages/new/", training.stage_new, name="stage-new"),
     path("trekking/<int:pk>/stages/<int:stage_id>/edit/", training.stage_edit, name="stage-edit"),
