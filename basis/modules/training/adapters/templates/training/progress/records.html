@@ -23,7 +23,7 @@
     <p class="muted">
       Mejor 1RM estimado con carga externa; si no hay carga, la mejor serie de repeticiones. Solo sesiones completadas.
     </p>
-    {% for record in strength %}
+    {% for record in marked %}
       <div class="card-line row">
         <div>
           <strong>{{ record.name }}</strong>
@@ -31,28 +31,30 @@
           <small>{{ record.metric }}</small>
         </div>
         <div class="small muted" style="text-align:right">
-          {% if record.value != None %}
-            <strong>{{ record.value|floatformat:1 }}</strong>
-            {% if record.metric == '1RM estimado' %}
-              kg
-            {% else %}
-              rep
-            {% endif %}
-            <br>
-            {% if record.achieved_on %}· {{ record.achieved_on|date:'j M Y' }}{% endif %}
-            {% if record.session_id %}
-              · <a href="{% url 'session-detail' record.session_id %}">Ver sesión</a>
-            {% endif %}
-            <br>
-            {{ record.detail }}
+          <strong>{{ record.value|floatformat:1 }}</strong>
+          {% if record.metric == '1RM estimado' %}
+            kg
           {% else %}
-            Sin registro todavía
+            rep
           {% endif %}
+          <br>
+          {% if record.achieved_on %}· {{ record.achieved_on|date:'j M Y' }}{% endif %}
+          {% if record.session_id %}
+            · <a href="{% url 'session-detail' record.session_id %}">Ver sesión</a>
+          {% endif %}
+          <br>
+          {{ record.detail }}
         </div>
       </div>
     {% empty %}
-      <p class="muted">No hay ejercicios que coincidan con “{{ query }}”.</p>
+      <p class="muted">Todavía no hay marcas registradas con este filtro.</p>
     {% endfor %}
+    {% if unmarked %}
+      <details class="records-empty">
+        <summary>Sin registro todavía ({{ unmarked|length }})</summary>
+        {% for record in unmarked %}<p class="small muted">{{ record.name }}</p>{% endfor %}
+      </details>
+    {% endif %}
   </c-basis.card>
   <c-basis.card title="Deportes">
     {% for sport, rows in sports %}

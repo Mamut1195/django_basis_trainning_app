@@ -935,3 +935,16 @@ main:has(#component-catalog) {
 .plan-entry + .plan-entry {
   border-top: 1px solid var(--border);
 }
+.records-empty {
+  margin-top: 0.8rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+.records-empty summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 600;
+}
+.records-empty p {
+  margin: 0.25rem 0;
+}
