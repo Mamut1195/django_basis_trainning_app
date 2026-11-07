@@ -1,0 +1,80 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+  <c-basis.page-heading title="Todas tus marcas"
+                        eyebrow="Marcas"
+                        subtitle="Cada ejercicio y cada deporte, con su mejor registro, la fecha y la sesión de origen." />
+  <c-basis.card title="Buscar ejercicio">
+    <form method="get" class="actions">
+      <label for="q">Ejercicio</label>
+      <input id="q"
+             type="search"
+             name="q"
+             value="{{ query }}"
+             placeholder="Sentadilla, banca, remo…">
+      <c-ui.button type="submit">
+        Buscar
+      </c-ui.button>
+      {% if query %}
+        <a href="{% url 'records' %}">Limpiar</a>
+      {% endif %}
+    </form>
+  </c-basis.card>
+  <c-basis.card title="Fuerza">
+    <p class="muted">
+      Mejor 1RM estimado con carga externa; si no hay carga, la mejor serie de repeticiones. Solo sesiones completadas.
+    </p>
+    {% for record in strength %}
+      <div class="card-line row">
+        <div>
+          <strong>{{ record.name }}</strong>
+          <br>
+          <small>{{ record.metric }}</small>
+        </div>
+        <div class="small muted" style="text-align:right">
+          {% if record.value != None %}
+            <strong>{{ record.value|floatformat:1 }}</strong>
+            {% if record.metric == '1RM estimado' %}
+              kg
+            {% else %}
+              rep
+            {% endif %}
+            <br>
+            {% if record.achieved_on %}· {{ record.achieved_on|date:'j M Y' }}{% endif %}
+            {% if record.session_id %}
+              · <a href="{% url 'session-detail' record.session_id %}">Ver sesión</a>
+            {% endif %}
+            <br>
+            {{ record.detail }}
+          {% else %}
+            Sin registro todavía
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p class="muted">No hay ejercicios que coincidan con “{{ query }}”.</p>
+    {% endfor %}
+  </c-basis.card>
+  <c-basis.card title="Deportes">
+    {% for sport, rows in sports %}
+      <div class="card-line">
+        <h3>{{ rows.0.label }}</h3>
+      </div>
+      {% for record in rows %}
+        <div class="card-line row">
+          <div>
+            <strong>{{ record.metric }}</strong>
+            <br>
+            <small>{{ record.achieved_on|date:'j M Y' }}</small>
+          </div>
+          <div class="small muted" style="text-align:right">
+            <strong>{{ record.display }}</strong>
+            <br>
+            <a href="{% url 'session-detail' record.session_id %}">Ver sesión</a>
+          </div>
+        </div>
+      {% endfor %}
+    {% empty %}
+      <p class="muted">Todavía no hay sesiones completadas con distancia o desnivel.</p>
+    {% endfor %}
+  </c-basis.card>
+{% endblock %}
