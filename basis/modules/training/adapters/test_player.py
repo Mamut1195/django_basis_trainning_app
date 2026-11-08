@@ -308,3 +308,21 @@ class PlayerTests(TestCase):
             {"actual_reps": "4", "actual_kg": "75", "actual_rpe": "8.5"}, instance=self.row
         )
         self.assertTrue(form.is_valid(), form.errors)
+
+    def test_isometric_seconds_are_saved_next_to_reps(self) -> None:
+        response = self.client.post(
+            reverse("player-set", args=[self.row.pk]),
+            {
+                "revision": self.session.revision,
+                "actual_reps": "",
+                "actual_kg": "",
+                "actual_rpe": "",
+                "actual_rir": "",
+                "actual_isometric_seconds": "45",
+                "actual_distance_m": "",
+            },
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.row.refresh_from_db()
+        self.assertEqual(self.row.actual_isometric_seconds, 45)
