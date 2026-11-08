@@ -5,13 +5,24 @@
   if (!root) return;
   const status = root.querySelector("[data-player-status]");
   const forms = [...root.querySelectorAll("[data-quick-set]")];
-  const fields = ["actual_reps", "actual_kg", "actual_rpe", "actual_rir"];
+  const fieldNames = [
+    "actual_reps",
+    "actual_kg",
+    "actual_rpe",
+    "actual_rir",
+    "actual_isometric_seconds",
+    "actual_distance_m",
+  ];
+  const fieldsFor = (form) => fieldNames.filter((name) => form.elements[name]);
   const states = new Map();
   let serial = Promise.resolve();
   let blocked = false;
   const values = (form) =>
-    Object.fromEntries(fields.map((name) => [name, form.elements[name].value]));
-  const equal = (a, b) => fields.every((name) => a[name] === b[name]);
+    Object.fromEntries(fieldsFor(form).map((name) => [name, form.elements[name].value]));
+  const equal = (a, b) => {
+    const names = new Set([...Object.keys(a), ...Object.keys(b)]);
+    return [...names].every((name) => (a[name] ?? "") === (b[name] ?? ""));
+  };
   const announce = (form, text) => {
     form.querySelector("[data-row-status]").textContent = text;
     status.textContent = text;
@@ -93,7 +104,7 @@
       state.undo = undo ? null : before;
       state.dirty = !equal(values(form), sent);
       if (!state.dirty) {
-        fields.forEach((name) => {
+        fieldsFor(form).forEach((name) => {
           form.elements[name].value = result.values[name];
         });
         forget(form);
@@ -130,17 +141,13 @@
     } catch (_) {
       /* Optional recovery. */
     }
-    if (
-      draft &&
-      fields.every((name) => typeof draft[name] === "string") &&
-      !equal(draft, state.saved)
-    ) {
+    if (draft && fieldsFor(form).every((name) => name in draft) && !equal(draft, state.saved)) {
       state.dirty = true;
       const recover = document.createElement("button");
       recover.type = "button";
       recover.textContent = "Recuperar borrador de esta pestaña (revisar antes de guardar)";
       recover.addEventListener("click", () => {
-        fields.forEach((name) => {
+        fieldsFor(form).forEach((name) => {
           form.elements[name].value = draft[name];
         });
         state.dirty = true;
@@ -183,7 +190,7 @@
         announce(form, "Guarda primero los cambios actuales antes de deshacer.");
         return;
       }
-      fields.forEach((name) => {
+      fieldsFor(form).forEach((name) => {
         form.elements[name].value = state.undo[name];
       });
       state.dirty = true;

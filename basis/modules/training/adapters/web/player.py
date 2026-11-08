@@ -24,7 +24,14 @@ from ..records import rebuild
 class QuickSetForm(forms.ModelForm[StrengthSet]):
     class Meta:
         model = StrengthSet
-        fields = ["actual_reps", "actual_kg", "actual_rpe", "actual_rir"]
+        fields = [
+            "actual_reps",
+            "actual_kg",
+            "actual_rpe",
+            "actual_rir",
+            "actual_isometric_seconds",
+            "actual_distance_m",
+        ]
 
 
 @write_required

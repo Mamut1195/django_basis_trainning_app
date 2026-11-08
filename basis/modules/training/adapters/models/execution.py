@@ -378,6 +378,8 @@ class StrengthSet(ValidatedModel):
     )
     rest_seconds = models.PositiveIntegerField(null=True, blank=True)
     actual_rest_seconds = models.PositiveIntegerField(null=True, blank=True)
+    actual_isometric_seconds = models.PositiveIntegerField(null=True, blank=True)
+    actual_distance_m = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tempo = models.CharField(
         max_length=30, blank=True, help_text="Excéntrica-pausa-concéntrica-pausa"
     )
