@@ -980,6 +980,14 @@ main:has(#component-catalog) {
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
 }
+.coach-marks {
+  margin-top: 1rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+.coach-marks .eyebrow {
+  margin-bottom: 0.4rem;
+}
 .coach-proposal .eyebrow {
   margin: 0 0 0.25rem;
 }

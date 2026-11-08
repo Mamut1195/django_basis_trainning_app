@@ -8,6 +8,7 @@ When there are not enough weeks, it says so instead of inventing a baseline.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 from typing import Mapping, Sequence
 
@@ -26,6 +27,14 @@ BASELINE_WINDOW = 4
 
 
 @dataclass(frozen=True)
+class MarkHighlight:
+    name: str
+    metric: str
+    display: str
+    achieved_on: date | None
+
+
+@dataclass(frozen=True)
 class Diagnosis:
     findings: tuple[Finding, ...]
     sport: str | None
@@ -39,6 +48,7 @@ class Diagnosis:
     ratio: Decimal | None = None
     adherence_percent: Decimal | None = None
     missing_rpe: int = 0
+    marks: tuple[MarkHighlight, ...] = ()
 
 
 def _average_rpe(values: Sequence[Decimal | None]) -> Decimal | None:
