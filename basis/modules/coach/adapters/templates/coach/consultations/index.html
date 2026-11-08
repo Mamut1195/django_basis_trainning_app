@@ -46,6 +46,27 @@
         </div>
       </div>
     {% endif %}
+    {% if diagnosis.marks %}
+      <div class="coach-marks">
+        <p class="eyebrow">Tus marcas</p>
+        {% for mark in diagnosis.marks %}
+          <div class="card-line row">
+            <div>
+              <strong>{{ mark.name }}</strong>
+              <br>
+              <small>{{ mark.metric }}</small>
+            </div>
+            <div class="small muted" style="text-align:right">
+              <strong>{{ mark.display }}</strong>
+              {% if mark.achieved_on %}
+                <br>
+                <small>{{ mark.achieved_on|date:'j M' }}</small>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% if diagnosis.findings %}
       {% with primary=diagnosis.findings.0 %}
         <div class="coach-proposal">
