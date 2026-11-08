@@ -34,8 +34,12 @@
           <strong>{{ record.value|floatformat:1 }}</strong>
           {% if record.metric == '1RM estimado' %}
             kg
-          {% else %}
+          {% elif record.metric == 'Mejor serie' %}
             rep
+          {% elif record.metric == 'Mejor isométrico' %}
+            s
+          {% else %}
+            m
           {% endif %}
           <br>
           {% if record.achieved_on %}· {{ record.achieved_on|date:'j M Y' }}{% endif %}

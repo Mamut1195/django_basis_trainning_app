@@ -12,6 +12,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Iterable
 
 from django.db import transaction
+from django.db.models import Q
 
 from basis.modules.catalog.public import ExerciseChoices
 from basis.shared.identifiers import AccountId
@@ -69,21 +70,43 @@ def strength_records(
     ]
     rows = (
         StrengthSet.objects.filter(
+            Q(actual_reps__gt=0) | Q(actual_isometric_seconds__gt=0) | Q(actual_distance_m__gt=0),
             block__session__owner_id=account,
             block__session__status="completed",
-            actual_reps__gt=0,
         )
         .select_related("block__session", "exercise", "actual_exercise")
         .order_by("-block__session__date", "-pk")
     )
     best: dict[int, tuple[Decimal, str, str, date, str]] = {}
     best_reps: dict[int, tuple[int, str, date, str]] = {}
+    best_hold: dict[int, tuple[int, str, date, str]] = {}
+    best_carry: dict[int, tuple[Decimal, Decimal | None, str, date, str]] = {}
     for row in rows:
-        assert row.actual_reps is not None
         session = row.block.session
         if session is None:
             continue
         exercise_id = row.actual_exercise_id or row.exercise_id
+        if row.actual_isometric_seconds:
+            current_hold = best_hold.get(exercise_id)
+            if current_hold is None or row.actual_isometric_seconds > current_hold[0]:
+                best_hold[exercise_id] = (
+                    row.actual_isometric_seconds,
+                    str(session.pk),
+                    session.date,
+                    session.title,
+                )
+        if row.actual_distance_m:
+            current_carry = best_carry.get(exercise_id)
+            if current_carry is None or row.actual_distance_m > current_carry[0]:
+                best_carry[exercise_id] = (
+                    row.actual_distance_m,
+                    row.actual_kg,
+                    str(session.pk),
+                    session.date,
+                    session.title,
+                )
+        if not row.actual_reps:
+            continue
         load_type = row.actual_load_type or row.load_type
         if load_type == "external" and row.actual_kg is not None:
             estimate = _one_rm(row.actual_kg, row.actual_reps)
@@ -109,7 +132,34 @@ def strength_records(
     for exercise_id, name in sorted(catalog, key=lambda item: item[1]):
         load = best.get(exercise_id)
         reps = best_reps.get(exercise_id)
-        if load is not None:
+        hold = best_hold.get(exercise_id)
+        carry = best_carry.get(exercise_id)
+        if hold is not None:
+            records.append(
+                StrengthRecord(
+                    name,
+                    "Mejor isométrico",
+                    Decimal(hold[0]),
+                    f"{hold[0]} s · {hold[3]}",
+                    hold[2],
+                    hold[1],
+                    str(exercise_id),
+                )
+            )
+        elif carry is not None:
+            load_text = f"{carry[1]} kg · " if carry[1] is not None else ""
+            records.append(
+                StrengthRecord(
+                    name,
+                    "Mayor acarreo",
+                    carry[0],
+                    f"{carry[0]} m · {load_text}{carry[4]}",
+                    carry[3],
+                    carry[2],
+                    str(exercise_id),
+                )
+            )
+        elif load is not None:
             records.append(
                 StrengthRecord(
                     name,
@@ -219,7 +269,12 @@ def rebuild(account: AccountId, choices: ExerciseChoices) -> int:
     for record in strength_records(account, choices):
         if record.value is None:
             continue
-        unit = "kg" if record.metric == "1RM estimado" else "rep"
+        unit = {
+            "1RM estimado": "kg",
+            "Mejor serie": "rep",
+            "Mejor isométrico": "s",
+            "Mayor acarreo": "m",
+        }[record.metric]
         rows.append(
             PersonalRecord(
                 owner_id=account,
@@ -276,8 +331,18 @@ def stored_strength(
     }
     records: list[StrengthRecord] = []
     for exercise_id, name in sorted(catalog, key=lambda item: item[1]):
-        row = rows.get((str(exercise_id), "1RM estimado")) or rows.get(
-            (str(exercise_id), "Mejor serie")
+        row = next(
+            (
+                rows.get((str(exercise_id), metric))
+                for metric in (
+                    "Mejor isométrico",
+                    "Mayor acarreo",
+                    "1RM estimado",
+                    "Mejor serie",
+                )
+                if rows.get((str(exercise_id), metric)) is not None
+            ),
+            None,
         )
         if row is None:
             records.append(

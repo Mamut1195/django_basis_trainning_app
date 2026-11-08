@@ -27,6 +27,14 @@ class RecordTests(TestCase):
         classification, _ = Classification.objects.get_or_create(nombre="Fuerza")
         self.squat = Exercise.objects.create(nombre="Sentadilla", classification=classification)
         self.pushup = Exercise.objects.create(nombre="Flexiones", classification=classification)
+        self.hold = Exercise.objects.create(
+            nombre="Plancha", classification=classification, patron_movimiento="isometrico"
+        )
+        self.carry = Exercise.objects.create(
+            nombre="Paseo del granjero",
+            classification=classification,
+            patron_movimiento="acarreo",
+        )
         self.strength = Session.objects.create(
             owner=self.owner,
             title="Fuerza de prueba",
@@ -54,6 +62,24 @@ class RecordTests(TestCase):
             load_type="bodyweight",
             actual_reps=12,
         )
+        StrengthSet.objects.create(
+            block=block,
+            exercise=self.hold,
+            order=3,
+            kind="work",
+            load_type="bodyweight",
+            target_isometric_seconds=30,
+            actual_isometric_seconds=45,
+        )
+        StrengthSet.objects.create(
+            block=block,
+            exercise=self.carry,
+            order=4,
+            kind="work",
+            load_type="external",
+            actual_kg=Decimal("24"),
+            actual_distance_m=Decimal("40"),
+        )
         self.run_session = Session.objects.create(
             owner=self.owner,
             title="Rodaje",
@@ -76,6 +102,10 @@ class RecordTests(TestCase):
         self.assertContains(response, "93,3")
         self.assertContains(response, "Mejor serie")
         self.assertContains(response, "12,0")
+        self.assertContains(response, "Mejor isométrico")
+        self.assertContains(response, "45,0")
+        self.assertContains(response, "Mayor acarreo")
+        self.assertContains(response, "40,0")
         self.assertContains(response, "5.0 km")
         self.assertContains(response, "5:00 /km")
 
