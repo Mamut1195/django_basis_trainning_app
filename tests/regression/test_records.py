@@ -6,8 +6,16 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from basis.bootstrap.records import exercise_choices
 from basis.modules.catalog.adapters.models import Classification, Exercise
-from basis.modules.training.adapters.models import Block, Session, StrengthSet
+from basis.modules.training.adapters.models import (
+    Block,
+    PersonalRecord,
+    Session,
+    StrengthSet,
+)
+from basis.modules.training.adapters.records import rebuild
+from basis.shared.identifiers import AccountId
 
 from .factories import account
 
@@ -76,3 +84,25 @@ class RecordTests(TestCase):
         self.assertContains(response, "Flexiones")
         self.assertNotContains(response, "<strong>Sentadilla</strong>", html=True)
         self.assertContains(response, "5.0 km")
+
+    def test_records_are_persisted_and_rebuilt_after_a_new_best(self) -> None:
+        self.client.get(reverse("records"))
+        row = PersonalRecord.objects.get(
+            owner=self.owner, context=str(self.squat.pk), metric="1RM estimado"
+        )
+        self.assertEqual(row.value, Decimal("93.33"))
+        block = self.strength.blocks.get()
+        StrengthSet.objects.create(
+            block=block,
+            exercise=self.squat,
+            order=9,
+            kind="work",
+            load_type="external",
+            actual_kg=Decimal("100"),
+            actual_reps=5,
+        )
+        rebuild(AccountId(self.owner.pk), exercise_choices())
+        row = PersonalRecord.objects.get(
+            owner=self.owner, context=str(self.squat.pk), metric="1RM estimado"
+        )
+        self.assertEqual(row.value, Decimal("116.67"))

@@ -2,6 +2,7 @@
 
 from .execution import Block, Interval, Session, StrengthSet, configure_rm_references
 from .planning import Cycle, Goal, PlannedSession, TrainingPlan
+from .records import PersonalRecord
 from .trekking import TrekStage, TrekTrip
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "Interval",
     "TrekTrip",
     "TrekStage",
+    "PersonalRecord",
 ]

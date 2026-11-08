@@ -15,7 +15,11 @@ from basis.bootstrap.records import exercise_choices
 from basis.modules.coach.application.diagnosis import Diagnosis, MarkHighlight, diagnose
 from basis.modules.training.adapters.coach import DjangoTrainingCoachContexts
 from basis.modules.training.adapters.diagnosis import read_window
-from basis.modules.training.adapters.records import sport_records, strength_records
+from basis.modules.training.adapters.records import (
+    ensure_records,
+    stored_sports,
+    stored_strength,
+)
 from basis.shared.identifiers import AccountId
 
 WINDOW_DAYS = 35
@@ -36,7 +40,9 @@ def for_owner(account: AccountId, today: date) -> Diagnosis:
         excluded_sessions=window.excluded,
     )
     highlights: list[MarkHighlight] = []
-    for record in strength_records(account, exercise_choices()):
+    choices = exercise_choices()
+    ensure_records(account, choices)
+    for record in stored_strength(account, choices):
         if record.value is None:
             continue
         unit = "kg" if record.metric == "1RM estimado" else "rep"
@@ -45,7 +51,7 @@ def for_owner(account: AccountId, today: date) -> Diagnosis:
                 record.name, record.metric, f"{record.value:.1f} {unit}", record.achieved_on
             )
         )
-    for sport_record in sport_records(account):
+    for sport_record in stored_sports(account):
         highlights.append(
             MarkHighlight(
                 sport_record.label,
