@@ -201,6 +201,8 @@ def strength(value: object) -> StrengthData:
         actual_rir=optional_integer(row.get("actual_rir")),
         rest_seconds=optional_integer(row.get("rest_seconds")),
         actual_rest_seconds=optional_integer(row.get("actual_rest_seconds")),
+        actual_isometric_seconds=optional_integer(row.get("actual_isometric_seconds")),
+        actual_distance_m=optional_decimal(row.get("actual_distance_m")),
         isometric_seconds=optional_integer(row.get("isometric_seconds")),
         target_isometric_seconds=optional_integer(row.get("target_isometric_seconds")),
         target_percent_rm=optional_decimal(row.get("target_percent_rm")),

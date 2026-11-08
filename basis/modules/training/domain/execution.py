@@ -88,6 +88,8 @@ class StrengthData:
     actual_rir: int | None = None
     rest_seconds: int | None = None
     actual_rest_seconds: int | None = None
+    actual_isometric_seconds: int | None = None
+    actual_distance_m: Decimal | None = None
     isometric_seconds: int | None = None
     target_isometric_seconds: int | None = None
     target_percent_rm: Decimal | None = None
