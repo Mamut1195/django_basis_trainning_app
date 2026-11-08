@@ -11,10 +11,12 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Iterable
 
+from django.db import transaction
+
 from basis.modules.catalog.public import ExerciseChoices
 from basis.shared.identifiers import AccountId
 
-from .models import Session, StrengthSet
+from .models import PersonalRecord, Session, StrengthSet
 
 
 @dataclass(frozen=True)
@@ -25,6 +27,7 @@ class StrengthRecord:
     detail: str
     achieved_on: date | None
     session_id: str | None
+    key: str = ""
 
 
 @dataclass(frozen=True)
@@ -35,6 +38,7 @@ class SportRecord:
     display: str
     achieved_on: date
     session_id: str
+    key: str = ""
 
 
 def _decimal(value: object) -> Decimal | None:
@@ -114,6 +118,7 @@ def strength_records(
                     f"{load[1]} · {load[4]}",
                     load[3],
                     load[2],
+                    str(exercise_id),
                 )
             )
         elif reps is not None:
@@ -125,10 +130,13 @@ def strength_records(
                     f"{reps[0]} repeticiones · {reps[3]}",
                     reps[2],
                     reps[1],
+                    str(exercise_id),
                 )
             )
         else:
-            records.append(StrengthRecord(name, "Sin registro", None, "", None, None))
+            records.append(
+                StrengthRecord(name, "Sin registro", None, "", None, None, str(exercise_id))
+            )
     return tuple(records)
 
 
@@ -172,6 +180,7 @@ def sport_records(account: AccountId) -> tuple[SportRecord, ...]:
                     f"{distance_best[0] / 1000:.1f} km",
                     distance_best[1],
                     distance_best[2],
+                    sport,
                 )
             )
         if sport in best_pace:
@@ -185,6 +194,7 @@ def sport_records(account: AccountId) -> tuple[SportRecord, ...]:
                     f"{seconds // 60}:{seconds % 60:02d} /km",
                     pace_best[1],
                     pace_best[2],
+                    sport,
                 )
             )
         if sport in best_ascent:
@@ -197,9 +207,112 @@ def sport_records(account: AccountId) -> tuple[SportRecord, ...]:
                     f"{ascent_best[0]:.0f} m",
                     ascent_best[1],
                     ascent_best[2],
+                    sport,
                 )
             )
     return tuple(records)
+
+
+def rebuild(account: AccountId, choices: ExerciseChoices) -> int:
+    """Replace the materialized marks for one account from completed sessions."""
+    rows: list[PersonalRecord] = []
+    for record in strength_records(account, choices):
+        if record.value is None:
+            continue
+        unit = "kg" if record.metric == "1RM estimado" else "rep"
+        rows.append(
+            PersonalRecord(
+                owner_id=account,
+                kind="strength",
+                context=record.key,
+                label=record.name,
+                metric=record.metric,
+                value=record.value,
+                display=f"{record.value:.1f} {unit}",
+                detail=record.detail,
+                achieved_on=record.achieved_on,
+                session_id=record.session_id,
+            )
+        )
+    for sport_record in sport_records(account):
+        rows.append(
+            PersonalRecord(
+                owner_id=account,
+                kind="sport",
+                context=sport_record.key,
+                label=sport_record.label,
+                metric=sport_record.metric,
+                display=sport_record.display,
+                achieved_on=sport_record.achieved_on,
+                session_id=sport_record.session_id,
+            )
+        )
+    with transaction.atomic():
+        PersonalRecord.objects.filter(owner_id=account).delete()
+        PersonalRecord.objects.bulk_create(rows)
+    return len(rows)
+
+
+def ensure_records(account: AccountId, choices: ExerciseChoices) -> int:
+    """Backfill once for accounts that predate the materialized table."""
+    if PersonalRecord.objects.filter(owner_id=account).exists():
+        return 0
+    if not Session.objects.filter(owner_id=account, status="completed").exists():
+        return 0
+    return rebuild(account, choices)
+
+
+def stored_strength(
+    account: AccountId, choices: ExerciseChoices, query: str = ""
+) -> tuple[StrengthRecord, ...]:
+    catalog = [
+        (int(exercise_id), name)
+        for exercise_id, name, archived in choices.all()
+        if not archived and (not query or query.lower() in name.lower())
+    ]
+    rows = {
+        (row.context, row.metric): row
+        for row in PersonalRecord.objects.filter(owner_id=account, kind="strength")
+    }
+    records: list[StrengthRecord] = []
+    for exercise_id, name in sorted(catalog, key=lambda item: item[1]):
+        row = rows.get((str(exercise_id), "1RM estimado")) or rows.get(
+            (str(exercise_id), "Mejor serie")
+        )
+        if row is None:
+            records.append(
+                StrengthRecord(name, "Sin registro", None, "", None, None, str(exercise_id))
+            )
+            continue
+        records.append(
+            StrengthRecord(
+                name,
+                row.metric,
+                row.value,
+                row.detail,
+                row.achieved_on,
+                str(row.session_id) if row.session_id else None,
+                str(exercise_id),
+            )
+        )
+    return tuple(records)
+
+
+def stored_sports(account: AccountId) -> tuple[SportRecord, ...]:
+    return tuple(
+        SportRecord(
+            row.context,
+            row.label,
+            row.metric,
+            row.display,
+            row.achieved_on or date.today(),
+            str(row.session_id) if row.session_id else "",
+            row.context,
+        )
+        for row in PersonalRecord.objects.filter(owner_id=account, kind="sport").order_by(
+            "context", "metric"
+        )
+    )
 
 
 def grouped_sports(rows: Iterable[SportRecord]) -> tuple[tuple[str, tuple[SportRecord, ...]], ...]:

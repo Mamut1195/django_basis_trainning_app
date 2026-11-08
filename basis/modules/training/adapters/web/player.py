@@ -12,10 +12,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
 from basis.adapters.web.framework import Conflict, owner, sync_session, write_required
+from basis.bootstrap.records import exercise_choices
+from basis.shared.identifiers import AccountId
 
 from .. import manual_actions as mutations
 from ..actions import session_snapshot
 from ..models import Session, StrengthSet
+from ..records import rebuild
 
 
 class QuickSetForm(forms.ModelForm[StrengthSet]):
@@ -90,4 +93,5 @@ def complete(request: HttpRequest, pk: uuid.UUID) -> HttpResponse:
     except ValidationError as error:
         messages.error(request, str(error))
         return redirect("session-detail", pk=pk)
+    rebuild(AccountId(owner(request).pk), exercise_choices())
     return redirect("session-detail", pk=pk)
