@@ -34,6 +34,11 @@ class Diagnosis:
     average_rpe: Decimal | None
     coverage: Mapping[str, int]
     notes: tuple[str, ...] = ()
+    current_load: Decimal | None = None
+    baseline_load: Decimal | None = None
+    ratio: Decimal | None = None
+    adherence_percent: Decimal | None = None
+    missing_rpe: int = 0
 
 
 def _average_rpe(values: Sequence[Decimal | None]) -> Decimal | None:
@@ -73,10 +78,15 @@ def diagnose(
         baseline = rolling_mean(previous, BASELINE_WINDOW, minimum=MIN_BASELINE_WEEKS)
         ratios.append(load_ratio(row.load, baseline))
     average = _average_rpe([sample.reported_rpe for sample in group])
+    current_load = rows[-1].load
+    previous_last = [item.load for item in rows[max(0, len(rows) - 1 - BASELINE_WINDOW) : -1]]
+    baseline_last = rolling_mean(previous_last, BASELINE_WINDOW, minimum=MIN_BASELINE_WEEKS)
+    ratio_last = load_ratio(current_load, baseline_last)
+    missing_count = sum(1 for value in recent_rpe if value is None)
     findings = evaluate(
         load_ratios=ratios,
         adherence_percent=adherence_percent,
-        missing_sessions=sum(1 for value in recent_rpe if value is None),
+        missing_sessions=missing_count,
         average_rpe=average,
         thresholds=thresholds,
     )
@@ -99,4 +109,9 @@ def diagnose(
             "missing": sum(row.missing for row in rows),
         },
         notes=tuple(notes),
+        current_load=current_load,
+        baseline_load=baseline_last,
+        ratio=ratio_last,
+        adherence_percent=adherence_percent,
+        missing_rpe=missing_count,
     )

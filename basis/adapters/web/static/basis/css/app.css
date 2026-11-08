@@ -948,3 +948,54 @@ main:has(#component-catalog) {
 .records-empty p {
   margin: 0.25rem 0;
 }
+.coach-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+.coach-metrics > div {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.coach-metric-label {
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.coach-metrics strong {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+.coach-metrics small {
+  color: var(--muted);
+}
+.coach-proposal {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+.coach-proposal .eyebrow {
+  margin: 0 0 0.25rem;
+}
+.coach-proposal p {
+  margin: 0.2rem 0;
+}
+.coach-findings {
+  margin-top: 1rem;
+}
+.coach-findings summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .coach-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

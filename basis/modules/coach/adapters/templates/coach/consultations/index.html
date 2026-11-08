@@ -3,12 +3,61 @@
   <c-basis.page-heading title="Entrena con contexto."
                         eyebrow="Tu entrenador IA"
                         subtitle="Pregunta sobre tu entrenamiento o pide una propuesta de ciclos. Tú decides qué incorporar a tu plan." />
-  <c-basis.card title="Diagnóstico de tu entrenamiento">
+  <c-basis.card title="Lectura de tu semana">
     <p class="muted">
       Calculado con tus sesiones registradas. No es consejo médico ni una predicción de lesiones.
     </p>
+    {% if diagnosis.sport %}
+      <div class="coach-metrics">
+        <div>
+          <span class="coach-metric-label">Carga</span>
+          <strong>{{ diagnosis.current_load|floatformat:0 }}</strong>
+          <small>UA</small>
+        </div>
+        <div>
+          <span class="coach-metric-label">Base</span>
+          <strong>{{ diagnosis.baseline_load|floatformat:0|default:'—' }}</strong>
+          <small>UA</small>
+        </div>
+        <div>
+          <span class="coach-metric-label">Ratio</span>
+          <strong>{{ diagnosis.ratio|floatformat:2|default:'—' }}</strong>
+          <small>×</small>
+        </div>
+        <div>
+          <span class="coach-metric-label">RPE medio</span>
+          <strong>{{ diagnosis.average_rpe|floatformat:1|default:'—' }}</strong>
+          <small>/10</small>
+        </div>
+        <div>
+          <span class="coach-metric-label">Adherencia</span>
+          <strong>
+            {% if diagnosis.adherence_percent != None %}
+              {{ diagnosis.adherence_percent|floatformat:0 }}%
+            {% else %}
+              —
+            {% endif %}
+          </strong>
+        </div>
+        <div>
+          <span class="coach-metric-label">Sin RPE</span>
+          <strong>{{ diagnosis.missing_rpe }}</strong>
+          <small>sesiones</small>
+        </div>
+      </div>
+    {% endif %}
     {% if diagnosis.findings %}
-      <div class="stack-sm">
+      {% with primary=diagnosis.findings.0 %}
+        <div class="coach-proposal">
+          <p class="eyebrow">Qué propongo</p>
+          <p>
+            <strong>{{ primary.title }}</strong>
+          </p>
+          <p>{{ primary.proposal|default:"Mantén la semana; no hay un cambio claro todavía." }}</p>
+        </div>
+      {% endwith %}
+      <details class="coach-findings">
+        <summary>Ver {{ diagnosis.findings|length }} hallazgo(s) y evidencia</summary>
         {% for finding in diagnosis.findings %}
           <div class="card-line">
             <span class="pill">{{ finding.title }}</span>
@@ -21,7 +70,7 @@
             {% endif %}
           </div>
         {% endfor %}
-      </div>
+      </details>
     {% else %}
       <p class="muted">
         Todavía no hay suficiente historial para un diagnóstico. Registra sesiones con RPE y vuelve a mirar.
